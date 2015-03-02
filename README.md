@@ -11,3 +11,9 @@ http://www.superdroidrobots.com/shop/item.aspx/programmable-mecanum-wheel-vector
 
 * Kit by King Kong Robot
 http://www.kingkongrobot.com/index.php?m=content&c=index&a=show&catid=22&id=24
+
+* Robot Shop
+http://www.robotshop.com/
+
+* Odroid computing platform
+http://www.hardkernel.com/main/main.php
