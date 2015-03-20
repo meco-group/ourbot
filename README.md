@@ -50,3 +50,6 @@ http://www.hardkernel.com/main/main.php
 * LIDAR
 https://www.sparkfun.com/news/1404
 http://pulsedlight3d.com/products/lidar-lite
+
+* Nvidia
+http://blogs.nvidia.com/blog/2015/03/17/nvidia-drive-px/
