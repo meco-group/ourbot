@@ -25,8 +25,15 @@ Meeting 13 mrt 2015:
 * Autonomie
    * Makkelijk batterijen vervangen etc.
    
-## TODO:
+## To D0:
 * Maarten, Goele (2015-03-13): Herman Bruyninckx en Lin vragen of zij niet met iets vergelijksbaars bezig zijn.
+
+## Plans & activities of Robotics Group
+* Er zijn drie activiteiten aan de gang:
+    * een thesisstudente, Laura, van Eindhoven, gaat "iets" met de PR2 doen, en de youbot, op basis van constrained optimization en MPC.
+    * er is een GIP gestart om een nieuw soort "soft" mobiel platform te maken, met elektrische motoren van fietsen, en met de mogelijkheid om "zacht" te botsen met de omgeving; hiervoor zullen (later, in een thesis) motion control algoritmes uitgewerkt worden die expliciet gebruik maken van botsingen om de weg te vinden.
+    * er is een thesisstudent bezig met de "refactoring" van Lias, om toegang te krijgen tot en met de motorstromen, om energiegebruik te monitoren en te optimiseren in de bewegingscontrole.
+* Een piste waaraan ze denken is een platform van neobotix (zie bij "Handige links"), al dan niet met manipulator erop. Het is zowel mogelijk om een volledig platform aan te kopen, dan wel losse componenten om zelf een eigen systeem op te bouwen. Zij dachten dit (deels) te financieren met Flanders Make infrastructuur/uitrusting middelen, maar op dit moment is dit wat on hold, omdat er nog steeds geen duidelijkheid is over de finale budgetten voor 2015.
 
 ## Handige links
 * Kit from Seeed studio:
@@ -53,3 +60,8 @@ http://pulsedlight3d.com/products/lidar-lite
 
 * Nvidia
 http://blogs.nvidia.com/blog/2015/03/17/nvidia-drive-px/
+
+* Neobotix
+http://www.neobotix-robots.com/mobile-robots-overview.html
+http://www.neobotix-robots.com/mobile-manipulators-overview.html
+http://www.neobotix-robots.com/components.html
