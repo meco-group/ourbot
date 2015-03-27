@@ -62,6 +62,6 @@ http://pulsedlight3d.com/products/lidar-lite
 http://blogs.nvidia.com/blog/2015/03/17/nvidia-drive-px/
 
 * Neobotix
-http://www.neobotix-robots.com/mobile-robots-overview.html
-http://www.neobotix-robots.com/mobile-manipulators-overview.html
-http://www.neobotix-robots.com/components.html
+    * http://www.neobotix-robots.com/mobile-robots-overview.html
+    * http://www.neobotix-robots.com/mobile-manipulators-overview.html
+    * http://www.neobotix-robots.com/components.html
