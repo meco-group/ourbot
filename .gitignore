@@ -1,0 +1,7 @@
+orocos/*/*/bin/
+orocos/*/*/build/
+orocos/*/*/include/
+orocos/*/*/lib/
+orocos/*/*/CMakeList.txt
+orocos/*/*/Makefile
+orocos/*/*/manifest.xml
