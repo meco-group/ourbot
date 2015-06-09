@@ -5,3 +5,13 @@ orocos/*/*/lib/
 orocos/*/*/CMakeList.txt
 orocos/*/*/Makefile
 orocos/*/*/manifest.xml
+*.log
+*.ior
+*~
+orocos/setup.bash
+orocos/setup.sh
+orocos/setup.zsh
+*.tb_history
+*.rosinstall
+*.rosinstall.bak
+
