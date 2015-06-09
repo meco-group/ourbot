@@ -1,0 +1,43 @@
+#!/bin/bash
+#
+#This file copies all component src files to the Odroids and builds the components (pass argument 'build')
+#
+## Adapt SOURCEDIR to the path where your ourbot components are written
+## Adapt HOSTS to a list of multiple ip's for multiple Odroids
+#
+#Questions? ourBot@kuleuven.be
+
+SOURCEDIR=/home/ruben/ourbot/orocos/ourbot/
+OROCOSDIR=/home/odroid/orocos
+USERNAME=odroid
+HOSTS="192.168.0.2"
+PASSWORD="odroid"
+
+for HOSTNAME in ${HOSTS} ; do
+	#Sync source files
+	echo ""
+	echo "Send src files to "$HOSTNAME
+	echo "-----------------------------"
+	sshpass -p $PASSWORD rsync -avz --include=*/ --include=*/src/** --include=*.ops --include=Coordinator/*.lua --exclude=*   -e ssh $SOURCEDIR ${USERNAME}@${HOSTNAME}:$OROCOSDIR
+done
+
+if [ "X$1" = "Xbuild" ]
+then
+	for HOSTNAME in ${HOSTS} ; do
+		#Build components
+		echo "Build components on "$HOSTNAME
+		echo "-------------------------------"
+		sshpass -p $PASSWORD ssh ${USERNAME}@${HOSTNAME} "
+		cd $OROCOSDIR
+		for d in */ ; do
+			if [ ! "X\$d" = "XCoordinator/" ]
+			then
+				cd $OROCOSDIR/\$d
+				echo "Build "\$d
+				rosmake
+				cd ..
+			fi
+		done
+		"
+	done
+fi
