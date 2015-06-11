@@ -15,11 +15,7 @@ class DistributedControllerInterface : public ControllerInterface{
     std::vector<double> _est_poseA;
     std::vector<double> _est_poseB;
 
-  public:
-    DistributedControllerInterface(std::string const& name);
-    virtual bool controlUpdate() = 0;
-    virtual bool initialize() = 0;
-
+  protected:
     virtual bool startHook();
     virtual void updateHook();
 
@@ -27,6 +23,11 @@ class DistributedControllerInterface : public ControllerInterface{
     std::vector<double> getRefRelPoseB();
     std::vector<double> getEstPoseA();
     std::vector<double> getEstPoseB();
+
+  public:
+    DistributedControllerInterface(std::string const& name);
+    virtual bool controlUpdate() = 0;
+    virtual bool initialize() = 0;
 };
 
 #endif

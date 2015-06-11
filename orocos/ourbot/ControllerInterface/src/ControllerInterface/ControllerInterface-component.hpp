@@ -26,6 +26,13 @@ class ControllerInterface : public RTT::TaskContext{
     virtual bool controlUpdate() = 0;
     virtual bool initialize() = 0;
 
+    double getSampleRate();
+    std::vector<double> getRefPose();
+    std::vector<double> getRefFfw();
+    std::vector<double> getEstPose();
+    std::vector<double> getSetVelocity();
+    void setSetVelocity(std::vector<double> const&);
+
   public:
     ControllerInterface(std::string const& name);
     virtual bool configureHook();
@@ -33,11 +40,5 @@ class ControllerInterface : public RTT::TaskContext{
     virtual void updateHook();
     virtual void stopHook();
 
-    double getSampleRate();
-    std::vector<double> getRefPose();
-    std::vector<double> getRefFfw();
-    std::vector<double> getEstPose();
-    std::vector<double> getSetVelocity();
-    void setSetVelocity(std::vector<double> const&);
 };
 #endif

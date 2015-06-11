@@ -10,7 +10,7 @@
 # Creates a component library libPathGeneratorInterface-<target>.so
 # and installs in the directory lib/orocos/PathGeneratorInterface/
 #
-orocos_component(PathGeneratorInterface PathGeneratorInterface-component.hpp PathGeneratorInterface-component.cpp) # ...you may add multiple source files
+orocos_component(PathGeneratorInterface PathGeneratorInterface/PathGeneratorInterface-component.hpp PathGeneratorInterface/PathGeneratorInterface-component.cpp ExamplePathGenerator/ExamplePathGenerator-component.hpp ExamplePathGenerator/ExamplePathGenerator-component.cpp) # ...you may add multiple source files
 #
 # You may add multiple orocos_component statements.
 
@@ -19,7 +19,7 @@ orocos_component(PathGeneratorInterface PathGeneratorInterface-component.hpp Pat
 #
 # Installs in the include/orocos/PathGeneratorInterface/ directory
 #
-orocos_install_headers(PathGeneratorInterface-component.hpp) # ...you may add multiple header files
+orocos_install_headers(PathGeneratorInterface/PathGeneratorInterface-component.hpp ExamplePathGenerator/ExamplePathGenerator-component.hpp) # ...you may add multiple header files
 #
 # You may add multiple orocos_install_headers statements.
 
@@ -32,7 +32,7 @@ orocos_install_headers(PathGeneratorInterface-component.hpp) # ...you may add mu
 # Be aware that a plugin may only have the loadRTTPlugin() function once defined in a .cpp file.
 # This function is defined by the plugin and service CPP macros.
 #
-orocos_plugin(PathGeneratorInterface-plugin PathGeneratorInterface-plugin.cpp) # ...only one plugin function per library !
+orocos_plugin(PathGeneratorInterface-plugin PathGeneratorInterface/PathGeneratorInterface-plugin.cpp) # ...only one plugin function per library !
 #
 # You may add multiple orocos_plugin statements.
 
@@ -43,7 +43,7 @@ orocos_plugin(PathGeneratorInterface-plugin PathGeneratorInterface-plugin.cpp) #
 # Creates a plugin library libPathGeneratorInterface-service-<target>.so
 # and installs in the directory lib/orocos/PathGeneratorInterface/plugins/
 #
-orocos_service(PathGeneratorInterface-service PathGeneratorInterface-service.cpp) # ...only one service per library !
+orocos_service(PathGeneratorInterface-service PathGeneratorInterface/PathGeneratorInterface-service.cpp) # ...only one service per library !
 #
 # You may add multiple orocos_service statements.
 
@@ -54,7 +54,7 @@ orocos_service(PathGeneratorInterface-service PathGeneratorInterface-service.cpp
 # Creates a library libPathGeneratorInterface-support-<target>.so and installs it in
 # lib/
 #
-orocos_library(PathGeneratorInterface-support support.cpp) # ...you may add multiple source files
+orocos_library(PathGeneratorInterface-support PathGeneratorInterface/support.cpp) # ...you may add multiple source files
 #
 # You may add multiple orocos_library statements.
 

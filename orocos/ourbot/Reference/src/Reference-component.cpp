@@ -43,14 +43,13 @@ bool Reference::configureHook(){
     log(Error) << "No peer configurator !" <<endlog();
     return false;
   }
-  // OperationCaller<double(void)> getPathLength = configurator->getOperation("getPathLength");
-  // if (!getPathLength.ready()){
-  //   log(Error) << "No operation getPathLength of peer configurator !" <<endlog();
-  //   return false;
-  // }
+  OperationCaller<int(void)> getPathLength = configurator->getOperation("getPathLength");
+  if (!getPathLength.ready()){
+    log(Error) << "No operation getPathLength of peer configurator !" <<endlog();
+    return false;
+  }
+  _path_length = getPathLength();
 
-  // _path_length = getPathLength();
-  _path_length = 5;
   // Reserve required memory and initialize with zeros
   for(int i=0;i<3;i++){
     _cur_ref_pose[i].resize(_path_length);
