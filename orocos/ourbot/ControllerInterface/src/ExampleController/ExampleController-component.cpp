@@ -33,7 +33,7 @@ bool ExampleController::controlUpdate(){
   // PI controller
   std::vector<double> set_velocity_new(3);
   for (int i=0; i<3; i++){
-    set_velocity_new[i] = set_velocity[i] + _kp[i]*error[i] + (sample_rate*_ki[i] - _kp[i])*_error[i];
+    set_velocity_new[i] = set_velocity[i] + _kp[i]*error[i] + ((1./sample_rate)*_ki[i] - _kp[i])*_error[i];
   }
 
   // Velocity feedforward

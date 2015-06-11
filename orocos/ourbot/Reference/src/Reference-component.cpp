@@ -23,7 +23,7 @@ Reference::Reference(std::string const& name) : TaskContext(name, PreOperational
   ports()->addPort("ref_pose_outport", _ref_pose_outport).doc("Pose reference sample");
   ports()->addPort("ref_ffw_outport", _ref_ffw_outport).doc("Feedforward reference sample");
   ports()->addPort("ref_relposeA_outport", _ref_relposeA_outport).doc("Relative pose reference sample wrt neighbour A");
-  ports()->addPort("ref_relposeA_outport", _ref_relposeA_outport).doc("Relative pose reference sample wrt neighbour B");
+  ports()->addPort("ref_relposeB_outport", _ref_relposeB_outport).doc("Relative pose reference sample wrt neighbour B");
 
   _cur_ref_pose      = _ref_pose_1;
   _cur_ref_ffw       = _ref_ffw_1;
@@ -43,14 +43,14 @@ bool Reference::configureHook(){
     log(Error) << "No peer configurator !" <<endlog();
     return false;
   }
-  OperationCaller<double(void)> getPathLength = configurator->getOperation("getPathLength");
-  if (!getPathLength.ready()){
-    log(Error) << "No operation getPathLength of peer configurator !" <<endlog();
-    return false;
-  }
+  // OperationCaller<double(void)> getPathLength = configurator->getOperation("getPathLength");
+  // if (!getPathLength.ready()){
+  //   log(Error) << "No operation getPathLength of peer configurator !" <<endlog();
+  //   return false;
+  // }
 
-  _path_length = getPathLength();
-
+  // _path_length = getPathLength();
+  _path_length = 5;
   // Reserve required memory and initialize with zeros
   for(int i=0;i<3;i++){
     _cur_ref_pose[i].resize(_path_length);
@@ -62,14 +62,6 @@ bool Reference::configureHook(){
     _nxt_ref_ffw[i].resize(_path_length);
     _nxt_ref_relposeB[i].resize(_path_length);
     _nxt_ref_relposeA[i].resize(_path_length);
-  }
-
-  // Check connections
-  for(int i=0; i<3; i++){
-    _con_ref_pose[i]      = _ref_pose_inport[i].connected();
-    _con_ref_ffw[i]       = _ref_ffw_inport[i].connected();
-    _con_ref_relposeA[i]  = _ref_relposeA_inport[i].connected();
-    _con_ref_relposeB[i]  = _ref_relposeB_inport[i].connected();
   }
 
   // Show example data sample to ports to make data flow real-time
@@ -92,6 +84,14 @@ bool Reference::configureHook(){
 }
 
 bool Reference::startHook(){
+  // Check connections
+  for(int i=0; i<3; i++){
+    _con_ref_pose[i]      = _ref_pose_inport[i].connected();
+    _con_ref_ffw[i]       = _ref_ffw_inport[i].connected();
+    _con_ref_relposeA[i]  = _ref_relposeA_inport[i].connected();
+    _con_ref_relposeB[i]  = _ref_relposeB_inport[i].connected();
+  }
+
   std::cout << "Reference started !" <<std::endl;
   return true;
 }

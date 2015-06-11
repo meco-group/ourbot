@@ -10,7 +10,7 @@
 # Creates a component library libControllerInterface-<target>.so
 # and installs in the directory lib/orocos/ControllerInterface/
 #
-orocos_component(ControllerInterface ControllerInterface/ControllerInterface-component.hpp ControllerInterface/ControllerInterface-component.cpp ExampleController/ExampleController-component.hpp ExampleController/ExampleController-component.cpp)
+orocos_component(ControllerInterface ControllerInterface/ControllerInterface-component.hpp ControllerInterface/ControllerInterface-component.cpp DistributedControllerInterface/DistributedControllerInterface-component.cpp DistributedControllerInterface/DistributedControllerInterface-component.hpp ExampleController/ExampleController-component.hpp ExampleController/ExampleController-component.cpp)
 #
 # You may add multiple orocos_component statements.
 
@@ -19,7 +19,7 @@ orocos_component(ControllerInterface ControllerInterface/ControllerInterface-com
 #
 # Installs in the include/orocos/ControllerInterface/ directory
 #
-orocos_install_headers(ControllerInterface/ControllerInterface-component.hpp ExampleController/ExampleController-component.hpp) # ...you may add multiple header files
+orocos_install_headers(ControllerInterface/ControllerInterface-component.hpp DistributedControllerInterface/DistributedControllerInterface-component.hpp ExampleController/ExampleController-component.hpp) # ...you may add multiple header files
 #
 # You may add multiple orocos_install_headers statements.
 

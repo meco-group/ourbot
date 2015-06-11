@@ -1,0 +1,11 @@
+import("rtt_ros")
+ros.import("ControllerInterface")
+ros.import("Reference")
+
+loadComponent("controller","ExampleController")
+loadComponent("configurator","OCL::HelloWorld")
+addPeer("controller","configurator")
+controller.configure()
+
+loadComponent("reference", "Reference")
+addPeer("reference","configurator")

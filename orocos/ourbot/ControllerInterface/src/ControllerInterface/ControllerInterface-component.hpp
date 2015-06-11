@@ -28,10 +28,10 @@ class ControllerInterface : public RTT::TaskContext{
 
   public:
     ControllerInterface(std::string const& name);
-    bool configureHook();
-    bool startHook();
-    void updateHook();
-    void stopHook();
+    virtual bool configureHook();
+    virtual bool startHook();
+    virtual void updateHook();
+    virtual void stopHook();
 
     double getSampleRate();
     std::vector<double> getRefPose();

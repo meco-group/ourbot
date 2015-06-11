@@ -35,8 +35,8 @@ bool ControllerInterface::configureHook(){
 
 bool ControllerInterface::startHook(){
   // Check if input ports are connected
-  double check = true;
-  if (!(_est_pose_inport.connected())){
+  bool check = true;
+  if (!_est_pose_inport.connected()){
     log(Error) << "est_pose_inport not connected !" <<endlog();
     check = false;
   }
