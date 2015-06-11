@@ -19,15 +19,15 @@ bool ExampleController::initialize(){
 
 bool ExampleController::controlUpdate(){
   std::vector<double> est_pose          = getEstPose();
-  std::vector<double> reference         = getRefPose();
-  std::vector<double> reference_ffw     = getRefFfw();
+  std::vector<double> ref_pose          = getRefPose();
+  std::vector<double> ref_ffw           = getRefFfw();
   std::vector<double> set_velocity      = getSetVelocity();
   double sample_rate                    = getSampleRate();
 
   // Error
   std::vector<double> error(3);
   for (int i=0; i<3; i++){
-    error[i] = reference[i] - est_pose[i];
+    error[i] = ref_pose[i] - est_pose[i];
   }
 
   // PI controller
@@ -38,7 +38,7 @@ bool ExampleController::controlUpdate(){
 
   // Velocity feedforward
   for (int i=0; i<3; i++){
-    set_velocity_new[i] += reference_ffw[i];
+    set_velocity_new[i] += ref_ffw[i];
   }
 
   // Save error

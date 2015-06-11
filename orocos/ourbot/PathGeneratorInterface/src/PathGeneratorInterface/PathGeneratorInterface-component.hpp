@@ -17,7 +17,6 @@ class PathGeneratorInterface : public RTT::TaskContext{
     std::vector<double> _ref_pose[3];
     std::vector<double> _ref_ffw[3];
 
-    int _path_length;
     int _control_sample_rate;
     int _pathUpd_sample_rate;
     std::vector<double> _kin_limitations;
@@ -26,11 +25,14 @@ class PathGeneratorInterface : public RTT::TaskContext{
     virtual bool pathUpdate() = 0;
     virtual bool initialize() = 0;
 
+    int _path_length;
+
     int getPathLength();
     int getControlSampleRate();
     int getPathUpdSampleRate();
     std::vector<double> getKinLimitations();
     std::vector<double> getEstPose();
+
     void setRefPose(std::vector<double> const&, std::vector<double> const&, std::vector<double> const&);
     void setRefFfw(std::vector<double> const&, std::vector<double> const&, std::vector<double> const&);
 
