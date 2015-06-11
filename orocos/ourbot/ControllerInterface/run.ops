@@ -1,0 +1,7 @@
+import("rtt_ros")
+ros.import("ControllerInterface")
+
+loadComponent("controller","ExampleController")
+loadComponent("configurator","OCL::LuaComponent")
+//addPeer("controller","configurator")
+controller.configure()

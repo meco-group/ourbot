@@ -1,0 +1,30 @@
+import("rtt_ros")
+import("ocl")
+
+//OURBOT
+
+// Import all necessary components
+ros.import("ControllerInterface")
+
+// Load all local components
+loadComponent("coordinator", "OCL::LuaComponent")
+loadComponent("controller","ControllerInterface")
+
+server("coordinator",true)
+
+// AddPeers
+addPeer("coordinator","controller")
+
+// run coordinator
+coordinator.exec_file("Coordinator/launch_fsm.lua")
+coordinator.configure
+
+
+// Start components
+coordinator.start
+
+
+
+
+
+

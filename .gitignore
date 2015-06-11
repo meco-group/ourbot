@@ -7,3 +7,12 @@ orocos/*/*/Makefile
 orocos/*/*/manifest.xml
 orocos/.*
 orocos/setup.*
+*.log
+*.ior
+*~
+orocos/setup.bash
+orocos/setup.sh
+orocos/setup.zsh
+*.tb_history
+*.rosinstall
+*.rosinstall.bak

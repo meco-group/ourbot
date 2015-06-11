@@ -1,0 +1,27 @@
+import("rtt_ros")
+import("ocl")
+
+//EMPEROR
+
+// Import all necessary components
+ros.import("Emperor")
+
+// Load all local components
+loadComponent("emperor","Emperor")
+
+// Load all CORBA components (not yet)
+loadComponent("coordinator", "CORBA")
+
+// AddPeers
+addPeer("emperor","coordinator")
+
+// Connect ports
+var ConnPolicy cp
+cp.type = DATA
+cp.lock_policy = LOCKED
+connect("emperor.fsm_event_outport", "coordinator.fsm_event_inport", cp);
+
+connect("emperor.current_state_evport", "coordinator.current_state_outport", cp);
+
+// Start components
+emperor.start
