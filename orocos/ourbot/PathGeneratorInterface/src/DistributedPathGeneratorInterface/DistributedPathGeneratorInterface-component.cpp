@@ -7,21 +7,21 @@ DistributedPathGeneratorInterface::DistributedPathGeneratorInterface(std::string
   ports()->addPort("est_poseA_inport",_est_poseA_inport).doc("Estimated pose of neighbour A");
   ports()->addPort("est_poseB_inport",_est_poseB_inport).doc("Estimated pose of neighbour B");
 
-  ports()->addPort("ref_inA_x_inport",_ref_inA_inport[0]).doc("x reference of neighbour A");
-  ports()->addPort("ref_inA_y_inport",_ref_inA_inport[1]).doc("y reference of neighbour A");
-  ports()->addPort("ref_inA_t_inport",_ref_inA_inport[2]).doc("theta reference of neighbour A");
+  ports()->addPort("ref_inA_path_x_inport",_ref_inA_path_inport[0]).doc("x reference path of neighbour A");
+  ports()->addPort("ref_inA_path_y_inport",_ref_inA_path_inport[1]).doc("y reference path of neighbour A");
+  ports()->addPort("ref_inA_path_t_inport",_ref_inA_path_inport[2]).doc("theta reference path of neighbour A");
 
-  ports()->addPort("ref_inB_x_inport",_ref_inB_inport[0]).doc("x reference of neighbour B");
-  ports()->addPort("ref_inB_y_inport",_ref_inB_inport[1]).doc("y reference of neighbour B");
-  ports()->addPort("ref_inB_t_inport",_ref_inB_inport[2]).doc("theta reference of neighbour B");
+  ports()->addPort("ref_inB_path_x_inport",_ref_inB_path_inport[0]).doc("x reference path of neighbour B");
+  ports()->addPort("ref_inB_path_y_inport",_ref_inB_path_inport[1]).doc("y reference path of neighbour B");
+  ports()->addPort("ref_inB_path_t_inport",_ref_inB_path_inport[2]).doc("theta reference path of neighbour B");
 
-  ports()->addPort("ref_relposeA_x_outport", _ref_relposeA_outport[0]).doc("x relpose reference wrt neighbour A");
-  ports()->addPort("ref_relposeA_y_outport", _ref_relposeA_outport[1]).doc("y relpose reference wrt neighbour A");
-  ports()->addPort("ref_relposeA_t_outport", _ref_relposeA_outport[2]).doc("theta relpose reference wrt neighbour A");
+  ports()->addPort("ref_relposeA_path_x_outport", _ref_relposeA_path_outport[0]).doc("x relpose reference path wrt neighbour A");
+  ports()->addPort("ref_relposeA_path_y_outport", _ref_relposeA_path_outport[1]).doc("y relpose reference path wrt neighbour A");
+  ports()->addPort("ref_relposeA_path_t_outport", _ref_relposeA_path_outport[2]).doc("theta relpose reference path wrt neighbour A");
 
-  ports()->addPort("ref_relposeB_x_outport", _ref_relposeB_outport[0]).doc("x relpose reference wrt neighbour B");
-  ports()->addPort("ref_relposeB_y_outport", _ref_relposeB_outport[1]).doc("y relpose reference wrt neighbour B");
-  ports()->addPort("ref_relposeB_t_outport", _ref_relposeB_outport[2]).doc("theta relpose reference wrt neighbour B");
+  ports()->addPort("ref_relposeB_path_x_outport", _ref_relposeB_path_outport[0]).doc("x relpose reference path wrt neighbour B");
+  ports()->addPort("ref_relposeB_path_y_outport", _ref_relposeB_path_outport[1]).doc("y relpose reference path wrt neighbour B");
+  ports()->addPort("ref_relposeB_path_t_outport", _ref_relposeB_path_outport[2]).doc("theta relpose reference path wrt neighbour B");
 }
 
 bool DistributedPathGeneratorInterface::configureHook(){
@@ -29,17 +29,17 @@ bool DistributedPathGeneratorInterface::configureHook(){
 
   // Reserve required memory and initialize with zeros
   for(int i=0;i<3;i++){
-    _ref_relposeA[i].resize(_path_length);
-    _ref_relposeB[i].resize(_path_length);
-    _ref_inA[i].resize(_path_length);
-    _ref_inB[i].resize(_path_length);
+    _ref_relposeA_path[i].resize(_path_length);
+    _ref_relposeB_path[i].resize(_path_length);
+    _ref_inA_path[i].resize(_path_length);
+    _ref_inB_path[i].resize(_path_length);
   }
 
   // Show example data sample to ports to make data flow real-time
   std::vector<double> example(_path_length, 0.0);
   for(int i=0; i<3; i++){
-    _ref_relposeA_outport[i].setDataSample(example);
-    _ref_relposeB_outport[i].setDataSample(example);
+    _ref_relposeA_path_outport[i].setDataSample(example);
+    _ref_relposeB_path_outport[i].setDataSample(example);
   }
 
   return check;
@@ -54,10 +54,10 @@ bool DistributedPathGeneratorInterface::startHook(){
     log(Warning) << "_est_poseB_inport not connected !" <<endlog();
   }
   for (int i=0; i<3; i++){
-    if (!_ref_inA_inport[i].connected()){
+    if (!_ref_inA_path_inport[i].connected()){
       log(Warning) << "_ref_inA_inport "<< i << " not connected !" <<endlog();
     }
-    if (!_ref_inB_inport[i].connected()){
+    if (!_ref_inB_path_inport[i].connected()){
       log(Warning) << "_ref_inB_inport "<< i << " not connected !" <<endlog();
     }
   }
@@ -78,11 +78,11 @@ void DistributedPathGeneratorInterface::updateHook(){ // NOT GOING TO FAATL
   // Read paths from neighbours
   std::vector<double> path(_path_length);
   for (int i=0; i<3; i++){
-    if (_ref_inA_inport[i].connected() && (_ref_inA_inport[i].read(path) == RTT::NewData)){
-      _ref_inA[i] = path;
+    if (_ref_inA_path_inport[i].connected() && (_ref_inA_path_inport[i].read(path) == RTT::NewData)){
+      _ref_inA_path[i] = path;
     }
-    if (_ref_inB_inport[i].connected() && (_ref_inB_inport[i].read(path) == RTT::NewData)){
-      _ref_inB[i] = path;
+    if (_ref_inB_path_inport[i].connected() && (_ref_inB_path_inport[i].read(path) == RTT::NewData)){
+      _ref_inB_path[i] = path;
     }
   }
 
@@ -90,29 +90,29 @@ void DistributedPathGeneratorInterface::updateHook(){ // NOT GOING TO FAATL
 
   // Write path
   for (int i=0; i<3; i++){
-    _ref_relposeA_outport[i].write(_ref_relposeA[i]);
-    _ref_relposeA_outport[i].write(_ref_relposeA[i]);
+    _ref_relposeA_path_outport[i].write(_ref_relposeA_path[i]);
+    _ref_relposeA_path_outport[i].write(_ref_relposeA_path[i]);
   }
 }
 
 std::vector<double> DistributedPathGeneratorInterface::getEstPoseA(){ return _est_poseA; }
 std::vector<double> DistributedPathGeneratorInterface::getEstPoseB(){ return _est_poseB; }
 
-std::vector<double> DistributedPathGeneratorInterface::getRefInA_x(){ return _ref_inA[0]; }
-std::vector<double> DistributedPathGeneratorInterface::getRefInA_y(){ return _ref_inA[1]; }
-std::vector<double> DistributedPathGeneratorInterface::getRefInA_t(){ return _ref_inA[2]; }
-std::vector<double> DistributedPathGeneratorInterface::getRefInB_x(){ return _ref_inB[0]; }
-std::vector<double> DistributedPathGeneratorInterface::getRefInB_y(){ return _ref_inB[1]; }
-std::vector<double> DistributedPathGeneratorInterface::getRefInB_t(){ return _ref_inB[2]; }
+std::vector<double> DistributedPathGeneratorInterface::getRefInAPath_x(){ return _ref_inA_path[0]; }
+std::vector<double> DistributedPathGeneratorInterface::getRefInAPath_y(){ return _ref_inA_path[1]; }
+std::vector<double> DistributedPathGeneratorInterface::getRefInAPath_t(){ return _ref_inA_path[2]; }
+std::vector<double> DistributedPathGeneratorInterface::getRefInBPath_x(){ return _ref_inB_path[0]; }
+std::vector<double> DistributedPathGeneratorInterface::getRefInBPath_y(){ return _ref_inB_path[1]; }
+std::vector<double> DistributedPathGeneratorInterface::getRefInBPath_t(){ return _ref_inB_path[2]; }
 
-void DistributedPathGeneratorInterface::setRefRelPoseA(std::vector<double> const& ref_relposeA_x, std::vector<double> const& ref_relposeA_y, std::vector<double> const& ref_relposeA_t){
-  _ref_relposeA[0] = ref_relposeA_x;
-  _ref_relposeA[1] = ref_relposeA_y;
-  _ref_relposeA[2] = ref_relposeA_t;
+void DistributedPathGeneratorInterface::setRefRelPoseAPath(std::vector<double> const& ref_relposeA_path_x, std::vector<double> const& ref_relposeA_path_y, std::vector<double> const& ref_relposeA_path_t){
+  _ref_relposeA_path[0] = ref_relposeA_path_x;
+  _ref_relposeA_path[1] = ref_relposeA_path_y;
+  _ref_relposeA_path[2] = ref_relposeA_path_t;
 }
 
-void DistributedPathGeneratorInterface::setRefRelPoseB(std::vector<double> const& ref_relposeB_x, std::vector<double> const& ref_relposeB_y, std::vector<double> const& ref_relposeB_t){
-  _ref_relposeB[0] = ref_relposeB_x;
-  _ref_relposeB[1] = ref_relposeB_y;
-  _ref_relposeB[2] = ref_relposeB_t;
+void DistributedPathGeneratorInterface::setRefRelPoseBPath(std::vector<double> const& ref_relposeB_path_x, std::vector<double> const& ref_relposeB_path_y, std::vector<double> const& ref_relposeB_path_t){
+  _ref_relposeB_path[0] = ref_relposeB_path_x;
+  _ref_relposeB_path[1] = ref_relposeB_path_y;
+  _ref_relposeB_path[2] = ref_relposeB_path_t;
 }

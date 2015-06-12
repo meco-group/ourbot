@@ -6,7 +6,7 @@
 ControllerInterface::ControllerInterface(std::string const& name) : TaskContext(name, PreOperational),
     _ref_pose(3), _ref_ffw(3), _est_pose(3), _set_velocity(3){
 
-  ports()->addPort("est_pose_inport",_est_pose_inport).doc("Estimated pose");
+  ports()->addPort("est_pose_inport", _est_pose_inport).doc("Estimated pose");
   ports()->addPort("ref_pose_inport", _ref_pose_inport).doc("Pose reference sample");
   ports()->addPort("ref_ffw_inport", _ref_ffw_inport).doc("Feedforward reference sample");
 
@@ -14,6 +14,7 @@ ControllerInterface::ControllerInterface(std::string const& name) : TaskContext(
 }
 
 bool ControllerInterface::configureHook(){
+  // Get configurator peer and sample rate
   TaskContext* configurator = getPeer("configurator");
   if (configurator==NULL){
     log(Error) << "No peer configurator !" <<endlog();

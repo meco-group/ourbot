@@ -10,12 +10,12 @@ class PathGeneratorInterface : public RTT::TaskContext{
   private:
     InputPort<std::vector<double> > _est_pose_inport;
 
-    OutputPort<std::vector<double> > _ref_pose_outport[3];
-    OutputPort<std::vector<double> > _ref_ffw_outport[3];
+    OutputPort<std::vector<double> > _ref_pose_path_outport[3];
+    OutputPort<std::vector<double> > _ref_ffw_path_outport[3];
 
     std::vector<double> _est_pose;
-    std::vector<double> _ref_pose[3];
-    std::vector<double> _ref_ffw[3];
+    std::vector<double> _ref_pose_path[3];
+    std::vector<double> _ref_ffw_path[3];
 
     int _control_sample_rate;
     int _pathUpd_sample_rate;
@@ -33,8 +33,8 @@ class PathGeneratorInterface : public RTT::TaskContext{
     std::vector<double> getKinLimitations();
     std::vector<double> getEstPose();
 
-    void setRefPose(std::vector<double> const&, std::vector<double> const&, std::vector<double> const&);
-    void setRefFfw(std::vector<double> const&, std::vector<double> const&, std::vector<double> const&);
+    void setRefPosePath(std::vector<double> const&, std::vector<double> const&, std::vector<double> const&);
+    void setRefFfwPath(std::vector<double> const&, std::vector<double> const&, std::vector<double> const&);
 
   public:
     PathGeneratorInterface(std::string const& name);

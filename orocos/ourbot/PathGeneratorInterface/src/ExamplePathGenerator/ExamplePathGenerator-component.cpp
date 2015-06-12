@@ -24,8 +24,8 @@ bool ExamplePathGenerator::pathUpdate(){
   std::vector<double> ref_ffw_t(getPathLength(), 0.0);
 
   // Write reference
-  setRefPose(ref_pose_x, ref_pose_y, ref_pose_t);
-  setRefFfw(ref_ffw_x, ref_ffw_y, ref_ffw_t);
+  setRefPosePath(ref_pose_x, ref_pose_y, ref_pose_t);
+  setRefFfwPath(ref_ffw_x, ref_ffw_y, ref_ffw_t);
 
   return true;
 }

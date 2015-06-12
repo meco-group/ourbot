@@ -27,7 +27,7 @@ bool DistributedControllerInterface::configureHook(){
   // Show example data sample to ports to make data flow real-time
   std::vector<double> example(_com_size, 0.0);
   _com_outA_outport.setDataSample(example);
-  _com_outA_outport.setDataSample(example);
+  _com_outB_outport.setDataSample(example);
 
   return ControllerInterface::configureHook();
 }

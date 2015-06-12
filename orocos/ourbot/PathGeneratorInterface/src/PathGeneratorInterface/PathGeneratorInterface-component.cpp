@@ -5,13 +5,13 @@
 PathGeneratorInterface::PathGeneratorInterface(std::string const& name) : TaskContext(name, PreOperational), _est_pose(3){
   ports()->addPort("est_pose_inport", _est_pose_inport).doc("Estimated pose");
 
-  ports()->addPort("ref_pose_x_outport", _ref_pose_outport[0]).doc("x reference");
-  ports()->addPort("ref_pose_y_outport", _ref_pose_outport[1]).doc("y reference");
-  ports()->addPort("ref_pose_t_outport", _ref_pose_outport[2]).doc("theta reference");
+  ports()->addPort("ref_pose_path_x_outport", _ref_pose_path_outport[0]).doc("x reference path");
+  ports()->addPort("ref_pose_path_y_outport", _ref_pose_path_outport[1]).doc("y reference path");
+  ports()->addPort("ref_pose_path_t_outport", _ref_pose_path_outport[2]).doc("theta reference path");
 
-  ports()->addPort("ref_ffw_x_outport", _ref_ffw_outport[0]).doc("x ffw reference");
-  ports()->addPort("ref_ffw_y_outport", _ref_ffw_outport[1]).doc("y ffw reference");
-  ports()->addPort("ref_ffw_t_outport", _ref_ffw_outport[2]).doc("theta ffw reference");
+  ports()->addPort("ref_ffw_path_x_outport", _ref_ffw_path_outport[0]).doc("x ffw reference path");
+  ports()->addPort("ref_ffw_path_y_outport", _ref_ffw_path_outport[1]).doc("y ffw reference path");
+  ports()->addPort("ref_ffw_path_t_outport", _ref_ffw_path_outport[2]).doc("theta ffw reference path");
 }
 
 bool PathGeneratorInterface::configureHook(){
@@ -49,15 +49,15 @@ bool PathGeneratorInterface::configureHook(){
 
   // Reserve required memory and initialize with zeros
   for(int i=0;i<3;i++){
-    _ref_pose[i].resize(_path_length);
-    _ref_ffw[i].resize(_path_length);
+    _ref_pose_path[i].resize(_path_length);
+    _ref_ffw_path[i].resize(_path_length);
   }
 
   // Show example data sample to ports to make data flow real-time
   std::vector<double> example(_path_length, 0.0);
   for(int i=0; i<3; i++){
-    _ref_pose_outport[i].setDataSample(example);
-    _ref_ffw_outport[i].setDataSample(example);
+    _ref_pose_path_outport[i].setDataSample(example);
+    _ref_ffw_path_outport[i].setDataSample(example);
   }
 
   return true;
@@ -87,8 +87,8 @@ void PathGeneratorInterface::updateHook(){
 
   // Write path
   for (int i=0; i<3; i++){
-    _ref_pose_outport[i].write(_ref_pose[i]);
-    _ref_ffw_outport[i].write(_ref_ffw[i]);
+    _ref_pose_path_outport[i].write(_ref_pose_path[i]);
+    _ref_ffw_path_outport[i].write(_ref_ffw_path[i]);
   }
 
   log(Info) << "Path updated !" <<endlog();
@@ -99,13 +99,13 @@ int PathGeneratorInterface::getControlSampleRate() { return _control_sample_rate
 int PathGeneratorInterface::getPathUpdSampleRate() { return _pathUpd_sample_rate; }
 std::vector<double> PathGeneratorInterface::getKinLimitations() { return _kin_limitations; }
 std::vector<double> PathGeneratorInterface::getEstPose() { return _est_pose; }
-void PathGeneratorInterface::setRefPose(std::vector<double> const& ref_pose_x, std::vector<double> const& ref_pose_y, std::vector<double> const& ref_pose_t){
- _ref_pose[0] = ref_pose_x;
- _ref_pose[1] = ref_pose_y;
- _ref_pose[2] = ref_pose_t;
+void PathGeneratorInterface::setRefPosePath(std::vector<double> const& ref_pose_path_x, std::vector<double> const& ref_pose_path_y, std::vector<double> const& ref_pose_path_t){
+ _ref_pose_path[0] = ref_pose_path_x;
+ _ref_pose_path[1] = ref_pose_path_y;
+ _ref_pose_path[2] = ref_pose_path_t;
 }
-void PathGeneratorInterface::setRefFfw(std::vector<double> const& ref_ffw_x, std::vector<double> const& ref_ffw_y, std::vector<double> const& ref_ffw_t){
- _ref_ffw[0] = ref_ffw_x;
- _ref_ffw[1] = ref_ffw_y;
- _ref_ffw[2] = ref_ffw_t;
+void PathGeneratorInterface::setRefFfwPath(std::vector<double> const& ref_ffw_path_x, std::vector<double> const& ref_ffw_path_y, std::vector<double> const& ref_ffw_path_t){
+ _ref_ffw_path[0] = ref_ffw_path_x;
+ _ref_ffw_path[1] = ref_ffw_path_y;
+ _ref_ffw_path[2] = ref_ffw_path_t;
 }
