@@ -10,8 +10,9 @@
 # Creates a component library libEstimatorInterface-<target>.so
 # and installs in the directory lib/orocos/EstimatorInterface/
 #
-orocos_component(EstimatorInterface EstimatorInterface/EstimatorInterface-component.hpp EstimatorInterface/EstimatorInterface-component.cpp) # ...you may add multiple source files
-orocos_component(EstimatorInterface ExampleEstimator/ExampleEstimator-component.hpp ExampleEstimator/ExampleEstimator-component.cpp) # ...you may add multiple source files
+orocos_component(EstimatorInterface EstimatorInterface/EstimatorInterface-component.hpp EstimatorInterface/EstimatorInterface-component.cpp)
+orocos_component(EstimatorInterface DistributedEstimatorInterface/DistributedEstimatorInterface-component.hpp DistributedEstimatorInterface/DistributedEstimatorInterface-component.cpp)
+orocos_component(EstimatorInterface ExampleEstimator/ExampleEstimator-component.hpp ExampleEstimator/ExampleEstimator-component.cpp)
 #
 # You may add multiple orocos_component statements.
 
@@ -20,7 +21,8 @@ orocos_component(EstimatorInterface ExampleEstimator/ExampleEstimator-component.
 #
 # Installs in the include/orocos/EstimatorInterface/ directory
 #
-orocos_install_headers(EstimatorInterface/EstimatorInterface-component.hpp) # ...you may add multiple header files
+orocos_install_headers(EstimatorInterface/EstimatorInterface-component.hpp)
+orocos_install_headers(DistributedEstimatorInterface/DistributedEstimatorInterface-component.hpp)
 orocos_install_headers(ExampleEstimator/ExampleEstimator-component.hpp)
 #
 # You may add multiple orocos_install_headers statements.

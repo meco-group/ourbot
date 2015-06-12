@@ -23,8 +23,8 @@ EstimatorInterface::EstimatorInterface(std::string const& name) : TaskContext(na
   ports()->addPort("cmd_velocity_inport", _cmd_velocity_inport).doc("Velocity command for actuator");
 
   ports()->addPort("est_pose_outport", _est_pose_outport).doc("Estimated pose");
-  ports()->addPort("est_velocity_outport", _est_pose_outport).doc("Estimated velocity");
-  ports()->addPort("est_acceleration_outport", _est_pose_outport).doc("Estimated acceleration");
+  ports()->addPort("est_velocity_outport", _est_velocity_outport).doc("Estimated velocity");
+  ports()->addPort("est_acceleration_outport", _est_acceleration_outport).doc("Estimated acceleration");
 
 }
 
@@ -82,7 +82,8 @@ bool EstimatorInterface::startHook(){
     check = false;
   }
   if (!_cal_ir_distances_inport.connected()){
-    log(Warning) << "_cal_ir_distances_inport not connected !" <<endlog();
+    log(Error) << "_cal_ir_distances_inport not connected !" <<endlog();
+    check = false;
   }
   if (!_cal_ir_angles_inport.connected()){
     log(Error) << "_cal_ir_angles_inport not connected !" <<endlog();
@@ -93,7 +94,8 @@ bool EstimatorInterface::startHook(){
     check = false;
   }
   if (!_cal_imul_dorientation_inport.connected()){
-    log(Warning) << "_cal_imul_dorientation_inport not connected !" <<endlog();
+    log(Error) << "_cal_imul_dorientation_inport not connected !" <<endlog();
+    check = false;
   }
 
   if (!_cal_imul_orientation_inport.connected()){
@@ -105,7 +107,8 @@ bool EstimatorInterface::startHook(){
     check = false;
   }
   if (!_cal_imur_dorientation_inport.connected()){
-    log(Warning) << "_cal_imur_dorientation_inport not connected !" <<endlog();
+    log(Error) << "_cal_imur_dorientation_inport not connected !" <<endlog();
+    check = false;
   }
   if (!_cal_imur_orientation_inport.connected()){
     log(Error) << "_cal_imur_orientation_inport not connected !" <<endlog();
@@ -116,10 +119,12 @@ bool EstimatorInterface::startHook(){
     check = false;
   }
   if (!_cal_motor_current_inport.connected()){
-    log(Warning) << "_cal_motor_current_inport not connected !" <<endlog();
+    log(Error) << "_cal_motor_current_inport not connected !" <<endlog();
+    check = false;
   }
   if (!_cmd_velocity_inport.connected()){
-    log(Warning) << "_cmd_velocity_inport not connected !" <<endlog();
+    log(Error) << "_cmd_velocity_inport not connected !" <<endlog();
+    check = false;
   }
   if (!initialize()){
     log(Error) << "Error occured in initialize() !" <<endlog();

@@ -16,5 +16,8 @@ class Configurator : public RTT::TaskContext{
     int getControlSampleRate();
     int getPathUpdSampleRate();
     std::vector<double> getKinLimitations();
+    int getNrofIR();
+    int getLidarDataLength();
+
 };
 #endif

@@ -9,6 +9,8 @@ Configurator::Configurator(std::string const& name) : TaskContext(name){
   addOperation("getControlSampleRate",&Configurator::getControlSampleRate,this);
   addOperation("getPathUpdSampleRate",&Configurator::getPathUpdSampleRate,this);
   addOperation("getKinLimitations",&Configurator::getKinLimitations,this);
+  addOperation("getNrofIR",&Configurator::getNrofIR,this);
+  addOperation("getLidarDataLength",&Configurator::getLidarDataLength,this);
 
   std::cout << "Configurator constructed !" <<std::endl;
 }
@@ -51,6 +53,12 @@ std::vector<double> Configurator::getKinLimitations(){
   kin_lim.at(2) = 1.;
   kin_lim.at(3) = -1.;
   return kin_lim;
+}
+int Configurator::getNrofIR(){
+  return 8;
+}
+int Configurator::getLidarDataLength(){
+  return 100;
 }
 
 /*

@@ -1,23 +1,33 @@
+require("print")
+
 import("rtt_ros")
 ros.import("Configurator")
 ros.import("ControllerInterface")
 ros.import("Reference")
 ros.import("PathGeneratorInterface")
+ros.import("EstimatorInterface")
 
 // dummy configurator
 loadComponent("configurator", "Configurator")
-
+print.ln("Created configurator")
 loadComponent("controller","ExampleController")
+print.ln("Created controller")
 loadComponent("reference", "Reference")
+print.ln("Created reference")
 loadComponent("pathgenerator","ExamplePathGenerator")
+print.ln("Created pathgenerator")
+loadComponent("estimator","ExampleEstimator")
+print.ln("Created estimator")
 
 addPeer("controller","configurator")
 addPeer("reference", "configurator")
 addPeer("pathgenerator","configurator")
+addPeer("estimator","configurator")
 
 controller.configure()
 reference.configure()
 pathgenerator.configure()
+estimator.configure()
 
 
 
