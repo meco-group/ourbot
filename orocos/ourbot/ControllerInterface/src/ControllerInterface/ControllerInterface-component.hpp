@@ -13,25 +13,25 @@ class ControllerInterface : public RTT::TaskContext{
     InputPort<std::vector<double> > _ref_ffw_inport;
     InputPort<std::vector<double> > _est_pose_inport;
 
-    OutputPort<std::vector<double> > _set_velocity_outport;
+    OutputPort<std::vector<double> > _cmd_velocity_outport;
 
     int _sample_rate;
 
     std::vector<double> _ref_pose;
     std::vector<double> _ref_ffw;
     std::vector<double> _est_pose;
-    std::vector<double> _set_velocity;
+    std::vector<double> _cmd_velocity;
 
   protected:
     virtual bool controlUpdate() = 0;
     virtual bool initialize() = 0;
 
-    double getSampleRate();
+    int getSampleRate();
     std::vector<double> getRefPose();
     std::vector<double> getRefFfw();
     std::vector<double> getEstPose();
-    std::vector<double> getSetVelocity();
-    void setSetVelocity(std::vector<double> const&);
+    std::vector<double> getCmdVelocity();
+    void setCmdVelocity(std::vector<double> const&);
 
   public:
     ControllerInterface(std::string const& name);

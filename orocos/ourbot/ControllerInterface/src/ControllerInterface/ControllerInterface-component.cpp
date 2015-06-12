@@ -4,13 +4,13 @@
 #include <vector>
 
 ControllerInterface::ControllerInterface(std::string const& name) : TaskContext(name, PreOperational),
-    _ref_pose(3), _ref_ffw(3), _est_pose(3), _set_velocity(3){
+    _ref_pose(3), _ref_ffw(3), _est_pose(3), _cmd_velocity(3){
 
   ports()->addPort("est_pose_inport", _est_pose_inport).doc("Estimated pose");
   ports()->addPort("ref_pose_inport", _ref_pose_inport).doc("Pose reference sample");
   ports()->addPort("ref_ffw_inport", _ref_ffw_inport).doc("Feedforward reference sample");
 
-  ports()->addPort("set_velocity_outport",_set_velocity_outport).doc("Setpoint (vx,vy,w) for Teensy");
+  ports()->addPort("cmd_velocity_outport",_cmd_velocity_outport).doc("Velocity command for actuator");
 }
 
 bool ControllerInterface::configureHook(){
@@ -29,7 +29,7 @@ bool ControllerInterface::configureHook(){
 
   // Show example data sample to ports to make data flow real-time
   std::vector<double> example(3, 0.0);
-  _set_velocity_outport.setDataSample(example);
+  _cmd_velocity_outport.setDataSample(example);
 
   return true;
 }
@@ -73,7 +73,7 @@ void ControllerInterface::updateHook(){
   controlUpdate();
 
   // Write velocity setpoints
-  _set_velocity_outport.write(_set_velocity);
+  _cmd_velocity_outport.write(_cmd_velocity);
 
   log(Info) << "Controller updated !" <<endlog();
 }
@@ -81,14 +81,14 @@ void ControllerInterface::updateHook(){
 void ControllerInterface::stopHook() {
   // Set velocity setpoint to zero
   std::vector<double> zerovelocity(3,0.0);
-  setSetVelocity(zerovelocity);
-  _set_velocity_outport.write(_set_velocity);
+  setCmdVelocity(zerovelocity);
+  _cmd_velocity_outport.write(_cmd_velocity);
   std::cout << "Controller stopped !" <<std::endl;
 }
 
-double ControllerInterface::getSampleRate(){ return _sample_rate; }
+int ControllerInterface::getSampleRate(){ return _sample_rate; }
 std::vector<double> ControllerInterface::getEstPose(){ return _est_pose; }
 std::vector<double> ControllerInterface::getRefPose(){ return _ref_pose; }
 std::vector<double> ControllerInterface::getRefFfw(){ return _ref_ffw; }
-std::vector<double> ControllerInterface::getSetVelocity(){ return _set_velocity; }
-void ControllerInterface::setSetVelocity(std::vector<double> const& set_velocity){_set_velocity = set_velocity; }
+std::vector<double> ControllerInterface::getCmdVelocity(){ return _cmd_velocity; }
+void ControllerInterface::setCmdVelocity(std::vector<double> const& cmd_velocity){_cmd_velocity = cmd_velocity; }
