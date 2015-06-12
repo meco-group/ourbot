@@ -25,6 +25,8 @@ class EstimatorInterface : public RTT::TaskContext{
     OutputPort<std::vector<double> > _est_pose_outport;
     OutputPort<std::vector<double> > _est_velocity_outport;
     OutputPort<std::vector<double> > _est_acceleration_outport;
+    OutputPort<std::vector<double> > _est_global_offset_outport;      // estimated offset of initial frame wrt world frame
+    OutputPort<std::vector<double> > _map_obstacles_outport;          // obstacles wrt to world frame
 
     std::vector<double> _cal_lidar_distances;
     std::vector<double> _cal_lidar_angles;
@@ -39,13 +41,17 @@ class EstimatorInterface : public RTT::TaskContext{
     std::vector<double> _cal_enc_pose;
     std::vector<double> _cal_motor_current;
     std::vector<double> _cmd_velocity;
+
     std::vector<double> _est_pose;
     std::vector<double> _est_velocity;
     std::vector<double> _est_acceleration;
+    std::vector<double> _est_global_offset;
+    std::vector<double> _map_obstacles;
 
     int _sample_rate;
     int _lidar_data_length;
     int _nrof_ir;
+    int _obs_data_length;
 
   protected:
     virtual bool estimateUpdate() = 0;
@@ -54,6 +60,7 @@ class EstimatorInterface : public RTT::TaskContext{
     int getSampleRate();
     int getLidarDataLength();
     int getNrofIR();
+    int getObsDataLength();
 
     std::vector<std::vector<double> > getLidarData();
     std::vector<std::vector<double> > getIRData();
@@ -70,6 +77,8 @@ class EstimatorInterface : public RTT::TaskContext{
     void setEstPose(std::vector<double> const&);
     void setEstVelocity(std::vector<double> const&);
     void setEstAcceleration(std::vector<double> const&);
+    void setEstGlobalOffset(std::vector<double> const&);
+    void setObstacleData(std::vector<double> const&);
 
   public:
     EstimatorInterface(std::string const& name);

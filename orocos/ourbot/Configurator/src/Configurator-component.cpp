@@ -11,6 +11,7 @@ Configurator::Configurator(std::string const& name) : TaskContext(name){
   addOperation("getKinLimitations",&Configurator::getKinLimitations,this);
   addOperation("getNrofIR",&Configurator::getNrofIR,this);
   addOperation("getLidarDataLength",&Configurator::getLidarDataLength,this);
+  addOperation("getObsDataLength",&Configurator::getObsDataLength,this);
 
   std::cout << "Configurator constructed !" <<std::endl;
 }
@@ -58,6 +59,9 @@ int Configurator::getNrofIR(){
   return 8;
 }
 int Configurator::getLidarDataLength(){
+  return 100;
+}
+int Configurator::getObsDataLength(){
   return 100;
 }
 

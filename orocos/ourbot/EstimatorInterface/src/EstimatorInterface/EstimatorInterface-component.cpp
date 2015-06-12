@@ -6,7 +6,7 @@ EstimatorInterface::EstimatorInterface(std::string const& name) : TaskContext(na
     _cal_imul_transacc(3), _cal_imul_dorientation(0.), _cal_imul_orientation(0.),
     _cal_imur_transacc(3), _cal_imur_dorientation(0.), _cal_imur_orientation(0.),
     _cal_enc_pose(3), _cal_motor_current(4), _cmd_velocity(3),
-    _est_pose(3), _est_velocity(3), _est_acceleration(3){
+    _est_pose(3), _est_velocity(3), _est_acceleration(3), _est_global_offset(3){
 
   ports()->addPort("cal_lidar_distances_inport", _cal_lidar_distances_inport).doc("Distances wrt center from LIDAR");
   ports()->addPort("cal_lidar_angles_inport", _cal_lidar_angles_inport).doc("Angles from LIDAR");
@@ -22,10 +22,11 @@ EstimatorInterface::EstimatorInterface(std::string const& name) : TaskContext(na
   ports()->addPort("cal_motor_current_inport", _cal_motor_current_inport).doc("Current of 4 motors");
   ports()->addPort("cmd_velocity_inport", _cmd_velocity_inport).doc("Velocity command for actuator");
 
-  ports()->addPort("est_pose_outport", _est_pose_outport).doc("Estimated pose");
-  ports()->addPort("est_velocity_outport", _est_velocity_outport).doc("Estimated velocity");
-  ports()->addPort("est_acceleration_outport", _est_acceleration_outport).doc("Estimated acceleration");
-
+  ports()->addPort("est_pose_outport", _est_pose_outport).doc("Estimated pose wrt to initial frame");
+  ports()->addPort("est_velocity_outport", _est_velocity_outport).doc("Estimated velocity wrt to initial frame");
+  ports()->addPort("est_acceleration_outport", _est_acceleration_outport).doc("Estimated acceleration wrt to initial frame");
+  ports()->addPort("est_global_offset_outport", _est_global_offset_outport).doc("Estimated offset of initial frame wrt world frame");
+  ports()->addPort("map_obstacles_outport", _map_obstacles_outport).doc("Estimated obstacle data wrt to world frame");
 }
 
 bool EstimatorInterface::configureHook(){
@@ -50,23 +51,32 @@ bool EstimatorInterface::configureHook(){
     log(Error) << "No operation getNrofIR of peer configurator !" <<endlog();
     return false;
   }
+  OperationCaller<int(void)> getObsDataLength = configurator->getOperation("getObsDataLength");
+  if (!getObsDataLength.ready()){
+    log(Error) << "No operation getObsDataLength of peer configurator !" <<endlog();
+    return false;
+  }
 
   _sample_rate = getControlSampleRate();
   _lidar_data_length = getLidarDataLength();
   _nrof_ir = getNrofIR();
+  _obs_data_length = getObsDataLength();
 
   // Reserve required memory and initialize with zeros
   _cal_lidar_distances.resize(_lidar_data_length);
   _cal_lidar_angles.resize(_lidar_data_length);
   _cal_ir_distances.resize(_nrof_ir);
   _cal_ir_angles.resize(_nrof_ir);
+  _map_obstacles.resize(_obs_data_length);
 
   // Show example data sample to ports to make data flow real-time
   std::vector<double> example(3, 0.0);
   _est_pose_outport.setDataSample(example);
   _est_velocity_outport.setDataSample(example);
   _est_acceleration_outport.setDataSample(example);
-
+  _est_global_offset_outport.setDataSample(example);
+  std::vector<double> exampleobs(_obs_data_length, 0.0);
+  _map_obstacles_outport.setDataSample(exampleobs);
   return true;
 }
 
@@ -162,6 +172,8 @@ void EstimatorInterface::updateHook(){
   _est_pose_outport.write(_est_pose);
   _est_velocity_outport.write(_est_velocity);
   _est_acceleration_outport.write(_est_acceleration);
+  _est_global_offset_outport.write(_est_global_offset);
+  _map_obstacles_outport.write(_map_obstacles);
 
   log(Info) << "Estimator updated !" <<endlog();
 }
@@ -173,6 +185,7 @@ void EstimatorInterface::stopHook() {
 int EstimatorInterface::getSampleRate(){ return _sample_rate; }
 int EstimatorInterface::getLidarDataLength(){ return _lidar_data_length; }
 int EstimatorInterface::getNrofIR(){ return _nrof_ir; }
+int EstimatorInterface::getObsDataLength(){ return _obs_data_length; }
 
 std::vector<std::vector<double> > EstimatorInterface::getLidarData(){
   std::vector<std::vector<double> > lidardata(2, std::vector<double>(_lidar_data_length));
@@ -200,3 +213,5 @@ std::vector<double> EstimatorInterface::getCmdVelocity(){ return _cmd_velocity; 
 void EstimatorInterface::setEstPose(std::vector<double> const& est_pose){ _est_pose = est_pose; }
 void EstimatorInterface::setEstVelocity(std::vector<double> const& est_velocity){ _est_velocity = est_velocity; }
 void EstimatorInterface::setEstAcceleration(std::vector<double> const& est_acceleration){ _est_acceleration = est_acceleration; }
+void EstimatorInterface::setEstGlobalOffset(std::vector<double> const& est_global_offset){ _est_global_offset = est_global_offset; }
+void EstimatorInterface::setObstacleData(std::vector<double> const& map_obstacles){ _map_obstacles = map_obstacles; } // can be reimplemented...

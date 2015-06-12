@@ -18,6 +18,7 @@ class Configurator : public RTT::TaskContext{
     std::vector<double> getKinLimitations();
     int getNrofIR();
     int getLidarDataLength();
+    int getObsDataLength();
 
 };
 #endif
