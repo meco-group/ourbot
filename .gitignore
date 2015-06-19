@@ -10,9 +10,12 @@ orocos/setup.*
 *.log
 *.ior
 *~
+orocos/ourbot/Test/
 orocos/setup.bash
 orocos/setup.sh
 orocos/setup.zsh
 *.tb_history
 *.rosinstall
 *.rosinstall.bak
+ourbot.sublime-project
+ourbot.sublime-workspace

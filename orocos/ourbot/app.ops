@@ -1,0 +1,39 @@
+export void VelocityCmdIntern(){
+  send_events.write("e_velocitycmdintern")
+}
+
+export void VelocityCmdExtern(){
+  send_events.write("e_velocitycmdextern")
+}
+
+export void UpdPathFollowing(){
+  send_events.write("e_updpathfollowing")
+}
+
+export void FixedPathFollowing(){
+  send_events.write("e_fixedpathfollowing")
+}
+
+export void Idle(){
+  send_events.write("e_idle")
+}
+
+export void Reset(){
+  send_events.write("e_reset")
+}
+
+export void Run(){
+  send_events.write("e_run")
+}
+
+export void Restart(){
+  send_events.write("e_restart")
+}
+
+export void StopLoop(){
+  send_events.write("e_stop")
+}
+
+export void Initialize(){
+  send_events.write("e_init")
+}

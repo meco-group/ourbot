@@ -14,10 +14,11 @@ SERVER="192.168.0.2"	#The host that sets up the CORBA Name Service
 PASSWORD="odroid"
 
 for HOSTNAME in ${HOSTS} ; do
-	echo "Deploying host "$HOSTNAME		
+	echo "Deploying host "$HOSTNAME
 	if [ "$HOSTNAME"="$SERVER" ]
 	then
-		screen -A -m -d -S "$HOSTNAME" sshpass -p $PASSWORD ssh ${USERNAME}@${HOSTNAME} "
+		# screen -A -m -d -S "$HOSTNAME" sshpass -p $PASSWORD ssh ${USERNAME}@${HOSTNAME} "
+		sshpass -p $PASSWORD ssh ${USERNAME}@${HOSTNAME} "
 		echo $PASSWORD | sudo -S killall omniNames
 		echo $PASSWORD | sudo -S rm /var/lib/omniorb/*
 		sudo omniNames -start &

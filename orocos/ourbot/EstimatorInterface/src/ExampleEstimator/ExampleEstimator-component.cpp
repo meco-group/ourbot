@@ -2,7 +2,7 @@
 #include <rtt/Component.hpp>
 #include <iostream>
 
-ExampleEstimator::ExampleEstimator(std::string const& name) : EstimatorInterface(name){
+ExampleEstimator::ExampleEstimator(std::string const& name) : EstimatorInterface(name), _cnt(0){
 
 }
 
@@ -23,12 +23,18 @@ bool ExampleEstimator::estimateUpdate(){
   double imur_orientation                       = getImuROrientation();
   std::vector<double> enc_pose                  = getEncPose();
   std::vector<double> motor_current             = getMotorCurrent();
-  std::vector<double> cmd_velocity              = getCmdVelocity();
+  std::vector<double> cal_velocity              = getCalVelocity();
 
   // Dummy state update
   std::vector<double> est_pose(3, 0.0);
   std::vector<double> est_velocity(3, 0.0);
   std::vector<double> est_acceleration(3, 0.0);
+
+  est_pose.at(0) = _cnt;
+  est_pose.at(1) = _cnt;
+  est_pose.at(2) = _cnt;
+
+  _cnt++;
 
   // Write estimated parameters
   setEstPose(est_pose);
@@ -38,4 +44,4 @@ bool ExampleEstimator::estimateUpdate(){
   return true;
 }
 
-ORO_CREATE_COMPONENT(ExampleEstimator);
+ORO_LIST_COMPONENT_TYPE(ExampleEstimator);

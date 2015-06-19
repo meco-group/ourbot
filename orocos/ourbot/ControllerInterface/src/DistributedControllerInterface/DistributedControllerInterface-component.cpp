@@ -3,31 +3,31 @@
 #include <iostream>
 
 DistributedControllerInterface::DistributedControllerInterface(std::string const& name, int com_size) : ControllerInterface(name),
-    _ref_relposeA(3), _ref_relposeB(3), _est_poseA(3), _est_poseB(3){
-  ports()->addPort("est_poseA_inport",_est_poseA_inport).doc("Estimated pose of neighbour A");
-  ports()->addPort("est_poseB_inport",_est_poseB_inport).doc("Estimated pose of neighbour B");
-  ports()->addPort("ref_relposeA_inport", _ref_relposeA_inport).doc("Relative pose reference sample wrt neighbour A");
-  ports()->addPort("ref_relposeB_inport", _ref_relposeB_inport).doc("Relative pose reference sample wrt neighbour B");
-  ports()->addPort("com_inA_inport", _com_inA_inport).doc("Input signal received from neighbour A's controller");
-  ports()->addPort("com_inB_inport", _com_inB_inport).doc("Input signal received from neighbour B's controller");
+    _ref_relposeL(3), _ref_relposeR(3), _est_poseL(3), _est_poseR(3){
+  ports()->addPort("est_poseL_port",_est_poseL_port).doc("Estimated pose of neighbour via left going signal");
+  ports()->addPort("est_poseR_port",_est_poseR_port).doc("Estimated pose of neighbour via right going signal");
+  ports()->addPort("ref_relposeL_port", _ref_relposeL_port).doc("Relative pose reference sample wrt neighbour via left going signal");
+  ports()->addPort("ref_relposeR_port", _ref_relposeR_port).doc("Relative pose reference sample wrt neighbour via right going signal");
+  ports()->addPort("com_inL_port", _com_inL_port).doc("Input signal received from controller of neighbour via left going signal");
+  ports()->addPort("com_inR_port", _com_inR_port).doc("Input signal received from controller of neighbour via right going signal");
 
-  ports()->addPort("com_outA_outport", _com_outA_outport).doc("Output signal sent to neighbour A's controller");
-  ports()->addPort("com_outB_outport", _com_outB_outport).doc("Output signal sent to neighbour B's controller");
+  ports()->addPort("com_outL_port", _com_outL_port).doc("Output signal sent to controller of neighbour via left going signal");
+  ports()->addPort("com_outR_port", _com_outR_port).doc("Output signal sent to controller of neighbour via right going signal");
 
   _com_size = com_size;
 }
 
 bool DistributedControllerInterface::configureHook(){
   // Reserve required memory and initialize with zeros
-  _com_inA.resize(_com_size);
-  _com_inB.resize(_com_size);
-  _com_outA.resize(_com_size);
-  _com_outB.resize(_com_size);
+  _com_inL.resize(_com_size);
+  _com_inR.resize(_com_size);
+  _com_outL.resize(_com_size);
+  _com_outR.resize(_com_size);
 
   // Show example data sample to ports to make data flow real-time
   std::vector<double> example(_com_size, 0.0);
-  _com_outA_outport.setDataSample(example);
-  _com_outB_outport.setDataSample(example);
+  _com_outL_port.setDataSample(example);
+  _com_outR_port.setDataSample(example);
 
   return ControllerInterface::configureHook();
 }
@@ -36,25 +36,25 @@ bool DistributedControllerInterface::startHook(){
   // Check if input ports are connected
   bool check = true;
 
-  if (!_est_poseA_inport.connected()){
-    log(Error) << "est_poseA_inport not connected !" <<endlog();
+  if (!_est_poseL_port.connected()){
+    log(Error) << "est_poseL_port not connected !" <<endlog();
     check = false;
   }
-  if (!_ref_relposeA_inport.connected()){
-    log(Error) << "ref_relposeA_inport not connected !" <<endlog();
+  if (!_ref_relposeL_port.connected()){
+    log(Error) << "ref_relposeL_port not connected !" <<endlog();
     check = false;
   }
-  if (!_est_poseB_inport.connected()){
-    log(Warning) << "est_poseB_inport not connected !" <<endlog();
+  if (!_est_poseR_port.connected()){
+    log(Warning) << "est_poseR_port not connected !" <<endlog();
   }
-  if (!_ref_relposeB_inport.connected()){
-    log(Warning) << "ref_relposeB_inport not connected !" <<endlog();
+  if (!_ref_relposeR_port.connected()){
+    log(Warning) << "ref_relposeR_port not connected !" <<endlog();
   }
-  if (!_com_inA_inport.connected()){
-    log(Warning) << "com_inA_inport not connected !" <<endlog();
+  if (!_com_inL_port.connected()){
+    log(Warning) << "com_inL_port not connected !" <<endlog();
   }
-  if (!_com_inB_inport.connected()){
-    log(Warning) << "com_inB_inport not connected !" <<endlog();
+  if (!_com_inR_port.connected()){
+    log(Warning) << "com_inR_port not connected !" <<endlog();
   }
   if (!check){
     return false;
@@ -64,37 +64,37 @@ bool DistributedControllerInterface::startHook(){
 
 void DistributedControllerInterface::updateHook(){
   // Read estimated poses from estimator
-  if (_est_poseA_inport.read(_est_poseA) == RTT::NoData) {log(Error) << "No data on _est_poseA_inport !" <<endlog(); fatal();}
-  if (_est_poseB_inport.connected()){
-    if (_est_poseB_inport.read(_est_poseB) == RTT::NoData) {log(Error) << "No data on _est_poseB_inport !" <<endlog(); fatal();}
+  if (_est_poseL_port.read(_est_poseL) == RTT::NoData) {log(Error) << "No data on _est_poseL_port !" <<endlog(); error();}
+  if (_est_poseR_port.connected()){
+    if (_est_poseR_port.read(_est_poseR) == RTT::NoData) {log(Error) << "No data on _est_poseR_port !" <<endlog(); error();}
   }
 
   // Read reference rel poses
-  if (_ref_relposeA_inport.read(_ref_relposeA) == RTT::NoData) {log(Error) << "No data on _ref_relposeA_inport !" <<endlog(); fatal();}
-  if (_ref_relposeB_inport.connected()){
-    if (_ref_relposeB_inport.read(_ref_relposeB) == RTT::NoData) {log(Error) << "No data on _ref_relposeB_inport !" <<endlog(); fatal();}
+  if (_ref_relposeL_port.read(_ref_relposeL) == RTT::NoData) {log(Error) << "No data on _ref_relposeL_port !" <<endlog(); error();}
+  if (_ref_relposeR_port.connected()){
+    if (_ref_relposeR_port.read(_ref_relposeR) == RTT::NoData) {log(Error) << "No data on _ref_relposeR_port !" <<endlog(); error();}
   }
 
   // Read signals from neighbouring controllers
-  if (_com_inA_inport.connected()){
-    if (_com_inA_inport.read(_com_inA) == RTT::NoData) {log(Error) << "No data on _com_inA_inport !" << endlog(); fatal();}
+  if (_com_inL_port.connected()){
+    if (_com_inL_port.read(_com_inL) == RTT::NoData) {log(Error) << "No data on _com_inL_port !" << endlog(); error();}
   }
-  if (_com_inB_inport.connected()){
-    if (_com_inB_inport.read(_com_inB) == RTT::NoData) {log(Error) << "No data on _com_inB_inport !" << endlog(); fatal();}
+  if (_com_inR_port.connected()){
+    if (_com_inR_port.read(_com_inR) == RTT::NoData) {log(Error) << "No data on _com_inR_port !" << endlog(); error();}
   }
 
   ControllerInterface::updateHook();
 
   // Write signals to neighbouring controllers
-  _com_outA_outport.write(_com_outA);
-  _com_outB_outport.write(_com_outB);
+  _com_outL_port.write(_com_outL);
+  _com_outR_port.write(_com_outR);
 }
 
-std::vector<double> DistributedControllerInterface::getRefRelPoseA(){ return _ref_relposeA; }
-std::vector<double> DistributedControllerInterface::getRefRelPoseB(){ return _ref_relposeB; }
-std::vector<double> DistributedControllerInterface::getEstPoseA(){ return _est_poseA; }
-std::vector<double> DistributedControllerInterface::getEstPoseB(){ return _est_poseB; }
-std::vector<double> DistributedControllerInterface::getComInA(){ return _com_inA; }
-std::vector<double> DistributedControllerInterface::getComInB(){ return _com_inB; }
-void DistributedControllerInterface::setComOutA(std::vector<double> const& com_outA){ _com_outA = com_outA; }
-void DistributedControllerInterface::setComOutB(std::vector<double> const& com_outB){ _com_outB = com_outB; }
+std::vector<double> DistributedControllerInterface::getRefRelPoseL(){ return _ref_relposeL; }
+std::vector<double> DistributedControllerInterface::getRefRelPoseR(){ return _ref_relposeR; }
+std::vector<double> DistributedControllerInterface::getEstPoseL(){ return _est_poseL; }
+std::vector<double> DistributedControllerInterface::getEstPoseR(){ return _est_poseR; }
+std::vector<double> DistributedControllerInterface::getComInL(){ return _com_inL; }
+std::vector<double> DistributedControllerInterface::getComInR(){ return _com_inR; }
+void DistributedControllerInterface::setComOutL(std::vector<double> const& com_outL){ _com_outL = com_outL; }
+void DistributedControllerInterface::setComOutR(std::vector<double> const& com_outR){ _com_outR = com_outR; }

@@ -9,13 +9,13 @@ using namespace RTT;
 
 class ControllerInterface : public RTT::TaskContext{
   private:
-    InputPort<std::vector<double> > _ref_pose_inport;
-    InputPort<std::vector<double> > _ref_ffw_inport;
-    InputPort<std::vector<double> > _est_pose_inport;
+    InputPort<std::vector<double> > _ref_pose_port;
+    InputPort<std::vector<double> > _ref_ffw_port;
+    InputPort<std::vector<double> > _est_pose_port;
 
-    OutputPort<std::vector<double> > _cmd_velocity_outport;
+    OutputPort<std::vector<double> > _cmd_velocity_port;
 
-    int _sample_rate;
+    double _control_sample_rate;
 
     std::vector<double> _ref_pose;
     std::vector<double> _ref_ffw;
@@ -26,7 +26,7 @@ class ControllerInterface : public RTT::TaskContext{
     virtual bool controlUpdate() = 0;
     virtual bool initialize() = 0;
 
-    int getSampleRate();
+    double getControlSampleRate();
     std::vector<double> getRefPose();
     std::vector<double> getRefFfw();
     std::vector<double> getEstPose();

@@ -1,29 +1,17 @@
 import("rtt_ros")
-import("ocl")
+ros.import("rtt_rospack")
 
-//OURBOT
+loadComponent("lua","OCL::LuaComponent")
 
-// Import all necessary components
-ros.import("ControllerInterface")
+lua.setPeriod(0.1)
+lua.exec_file("deploy.lua")
+addPeer("lua","Deployer")
 
-// Load all local components
-loadComponent("coordinator", "OCL::LuaComponent")
-loadComponent("controller","ControllerInterface")
+loadService("lua","marshalling")
+lua.marshalling.loadProperties("Configuration/system.cpf")
 
-server("coordinator",true)
-
-// AddPeers
-addPeer("coordinator","controller")
-
-// run coordinator
-coordinator.exec_file("Coordinator/launch_fsm.lua")
-coordinator.configure
-
-
-// Start components
-coordinator.start
-
-
+lua.configure()
+lua.start()
 
 
 
