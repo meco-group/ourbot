@@ -10,6 +10,7 @@ local reference     = 'reference'..index
 local velocitycmd   = 'velocitycmd'..index
 local sensors       = 'sensors'..index
 local coordinator   = 'coordinator'..index
+local reporter      = 'reporter'..index
 
 --Components to load
 local components_to_load = {
@@ -19,9 +20,22 @@ local components_to_load = {
   [reference]       = reference_type,
   [velocitycmd]     = velocitycmd_type,
   [sensors]         = 'Sensors',
-  [coordinator]     = 'OCL::LuaTLSFComponent'
-   -- reporter='OCL::NetcdfReporting'
+  [coordinator]     = 'OCL::LuaTLSFComponent',
+  [reporter]        = 'OCL::NetcdfReporting'
    --add here componentname = 'componenttype'
+}
+
+--Ports to report
+local ports_to_report = {
+  cmd_velocity_port     = controller,
+  est_pose_port         = estimator,
+  est_velocity_port     = estimator,
+  est_acceleration_port = estimator,
+  est_global_offset_port= estimator,
+  ref_pose_port         = reference,
+  ref_ffw_port          = reference,
+  cmd_velocity_port     = velocitycmd
+  --add here portname = componentname
 }
 
 --Packages to import
@@ -90,13 +104,13 @@ return rfsm.state {
       configure_components = rfsm.state {
         entry = function(fsm)
           for name,comp in pairs(components) do
-            if (name ~= coordinator) then --coordinator is configured in a later stadium
+            if (name ~= coordinator and name ~= reporter) then --coordinator/reporter is configured in a later stadium
               comp:loadService('marshalling')
               --Every component loads system configurations
               if (not comp:provides('marshalling'):loadProperties(system_config_file)) then rfsm.send_events(fsm,'e_failed') return end
               --If available, a component loads its specific configurations
               if(component_config_files[name]) then
-                if (not comp:provides('marshalling'):loadProperties(component_config[name])) then rfsm.send_events(fsm,'e_failed') return end
+                if (not comp:provides('marshalling'):loadProperties(component_config_files[name])) then rfsm.send_events(fsm,'e_failed') return end
               end
               --Configure the components and send 'e_failed' if configuring fails
               if (not comp:configure()) then rfsm.send_events(fsm,'e_failed') return end
@@ -125,6 +139,7 @@ return rfsm.state {
           if (not dp:addPeer(coordinator,reference))    then rfsm.send_events(fsm,'e_failed') return end
           if (not dp:addPeer(coordinator,sensors))      then rfsm.send_events(fsm,'e_failed') return end
           if (not dp:addPeer(coordinator,velocitycmd))  then rfsm.send_events(fsm,'e_failed') return end
+          if (not dp:addPeer(coordinator,reporter))     then rfsm.send_events(fsm,'e_failed') return end
             --add more peers here
         end,
       },
@@ -163,11 +178,11 @@ return rfsm.state {
       set_activities = rfsm.state {
         entry = function(fsm)
           dp:setActivity(sensors,1./control_sample_rate,10,rtt.globals.ORO_SCHED_RT)
-          dp:setActivity(coordinator,1./control_sample_rate,9,rtt.globals.ORO_SCHED_RT)
-          dp:setActivity(pathgenerator,1./pathupd_sample_rate,8,rtt.globals.ORO_SCHED_RT)
-          dp:setActivity(velocitycmd,1./velcmd_sample_rate,7,rtt.globals.ORO_SCHED_RT)
+          dp:setActivity(coordinator,1./control_sample_rate,10,rtt.globals.ORO_SCHED_RT)
+          dp:setActivity(pathgenerator,1./pathupd_sample_rate,10,rtt.globals.ORO_SCHED_RT)
+          dp:setActivity(velocitycmd,1./velcmd_sample_rate,10,rtt.globals.ORO_SCHED_RT)
+          dp:setActivity(reporter,0,2,rtt.globals.ORO_SCHED_RT)
             --add here extra activities
-          -- dp:setActivity(reporter,0,2,rtt.globals.ORO_SCHED_RT)
           --The estimator, controller and reference component are triggered by the coordinator and executed in the same thread.
           dp:setMasterSlaveActivity(coordinator,estimator)
           dp:setMasterSlaveActivity(coordinator,controller)
@@ -203,25 +218,26 @@ return rfsm.state {
       rfsm.transition {src = 'load_app_coordination', tgt = 'prepare_reporter', events = {'e_done'}},
 
       prepare_reporter = rfsm.state{
-        -- entry = function(fsm)
-        --   --Create necessary connections
-        --   dp:addPeer('reporter','reference')
-        --   dp:addPeer('reporter','controller')
-        --   dp:connectPeers('reporter','plant')
-        --   dp:connectPeers('reporter',coordinator)
-        --   --Load the marshalling service and the previously defined configuration file
-        --   components.reporter:loadService('marshalling')
-        --   components.reporter:provides('marshalling'):loadProperties(reporter_configuration_file)
-        --   --Try to configure the reporter, drop out if it fails
-        --   if (not components.reporter:configure()) then
-        --      rfsm.send_events(fsm,'e_failed')
-        --   end
-        -- end,
+        entry = function(fsm)
+          --Load the marshalling service and the previously defined configuration file
+          components[reporter]:loadService('marshalling')
+          components[reporter]:provides('marshalling'):loadProperties('Configuration/reporter-config.cpf')
+
+          --Add components to report
+          for port,comp in pairs(ports_to_report) do
+            if (not dp:addPeer(reporter,comp)) then rfsm.send_events(fsm,'e_failed') end
+            if (not components[reporter]:reportPort(comp,port)) then rfsm.send_events(fsm,'e_failed') end
+          end
+
+          -- Try to configure the reporter, drop out if it fails
+          if (not components[reporter]:configure()) then rfsm.send_events(fsm,'e_failed') return end
+
+        end,
       },
    },
 
   --Deployment is finished.
-  rfsm.transition {src = '.deploy.prepare_reporter', tgt='deployed', events = {'e_done'}},
+  rfsm.transition {src = '.deploy.prepare_reporter', tgt='deployed'}, --, events = {'e_done'}},
 
   deployed = rfsm.conn{},
 

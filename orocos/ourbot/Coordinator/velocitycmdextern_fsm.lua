@@ -3,9 +3,11 @@ local tc = rtt.getTC()
 --dummy, load teensy and sensors
 local sensors     = tc:getPeer(sensors)
 local estimator   = tc:getPeer(estimator)
+local reporter    = tc:getPeer(reporter)
 
 local estimatorUpdate           = estimator:getOperation("update")
 local estimatorInRunTimeError   = estimator:getOperation("inRunTimeError")
+local snapshot                  = reporter:getOperation("snapshot")
 
 --Variable for the timing diagnostics
 local jitter = 0
@@ -36,6 +38,10 @@ return rfsm.state {
 
   run = rfsm.state{
     entry = function(fsm)
+      if not reporter:start() then
+        rtt.log("Error","Could not start reporter component")
+        return
+      end
       if not estimator:start() then
         rtt.logl("Error","Could not start estimator component")
         rfsm.send_events(fsm,'e_failed')
@@ -53,6 +59,9 @@ return rfsm.state {
 
         --Update estimator
         estimatorUpdate()
+
+        --Take snapshot for logger
+        snapshot:send()
 
         end_time = get_sec()
         if estimatorInRunTimeError() then
@@ -86,6 +95,7 @@ return rfsm.state {
   stop = rfsm.state{
     entry = function(fsm)
       estimator:stop()
+      reporter:stop()
     end,
   },
 

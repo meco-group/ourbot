@@ -4,6 +4,7 @@ local pathgenerator = tc:getPeer(pathgenerator)
 local controller    = tc:getPeer(controller)
 local estimator     = tc:getPeer(estimator)
 local reference     = tc:getPeer(reference)
+local reporter      = tc:getPeer(reporter)
 --dummy/add here sensor+actuator components
 local sensors       = tc:getPeer(sensors)
 
@@ -13,6 +14,7 @@ local controllerUpdate          = controller:getOperation("update")
 local estimatorInRunTimeError   = estimator:getOperation("inRunTimeError")
 local controllerInRunTimeError  = controller:getOperation("inRunTimeError")
 local referenceInRunTimeError   = reference:getOperation("inRunTimeError")
+local snapshot                  = reporter:getOperation("snapshot")
 
 --Variable for the timing diagnostics
 local jitter = 0
@@ -47,6 +49,10 @@ return rfsm.state {
         rfsm.send_events(fsm,'e_failed')
         return
       end
+      if not reporter:start() then
+        rtt.log("Error","Could not start reporter component")
+        return
+      end
       if not reference:start() or not estimator:start() or not controller:start() then
         rtt.logl("Error","Could not start reference/estimator/controller component")
         rfsm.send_events(fsm,'e_failed')
@@ -67,6 +73,9 @@ return rfsm.state {
         estimatorUpdate()
         --Update the control algorithm
         controllerUpdate()
+
+        --Take snapshot for logger
+        snapshot:send()
 
         end_time = get_sec()
         if controllerInRunTimeError() or estimatorInRunTimeError() or referenceInRunTimeError() then
@@ -102,6 +111,7 @@ return rfsm.state {
       estimator:stop()
       reference:stop()
       controller:stop()
+      reporter:stop()
     end,
   },
   --You can restart the control loop by sending 'e_restart', it will not reinitialize the sensors

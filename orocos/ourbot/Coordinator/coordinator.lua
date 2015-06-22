@@ -39,6 +39,7 @@ function configureHook()
    velocitycmd   = 'velocitycmd'..index
    sensors       = 'sensors'..index
    coordinator   = 'coordinator'..index
+   reporter      = 'reporter'..index
 
    -- load state machine
    fsm = rfsm.init(rfsm.load("Coordinator/coordinator_fsm.lua"))
