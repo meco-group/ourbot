@@ -32,6 +32,5 @@ class Sensors : public RTT::TaskContext{
     bool startHook();
     void updateHook();
     void stopHook();
-    void cleanupHook();
 };
 #endif

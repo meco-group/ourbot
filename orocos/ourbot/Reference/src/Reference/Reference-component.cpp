@@ -95,8 +95,6 @@ void Reference::updateHook(){
         _got_ref_pose_path[i]      = false;
         _got_ref_ffw_path[i]       = false;
       }
-
-      log(Info)<<"Start reading new path !"<<endlog();
     }
     else{
       log(Warning)<<"No new path ! Staying at last sample."<<endlog();
@@ -106,7 +104,6 @@ void Reference::updateHook(){
   {
     _index++;
   }
-  std::cout << "Reference updated !" <<std::endl;
 }
 
 void Reference::stopHook() {

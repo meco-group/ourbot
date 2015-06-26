@@ -9,37 +9,26 @@ local fqn_out, events_in
 local start_time
 
 --Create properties
-_index            = rtt.Property("int","index","Index number of agent")
+_index = rtt.Property("int","index","Index number of agent")
 
 tc:addProperty(_index)
 
---Port to send events
-_fsm_event_port   = rtt.InputPort("string")
-tc:addEventPort(_fsm_event_port, "fsm_event_port", "rFSM event input port")
---Port from which coordinator can send events to its own
-_send_events_port = rtt.OutputPort("string")
-tc:addPort(_send_events_port,"send_events","Port to send events to the FSM")
-_send_events_port:connect(_fsm_event_port)
---Port to send failure event to deployer
-_failure_event_port = rtt.OutputPort("string")
-tc:addPort(_failure_event_port,"failure_event_port","Port to send failure event to other components")
---Port to read out the current state.
-_current_state_port = rtt.OutputPort("string")
-tc:addPort(_current_state_port, "current_state_port", "current active rFSM state")
+--Ports which drive/read the FSM
+_coordinator_fsm_event_port      = rtt.InputPort("string")
+_coordinator_send_event_port     = rtt.OutputPort("string")
+_coordinator_failure_event_port  = rtt.OutputPort("string")
+_coordinator_current_state_port  = rtt.OutputPort("string")
+
+tc:addEventPort(_coordinator_fsm_event_port, "coordinator_fsm_event_port", "Event port for driving the coordinator FSM")
+tc:addPort(_coordinator_send_event_port, "coordinator_send_event_port", "Port to send events to the coordinator FSM from the coordinator")
+tc:addPort(_coordinator_failure_event_port,"coordinator_failure_event_port","Port to send indicate a failure in the coordinator")
+tc:addPort(_coordinator_current_state_port, "coordinator_current_state_port", "current active state of the coordinator FSM")
+
+_coordinator_send_event_port:connect(_coordinator_fsm_event_port)
 
 function configureHook()
-   --create local copies of the property values
-   index             = _index:get()
-
-   --Define component names here
-   estimator     = 'estimator'..index
-   controller    = 'controller'..index
-   pathgenerator = 'pathgenerator'..index
-   reference     = 'reference'..index
-   velocitycmd   = 'velocitycmd'..index
-   sensors       = 'sensors'..index
-   coordinator   = 'coordinator'..index
-   reporter      = 'reporter'..index
+   -- create local copies of the property values
+   index = _index:get()
 
    -- load state machine
    fsm = rfsm.init(rfsm.load("Coordinator/coordinator_fsm.lua"))
@@ -48,17 +37,23 @@ function configureHook()
       return false
    end
 
+   -- connect event ports to state machine
+   fsm.getevents = rfsm_rtt.gen_read_str_events(_coordinator_fsm_event_port)
+   rfsm.post_step_hook_add(fsm, rfsm_rtt.gen_write_fqn(_coordinator_current_state_port))
+
    -- enable state entry and exit dbg output
    fsm.dbg=rfsmpp.gen_dbgcolor('Coordinator FSM', { STATE_ENTER=true, STATE_EXIT=true}, false)
 
-   -- connect event ports to state machine
-   fsm.getevents = rfsm_rtt.gen_read_str_events(_fsm_event_port)
-   rfsm.post_step_hook_add(fsm, rfsm_rtt.gen_write_fqn(_current_state_port))
-
-   -- redirect rFSM output to rtt log
+   -- redirect FSM output to rtt log
    fsm.info=function(...) rtt.logl('Info', table.concat({...}, ' ')) end
    fsm.warn=function(...) rtt.logl('Warning', table.concat({...}, ' ')) end
    fsm.err=function(...) rtt.logl('Error', table.concat({...}, ' ')) end
+
+   -- create ports with timing info
+   _controlloop_duration = rtt.OutputPort("double")
+   _controlloop_jitter   = rtt.OutputPort("double")
+   tc:addPort(_controlloop_duration,"controlloop_duration","Duration of executing the control loop")
+   tc:addPort(_controlloop_jitter,"controlloop_jitter","Jitter of the control loop")
 
    return true
 end

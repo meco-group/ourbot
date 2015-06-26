@@ -21,7 +21,6 @@ bool VelocityCommandInterface::startHook(){
 
 void VelocityCommandInterface::updateHook(){
   _cmd_velocity_port.write(_cmd_velocity);
-  log(Info) << "Velocity Commander updated !" <<endlog();
 }
 
 void VelocityCommandInterface::stopHook() {

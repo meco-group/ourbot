@@ -8,7 +8,7 @@ lua.exec_file("deploy.lua")
 addPeer("lua","Deployer")
 
 loadService("lua","marshalling")
-lua.marshalling.loadProperties("Configuration/emperor.cpf")
+lua.marshalling.loadProperties("Configuration/emperor-config.cpf")
 
 lua.configure()
 lua.start()

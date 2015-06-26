@@ -46,10 +46,6 @@ bool ExampleController::controlUpdate(){
   // Write velocity setpoint
   setCmdVelocity(cmd_velocity_new);
 
-  std::cout<<"Ref pose: ("<<ref_pose.at(0)<<","<<ref_pose.at(1)<<","<<ref_pose.at(2)<<")"<<std::endl;
-  std::cout<<"Est pose: ("<<est_pose.at(0)<<","<<est_pose.at(1)<<","<<est_pose.at(2)<<")"<<std::endl;
-  std::cout<<"Cmd vel: ("<<cmd_velocity_new.at(0)<<","<<cmd_velocity_new.at(1)<<","<<cmd_velocity_new.at(2)<<")"<<std::endl;
-
   return true;
 }
 

@@ -68,11 +68,7 @@ void Sensors::updateHook(){
 }
 
 void Sensors::stopHook() {
-  std::cout << "Sensors executes stopping !" <<std::endl;
-}
-
-void Sensors::cleanupHook() {
-  std::cout << "Sensors cleaning up !" <<std::endl;
+  std::cout << "Sensors stopped !" <<std::endl;
 }
 
 ORO_CREATE_COMPONENT(Sensors)

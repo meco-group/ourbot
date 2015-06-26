@@ -1,49 +1,39 @@
 export void VelocityCmdIntern(){
-  send_events.write("e_velocitycmdintern")
-  fsm_event_port.write("e_velocitycmdintern")
+  emperor_send_event_port.write("e_velocitycmdintern")
 }
 
 export void VelocityCmdExtern(){
-  send_events.write("e_velocitycmdextern")
-  fsm_event_port.write("e_velocitycmdextern")
+  emperor_send_event_port.write("e_velocitycmdextern")
 }
 
 export void UpdPathFollowing(){
-  send_events.write("e_updpathfollowing")
-  fsm_event_port.write("e_updpathfollowing")
+  emperor_send_event_port.write("e_updpathfollowing")
 }
 
 export void FixedPathFollowing(){
-  send_events.write("e_fixedpathfollowing")
-  fsm_event_port.write("e_fixedpathfollowing")
+  emperor_send_event_port.write("e_fixedpathfollowing")
 }
 
 export void Idle(){
-  send_events.write("e_idle")
-  fsm_event_port.write("e_idle")
+  emperor_send_event_port.write("e_idle")
 }
 
 export void Reset(){
-  send_events.write("e_reset")
-  fsm_event_port.write("e_reset")
+  emperor_send_event_port.write("e_reset")
 }
 
 export void Run(){
-  send_events.write("e_run")
-  fsm_event_port.write("e_run")
+  emperor_send_event_port.write("e_run")
 }
 
 export void Restart(){
-  send_events.write("e_restart")
-  fsm_event_port.write("e_restart")
+  emperor_send_event_port.write("e_restart")
 }
 
 export void StopLoop(){
-  send_events.write("e_stop")
-  fsm_event_port.write("e_stop")
+  emperor_send_event_port.write("e_stop")
 }
 
 export void Initialize(){
-  send_events.write("e_init")
-  fsm_event_port.write("e_init")
+  emperor_send_event_port.write("e_init")
 }

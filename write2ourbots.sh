@@ -35,7 +35,7 @@ then
 			then
 				cd $OROCOSDIR/\$d
 				echo "Build "\$d
-				rosmake
+				make -j4
 				cd ..
 			fi
 		done

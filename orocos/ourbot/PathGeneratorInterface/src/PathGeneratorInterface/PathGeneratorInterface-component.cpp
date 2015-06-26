@@ -18,8 +18,6 @@ PathGeneratorInterface::PathGeneratorInterface(std::string const& name) : TaskCo
   ports()->addPort("ref_ffw_path_y_port", _ref_ffw_path_port[1]).doc("y ffw reference path");
   ports()->addPort("ref_ffw_path_t_port", _ref_ffw_path_port[2]).doc("theta ffw reference path");
 
-  ports()->addPort("fsm_event_port", _fsm_event_port).doc("rFSM event input port");
-
   addProperty("control_sample_rate", _control_sample_rate).doc("Frequency to update the control loop");
   addProperty("pathupd_sample_rate", _pathupd_sample_rate).doc("Frequency to update the path");
   addProperty("obs_data_length", _obs_data_length).doc("Length of obstacle data");
@@ -29,7 +27,7 @@ PathGeneratorInterface::PathGeneratorInterface(std::string const& name) : TaskCo
 bool PathGeneratorInterface::configureHook(){
   // Compute path length
   _path_length = static_cast<int>(_control_sample_rate/_pathupd_sample_rate);
-
+  std::cout << "Path length: " << _path_length << std::endl;
   // Reserve required memory and initialize with zeros
   _map_obstacles.resize(_obs_data_length);
   for(int i=0;i<3;i++){
@@ -43,7 +41,6 @@ bool PathGeneratorInterface::configureHook(){
     _ref_pose_path_port[i].setDataSample(example);
     _ref_ffw_path_port[i].setDataSample(example);
   }
-  _fsm_event_port.setDataSample("e_initialpath");
 
   return true;
 }
@@ -76,6 +73,10 @@ bool PathGeneratorInterface::startHook(){
   std::cout << "PathGenerator started !" <<std::endl;
   return true;
 }
+
+// void PathGeneratorInterface::updateHook(){
+
+// }
 
 void PathGeneratorInterface::updateHook(){
   TimeService::ticks prev_timestamp = _timestamp;
@@ -110,13 +111,7 @@ void PathGeneratorInterface::updateHook(){
     _ref_ffw_path_port[i].write(_ref_ffw_path[i]);
   }
 
-  // Write event for initial path
-  // if (_init == 0){
-  _fsm_event_port.write("e_initialpath");
-  // }
-
-  // log(Info) << "Path updated !" <<endlog();
-  std::cout <<  "Path updated !" << std::endl;
+  log(Info) << "Path updated !" <<endlog();
 
   // Check timing
   if (_init>2){
@@ -133,6 +128,10 @@ void PathGeneratorInterface::updateHook(){
     _init++;
   }
 
+}
+
+void PathGeneratorInterface::stopHook() {
+  std::cout << "Pathgenerator stopped !" <<std::endl;
 }
 
 int PathGeneratorInterface::getPathLength() { return _path_length; }

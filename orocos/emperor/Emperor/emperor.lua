@@ -13,26 +13,22 @@ _peers = rtt.Property("ints","peers","Index numbers of peer agents")
 
 tc:addProperty(_peers)
 
---Port to send events to coordinator peers
-_fsm_event_port   = rtt.OutputPort("string")
-tc:addPort(_fsm_event_port, "fsm_event_port", "rFSM event input port")
--- --Port to send events
-_emperor_fsm_event_port = rtt.InputPort("string")
-tc:addEventPort(_emperor_fsm_event_port, "emperor_fsm_event_port", "rFSM event input port")
---Port from which emperor can send events to its own
-_send_events_port = rtt.OutputPort("string")
-tc:addPort(_send_events_port,"send_events","Port to send events to the FSM")
-_send_events_port:connect(_emperor_fsm_event_port)
---Port to send failure event to deployer
-_failure_event_port = rtt.OutputPort("string")
-tc:addPort(_failure_event_port,"failure_event_port","Port to send failure event to other components")
---Port where current state of peers come
-_current_state_port = rtt.InputPort("string")
-tc:addEventPort(_current_state_port, "current_state_port", "current active rFSM state")
+--Ports which drive/read the FSM
+_emperor_fsm_event_port      = rtt.InputPort("string")
+_emperor_send_event_port     = rtt.OutputPort("string")
+_emperor_failure_event_port  = rtt.OutputPort("string")
+_emperor_current_state_port  = rtt.OutputPort("string")
+
+tc:addEventPort(_emperor_fsm_event_port, "emperor_fsm_event_port", "Event port for driving the emperor FSM")
+tc:addPort(_emperor_send_event_port, "emperor_send_event_port", "Port to send events to the emperor FSM from the emperor")
+tc:addPort(_emperor_failure_event_port,"emperor_failure_event_port","Port to send indicate a failure in the emperor")
+tc:addPort(_emperor_current_state_port, "emperor_current_state_port", "current active state of the emperor FSM")
+
+_emperor_send_event_port:connect(_emperor_fsm_event_port)
 
 function configureHook()
    --create local copies of the property values
-   peers         = _peers:get()
+   peers = _peers:get()
 
    -- load state machine
    fsm = rfsm.init(rfsm.load("Emperor/emperor_fsm.lua"))
@@ -41,12 +37,12 @@ function configureHook()
       return false
    end
 
+  -- connect event ports to state machine
+   fsm.getevents = rfsm_rtt.gen_read_str_events(_emperor_fsm_event_port)
+   rfsm.post_step_hook_add(fsm, rfsm_rtt.gen_write_fqn(_emperor_current_state_port))
+
    -- enable state entry and exit dbg output
    fsm.dbg=rfsmpp.gen_dbgcolor('Emperor FSM', { STATE_ENTER=true, STATE_EXIT=true}, false)
-
-   -- connect event ports to state machine
-   fsm.getevents = rfsm_rtt.gen_read_str_events(_emperor_fsm_event_port)
-   -- rfsm.post_step_hook_add(fsm, rfsm_rtt.gen_write_fqn(_current_state_port))
 
    -- redirect rFSM output to rtt log
    fsm.info=function(...) rtt.logl('Info', table.concat({...}, ' ')) end

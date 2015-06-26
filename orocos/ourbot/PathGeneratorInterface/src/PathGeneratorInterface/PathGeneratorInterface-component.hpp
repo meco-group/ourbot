@@ -19,7 +19,6 @@ class PathGeneratorInterface : public RTT::TaskContext{
 
     OutputPort<std::vector<double> > _ref_pose_path_port[3];
     OutputPort<std::vector<double> > _ref_ffw_path_port[3];
-    OutputPort<std::string> _fsm_event_port;
 
     std::vector<double> _est_pose;
     std::vector<double> _est_global_offset;
@@ -63,5 +62,6 @@ class PathGeneratorInterface : public RTT::TaskContext{
     virtual bool configureHook();
     virtual bool startHook();
     virtual void updateHook();
+    virtual void stopHook();
 };
 #endif

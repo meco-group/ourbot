@@ -48,6 +48,10 @@ bool ControllerInterface::startHook(){
   return true;
 }
 
+// void ControllerInterface::updateHook(){
+
+// }
+
 void ControllerInterface::updateHook(){
   // Read estimated state from estimator
   if (_est_pose_port.read(_est_pose) == RTT::NoData) {log(Error) << "No data on _est_pose_port !" <<endlog(); error();}
@@ -63,8 +67,6 @@ void ControllerInterface::updateHook(){
 
   // Write velocity setpoints
   _cmd_velocity_port.write(_cmd_velocity);
-
-  log(Info) << "Controller updated !" <<endlog();
 }
 
 void ControllerInterface::stopHook() {

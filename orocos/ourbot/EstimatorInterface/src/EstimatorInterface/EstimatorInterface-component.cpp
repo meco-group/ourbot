@@ -153,9 +153,6 @@ void EstimatorInterface::updateHook(){
   _est_acceleration_port.write(_est_acceleration);
   _est_global_offset_port.write(_est_global_offset);
   _map_obstacles_port.write(_map_obstacles);
-
-  // log(Info) << "Estimator updated !" <<endlog();
-  std::cout << "Estimator updated !" <<std::endl;
 }
 
 void EstimatorInterface::stopHook() {
