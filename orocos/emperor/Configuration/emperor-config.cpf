@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "cpf.dtd">
+<properties>
+  <struct name="peers" type="ints">
+    <description>Index numbers of peer agents</description>
+    <simple name="Element0" type="long">
+      <value>1</value>
+    </simple>
+  </struct>
+  <simple name="velocitycmd" type="string">
+    <description>VelocityCommand component to use (only for intern velocitycmd)</description>
+    <value>ExampleVelocityCommand</value>
+  </simple>
+  <simple name="velcmd_sample_rate" type="double">
+    <description>Frequency to update velocity commander</description>
+    <value>1.</value>
+  </simple>
+</properties>

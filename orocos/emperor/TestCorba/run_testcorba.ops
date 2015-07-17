@@ -1,0 +1,15 @@
+import("rtt_ros")
+ros.import("TestCorba")
+
+loadComponent("testcorba1","TestCorba")
+loadComponent("testcorba2","CORBA")
+
+testcorba1.datasize = 10
+testcorba1.configure()
+testcorba1.setPeriod(1.)
+
+testcorba2.period = 1.
+
+testcorba2.configure()
+testcorba2.start()
+testcorba1.start()
