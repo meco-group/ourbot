@@ -8,9 +8,11 @@ local controller    = 'controller'..index
 local pathgenerator = 'pathgenerator'..index
 local reference     = 'reference'..index
 local velocitycmd   = 'velocitycmd'..index
-local sensors       = 'sensors'..index
 local coordinator   = 'coordinator'..index
 local reporter      = 'reporter'..index
+local io            = 'io'..index
+local teensy        = 'teensy'..index
+local lidar         = 'lidar'..index
   --add here extra components
 
 --Components to load
@@ -20,10 +22,17 @@ local components_to_load = {
   [pathgenerator]   = pathgenerator_type,
   [reference]       = reference_type,
   [velocitycmd]     = velocitycmd_type,
-  [sensors]         = 'Sensors',
   [coordinator]     = 'OCL::LuaTLSFComponent',
-  [reporter]        = 'OCL::NetcdfReporting'
+  [reporter]        = 'OCL::NetcdfReporting',
+  [io]              = 'Container',
+  [teensy]          = 'TeensyBridge',
+  [lidar]           = 'RPLidar'
    --add here componentname = 'componenttype'
+}
+
+--Containers to fill
+local containers_to_fill = {
+  [io]              = {teensy, lidar}
 }
 
 --Ports to report
@@ -32,7 +41,8 @@ local ports_to_report = {
   [estimator]       = {'est_pose_port', 'est_velocity_port', 'est_acceleration_port', 'est_global_offset_port'},
   [reference]       = {'ref_pose_port', 'ref_ffw_port'},
   [velocitycmd]     = {'cmd_velocity_port'},
-  [coordinator]     = {'controlloop_duration', 'controlloop_jitter'}
+  [coordinator]     = {'controlloop_duration', 'controlloop_jitter'},
+  [io]              = {'cal_enc_pose_port', 'cal_velocity_port', 'cal_lidar_node_port'}
   --add here componentname = 'portnames'
 }
 
@@ -43,7 +53,9 @@ local packages_to_import = {
   [pathgenerator]   = 'PathGeneratorInterface',
   [reference]       = 'Reference',
   [velocitycmd]     = 'VelocityCommandInterface',
-  [sensors]         = 'Sensors'
+  [io]              = 'Container',
+  [teensy]          = 'SerialInterface',
+  [lidar]           = 'SerialInterface'
   --add here componentname = 'parentcomponenttype'
 }
 
@@ -55,7 +67,7 @@ local component_config_files  = {
 }
 
 --Accessible components over CORBA
-local server_components = {coordinator, sensors}
+local server_components = {coordinator, io}
 
 for comp,ports in pairs(ports_to_report) do
   table.insert(server_components,comp)
@@ -114,10 +126,25 @@ return rfsm.state {
           if (not dp:loadComponent(name,type)) then rfsm.send_events(fsm,'e_failed') return end
           components[name] = dp:getPeer(name)
         end
-        --Go through the table of components to make server
-        for i,name in pairs(server_components) do
-          if (not dp:server(name,true)) then rfsm.send_events(fsm,'e_failed') return end
+        --Fill containers with correct components
+        for container,comps in pairs(containers_to_fill) do
+          addToContainer = components[container]:getOperation("addComponent")
+          for i,name in pairs(comps) do
+            dp:addPeer(container, name)
+            addToContainer(name)
+          end
         end
+
+        -- dp:addPeer(io, teensy)
+        -- dp:addPeer(io, lidar)
+        -- addToIO = components[io]:getOperation("addComponent")
+        -- addToIO(teensy)
+        -- addToIO(lidar)
+
+        --Go through the table of components to make server
+        -- for i,name in pairs(server_components) do
+        --   if (not dp:server(name,true)) then rfsm.send_events(fsm,'e_failed') return end
+        -- end
       end
     },
 
@@ -142,12 +169,12 @@ return rfsm.state {
     connect_components = rfsm.state {
       entry = function(fsm)
         --Connect all components
-        if (not dp:connectPorts(sensors,estimator))        then rfsm.send_events(fsm,'e_failed') return end
+        if (not dp:connectPorts(io,estimator))        then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:connectPorts(estimator,controller))     then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:connectPorts(reference,controller))     then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:connectPorts(reference,pathgenerator))  then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:connectPorts(estimator,pathgenerator))  then rfsm.send_events(fsm,'e_failed') return end
-        if (not dp:connectPorts(velocitycmd,sensors))      then rfsm.send_events(fsm,'e_failed') return end
+        if (not dp:connectPorts(velocitycmd,io))      then rfsm.send_events(fsm,'e_failed') return end
           --add more connections here
 
         --Add every component as peer of coordinator
@@ -155,9 +182,9 @@ return rfsm.state {
         if (not dp:addPeer(coordinator,estimator))    then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:addPeer(coordinator,pathgenerator))then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:addPeer(coordinator,reference))    then rfsm.send_events(fsm,'e_failed') return end
-        if (not dp:addPeer(coordinator,sensors))      then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:addPeer(coordinator,velocitycmd))  then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:addPeer(coordinator,reporter))     then rfsm.send_events(fsm,'e_failed') return end
+        if (not dp:addPeer(coordinator,io))           then rfsm.send_events(fsm,'e_failed') return end
           --add more peers here
       end,
     },
@@ -189,16 +216,22 @@ return rfsm.state {
 
     set_activities = rfsm.state {
       entry = function(fsm)
-        dp:setActivity(sensors,1./control_sample_rate,10,rtt.globals.ORO_SCHED_RT)
         dp:setActivity(coordinator,1./control_sample_rate,10,rtt.globals.ORO_SCHED_RT)
         dp:setActivity(pathgenerator,1./pathupd_sample_rate,10,rtt.globals.ORO_SCHED_RT)
         dp:setActivity(velocitycmd,1./velcmd_sample_rate,10,rtt.globals.ORO_SCHED_RT)
         dp:setActivity(reporter,0,2,rtt.globals.ORO_SCHED_RT)
+        dp:setActivity(io,1./200,10,rtt.globals.ORO_SCHED_RT)
           --add here extra activities
         --The estimator, controller and reference component are triggered by the coordinator and executed in the same thread.
         dp:setMasterSlaveActivity(coordinator,estimator)
         dp:setMasterSlaveActivity(coordinator,controller)
         dp:setMasterSlaveActivity(coordinator,reference)
+
+        for container,comps in pairs(containers_to_fill) do
+          for i,name in pairs(comps) do
+            dp:setMasterSlaveActivity(container,name)
+          end
+        end
       end,
     },
 

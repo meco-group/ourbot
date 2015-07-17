@@ -31,7 +31,7 @@ add_subdirectory( src )
 # The header will go in include/orocos/Container/types/Container/Container-types.hpp
 # So you can #include <Container/Container-types.hpp>
 #
-orocos_typegen_headers(include/Container/Container-types.hpp) # ...you may add multiple header files
+#orocos_typegen_headers(include/Container/Container-types.hpp) # ...you may add multiple header files
 #
 # You may only have *ONE* orocos_typegen_headers statement in your toplevel CMakeFile.txt !
 
