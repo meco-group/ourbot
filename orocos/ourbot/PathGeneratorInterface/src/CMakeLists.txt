@@ -10,9 +10,7 @@
 # Creates a component library libPathGeneratorInterface-<target>.so
 # and installs in the directory lib/orocos/PathGeneratorInterface/
 #
-orocos_component(PathGeneratorInterface PathGeneratorInterface/PathGeneratorInterface-component.hpp PathGeneratorInterface/PathGeneratorInterface-component.cpp) # ...you may add multiple source files
-orocos_component(PathGeneratorInterface DistributedPathGeneratorInterface/DistributedPathGeneratorInterface-component.hpp DistributedPathGeneratorInterface/DistributedPathGeneratorInterface-component.cpp)
-orocos_component(PathGeneratorInterface ExamplePathGenerator/ExamplePathGenerator-component.hpp ExamplePathGenerator/ExamplePathGenerator-component.cpp)
+orocos_component(PathGeneratorInterface PathGeneratorInterface/PathGeneratorInterface-component.hpp PathGeneratorInterface/PathGeneratorInterface-component.cpp DistributedPathGeneratorInterface/DistributedPathGeneratorInterface-component.hpp DistributedPathGeneratorInterface/DistributedPathGeneratorInterface-component.cpp ExamplePathGenerator/ExamplePathGenerator-component.hpp ExamplePathGenerator/ExamplePathGenerator-component.cpp)
 #
 # You may add multiple orocos_component statements.
 
@@ -21,9 +19,7 @@ orocos_component(PathGeneratorInterface ExamplePathGenerator/ExamplePathGenerato
 #
 # Installs in the include/orocos/PathGeneratorInterface/ directory
 #
-orocos_install_headers(PathGeneratorInterface/PathGeneratorInterface-component.hpp) # ...you may add multiple header files
-orocos_install_headers(DistributedPathGeneratorInterface/DistributedPathGeneratorInterface-component.hpp)
-orocos_install_headers(ExamplePathGenerator/ExamplePathGenerator-component.hpp)
+orocos_install_headers(PathGeneratorInterface/PathGeneratorInterface-component.hpp DistributedPathGeneratorInterface/DistributedPathGeneratorInterface-component.hpp ExamplePathGenerator/ExamplePathGenerator-component.hpp)
 #
 # You may add multiple orocos_install_headers statements.
 
