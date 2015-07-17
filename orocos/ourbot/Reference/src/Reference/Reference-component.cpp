@@ -12,7 +12,6 @@ Reference::Reference(std::string const& name) : TaskContext(name, PreOperational
   ports()->addPort("ref_ffw_path_y_port", _ref_ffw_path_port[1]).doc("y ffw reference path");
   ports()->addPort("ref_ffw_path_t_port", _ref_ffw_path_port[2]).doc("theta ffw reference path");
 
-
   ports()->addPort("ref_pose_port", _ref_pose_port).doc("Pose reference sample");
   ports()->addPort("ref_ffw_port", _ref_ffw_port).doc("Feedforward reference sample");
 

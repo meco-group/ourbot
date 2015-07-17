@@ -34,7 +34,7 @@ _deployer_failure_event_port  = rtt.OutputPort("string")
 _deployer_current_state_port  = rtt.OutputPort("string")
 
 tc:addEventPort(_deployer_fsm_event_port, "deployer_fsm_event_port", "Event port for driving the deployer FSM")
-tc:addPort(_deployer_failure_event_port, "deployer_failure_event_port", "Port to send indicate a failure in the deployer")
+tc:addPort(_deployer_failure_event_port, "deployer_failure_event_port", "Port to indicate a failure in the deployer")
 tc:addPort(_deployer_current_state_port, "deployer_current_state_port", "current active state of the deployer FSM")
 
 function configureHook()
@@ -51,7 +51,7 @@ function configureHook()
    velcmd_sample_rate   = _velcmd_sample_rate:get()
 
    --Define Reference type
-   if distributed then
+   if distributed==false then
       reference_type = "Reference"
    else
       reference_type = "DistributedReference"

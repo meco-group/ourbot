@@ -8,10 +8,10 @@ using namespace RTT;
 
 class EstimatorInterface : public RTT::TaskContext{
   private:
-    InputPort<std::vector<double> > _cal_lidar_distances_port;
-    InputPort<std::vector<double> > _cal_lidar_angles_port;
-    InputPort<std::vector<double> > _cal_ir_distances_port;
-    InputPort<std::vector<double> > _cal_ir_angles_port;
+    InputPort<std::vector<double> > _cal_lidar_x_port;
+    InputPort<std::vector<double> > _cal_lidar_y_port;
+    InputPort<std::vector<double> > _cal_ir_x_port;
+    InputPort<std::vector<double> > _cal_ir_y_port;
     InputPort<std::vector<double> > _cal_imul_transacc_port;
     InputPort<double> _cal_imul_dorientation_port;
     InputPort<double> _cal_imul_orientation_port;
@@ -20,6 +20,7 @@ class EstimatorInterface : public RTT::TaskContext{
     InputPort<double> _cal_imur_orientation_port;
     InputPort<std::vector<double> > _cal_enc_pose_port;
     InputPort<std::vector<double> > _cal_motor_current_port;
+    InputPort<std::vector<double> > _cal_motor_voltage_port;
     InputPort<std::vector<double> > _cal_velocity_port;
 
     OutputPort<std::vector<double> > _est_pose_port;
@@ -28,10 +29,10 @@ class EstimatorInterface : public RTT::TaskContext{
     OutputPort<std::vector<double> > _est_global_offset_port;      // estimated offset of initial frame wrt world frame
     OutputPort<std::vector<double> > _map_obstacles_port;          // obstacles wrt to world frame
 
-    std::vector<double> _cal_lidar_distances;
-    std::vector<double> _cal_lidar_angles;
-    std::vector<double> _cal_ir_distances;
-    std::vector<double> _cal_ir_angles;
+    std::vector<double> _cal_lidar_x;
+    std::vector<double> _cal_lidar_y;
+    std::vector<double> _cal_ir_x;
+    std::vector<double> _cal_ir_y;
     std::vector<double> _cal_imul_transacc;
     double _cal_imul_dorientation;
     double _cal_imul_orientation;
@@ -40,6 +41,7 @@ class EstimatorInterface : public RTT::TaskContext{
     double _cal_imur_orientation;
     std::vector<double> _cal_enc_pose;
     std::vector<double> _cal_motor_current;
+    std::vector<double> _cal_motor_voltage;
     std::vector<double> _cal_velocity;
 
     std::vector<double> _est_pose;
@@ -72,6 +74,7 @@ class EstimatorInterface : public RTT::TaskContext{
     double getImuROrientation();
     std::vector<double> getEncPose();
     std::vector<double> getMotorCurrent();
+    std::vector<double> getMotorVoltage();
     std::vector<double> getCalVelocity();
 
     void setEstPose(std::vector<double> const&);

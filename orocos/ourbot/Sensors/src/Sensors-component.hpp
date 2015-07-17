@@ -8,10 +8,10 @@ using namespace RTT;
 
 class Sensors : public RTT::TaskContext{
   private:
-    OutputPort<std::vector<double> > _cal_lidar_distances_port;
-    OutputPort<std::vector<double> > _cal_lidar_angles_port;
-    OutputPort<std::vector<double> > _cal_ir_distances_port;
-    OutputPort<std::vector<double> > _cal_ir_angles_port;
+    OutputPort<std::vector<double> > _cal_lidar_x_port;
+    OutputPort<std::vector<double> > _cal_lidar_y_port;
+    OutputPort<std::vector<double> > _cal_ir_x_port;
+    OutputPort<std::vector<double> > _cal_ir_y_port;
     OutputPort<std::vector<double> > _cal_imul_transacc_port;
     OutputPort<double> _cal_imul_dorientation_port;
     OutputPort<double> _cal_imul_orientation_port;

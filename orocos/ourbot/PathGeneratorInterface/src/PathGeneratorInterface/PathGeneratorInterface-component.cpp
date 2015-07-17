@@ -111,8 +111,6 @@ void PathGeneratorInterface::updateHook(){
     _ref_ffw_path_port[i].write(_ref_ffw_path[i]);
   }
 
-  log(Info) << "Path updated !" <<endlog();
-
   // Check timing
   if (_init>2){
     Seconds prev_time_elapsed = TimeService::Instance()->secondsSince( prev_timestamp );

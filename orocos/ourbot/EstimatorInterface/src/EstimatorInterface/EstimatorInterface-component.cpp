@@ -8,10 +8,10 @@ EstimatorInterface::EstimatorInterface(std::string const& name) : TaskContext(na
     _cal_enc_pose(3), _cal_motor_current(4), _cal_velocity(3),
     _est_pose(3), _est_velocity(3), _est_acceleration(3), _est_global_offset(3){
 
-  ports()->addPort("cal_lidar_distances_port", _cal_lidar_distances_port).doc("Distances wrt center from LIDAR");
-  ports()->addPort("cal_lidar_angles_port", _cal_lidar_angles_port).doc("Angles from LIDAR");
-  ports()->addPort("cal_ir_distances_port", _cal_ir_distances_port).doc("Distances wrt center from IR's");
-  ports()->addPort("cal_ir_angles_port", _cal_ir_angles_port).doc("Angles from IR's");
+  ports()->addPort("cal_lidar_distances_port", _cal_lidar_x_port).doc("Observed x positions wrt local frame from LIDAR");
+  ports()->addPort("cal_lidar_angles_port", _cal_lidar_y_port).doc("Observed y positions wrt local frame from LIDAR");
+  ports()->addPort("cal_ir_distances_port", _cal_ir_x_port).doc("Observed x positions wrt local frame from IR's");
+  ports()->addPort("cal_ir_angles_port", _cal_ir_y_port).doc("Observed y positions wrt local frame from IR's");
   ports()->addPort("cal_imul_transacc_port", _cal_imul_transacc_port).doc("Translational accelerations of IMU left");
   ports()->addPort("cal_imul_dorientation_port", _cal_imul_dorientation_port).doc("Derivative of orientation of IMU left");
   ports()->addPort("cal_imul_orientation_port", _cal_imul_orientation_port).doc("Orientation of IMU left");
@@ -20,6 +20,7 @@ EstimatorInterface::EstimatorInterface(std::string const& name) : TaskContext(na
   ports()->addPort("cal_imur_orientation_port", _cal_imur_orientation_port).doc("Orientation of IMU right");
   ports()->addPort("cal_enc_pose_port", _cal_enc_pose_port).doc("Pose derived from encoders");
   ports()->addPort("cal_motor_current_port", _cal_motor_current_port).doc("Current of 4 motors");
+  ports()->addPort("cal_motor_voltage_port", _cal_motor_voltage_port).doc("Voltage of 4 motors");
   ports()->addPort("cal_velocity_port", _cal_velocity_port).doc("Velocity input of system");
 
   ports()->addPort("est_pose_port", _est_pose_port).doc("Estimated pose wrt to initial frame");
@@ -36,10 +37,10 @@ EstimatorInterface::EstimatorInterface(std::string const& name) : TaskContext(na
 
 bool EstimatorInterface::configureHook(){
   // Reserve required memory and initialize with zeros
-  _cal_lidar_distances.resize(_lidar_data_length);
-  _cal_lidar_angles.resize(_lidar_data_length);
-  _cal_ir_distances.resize(_ir_data_length);
-  _cal_ir_angles.resize(_ir_data_length);
+  _cal_lidar_x.resize(_lidar_data_length);
+  _cal_lidar_y.resize(_lidar_data_length);
+  _cal_ir_x.resize(_ir_data_length);
+  _cal_ir_y.resize(_ir_data_length);
   _map_obstacles.resize(_obs_data_length);
 
   // Show example data sample to ports to make data flow real-time
@@ -56,19 +57,19 @@ bool EstimatorInterface::configureHook(){
 bool EstimatorInterface::startHook(){
   // Check if input ports are connected
   bool check = true;
-  if (!_cal_lidar_distances_port.connected()){
+  if (!_cal_lidar_x_port.connected()){
     log(Error) << "_cal_lidar_distances_port not connected !" <<endlog();
     check = false;
   }
-  if (!_cal_lidar_angles_port.connected()){
+  if (!_cal_lidar_y_port.connected()){
     log(Error) << "_cal_lidar_angles_port not connected !" <<endlog();
     check = false;
   }
-  if (!_cal_ir_distances_port.connected()){
+  if (!_cal_ir_x_port.connected()){
     log(Error) << "_cal_ir_distances_port not connected !" <<endlog();
     check = false;
   }
-  if (!_cal_ir_angles_port.connected()){
+  if (!_cal_ir_y_port.connected()){
     log(Error) << "_cal_ir_angles_port not connected !" <<endlog();
     check = false;
   }
@@ -80,7 +81,6 @@ bool EstimatorInterface::startHook(){
     log(Error) << "_cal_imul_dorientation_port not connected !" <<endlog();
     check = false;
   }
-
   if (!_cal_imul_orientation_port.connected()){
     log(Error) << "_cal_imul_orientation_port not connected !" <<endlog();
     check = false;
@@ -105,6 +105,10 @@ bool EstimatorInterface::startHook(){
     log(Error) << "_cal_motor_current_port not connected !" <<endlog();
     check = false;
   }
+  if (!_cal_motor_current_port.connected()){
+    log(Error) << "_cal_motor_voltage_port not connected !" <<endlog();
+    check = false;
+  }
   if (!_cal_velocity_port.connected()){
     log(Error) << "_cal_velocity_port not connected !" <<endlog();
     check = false;
@@ -122,10 +126,10 @@ bool EstimatorInterface::startHook(){
 
 void EstimatorInterface::updateHook(){
   // Read from sensors
-  if (_cal_lidar_distances_port.read(_cal_lidar_distances) == RTT::NoData) {log(Error) << "No data on _cal_lidar_distances_port !" <<endlog(); error();}
-  if (_cal_lidar_angles_port.read(_cal_lidar_angles) == RTT::NoData) {log(Error) << "No data on _cal_lidar_angles_port !" <<endlog(); error();}
-  if (_cal_ir_distances_port.read(_cal_ir_distances) == RTT::NoData) {log(Error) << "No data on _cal_ir_distances_port !" <<endlog(); error();}
-  if (_cal_ir_angles_port.read(_cal_ir_angles) == RTT::NoData) {log(Error) << "No data on _cal_ir_angles_port !" <<endlog(); error();}
+  if (_cal_lidar_x_port.read(_cal_lidar_x) == RTT::NoData) {log(Error) << "No data on _cal_lidar_x_port !" <<endlog(); error();}
+  if (_cal_lidar_y_port.read(_cal_lidar_y) == RTT::NoData) {log(Error) << "No data on _cal_lidar_y_port !" <<endlog(); error();}
+  if (_cal_ir_x_port.read(_cal_ir_x) == RTT::NoData) {log(Error) << "No data on _cal_ir_x_port !" <<endlog(); error();}
+  if (_cal_ir_y_port.read(_cal_ir_y) == RTT::NoData) {log(Error) << "No data on _cal_ir_y_port !" <<endlog(); error();}
   if (_cal_imul_transacc_port.read(_cal_imul_transacc) == RTT::NoData) {log(Error) << "No data on _cal_imul_transacc_port !" <<endlog(); error();}
   if (_cal_imul_dorientation_port.read(_cal_imul_dorientation) == RTT::NoData) {log(Error) << "No data on _cal_imul_dorientation_port !" <<endlog(); error();}
   if (_cal_imul_orientation_port.read(_cal_imul_orientation) == RTT::NoData) {log(Error) << "No data on _cal_imul_orientation_port !" <<endlog(); error();}
@@ -134,6 +138,7 @@ void EstimatorInterface::updateHook(){
   if (_cal_imur_orientation_port.read(_cal_imur_orientation) == RTT::NoData) {log(Error) << "No data on _cal_imur_orientation_port !" <<endlog(); error();}
   if (_cal_enc_pose_port.read(_cal_enc_pose) == RTT::NoData) {log(Error) << "No data on _cal_enc_pose_port !" <<endlog(); error();}
   if (_cal_motor_current_port.read(_cal_motor_current) == RTT::NoData) {log(Error) << "No data on _cal_motor_current_port !" <<endlog(); error();}
+  if (_cal_motor_voltage_port.read(_cal_motor_voltage) == RTT::NoData) {log(Error) << "No data on _cal_motor_voltage_port !" <<endlog(); error();}
 
   // Read velocity command
   std::vector<double> sample(3,0.0);
@@ -147,7 +152,7 @@ void EstimatorInterface::updateHook(){
   // Apply estimation update
   estimateUpdate();
 
-  // Write vestimated values
+  // Write estimated values
   _est_pose_port.write(_est_pose);
   _est_velocity_port.write(_est_velocity);
   _est_acceleration_port.write(_est_acceleration);
@@ -166,14 +171,14 @@ int EstimatorInterface::getObsDataLength(){ return _obs_data_length; }
 
 std::vector<std::vector<double> > EstimatorInterface::getLidarData(){
   std::vector<std::vector<double> > lidardata(2, std::vector<double>(_lidar_data_length));
-  lidardata.at(0) = _cal_lidar_distances;
-  lidardata.at(1) = _cal_lidar_angles;
+  lidardata.at(0) = _cal_lidar_x;
+  lidardata.at(1) = _cal_lidar_y;
   return lidardata;
 }
 std::vector<std::vector<double> > EstimatorInterface::getIRData(){
   std::vector<std::vector<double> > irdata(2, std::vector<double>(_ir_data_length));
-  irdata.at(0) = _cal_ir_distances;
-  irdata.at(1) = _cal_ir_angles;
+  irdata.at(0) = _cal_ir_x;
+  irdata.at(1) = _cal_ir_y;
   return irdata;
 }
 
@@ -185,6 +190,7 @@ double EstimatorInterface::getImuRDOrientation(){return _cal_imur_dorientation; 
 double EstimatorInterface::getImuROrientation(){return _cal_imur_orientation; }
 std::vector<double> EstimatorInterface::getEncPose(){ return _cal_enc_pose; }
 std::vector<double> EstimatorInterface::getMotorCurrent(){ return _cal_motor_current; }
+std::vector<double> EstimatorInterface::getMotorVoltage(){ return _cal_motor_voltage; }
 std::vector<double> EstimatorInterface::getCalVelocity(){ return _cal_velocity; }
 
 void EstimatorInterface::setEstPose(std::vector<double> const& est_pose){ _est_pose = est_pose; }

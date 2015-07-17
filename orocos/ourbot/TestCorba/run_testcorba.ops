@@ -1,0 +1,4 @@
+import("rtt_ros")
+ros.import("TestCorba")
+loadComponent("testcorba2","TestCorba")
+server("testcorba2",true)
