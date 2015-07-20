@@ -17,9 +17,11 @@ class VelocityCommandInterface : public RTT::TaskContext{
 
   public:
     VelocityCommandInterface(std::string const& name);
+    void setVelocity(double, double, double);
     virtual bool configureHook();
     virtual bool startHook();
     virtual void updateHook();
     virtual void stopHook();
+    virtual void cleanupHook();
 };
 #endif

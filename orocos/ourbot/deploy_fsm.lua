@@ -63,6 +63,8 @@ local packages_to_import = {
 local system_config_file      = 'Configuration/system-config.cpf'
 local reporter_config_file    = 'Configuration/reporter-config.cpf'
 local component_config_files  = {
+  [teensy]          = 'Configuration/teensy-config.cpf',
+  [lidar]           = 'Configuration/lidar-config.cpf'
   --add here componentname = 'Configuration/component-config.cpf'
 }
 

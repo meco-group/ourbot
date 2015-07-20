@@ -49,7 +49,7 @@
 
   <simple name="lidar_data_length" type="long">
     <description>Length of lidar data</description>
-    <value>10</value>
+    <value>128</value>
   </simple>
   <simple name="ir_data_length" type="long">
     <description>Length of ir data (= number of ir's)</description>
@@ -59,7 +59,7 @@
     <description>Length of obstacle data</description>
     <value>10</value>
   </simple>
-  
+
   <simple name="platform_length" type="double">
     <description>Length of the platform in [m]</description>
     <value>0.3</value>
@@ -72,8 +72,8 @@
     <description>Radius of the wheel in [m]</description>
     <value>0.05</value>
   </simple>
-  
-  
+
+
   <struct name="kin_limitations" type="array">
     <description>Kinematic limitations (vmax, vmin, amax, amin)</description>
     <simple name="vmax" type="double">

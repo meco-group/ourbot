@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE properties SYSTEM "cpf.dtd">
 <properties>
-	<simple name="encoder_ticks_per_revolution" type="double">
+	<simple name="encoder_ticks_per_revolution" type="long">
     <description>Number of encoder ticks per full revolution. Gear ratio should also be accounted for!</description>
     <value>38400</value>
+  </simple>
+  <simple name="usb_port_name" type="string">
+    <description>Port name for the USB device. Full path required.</description>
+    <value>/dev/ttyACM0</value>
   </simple>
 
   <simple name="velocity_controller_P" type="double">

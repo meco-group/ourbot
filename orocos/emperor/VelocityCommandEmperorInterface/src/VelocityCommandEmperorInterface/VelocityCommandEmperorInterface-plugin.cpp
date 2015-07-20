@@ -13,13 +13,13 @@ using namespace std;
 bool loadRTTPlugin( RTT::TaskContext* t )
 {
     if ( t == 0 )
-        cout << "Plugin of VelocityCommandInterface loaded in process."<< endl;
+        cout << "Plugin of VelocityCommandEmperorInterface loaded in process."<< endl;
     else
-        cout << "Plugin of VelocityCommandInterface loaded in component: "<< t->getName() << endl;
+        cout << "Plugin of VelocityCommandEmperorInterface loaded in component: "<< t->getName() << endl;
     return true;
 }
 
 std::string getRTTPluginName()
 {
-    return "VelocityCommandInterface-example-plugin";
+    return "VelocityCommandEmperorInterface-example-plugin";
 }
