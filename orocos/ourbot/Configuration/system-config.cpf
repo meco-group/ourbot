@@ -59,6 +59,21 @@
     <description>Length of obstacle data</description>
     <value>10</value>
   </simple>
+  
+  <simple name="platform_length" type="double">
+    <description>Length of the platform in [m]</description>
+    <value>0.3</value>
+  </simple>
+  <simple name="platform_width" type="double">
+    <description>Width of the platform in [m]</description>
+    <value>0.263</value>
+  </simple>
+  <simple name="wheel_radius" type="double">
+    <description>Radius of the wheel in [m]</description>
+    <value>0.05</value>
+  </simple>
+  
+  
   <struct name="kin_limitations" type="array">
     <description>Kinematic limitations (vmax, vmin, amax, amin)</description>
     <simple name="vmax" type="double">

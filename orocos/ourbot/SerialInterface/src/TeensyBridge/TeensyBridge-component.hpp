@@ -41,6 +41,9 @@ class TeensyBridge : public USBInterface
 		std::vector<double>	_pose;
 		
 		uint8_t _control_mode;
+		double _velocity_controller_P;
+		double _velocity_controller_I;
+		double _velocity_controller_D;
 		
 		RTT::InputPort<std::vector<double> >	_cmd_velocity_port;
 		RTT::OutputPort<std::vector<double> > _cal_enc_pose_port;
@@ -62,6 +65,7 @@ class TeensyBridge : public USBInterface
 		TeensyBridge(std::string const& name);
 		
 		bool configureHook();
+		bool startHook();
 		void updateHook();
 		
 		uint32_t getPacketsDropped();

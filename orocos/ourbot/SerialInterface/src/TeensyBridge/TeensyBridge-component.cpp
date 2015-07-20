@@ -6,13 +6,19 @@
 #define MAVLINK_MSG_OVERHEAD					8
 
 TeensyBridge::TeensyBridge(std::string const& name) :
-	USBInterface(name), _platform_length(0.2), _platform_width(0.15), _wheel_radius(0.05), _encoder_ticks_per_revolution(38400), _current_sensor_gain(1.0), _current_sensor_offset(0.0), _kinematic_conversion_position(0.0), _kinematic_conversion_orientation(0.0), _kinematic_conversion_wheel(0.0), _pose(3,0.0), _control_mode(TEENSYBRIDGE_CONTROL_MODE_SIMPLE)
+	USBInterface(name), _platform_length(0.3), _platform_width(0.25), _wheel_radius(0.05), _encoder_ticks_per_revolution(38400), 
+	_current_sensor_gain(1.0), _current_sensor_offset(0.0), 
+	_kinematic_conversion_position(0.0), _kinematic_conversion_orientation(0.0), _kinematic_conversion_wheel(0.0), _pose(3,0.0), 
+	_control_mode(TEENSYBRIDGE_CONTROL_MODE_SIMPLE), _velocity_controller_P(0.0f), _velocity_controller_I(0.0f), _velocity_controller_D(0.0f)
 {
-	this->addProperty("_platform_length",_platform_length).doc("Property containing the platform length in [m].");
-	this->addProperty("_platform_width",_platform_width).doc("Property containing the platform width in [m].");
-	this->addProperty("_wheel_radius",_wheel_radius).doc("Property containing the wheel radius in [m].");
-	this->addProperty("_encoder_ticks_per_revolution",_encoder_ticks_per_revolution).doc("Property containing the encoder ticks per revolution in [-].");
-	this->addProperty("_current_sensor_gain",_current_sensor_gain).doc("Gain of current sensor to get proper scaling");
+	this->addProperty("platform_length",_platform_length).doc("Property containing the platform length in [m].");
+	this->addProperty("platform_width",_platform_width).doc("Property containing the platform width in [m].");
+	this->addProperty("wheel_radius",_wheel_radius).doc("Property containing the wheel radius in [m].");
+	this->addProperty("encoder_ticks_per_revolution",_encoder_ticks_per_revolution).doc("Property containing the encoder ticks per revolution in [-].");
+	this->addProperty("current_sensor_gain",_current_sensor_gain).doc("Gain of current sensor to get proper scaling");
+	this->addProperty("velocity_controller_P",_velocity_controller_P).doc("Proportional gain for the velocity controller.")
+	this->addProperty("velocity_controller_I",_velocity_controller_I).doc("Integral gain for the velocity controller.")
+	this->addProperty("velocity_controller_D",_velocity_controller_D).doc("Derivative gain for the velocity controller.")
 
 	this->ports()->addPort( "cmd_velocity_port", _cmd_velocity_port ).doc("Input port for low level velocity controller. Vector contains [vx,vy,w]");
 	this->ports()->addPort( "cal_enc_pose_port", _cal_enc_pose_port ).doc( "Output port for calibrated encoder values. Outputs the pose (x,y,orientation) in [m,m,rad]" );
@@ -137,7 +143,7 @@ bool TeensyBridge::configureHook()
   
   //calculate kinematic conversion
   _kinematic_conversion_position = _wheel_radius*M_PI/_encoder_ticks_per_revolution;
-	_kinematic_conversion_orientation = _wheel_radius*M_PI/_encoder_ticks_per_revolution/(_platform_length + _platform_width);
+	_kinematic_conversion_orientation = _wheel_radius*M_PI/_encoder_ticks_per_revolution/(_platform_length/2.0 + _platform_width/2.0);
 	_kinematic_conversion_wheel = _encoder_ticks_per_revolution/(2.0*M_PI*_wheel_radius);
 	
 #ifndef TEENSYBRIDGE_TESTFLAG  
@@ -146,6 +152,12 @@ bool TeensyBridge::configureHook()
 	_usb_port_name = "/dev/ttyACM0";
 	return setPeriod(0.005);
 #endif //TEENSYBRIDGE_TESTFLAG
+}
+
+bool TeensyBridge::startHook()
+{
+	USBInterface::startHook();
+	setVelocityController(_velocity_controller_P, _velocity_controller_I, _velocity_controller_D);
 }
 
 void TeensyBridge::updateHook()
@@ -243,7 +255,7 @@ void TeensyBridge::setVelocity(double vx, double vy, double w)
 		uint8_t buffer[MAVLINK_MSG_ID_MOTOR_COMMAND_LEN+MAVLINK_MSG_OVERHEAD];
 		uint8_t numbytes = 0;
 	
-		w = (_platform_length + _platform_width)*w;
+		w = (_platform_length + _platform_width)*w/2.0;
 	
 		// UPDATE 14/07/2015: To have the same reference frame as the youbot, the y-axis has been changed
 		motor_command.command_left_front = (vx - vy - w)*_kinematic_conversion_wheel;

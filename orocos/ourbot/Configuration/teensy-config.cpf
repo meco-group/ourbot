@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "cpf.dtd">
+<properties>
+	<simple name="encoder_ticks_per_revolution" type="double">
+    <description>Number of encoder ticks per full revolution. Gear ratio should also be accounted for!</description>
+    <value>38400</value>
+  </simple>
+
+  <simple name="velocity_controller_P" type="double">
+    <description>Standard velocity controller proportional gain</description>
+    <value>10.0</value>
+  </simple>
+  <simple name="velocity_controller_I" type="double">
+    <description>Standard velocity controller integral gain</description>
+    <value>2.5</value>
+  </simple>
+  <simple name="velocity_controller_D" type="double">
+    <description>Standard velocity controller derivative gain</description>
+    <value>0.01</value>
+  </simple>
+</properties>
