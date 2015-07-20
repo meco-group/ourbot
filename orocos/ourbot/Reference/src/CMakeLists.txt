@@ -10,8 +10,7 @@
 # Creates a component library libReference-<target>.so
 # and installs in the directory lib/orocos/Reference/
 #
-orocos_component(Reference Reference/Reference-component.hpp Reference/Reference-component.cpp) # ...you may add multiple source files
-orocos_component(Reference DistributedReference/DistributedReference-component.hpp DistributedReference/DistributedReference-component.cpp)
+orocos_component(Reference Reference/Reference-component.hpp Reference/Reference-component.cpp Reference DistributedReference/DistributedReference-component.hpp DistributedReference/DistributedReference-component.cpp)
 #
 # You may add multiple orocos_component statements.
 
@@ -20,8 +19,7 @@ orocos_component(Reference DistributedReference/DistributedReference-component.h
 #
 # Installs in the include/orocos/Reference/ directory
 #
-orocos_install_headers(Reference/Reference-component.hpp) # ...you may add multiple header files
-orocos_install_headers(DistributedReference/DistributedReference-component.hpp)
+orocos_install_headers(Reference/Reference-component.hpp DistributedReference/DistributedReference-component.hpp)
 #
 # You may add multiple orocos_install_headers statements.
 

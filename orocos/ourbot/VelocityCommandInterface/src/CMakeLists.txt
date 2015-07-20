@@ -10,8 +10,7 @@
 # Creates a component library libVelocityCommandInterface-<target>.so
 # and installs in the directory lib/orocos/VelocityCommandInterface/
 #
-orocos_component(VelocityCommandInterface VelocityCommandInterface/VelocityCommandInterface-component.hpp VelocityCommandInterface/VelocityCommandInterface-component.cpp)
-orocos_component(VelocityCommandInterface ExampleVelocityCommand/ExampleVelocityCommand-component.hpp ExampleVelocityCommand/ExampleVelocityCommand-component.cpp)
+orocos_component(VelocityCommandInterface VelocityCommandInterface/VelocityCommandInterface-component.hpp VelocityCommandInterface/VelocityCommandInterface-component.cpp ExampleVelocityCommand/ExampleVelocityCommand-component.hpp ExampleVelocityCommand/ExampleVelocityCommand-component.cpp)
 # You may add multiple orocos_component statements.
 
 #
@@ -19,8 +18,7 @@ orocos_component(VelocityCommandInterface ExampleVelocityCommand/ExampleVelocity
 #
 # Installs in the include/orocos/VelocityCommandInterface/ directory
 #
-orocos_install_headers(VelocityCommandInterface/VelocityCommandInterface-component.hpp)
-orocos_install_headers(ExampleVelocityCommand/ExampleVelocityCommand-component.hpp)
+orocos_install_headers(VelocityCommandInterface/VelocityCommandInterface-component.hpp ExampleVelocityCommand/ExampleVelocityCommand-component.hpp)
 #
 # You may add multiple orocos_install_headers statements.
 
