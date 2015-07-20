@@ -19,3 +19,6 @@ orocos/setup.zsh
 *.rosinstall.bak
 ourbot.sublime-project
 ourbot.sublime-workspace
+orocos/*/TestCorba/
+orocos/ourbot/orocos/naming_distributed_agents.txt
+orocos/overview.txt
