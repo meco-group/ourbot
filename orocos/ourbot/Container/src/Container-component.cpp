@@ -2,34 +2,38 @@
 #include <rtt/Component.hpp>
 #include <iostream>
 
-#define COMPONENTS_FUNCTION_ITERATOR(func)	for(Components::iterator task = _components.begin(); task != _components.end() ; ++task) { \
-																				(*task)->func(); \
-																			}
+#define COMPONENTS_FUNCTION_ITERATOR_BOOL(func)	bool value = true; \
+																								for(Components::iterator task = _components.begin(); task != _components.end() ; ++task) { \
+																									value = value & (*task)->func(); \
+																								}\
+																								return value;
+																								
+#define COMPONENTS_FUNCTION_ITERATOR_VOID(func)	for(Components::iterator task = _components.begin(); task != _components.end() ; ++task) { \
+																									(*task)->func(); \
+																								}
 
 Container::Container(std::string const& name) : TaskContext(name,PreOperational){
 	addOperation("addComponent", &Container::addComponent, this).doc("Adds a component to the component container and takes care of its configure, start, stop cleanup and update. All its ports become available under the same name.");
 }
 
 bool Container::configureHook(){
-	COMPONENTS_FUNCTION_ITERATOR(configure)
-  return true;
+	COMPONENTS_FUNCTION_ITERATOR_BOOL(configure)
 }
 
 bool Container::startHook(){
-	COMPONENTS_FUNCTION_ITERATOR(start)	
-  return true;
+	COMPONENTS_FUNCTION_ITERATOR_BOOL(start)	
 }
 
 void Container::updateHook(){
-	COMPONENTS_FUNCTION_ITERATOR(update)
+	COMPONENTS_FUNCTION_ITERATOR_VOID(update)
 }
 
 void Container::stopHook() {
-	COMPONENTS_FUNCTION_ITERATOR(stop)
+	COMPONENTS_FUNCTION_ITERATOR_VOID(stop)
 }
 
 void Container::cleanupHook() {
-	COMPONENTS_FUNCTION_ITERATOR(cleanup)
+	COMPONENTS_FUNCTION_ITERATOR_VOID(cleanup)
 }
 
 bool Container::addComponent( const std::string& component )

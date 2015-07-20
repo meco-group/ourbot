@@ -27,7 +27,12 @@ bool USBInterface::configureHook()
 
 bool USBInterface::startHook()
 {
-	connectSerial();
+	if(connectSerial()){
+		return true;
+	}else{
+		RTT::log(RTT::Warning) << "Cannot connect to the USB device (" + getName() + ")" << RTT::endlog();
+		return false;
+	}
 }
 
 void USBInterface::updateHook()

@@ -48,6 +48,7 @@ class RPLidar : public USBInterface
 	private:		
 		rplidar_response_device_info_t		_info;		//device info
 		rplidar_response_device_health_t	_health;	//device health
+		double _angle_offset;												//angle offset
 	
 		rplidar_activity_t		_state;								//lidar state
 		
@@ -76,7 +77,9 @@ class RPLidar : public USBInterface
 		RPLidar(std::string const& name);
 		
 		bool configureHook();
+		bool startHook();
 		void updateHook();
+		void stopHook();
 		
 		bool deviceInfo();
 		bool deviceHealth();

@@ -3,7 +3,7 @@
 #include <math.h>
 
 RPLidar::RPLidar(std::string const& name) :
-	USBInterface(name), _state(IDLE), _buffer_offset(0), _lidar_data_length(RPLIDAR_NODE_BUFFER_SIZE), _node_buffer_fill(0), _primary_node_buffer(_node_buffer1), _secondary_node_buffer(_node_buffer2),
+	USBInterface(name), _angle_offset(0.05), _state(IDLE), _buffer_offset(0), _lidar_data_length(RPLIDAR_NODE_BUFFER_SIZE), _node_buffer_fill(0), _primary_node_buffer(_node_buffer1), _secondary_node_buffer(_node_buffer2),
 	_node_buffer1{std::vector<double>(RPLIDAR_NODE_BUFFER_SIZE),std::vector<double>(RPLIDAR_NODE_BUFFER_SIZE),std::vector<double>(RPLIDAR_NODE_BUFFER_SIZE)},
 	_node_buffer2{std::vector<double>(RPLIDAR_NODE_BUFFER_SIZE),std::vector<double>(RPLIDAR_NODE_BUFFER_SIZE),std::vector<double>(RPLIDAR_NODE_BUFFER_SIZE)}
 {
@@ -19,6 +19,7 @@ RPLidar::RPLidar(std::string const& name) :
 	addOperation("stopScan", &RPLidar::stopScan, this).doc("Stops the lidar. Returns true if the command has been carried out successfully");
 	addOperation("showState", &RPLidar::showState, this).doc("Return the state in which the lidar currently operates.");
 	
+	addProperty("lidar_angle_offset", _angle_offset).doc("Angular offset of the lidar in radians.");
 	addProperty("lidar_data_length", _lidar_data_length).doc("Length of the lidar data.");
 }
 
@@ -181,6 +182,16 @@ bool RPLidar::configureHook()
 #endif //RPLIDAR_TESTFLAG
 }
 
+bool RPLidar::startHook()
+{
+	if(USBInterface::startHook()){
+		startScan();
+		return true;
+	} else {
+		return false;
+	}		
+}
+
 void RPLidar::updateHook()
 {
 	//do nothing
@@ -230,6 +241,12 @@ void RPLidar::updateHook()
 		//Scanning has stopped: go to idle
 		_state = IDLE;
 	}
+}
+
+void RPLidar::stopHook()
+{
+	stopScan();
+	USBInterface::stopHook();
 }
 
 bool RPLidar::deviceInfo()
@@ -311,43 +328,45 @@ void RPLidar::showMeasurement(const rplidar_response_measurement_node_t &node)
 {
 	printf("%s theta: %03.2f Dist: %08.2f Qual: %2d\n", 
         (node.sync_quality & RPLIDAR_RESP_MEASUREMENT_SYNCBIT) ?"S ":"  ", 
-        (node.angle_q6_checkbit >> RPLIDAR_RESP_MEASUREMENT_ANGLE_SHIFT)/64.0f,
-         node.distance_q2/4.0f,
+        (node.angle_q6_checkbit >> RPLIDAR_RESP_MEASUREMENT_ANGLE_SHIFT)/64.0,
+         node.distance_q2*0.00025,
          node.sync_quality && 0x3F);
 }
 
 void RPLidar::addNodeToMeasurements(const rplidar_response_measurement_node_t &node)
 {
-	double angle = (node.angle_q6_checkbit >> RPLIDAR_RESP_MEASUREMENT_ANGLE_SHIFT)*M_PI/(64.0*180.0);
-	double distance = node.distance_q2/4.0f;
-
-	//add node to current buffer
-	_primary_node_buffer[0][_node_buffer_fill] = distance*cos(angle);
-	_primary_node_buffer[1][_node_buffer_fill] = distance*sin(angle);
-	_primary_node_buffer[2][_node_buffer_fill] = (node.sync_quality && 0x3F)/64.0;
-
-	std::vector<double> v(3);
-	v[0] = _primary_node_buffer[0][_node_buffer_fill];
-	v[1] = _primary_node_buffer[1][_node_buffer_fill];
-	v[2] = _primary_node_buffer[2][_node_buffer_fill];
-	_cal_lidar_node_port.write(v);
+	double angle = (node.angle_q6_checkbit >> RPLIDAR_RESP_MEASUREMENT_ANGLE_SHIFT)*M_PI/(64.0*180.0) - _angle_offset;
+	double distance = node.distance_q2*0.00025; //node.distance_q2/4000.0
 	
-	_node_buffer_fill++;
-	if(_node_buffer_fill >= _lidar_data_length){
-		//set to ports
-		_cal_lidar_x_port.write(*_primary_node_buffer);
-		_cal_lidar_y_port.write(*_primary_node_buffer);
-		_cal_lidar_quality_port.write(*_primary_node_buffer);
+	if(distance > 0.1){ //check if the node is far enough, otherwise discard measurement
+		//add node to current buffer
+		_primary_node_buffer[0][_node_buffer_fill] = -distance*cos(angle);
+		_primary_node_buffer[1][_node_buffer_fill] = distance*sin(angle);
+		_primary_node_buffer[2][_node_buffer_fill] = (node.sync_quality && 0x3F)/64.0;
+
+		std::vector<double> v(3);
+		v[0] = _primary_node_buffer[0][_node_buffer_fill];
+		v[1] = _primary_node_buffer[1][_node_buffer_fill];
+		v[2] = _primary_node_buffer[2][_node_buffer_fill];
+		_cal_lidar_node_port.write(v);
+	
+		_node_buffer_fill++;
+		if(_node_buffer_fill >= _lidar_data_length){
+			//set to ports
+			_cal_lidar_x_port.write(*_primary_node_buffer);
+			_cal_lidar_y_port.write(*_primary_node_buffer);
+			_cal_lidar_quality_port.write(*_primary_node_buffer);
 		
-		//make other buffer current buffer
-		std::vector<double> *ptemp = _primary_node_buffer;
-		_primary_node_buffer = _secondary_node_buffer;
-		_secondary_node_buffer = ptemp;
+			//make other buffer current buffer
+			std::vector<double> *ptemp = _primary_node_buffer;
+			_primary_node_buffer = _secondary_node_buffer;
+			_secondary_node_buffer = ptemp;
 		
-		//set fill to 0
-		_node_buffer_fill = 0;
+			//set fill to 0
+			_node_buffer_fill = 0;
 		
-		std::cout << "switched buffers." << std::endl;
+			RPLIDAR_DEBUG_PRINT("switched buffers.")
+		}
 	}
 }
 
