@@ -16,9 +16,9 @@ TeensyBridge::TeensyBridge(std::string const& name) :
 	this->addProperty("wheel_radius",_wheel_radius).doc("Property containing the wheel radius in [m].");
 	this->addProperty("encoder_ticks_per_revolution",_encoder_ticks_per_revolution).doc("Property containing the encoder ticks per revolution in [-].");
 	this->addProperty("current_sensor_gain",_current_sensor_gain).doc("Gain of current sensor to get proper scaling");
-	this->addProperty("velocity_controller_P",_velocity_controller_P).doc("Proportional gain for the velocity controller.")
-	this->addProperty("velocity_controller_I",_velocity_controller_I).doc("Integral gain for the velocity controller.")
-	this->addProperty("velocity_controller_D",_velocity_controller_D).doc("Derivative gain for the velocity controller.")
+	this->addProperty("velocity_controller_P",_velocity_controller_P).doc("Proportional gain for the velocity controller.");
+	this->addProperty("velocity_controller_I",_velocity_controller_I).doc("Integral gain for the velocity controller.");
+	this->addProperty("velocity_controller_D",_velocity_controller_D).doc("Derivative gain for the velocity controller.");
 
 	this->ports()->addPort( "cmd_velocity_port", _cmd_velocity_port ).doc("Input port for low level velocity controller. Vector contains [vx,vy,w]");
 	this->ports()->addPort( "cal_enc_pose_port", _cal_enc_pose_port ).doc( "Output port for calibrated encoder values. Outputs the pose (x,y,orientation) in [m,m,rad]" );
