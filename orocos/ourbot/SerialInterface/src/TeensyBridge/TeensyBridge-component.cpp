@@ -156,8 +156,12 @@ bool TeensyBridge::configureHook()
 
 bool TeensyBridge::startHook()
 {
-	USBInterface::startHook();
-	setVelocityController(_velocity_controller_P, _velocity_controller_I, _velocity_controller_D);
+	if(USBInterface::startHook()){
+		setVelocityController(_velocity_controller_P, _velocity_controller_I, _velocity_controller_D);
+		return true;
+	}else{
+		return false;
+	}
 }
 
 void TeensyBridge::updateHook()
