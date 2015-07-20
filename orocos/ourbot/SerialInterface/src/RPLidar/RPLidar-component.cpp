@@ -11,7 +11,7 @@ RPLidar::RPLidar(std::string const& name) :
 	this->ports()->addPort( "cal_lidar_y_port", _cal_lidar_y_port ).doc( "Output port for calibrated lidar node positions. Holds a vector of RPLIDAR_NODE_BUFFER_SIZE y-coordinates [m]." );
 	this->ports()->addPort( "cal_lidar_quality_port", _cal_lidar_quality_port ).doc( "Output port for node quality. value between 0 and 1" );
 	this->ports()->addPort( "cal_lidar_node_port", _cal_lidar_node_port ).doc( "Output port for the calibrated lidar nodes [m,m,-]" );
-	
+
 	addOperation("deviceInfo", &RPLidar::deviceInfo, this).doc("Send request to the lidar to send its device info.");
 	addOperation("deviceHealth", &RPLidar::deviceHealth, this).doc("Send request to the lidar to send its health.");
 	addOperation("deviceReset", &RPLidar::deviceReset, this).doc("Send request to the lidar to reset.");
@@ -62,7 +62,7 @@ bool RPLidar::sendCommand(uint8_t cmd, const void *payload, uint32_t payloadsize
       // send checksum
       writeByte(checksum);
   }
-  
+
   if(cmd == RPLIDAR_CMD_RESET){ _state = RESETTING; }
   else if(cmd == RPLIDAR_CMD_STOP) { _state = STOP_SCANNING; }
   else { _state = PENDING; }
@@ -70,7 +70,7 @@ bool RPLidar::sendCommand(uint8_t cmd, const void *payload, uint32_t payloadsize
 }
 
 int RPLidar::handleRequest(uint8_t* buffer, uint32_t numbytes)
-{	
+{
 	_request_status = DECODING;
 	uint32_t bytes_decoded = 0;
 	uint32_t offset = 0;
@@ -80,7 +80,7 @@ int RPLidar::handleRequest(uint8_t* buffer, uint32_t numbytes)
 			RPLIDAR_DEBUG_PRINT("Received valid message from the rplidar.")
 			rplidar_ans_header_t* answer_header = reinterpret_cast<rplidar_ans_header_t *>(buffer+offset);
 			_request_status = INVALID;
-			
+
 			switch(answer_header->type){
 				case RPLIDAR_ANS_TYPE_DEVHEALTH:{
 					// handle the device info message
@@ -96,7 +96,7 @@ int RPLidar::handleRequest(uint8_t* buffer, uint32_t numbytes)
 		      	RPLIDAR_DEBUG_PRINT("Received DEVHEALTH packet from the rplidar but the SIZE MASK did not match.")
 		      }
 					break;}
-					
+
 				case RPLIDAR_ANS_TYPE_DEVINFO:{
 					// handle the device info message
 		      if((answer_header->size_q30_subtype & RPLIDAR_ANS_HEADER_SIZE_MASK) >= sizeof(rplidar_response_device_info_t)){
@@ -111,7 +111,7 @@ int RPLidar::handleRequest(uint8_t* buffer, uint32_t numbytes)
 		      	RPLIDAR_DEBUG_PRINT("Received DEVINFO packet from the rplidar but the SIZE MASK did not match.")
 		      }
 					break;}
-					
+
 				case RPLIDAR_ANS_TYPE_MEASUREMENT:{
 					// handle the device info message
 		      if((answer_header->size_q30_subtype & RPLIDAR_ANS_HEADER_SIZE_MASK) >= sizeof(rplidar_response_measurement_node_t)){
@@ -125,13 +125,13 @@ int RPLidar::handleRequest(uint8_t* buffer, uint32_t numbytes)
 		      	RPLIDAR_DEBUG_PRINT("Received MEASUREMENT NODE packet from the rplidar but the SIZE MASK did not match.")
 		      }
 					break;}
-				
+
 				default:
 					break;
 			}
-		}	
+		}
 	}
-	
+
 	return bytes_decoded;
 }
 
@@ -149,9 +149,9 @@ int RPLidar::handleScan(uint8_t* buffer, uint32_t numbytes)
 				showMeasurement(*node);
 			#endif //RPLIDAR_DEBUGFLAG*/
 			_measurement_status = MEASUREMENT_NODE;
-			
+
 			addNodeToMeasurements(*node);
-		}	
+		}
 	}
 
 	if(_measurement_status == MEASUREMENT_NODE){
@@ -167,14 +167,14 @@ bool RPLidar::configureHook()
   std::vector<double> example(3, 0.0);
   // set 3D ports
   _cal_lidar_node_port.setDataSample(example);
-  
+
   // set RPLIDAR_NODE_BUFFER_SIZE-D ports
   example.resize(_lidar_data_length);
   _cal_lidar_x_port.setDataSample(example);
   _cal_lidar_y_port.setDataSample(example);
   _cal_lidar_quality_port.setDataSample(example);
-  
-#ifndef RPLIDAR_TESTFLAG  
+
+#ifndef RPLIDAR_TESTFLAG
 	return true;
 #else
 	_usb_port_name = "/dev/ttyUSB0";
@@ -196,10 +196,10 @@ void RPLidar::updateHook()
 {
 	//do nothing
 	int numbytes = readBytes(_buffer + _buffer_offset, RPLIDAR_BUFFER_SIZE - _buffer_offset);
-	
+
 	if(numbytes>0){
 		RPLIDAR_DEBUG_PRINT("Bytes received: " << numbytes)
-		
+
 		//decode the buffer while bytes are available
 		numbytes += _buffer_offset;
 		uint32_t decoding_offset = 0;
@@ -222,15 +222,15 @@ void RPLidar::updateHook()
 					bytes_decoded = numbytes;
 					_request_status = RESET;
 					_state = IDLE;
-					break;				
-			}	
+					break;
+			}
 			decoding_offset += bytes_decoded;
 			numbytes -= bytes_decoded;
-			
+
 			RPLIDAR_DEBUG_PRINT("Decoding offset " << decoding_offset)
 			RPLIDAR_DEBUG_PRINT("Numbytes: " << numbytes)
 		}while((bytes_decoded>0)&&(numbytes>0));
-		
+
 		//copy the remainder to the beginning of the buffer
 		if(numbytes>0){
 			memcpy(_buffer, _buffer + decoding_offset, numbytes);
@@ -288,7 +288,7 @@ void RPLidar::showState()
 			break;
 		case RESETTING:
 			std::cout << "RESETTING: waiting for the reset message to be sent." << std::endl;
-			break;	
+			break;
 	}
 }
 

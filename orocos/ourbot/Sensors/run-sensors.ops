@@ -1,4 +1,0 @@
-import("rtt_ros")
-ros.import("Sensors")
-loadComponent("sensors","Sensors")
-

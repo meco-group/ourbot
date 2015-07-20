@@ -2,8 +2,7 @@ local tc = rtt.getTC()
 
 local estimator     = tc:getPeer('estimator'..tostring(index))
 local reporter      = tc:getPeer('reporter'..tostring(index))
--- dummy/add here sensor+actuator components
-local sensors       = tc:getPeer('sensors'..tostring(index))
+local io            = tc:getPeer('io'..tostring(index))
 
 local estimatorUpdate           = estimator:getOperation("update")
 local estimatorInRunTimeError   = estimator:getOperation("inRunTimeError")
@@ -26,9 +25,8 @@ return rfsm.state {
 
   init = rfsm.state{
     entry = function(fsm)
-      -- write here start command of sensor and actuator components
-      if not sensors:start() then
-        rtt.logl("Error","Could not start sensors component")
+      if not io:start() then
+        rtt.logl("Error","Could not start io component")
         rfsm.send_events(fsm,'e_failed')
         return
       end
@@ -101,8 +99,7 @@ return rfsm.state {
 
   reset = rfsm.state{
     entry = function(fsm)
-      -- call stop functions of sensors and actuators here.
-      sensors:stop()
+      io:stop()
     end,
   }
 }

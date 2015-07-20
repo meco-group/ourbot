@@ -44,7 +44,7 @@ local distr_components_to_load = {}
 
 for i=0,peers.size-1 do
   table.insert(distr_components_to_load,'coordinator'..peers[i])
-  table.insert(distr_components_to_load,'sensors'..peers[i])
+  table.insert(distr_components_to_load,'io'..peers[i])
   table.insert(distr_components_to_load,'controller'..peers[i])
   table.insert(distr_components_to_load,'estimator'..peers[i])
   table.insert(distr_components_to_load,'reference'..peers[i])
@@ -135,7 +135,7 @@ return rfsm.state {
       entry = function(fsm)
         --Connect all components
         for i=0,peers.size-1 do
-          if (not dp:connectPorts('velocitycmd','sensors'..peers[i])) then rfsm.send_events(fsm,'e_failed') return end
+          if (not dp:connectPorts('velocitycmd','io'..peers[i])) then rfsm.send_events(fsm,'e_failed') return end
         end
           --add more connections here
 

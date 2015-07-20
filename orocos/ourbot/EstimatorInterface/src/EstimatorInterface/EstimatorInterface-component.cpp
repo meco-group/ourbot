@@ -58,60 +58,46 @@ bool EstimatorInterface::startHook(){
   // Check if input ports are connected
   bool check = true;
   if (!_cal_lidar_x_port.connected()){
-    log(Error) << "_cal_lidar_distances_port not connected !" <<endlog();
-    check = false;
+    log(Warning) << "_cal_lidar_distances_port not connected !" <<endlog();
   }
   if (!_cal_lidar_y_port.connected()){
-    log(Error) << "_cal_lidar_angles_port not connected !" <<endlog();
-    check = false;
+    log(Warning) << "_cal_lidar_angles_port not connected !" <<endlog();
   }
   if (!_cal_ir_x_port.connected()){
-    log(Error) << "_cal_ir_distances_port not connected !" <<endlog();
-    check = false;
+    log(Warning) << "_cal_ir_distances_port not connected !" <<endlog();
   }
   if (!_cal_ir_y_port.connected()){
-    log(Error) << "_cal_ir_angles_port not connected !" <<endlog();
-    check = false;
+    log(Warning) << "_cal_ir_angles_port not connected !" <<endlog();
   }
   if (!_cal_imul_transacc_port.connected()){
-    log(Error) << "_cal_imul_transacc_port not connected !" <<endlog();
-    check = false;
+    log(Warning) << "_cal_imul_transacc_port not connected !" <<endlog();
   }
   if (!_cal_imul_dorientation_port.connected()){
-    log(Error) << "_cal_imul_dorientation_port not connected !" <<endlog();
-    check = false;
+    log(Warning) << "_cal_imul_dorientation_port not connected !" <<endlog();
   }
   if (!_cal_imul_orientation_port.connected()){
-    log(Error) << "_cal_imul_orientation_port not connected !" <<endlog();
-    check = false;
+    log(Warning) << "_cal_imul_orientation_port not connected !" <<endlog();
   }
   if (!_cal_imur_transacc_port.connected()){
-    log(Error) << "_cal_imur_transacc_port not connected !" <<endlog();
-    check = false;
+    log(Warning) << "_cal_imur_transacc_port not connected !" <<endlog();
   }
   if (!_cal_imur_dorientation_port.connected()){
-    log(Error) << "_cal_imur_dorientation_port not connected !" <<endlog();
-    check = false;
+    log(Warning) << "_cal_imur_dorientation_port not connected !" <<endlog();
   }
   if (!_cal_imur_orientation_port.connected()){
-    log(Error) << "_cal_imur_orientation_port not connected !" <<endlog();
-    check = false;
+    log(Warning) << "_cal_imur_orientation_port not connected !" <<endlog();
   }
   if (!_cal_enc_pose_port.connected()){
-    log(Error) << "_cal_enc_pose_port not connected !" <<endlog();
-    check = false;
+    log(Warning) << "_cal_enc_pose_port not connected !" <<endlog();
   }
   if (!_cal_motor_current_port.connected()){
-    log(Error) << "_cal_motor_current_port not connected !" <<endlog();
-    check = false;
+    log(Warning) << "_cal_motor_current_port not connected !" <<endlog();
   }
   if (!_cal_motor_current_port.connected()){
-    log(Error) << "_cal_motor_voltage_port not connected !" <<endlog();
-    check = false;
+    log(Warning) << "_cal_motor_voltage_port not connected !" <<endlog();
   }
   if (!_cal_velocity_port.connected()){
-    log(Error) << "_cal_velocity_port not connected !" <<endlog();
-    check = false;
+    log(Warning) << "_cal_velocity_port not connected !" <<endlog();
   }
   if (!initialize()){
     log(Error) << "Error occured in initialize() !" <<endlog();
@@ -126,19 +112,19 @@ bool EstimatorInterface::startHook(){
 
 void EstimatorInterface::updateHook(){
   // Read from sensors
-  if (_cal_lidar_x_port.read(_cal_lidar_x) == RTT::NoData) {log(Error) << "No data on _cal_lidar_x_port !" <<endlog(); error();}
-  if (_cal_lidar_y_port.read(_cal_lidar_y) == RTT::NoData) {log(Error) << "No data on _cal_lidar_y_port !" <<endlog(); error();}
-  if (_cal_ir_x_port.read(_cal_ir_x) == RTT::NoData) {log(Error) << "No data on _cal_ir_x_port !" <<endlog(); error();}
-  if (_cal_ir_y_port.read(_cal_ir_y) == RTT::NoData) {log(Error) << "No data on _cal_ir_y_port !" <<endlog(); error();}
-  if (_cal_imul_transacc_port.read(_cal_imul_transacc) == RTT::NoData) {log(Error) << "No data on _cal_imul_transacc_port !" <<endlog(); error();}
-  if (_cal_imul_dorientation_port.read(_cal_imul_dorientation) == RTT::NoData) {log(Error) << "No data on _cal_imul_dorientation_port !" <<endlog(); error();}
-  if (_cal_imul_orientation_port.read(_cal_imul_orientation) == RTT::NoData) {log(Error) << "No data on _cal_imul_orientation_port !" <<endlog(); error();}
-  if (_cal_imur_transacc_port.read(_cal_imur_transacc) == RTT::NoData) {log(Error) << "No data on _cal_imur_transacc_port !" <<endlog(); error();}
-  if (_cal_imur_dorientation_port.read(_cal_imur_dorientation) == RTT::NoData) {log(Error) << "No data on _cal_imur_dorientation_port !" <<endlog(); error();}
-  if (_cal_imur_orientation_port.read(_cal_imur_orientation) == RTT::NoData) {log(Error) << "No data on _cal_imur_orientation_port !" <<endlog(); error();}
-  if (_cal_enc_pose_port.read(_cal_enc_pose) == RTT::NoData) {log(Error) << "No data on _cal_enc_pose_port !" <<endlog(); error();}
-  if (_cal_motor_current_port.read(_cal_motor_current) == RTT::NoData) {log(Error) << "No data on _cal_motor_current_port !" <<endlog(); error();}
-  if (_cal_motor_voltage_port.read(_cal_motor_voltage) == RTT::NoData) {log(Error) << "No data on _cal_motor_voltage_port !" <<endlog(); error();}
+  // if (_cal_lidar_x_port.read(_cal_lidar_x) == RTT::NoData) {log(Error) << "No data on _cal_lidar_x_port !" <<endlog(); error();}
+  // if (_cal_lidar_y_port.read(_cal_lidar_y) == RTT::NoData) {log(Error) << "No data on _cal_lidar_y_port !" <<endlog(); error();}
+  // if (_cal_ir_x_port.read(_cal_ir_x) == RTT::NoData) {log(Error) << "No data on _cal_ir_x_port !" <<endlog(); error();}
+  // if (_cal_ir_y_port.read(_cal_ir_y) == RTT::NoData) {log(Error) << "No data on _cal_ir_y_port !" <<endlog(); error();}
+  // if (_cal_imul_transacc_port.read(_cal_imul_transacc) == RTT::NoData) {log(Error) << "No data on _cal_imul_transacc_port !" <<endlog(); error();}
+  // if (_cal_imul_dorientation_port.read(_cal_imul_dorientation) == RTT::NoData) {log(Error) << "No data on _cal_imul_dorientation_port !" <<endlog(); error();}
+  // if (_cal_imul_orientation_port.read(_cal_imul_orientation) == RTT::NoData) {log(Error) << "No data on _cal_imul_orientation_port !" <<endlog(); error();}
+  // if (_cal_imur_transacc_port.read(_cal_imur_transacc) == RTT::NoData) {log(Error) << "No data on _cal_imur_transacc_port !" <<endlog(); error();}
+  // if (_cal_imur_dorientation_port.read(_cal_imur_dorientation) == RTT::NoData) {log(Error) << "No data on _cal_imur_dorientation_port !" <<endlog(); error();}
+  // if (_cal_imur_orientation_port.read(_cal_imur_orientation) == RTT::NoData) {log(Error) << "No data on _cal_imur_orientation_port !" <<endlog(); error();}
+  // if (_cal_enc_pose_port.read(_cal_enc_pose) == RTT::NoData) {log(Error) << "No data on _cal_enc_pose_port !" <<endlog(); error();}
+  // if (_cal_motor_current_port.read(_cal_motor_current) == RTT::NoData) {log(Error) << "No data on _cal_motor_current_port !" <<endlog(); error();}
+  // if (_cal_motor_voltage_port.read(_cal_motor_voltage) == RTT::NoData) {log(Error) << "No data on _cal_motor_voltage_port !" <<endlog(); error();}
 
   // Read velocity command
   std::vector<double> sample(3,0.0);
@@ -148,6 +134,20 @@ void EstimatorInterface::updateHook(){
   else {
     _cal_velocity = sample;
   }
+
+  _cal_lidar_x_port.read(_cal_lidar_x);
+  _cal_lidar_y_port.read(_cal_lidar_y);
+  _cal_ir_x_port.read(_cal_ir_x);
+  _cal_ir_y_port.read(_cal_ir_y);
+  _cal_imul_transacc_port.read(_cal_imul_transacc);
+  _cal_imul_dorientation_port.read(_cal_imul_dorientation);
+  _cal_imul_orientation_port.read(_cal_imul_orientation);
+  _cal_imur_transacc_port.read(_cal_imur_transacc);
+  _cal_imur_dorientation_port.read(_cal_imur_dorientation);
+  _cal_imur_orientation_port.read(_cal_imur_orientation);
+  _cal_enc_pose_port.read(_cal_enc_pose);
+  _cal_motor_current_port.read(_cal_motor_current);
+  _cal_motor_voltage_port.read(_cal_motor_voltage);
 
   // Apply estimation update
   estimateUpdate();
