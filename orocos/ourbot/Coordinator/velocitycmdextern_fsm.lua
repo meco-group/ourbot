@@ -25,11 +25,30 @@ return rfsm.state {
 
   init = rfsm.state{
     entry = function(fsm)
+        -- test
+        -- port = estimator:getPort('est_pose_port')
+        smpl=rtt.Variable("array")
+        smpl:resize(3)
+        smpl:fromtab{0,0,0}
+        -- port:write(smpl)
+
+        -- setData
+      -- setData = estimator:getOperation("setData")
+      -- setData()
+
       if not io:start() then
         rtt.logl("Error","Could not start io component")
         rfsm.send_events(fsm,'e_failed')
         return
       end
+
+      -- estimator:configure()
+      -- if not estimator:start() then
+      --   rtt.logl("Error","Could not start estimator component")
+      --   rfsm.send_events(fsm,'e_failed')
+      --   return
+      -- end
+      print("Waiting on Run...")
     end
   },
 
@@ -45,6 +64,7 @@ return rfsm.state {
         rfsm.send_events(fsm,'e_failed')
         return
       end
+      print("System started. Abort by using Break.")
     end,
 
     doo = function(fsm)
@@ -56,6 +76,9 @@ return rfsm.state {
       while true do
         prev_start_time = start_time
         start_time      = get_sec()
+
+        -- update estimator
+        estimatorUpdate()
 
         -- take snapshot for logger
         snapshot:send()
@@ -70,12 +93,14 @@ return rfsm.state {
         -- ditch the first two calculations due to the initially wrongly calculated prev_start_time
         if init > 2 then
           duration = (end_time - prev_start_time) * 1000
-          if duration > 900*period then
-            rtt.logl('Warning','ControlLoop: Duration of calculation exceeded 90% of sample period')
-          end
           jitter = (start_time - prev_start_time - period) * 1000
-          if jitter > 100.*period then
-            rtt.logl('Warning','ControlLoop: Jitter exceeded 10% of sample period')
+          if print_level >= 1 then
+            if duration > 900*period then
+              rtt.logl('Warning','ControlLoop: Duration of calculation exceeded 90% of sample period')
+            end
+            if jitter > 100.*period then
+              rtt.logl('Warning','ControlLoop: Jitter exceeded 10% of sample period')
+            end
           end
           _controlloop_duration:write(duration)
           _controlloop_jitter:write(jitter)
@@ -94,6 +119,7 @@ return rfsm.state {
     entry = function(fsm)
       estimator:stop()
       reporter:stop()
+      print("System stopped. Waiting on Restart or Reset...")
     end,
   },
 

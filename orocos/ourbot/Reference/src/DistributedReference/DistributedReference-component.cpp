@@ -15,11 +15,19 @@ DistributedReference::DistributedReference(std::string const& name) : Reference(
   ports()->addPort("ref_relposeL_port", _ref_relposeL_port).doc("Relative pose reference sample wrt neighbour via left going signal");
   ports()->addPort("ref_relposeR_port", _ref_relposeR_port).doc("Relative pose reference sample wrt neighbour via right going signal");
 
+  addOperation("writeSample",&DistributedReference::writeSample, this).doc("Set data sample on output ports");
+
   _cur_ref_relposeL_path  = _ref_relposeL_path_1;
   _cur_ref_relposeR_path  = _ref_relposeR_path_1;
 
   _nxt_ref_relposeL_path  = _ref_relposeL_path_2;
   _nxt_ref_relposeR_path  = _ref_relposeR_path_2;
+}
+
+void DistributedReference::writeSample(){
+  std::vector<double> example(3, 0.0);
+  _ref_relposeL_port.write(example);
+  _ref_relposeR_port.write(example);
 }
 
 bool DistributedReference::configureHook(){

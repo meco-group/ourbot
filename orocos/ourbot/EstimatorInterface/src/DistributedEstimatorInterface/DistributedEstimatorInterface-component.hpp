@@ -33,6 +33,7 @@ class DistributedEstimatorInterface : public EstimatorInterface{
     virtual bool configureHook();
     virtual bool startHook();
     virtual void updateHook();
+    void writeSample();
 };
 
 #endif

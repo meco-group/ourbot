@@ -28,6 +28,7 @@ for HOSTNAME in ${HOSTS} ; do
 		"
 	else
 		sshpass -p $PASSWORD ssh ${USERNAME}@${HOSTNAME} "
+		ulimit -r 10
 		cd orocos
 		deployer-corba-gnulinux -s run.ops
 		"

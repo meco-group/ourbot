@@ -39,6 +39,6 @@ class ControllerInterface : public RTT::TaskContext{
     virtual bool startHook();
     virtual void updateHook();
     virtual void stopHook();
-
+    void writeSample();
 };
 #endif

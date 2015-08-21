@@ -14,7 +14,15 @@ DistributedControllerInterface::DistributedControllerInterface(std::string const
   ports()->addPort("com_outL_port", _com_outL_port).doc("Output signal sent to controller of neighbour via left going signal");
   ports()->addPort("com_outR_port", _com_outR_port).doc("Output signal sent to controller of neighbour via right going signal");
 
+  addOperation("writeSample",&DistributedControllerInterface::writeSample, this).doc("Set data sample on output ports");
+
   _com_size = com_size;
+}
+
+void DistributedControllerInterface::writeSample(){
+  std::vector<double> example(_com_size, 0.0);
+  _com_outL_port.write(example);
+  _com_outR_port.write(example);
 }
 
 bool DistributedControllerInterface::configureHook(){

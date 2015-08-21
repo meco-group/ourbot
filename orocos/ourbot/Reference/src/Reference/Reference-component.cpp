@@ -18,11 +18,19 @@ Reference::Reference(std::string const& name) : TaskContext(name, PreOperational
   addProperty("control_sample_rate", _control_sample_rate).doc("Frequency to update the control loop");
   addProperty("pathupd_sample_rate", _pathupd_sample_rate).doc("Frequency to update the path");
 
+  addOperation("writeSample",&Reference::writeSample, this).doc("Set data sample on output ports");
+
   _cur_ref_pose_path      = _ref_pose_path_1;
   _cur_ref_ffw_path       = _ref_ffw_path_1;
 
   _nxt_ref_pose_path      = _ref_pose_path_2;
   _nxt_ref_ffw_path       = _ref_ffw_path_2;
+}
+
+void Reference::writeSample(){
+  std::vector<double> example(3, 0.0);
+  _ref_pose_port.write(example);
+  _ref_ffw_port.write(example);
 }
 
 bool Reference::configureHook(){

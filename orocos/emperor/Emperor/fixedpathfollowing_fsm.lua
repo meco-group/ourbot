@@ -12,8 +12,8 @@ return rfsm.state {
   rfsm.trans{src = 'stop',    tgt = 'reset',  events = {'e_reset'}},
   rfsm.trans{src = 'reset',   tgt = 'idle'},
 
-  idle  = rfsm.state{ entry = function() print("Waiting on Initialize...") end },
-  init  = rfsm.state{ },
+  idle  = rfsm.state{ entry = function() print("Waiting on Init...") end },
+  init  = rfsm.state{ entry = function() print("Waiting on Run...") end},
   run   = rfsm.state{
     entry = function()
       if (not reporter:start()) then
@@ -21,6 +21,7 @@ return rfsm.state {
         rfsm.send_events(fsm,'e_failed')
         return
       end
+      print("System started. Abort by using Break.")
     end,
 
     doo = function()
@@ -31,7 +32,13 @@ return rfsm.state {
     end,
   },
 
-  stop  = rfsm.state{ entry = function() reporter:stop() end},
+  stop = rfsm.state{
+    entry = function(fsm)
+      reporter:stop()
+      print("System stopped. Waiting on Restart or Reset...")
+    end,
+  },
+
   reset = rfsm.state{ },
 
 }

@@ -9,9 +9,11 @@ local fqn_out, events_in
 local start_time
 
 --Create properties
-_index = rtt.Property("int","index","Index number of agent")
+_index         = rtt.Property("int","index","Index number of agent")
+_print_level   = rtt.Property("int","print_level","Level of output printing")
 
 tc:addProperty(_index)
+tc:addProperty(_print_level)
 
 --Ports which drive/read the FSM
 _coordinator_fsm_event_port      = rtt.InputPort("string")
@@ -28,7 +30,8 @@ _coordinator_send_event_port:connect(_coordinator_fsm_event_port)
 
 function configureHook()
    -- create local copies of the property values
-   index = _index:get()
+   index       = _index:get()
+   print_level = _print_level:get()
 
    -- load state machine
    fsm = rfsm.init(rfsm.load("Coordinator/coordinator_fsm.lua"))
@@ -41,13 +44,16 @@ function configureHook()
    fsm.getevents = rfsm_rtt.gen_read_str_events(_coordinator_fsm_event_port)
    rfsm.post_step_hook_add(fsm, rfsm_rtt.gen_write_fqn(_coordinator_current_state_port))
 
-   -- enable state entry and exit dbg output
-   fsm.dbg=rfsmpp.gen_dbgcolor('Coordinator FSM', { STATE_ENTER=true, STATE_EXIT=true}, false)
+   if print_level >= 2 then
+      -- enable state entry and exit dbg output
+      fsm.dbg=rfsmpp.gen_dbgcolor('Coordinator FSM', { STATE_ENTER=true, STATE_EXIT=true}, false)
 
-   -- redirect FSM output to rtt log
-   fsm.info=function(...) rtt.logl('Info', table.concat({...}, ' ')) end
-   fsm.warn=function(...) rtt.logl('Warning', table.concat({...}, ' ')) end
-   fsm.err=function(...) rtt.logl('Error', table.concat({...}, ' ')) end
+      -- redirect FSM output to rtt log
+      fsm.info=function(...) rtt.logl('Info', table.concat({...}, ' ')) end
+      fsm.warn=function(...) rtt.logl('Warning', table.concat({...}, ' ')) end
+      fsm.err=function(...) rtt.logl('Error', table.concat({...}, ' ')) end
+
+   end
 
    -- create ports with timing info
    _controlloop_duration = rtt.OutputPort("double")

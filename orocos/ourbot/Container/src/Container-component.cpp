@@ -1,13 +1,14 @@
 #include "Container-component.hpp"
 #include <rtt/Component.hpp>
 #include <iostream>
+#include <typeinfo>
 
 #define COMPONENTS_FUNCTION_ITERATOR_BOOL(func)	bool value = true; \
 																								for(Components::iterator task = _components.begin(); task != _components.end() ; ++task) { \
 																									value = value & (*task)->func(); \
 																								}\
 																								return value;
-																								
+
 #define COMPONENTS_FUNCTION_ITERATOR_VOID(func)	for(Components::iterator task = _components.begin(); task != _components.end() ; ++task) { \
 																									(*task)->func(); \
 																								}
@@ -21,7 +22,7 @@ bool Container::configureHook(){
 }
 
 bool Container::startHook(){
-	COMPONENTS_FUNCTION_ITERATOR_BOOL(start)	
+	COMPONENTS_FUNCTION_ITERATOR_BOOL(start)
 }
 
 void Container::updateHook(){
@@ -50,7 +51,7 @@ bool Container::addComponent( const std::string& component )
 	if(compStopped && thisStopped){
 		// It is possible to add the task to the container
 		_components.push_back(comp);
-		
+
 		Ports ports = comp->ports()->getPorts();
 		for (Ports::iterator port = ports.begin(); port != ports.end() ; ++port) {
 			std::string port_name = (*port)->getName();
@@ -59,12 +60,12 @@ bool Container::addComponent( const std::string& component )
 				addPort(port_name, (**port));
 			} else {
 				RTT::log(RTT::Error) << "Could not add port " + port_name + " because it is already in use." << RTT::endlog();
-			}			
+			}
 		}
 	} else {
 		RTT::log(RTT::Error) << "Could not add component " + component + " because it is already configured or running." << RTT::endlog();
 	}
-	
+
 	return (compStopped && thisStopped);
 }
 

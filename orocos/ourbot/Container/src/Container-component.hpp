@@ -18,7 +18,7 @@ class Container : public RTT::TaskContext{
     void updateHook();
     void stopHook();
     void cleanupHook();
-    
+
     bool addComponent( const std::string& component );
     Components getComponents();
 };

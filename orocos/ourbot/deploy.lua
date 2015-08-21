@@ -6,6 +6,7 @@ require 'os'
 tc = rtt.getTC()
 
 --Property definitions
+_print_level         = rtt.Property("int","print_level","Level of output printing")
 _estimator_type      = rtt.Property("string","estimator","Estimator component to use")
 _controller_type     = rtt.Property("string","controller","Controller component to use")
 _pathgenerator_type  = rtt.Property("string","pathgenerator","Pathgenerator component to use")
@@ -17,6 +18,7 @@ _control_sample_rate = rtt.Property("double","control_sample_rate","Frequency to
 _pathupd_sample_rate = rtt.Property("double","pathupd_sample_rate","Frequency to update the path")
 _velcmd_sample_rate  = rtt.Property("double","velcmd_sample_rate","Frequency to update velocity commander")
 
+tc:addProperty(_print_level)
 tc:addProperty(_estimator_type)
 tc:addProperty(_controller_type)
 tc:addProperty(_pathgenerator_type)
@@ -39,6 +41,7 @@ tc:addPort(_deployer_current_state_port, "deployer_current_state_port", "current
 
 function configureHook()
    --Create local copies of the property values
+   print_level          = _print_level:get()
    estimator_type       = _estimator_type:get()
    controller_type      = _controller_type:get()
    pathgenerator_type   = _pathgenerator_type:get()
@@ -68,13 +71,15 @@ function configureHook()
       return false
    end
 
-   --Add console printing for the state entry and exit
-   fsm.dbg = rfsmpp.gen_dbgcolor("Deployer FSM", { STATE_ENTER=true, STATE_EXIT=true}, false)
+   if print_level >= 2 then
+      --Add console printing for the state entry and exit
+      fsm.dbg = rfsmpp.gen_dbgcolor("Deployer FSM", { STATE_ENTER=true, STATE_EXIT=true}, false)
 
-   -- redirect rFSM output to rtt log
-   fsm.info=function(...) rtt.logl('Info', table.concat({...}, ' ')) end
-   fsm.warn=function(...) rtt.logl('Warning', table.concat({...}, ' ')) end
-   fsm.err=function(...) rtt.logl('Error', table.concat({...}, ' ')) end
+      -- redirect rFSM output to rtt log
+      fsm.info=function(...) rtt.logl('Info', table.concat({...}, ' ')) end
+      fsm.warn=function(...) rtt.logl('Warning', table.concat({...}, ' ')) end
+      fsm.err=function(...) rtt.logl('Error', table.concat({...}, ' ')) end
+   end
 
    -- connect event ports to state machine
    fsm.getevents = rfsm_rtt.gen_read_str_events(_deployer_fsm_event_port)

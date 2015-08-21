@@ -22,6 +22,16 @@ DistributedPathGeneratorInterface::DistributedPathGeneratorInterface(std::string
   ports()->addPort("ref_relposeR_path_x_port", _ref_relposeR_path_port[0]).doc("x relpose reference path wrt neighbour via right going signal");
   ports()->addPort("ref_relposeR_path_y_port", _ref_relposeR_path_port[1]).doc("y relpose reference path wrt neighbour via right going signal");
   ports()->addPort("ref_relposeR_path_t_port", _ref_relposeR_path_port[2]).doc("theta relpose reference path wrt neighbour via right going signal");
+
+  addOperation("writeSample",&DistributedPathGeneratorInterface::writeSample, this).doc("Set data sample on output ports");
+}
+
+void DistributedPathGeneratorInterface::writeSample(){
+  std::vector<double> example(_path_length, 0.0);
+  for(int i=0; i<3; i++){
+    _ref_relposeL_path_port[i].write(example);
+    _ref_relposeR_path_port[i].write(example);
+  }
 }
 
 bool DistributedPathGeneratorInterface::configureHook(){

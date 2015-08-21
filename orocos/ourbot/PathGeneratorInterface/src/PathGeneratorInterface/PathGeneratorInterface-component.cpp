@@ -22,12 +22,21 @@ PathGeneratorInterface::PathGeneratorInterface(std::string const& name) : TaskCo
   addProperty("pathupd_sample_rate", _pathupd_sample_rate).doc("Frequency to update the path");
   addProperty("obs_data_length", _obs_data_length).doc("Length of obstacle data");
   addProperty("kin_limitations", _kin_limitations).doc("Kinematic limitations (vmax, vmin, amax, amin)");
+
+  addOperation("writeSample",&PathGeneratorInterface::writeSample, this).doc("Set data sample on output ports");
+}
+
+void PathGeneratorInterface::writeSample(){
+  std::vector<double> example(_path_length, 0.0);
+  for(int i=0; i<3; i++){
+    _ref_pose_path_port[i].write(example);
+    _ref_ffw_path_port[i].write(example);
+  }
 }
 
 bool PathGeneratorInterface::configureHook(){
   // Compute path length
   _path_length = static_cast<int>(_control_sample_rate/_pathupd_sample_rate);
-  std::cout << "Path length: " << _path_length << std::endl;
   // Reserve required memory and initialize with zeros
   _map_obstacles.resize(_obs_data_length);
   for(int i=0;i<3;i++){
@@ -41,7 +50,6 @@ bool PathGeneratorInterface::configureHook(){
     _ref_pose_path_port[i].setDataSample(example);
     _ref_ffw_path_port[i].setDataSample(example);
   }
-
   return true;
 }
 
@@ -73,10 +81,6 @@ bool PathGeneratorInterface::startHook(){
   std::cout << "PathGenerator started !" <<std::endl;
   return true;
 }
-
-// void PathGeneratorInterface::updateHook(){
-
-// }
 
 void PathGeneratorInterface::updateHook(){
   TimeService::ticks prev_timestamp = _timestamp;

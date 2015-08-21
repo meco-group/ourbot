@@ -8,6 +8,8 @@ EstimatorInterface::EstimatorInterface(std::string const& name) : TaskContext(na
     _cal_enc_pose(3), _cal_motor_current(4), _cal_velocity(3),
     _est_pose(3), _est_velocity(3), _est_acceleration(3), _est_global_offset(3){
 
+  _est_pose_port.keepLastWrittenValue(true);
+
   ports()->addPort("cal_lidar_distances_port", _cal_lidar_x_port).doc("Observed x positions wrt local frame from LIDAR");
   ports()->addPort("cal_lidar_angles_port", _cal_lidar_y_port).doc("Observed y positions wrt local frame from LIDAR");
   ports()->addPort("cal_ir_distances_port", _cal_ir_x_port).doc("Observed x positions wrt local frame from IR's");
@@ -33,6 +35,19 @@ EstimatorInterface::EstimatorInterface(std::string const& name) : TaskContext(na
   addProperty("lidar_data_length", _lidar_data_length).doc("Length of lidar data");
   addProperty("ir_data_length", _ir_data_length).doc("Length of ir data (= number of ir's)");
   addProperty("obs_data_length", _obs_data_length).doc("Length of obstacle data");
+
+  addOperation("writeSample",&EstimatorInterface::writeSample, this).doc("Set data sample on output ports");
+
+}
+
+void EstimatorInterface::writeSample(){
+  std::vector<double> example(3, 0.0);
+  _est_pose_port.write(example);
+  _est_velocity_port.write(example);
+  _est_acceleration_port.write(example);
+  _est_global_offset_port.write(example);
+  std::vector<double> exampleobs(_obs_data_length, 0.0);
+  _map_obstacles_port.write(exampleobs);
 }
 
 bool EstimatorInterface::configureHook(){
