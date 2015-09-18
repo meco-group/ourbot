@@ -1,27 +1,14 @@
 import("rtt_ros")
-import("ocl")
+ros.import("rtt_rospack")
 
-//EMPEROR
+loadComponent("lua","OCL::LuaComponent")
 
-// Import all necessary components
-ros.import("Emperor")
+lua.setPeriod(0.1)
+lua.exec_file("deploy.lua")
+addPeer("lua","Deployer")
 
-// Load all local components
-loadComponent("emperor","Emperor")
+loadService("lua","marshalling")
+lua.marshalling.loadProperties("Configuration/emperor-config.cpf")
 
-// Load all CORBA components (not yet)
-loadComponent("coordinator", "CORBA")
-
-// AddPeers
-addPeer("emperor","coordinator")
-
-// Connect ports
-var ConnPolicy cp
-cp.type = DATA
-cp.lock_policy = LOCKED
-connect("emperor.fsm_event_outport", "coordinator.fsm_event_inport", cp);
-
-connect("emperor.current_state_evport", "coordinator.current_state_outport", cp);
-
-// Start components
-emperor.start
+lua.configure()
+lua.start()

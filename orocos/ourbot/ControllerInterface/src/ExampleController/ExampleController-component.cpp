@@ -2,7 +2,6 @@
 #include <rtt/Component.hpp>
 #include <iostream>
 
-
 ExampleController::ExampleController(std::string const& name) : ControllerInterface(name), _error(3){
   _kp[0] = 1.;
   _kp[1] = 1.;
@@ -22,7 +21,7 @@ bool ExampleController::controlUpdate(){
   std::vector<double> ref_pose          = getRefPose();
   std::vector<double> ref_ffw           = getRefFfw();
   std::vector<double> cmd_velocity      = getCmdVelocity();
-  double sample_rate                    = getSampleRate();
+  double control_sample_rate            = getControlSampleRate();
 
   // Error
   std::vector<double> error(3);
@@ -33,7 +32,7 @@ bool ExampleController::controlUpdate(){
   // PI controller
   std::vector<double> cmd_velocity_new(3);
   for (int i=0; i<3; i++){
-    cmd_velocity_new[i] = cmd_velocity[i] + _kp[i]*error[i] + ((1./sample_rate)*_ki[i] - _kp[i])*_error[i];
+    cmd_velocity_new[i] = cmd_velocity[i] + _kp[i]*error[i] + ((1./control_sample_rate)*_ki[i] - _kp[i])*_error[i];
   }
 
   // Velocity feedforward
@@ -50,4 +49,4 @@ bool ExampleController::controlUpdate(){
   return true;
 }
 
-ORO_CREATE_COMPONENT(ExampleController);
+ORO_LIST_COMPONENT_TYPE(ExampleController);

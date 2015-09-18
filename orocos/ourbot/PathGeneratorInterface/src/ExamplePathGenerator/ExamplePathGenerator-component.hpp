@@ -4,6 +4,9 @@
 #include "../PathGeneratorInterface/PathGeneratorInterface-component.hpp"
 
 class ExamplePathGenerator : public PathGeneratorInterface{
+  private:
+    int _path_length;
+    bool _even;
 
   public:
     ExamplePathGenerator(std::string const& name);

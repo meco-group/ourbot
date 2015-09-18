@@ -6,16 +6,16 @@
 class DistributedEstimatorInterface : public EstimatorInterface{
   private:
     // Communication with neighbouring controllers
-    InputPort<std::vector<double> > _com_inA_inport;
-    InputPort<std::vector<double> > _com_inB_inport;
+    InputPort<std::vector<double> > _com_inL_port;
+    InputPort<std::vector<double> > _com_inR_port;
 
-    OutputPort<std::vector<double> > _est_poseA_outport;
-    OutputPort<std::vector<double> > _est_poseB_outport;
+    OutputPort<std::vector<double> > _est_poseL_port;
+    OutputPort<std::vector<double> > _est_poseR_port;
 
-    std::vector<double> _com_inA;
-    std::vector<double> _com_inB;
-    std::vector<double> _est_poseA;
-    std::vector<double> _est_poseB;
+    std::vector<double> _com_inL;
+    std::vector<double> _com_inR;
+    std::vector<double> _est_poseL;
+    std::vector<double> _est_poseR;
 
     int _com_size;
 
@@ -23,10 +23,10 @@ class DistributedEstimatorInterface : public EstimatorInterface{
     virtual bool estimateUpdate() = 0;
     virtual bool initialize() = 0;
 
-    std::vector<double> getComInA();
-    std::vector<double> getComInB();
-    void setEstPoseA(std::vector<double> const&);
-    void setEstPoseB(std::vector<double> const&);
+    std::vector<double> getComInL();
+    std::vector<double> getComInR();
+    void setEstPoseL(std::vector<double> const&);
+    void setEstPoseR(std::vector<double> const&);
 
   public:
     DistributedEstimatorInterface(std::string const& name, int com_size);

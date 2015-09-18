@@ -10,7 +10,8 @@
 # Creates a component library libReference-<target>.so
 # and installs in the directory lib/orocos/Reference/
 #
-orocos_component(Reference Reference-component.hpp Reference-component.cpp) # ...you may add multiple source files
+orocos_component(Reference Reference/Reference-component.hpp Reference/Reference-component.cpp) # ...you may add multiple source files
+orocos_component(Reference DistributedReference/DistributedReference-component.hpp DistributedReference/DistributedReference-component.cpp)
 #
 # You may add multiple orocos_component statements.
 
@@ -19,7 +20,8 @@ orocos_component(Reference Reference-component.hpp Reference-component.cpp) # ..
 #
 # Installs in the include/orocos/Reference/ directory
 #
-orocos_install_headers(Reference-component.hpp) # ...you may add multiple header files
+orocos_install_headers(Reference/Reference-component.hpp) # ...you may add multiple header files
+orocos_install_headers(DistributedReference/DistributedReference-component.hpp)
 #
 # You may add multiple orocos_install_headers statements.
 
@@ -32,7 +34,7 @@ orocos_install_headers(Reference-component.hpp) # ...you may add multiple header
 # Be aware that a plugin may only have the loadRTTPlugin() function once defined in a .cpp file.
 # This function is defined by the plugin and service CPP macros.
 #
-orocos_plugin(Reference-plugin Reference-plugin.cpp) # ...only one plugin function per library !
+orocos_plugin(Reference-plugin Reference/Reference-plugin.cpp) # ...only one plugin function per library !
 #
 # You may add multiple orocos_plugin statements.
 
@@ -43,7 +45,7 @@ orocos_plugin(Reference-plugin Reference-plugin.cpp) # ...only one plugin functi
 # Creates a plugin library libReference-service-<target>.so
 # and installs in the directory lib/orocos/Reference/plugins/
 #
-#orocos_service(Reference-service Reference-service.cpp) # ...only one service per library !
+#orocos_service(Reference-service Reference/Reference-service.cpp) # ...only one service per library !
 #
 # You may add multiple orocos_service statements.
 
@@ -54,7 +56,7 @@ orocos_plugin(Reference-plugin Reference-plugin.cpp) # ...only one plugin functi
 # Creates a library libReference-support-<target>.so and installs it in
 # lib/
 #
-orocos_library(Reference-support support.cpp) # ...you may add multiple source files
+orocos_library(Reference-support Reference/support.cpp) # ...you may add multiple source files
 #
 # You may add multiple orocos_library statements.
 

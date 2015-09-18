@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "cpf.dtd">
+<properties>
+  <simple name="estimator" type="string">
+    <description>Estimator component to use</description>
+    <value>ExampleEstimator</value>
+  </simple>
+  <simple name="pathgenerator" type="string">
+    <description>Pathgenerator component to use</description>
+    <value>ExamplePathGenerator</value>
+  </simple>
+  <simple name="controller" type="string">
+    <description>Controller component to use</description>
+    <value>ExampleController</value>
+  </simple>
+  <simple name="velocitycmd" type="string">
+    <description>VelocityCommand component to use (only for intern velocitycmd)</description>
+    <value>ExampleVelocityCommand</value>
+  </simple>
+  <simple name="distributed" type="boolean">
+    <description>Distributed working?</description>
+    <value>false</value>
+  </simple>
+  <simple name="index" type="long">
+    <description>Index number of agent</description>
+    <value>1</value>
+  </simple>
+  <struct name="neighbours" type="ints">
+    <description>Index numbers of neighbouring agents</description>
+    <simple name="Element0" type="long">
+      <value>2</value>
+    </simple>
+    <simple name="Element1" type="long">
+      <value>3</value>
+    </simple>
+  </struct>
+  <simple name="control_sample_rate" type="double">
+    <description>Frequency to update controller</description>
+    <value>200.</value>
+  </simple>
+  <simple name="pathupd_sample_rate" type="double">
+    <description>Frequency to update path updater</description>
+    <value>2.</value>
+  </simple>
+  <simple name="velcmd_sample_rate" type="double">
+    <description>Frequency to update velocity commander</description>
+    <value>200.</value>
+  </simple>
+
+  <simple name="lidar_data_length" type="long">
+    <description>Length of lidar data</description>
+    <value>10</value>
+  </simple>
+  <simple name="ir_data_length" type="long">
+    <description>Length of ir data (= number of ir's)</description>
+    <value>8</value>
+  </simple>
+  <simple name="obs_data_length" type="long">
+    <description>Length of obstacle data</description>
+    <value>10</value>
+  </simple>
+  <struct name="kin_limitations" type="array">
+    <description>Kinematic limitations (vmax, vmin, amax, amin)</description>
+    <simple name="vmax" type="double">
+      <value>5.</value>
+    </simple>
+    <simple name="vmin" type="double">
+      <value>-5.</value>
+    </simple>
+    <simple name="amax" type="double">
+      <value>1.</value>
+    </simple>
+    <simple name="amin" type="double">
+      <value>-1.</value>
+    </simple>
+  </struct>
+</properties>

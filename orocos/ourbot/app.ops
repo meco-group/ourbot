@@ -1,0 +1,39 @@
+export void VelocityCmdIntern(){
+  coordinator_send_event_port.write("e_velocitycmdintern")
+}
+
+export void VelocityCmdExtern(){
+  coordinator_send_event_port.write("e_velocitycmdextern")
+}
+
+export void UpdPathFollowing(){
+  coordinator_send_event_port.write("e_updpathfollowing")
+}
+
+export void FixedPathFollowing(){
+  coordinator_send_event_port.write("e_fixedpathfollowing")
+}
+
+export void Idle(){
+  coordinator_send_event_port.write("e_idle")
+}
+
+export void Reset(){
+  coordinator_send_event_port.write("e_reset")
+}
+
+export void Run(){
+  coordinator_send_event_port.write("e_run")
+}
+
+export void Restart(){
+  coordinator_send_event_port.write("e_restart")
+}
+
+export void StopLoop(){
+  coordinator_send_event_port.write("e_stop")
+}
+
+export void Initialize(){
+  coordinator_send_event_port.write("e_init")
+}

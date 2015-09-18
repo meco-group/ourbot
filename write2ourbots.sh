@@ -18,23 +18,24 @@ for HOSTNAME in ${HOSTS} ; do
 	echo ""
 	echo "Send src files to "$HOSTNAME
 	echo "-----------------------------"
-	sshpass -p $PASSWORD rsync -avz --include=*/ --include=*/src/** --include=*.ops --include=Coordinator/*.lua --exclude=*   -e ssh $SOURCEDIR ${USERNAME}@${HOSTNAME}:$OROCOSDIR
+	sshpass -p $PASSWORD rsync -avz --include=*/ --include=*/src/** --include=*.ops --include=*.lua --include=Coordinator/*.lua --include=Configuration/*.cpf --exclude=*   -e ssh $SOURCEDIR ${USERNAME}@${HOSTNAME}:$OROCOSDIR
 done
 
 if [ "X$1" = "Xbuild" ]
 then
 	for HOSTNAME in ${HOSTS} ; do
 		#Build components
+		echo ""
 		echo "Build components on "$HOSTNAME
 		echo "-------------------------------"
 		sshpass -p $PASSWORD ssh ${USERNAME}@${HOSTNAME} "
 		cd $OROCOSDIR
 		for d in */ ; do
-			if [ ! "X\$d" = "XCoordinator/" ]
+			if [ !"X\$d" = "XCoordinator/" -a ! "X\$d" = "XConfiguration/" ]
 			then
 				cd $OROCOSDIR/\$d
 				echo "Build "\$d
-				rosmake
+				make -j4
 				cd ..
 			fi
 		done

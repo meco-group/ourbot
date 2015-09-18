@@ -3,19 +3,22 @@
 
 #include <rtt/RTT.hpp>
 #include <rtt/Port.hpp>
+#include <rtt/os/TimeService.hpp>
+#include <rtt/Time.hpp>
 
 using namespace RTT;
+using namespace RTT::os;
 
 class PathGeneratorInterface : public RTT::TaskContext{
   private:
-    InputPort<std::vector<double> > _est_pose_inport;               // estimated pose wrt initial frame (starts on 0.)
-    InputPort<std::vector<double> > _est_global_offset_inport;      // estimated offset of initial frame wrt world frame
-    InputPort<std::vector<double> > _map_obstacles_inport;          // obstacles wrt to world frame
-    InputPort<std::vector<double> > _target_abspose_inport;         // target wrt world frame
-    InputPort<std::vector<double> > _target_relpose_inport;         // target wrt initial frame
+    InputPort<std::vector<double> > _est_pose_port;               // estimated pose wrt initial frame (starts on 0.)
+    InputPort<std::vector<double> > _est_global_offset_port;      // estimated offset of initial frame wrt world frame
+    InputPort<std::vector<double> > _map_obstacles_port;          // obstacles wrt to world frame
+    InputPort<std::vector<double> > _target_abspose_port;         // target wrt world frame
+    InputPort<std::vector<double> > _target_relpose_port;         // target wrt initial frame
 
-    OutputPort<std::vector<double> > _ref_pose_path_outport[3];
-    OutputPort<std::vector<double> > _ref_ffw_path_outport[3];
+    OutputPort<std::vector<double> > _ref_pose_path_port[3];
+    OutputPort<std::vector<double> > _ref_ffw_path_port[3];
 
     std::vector<double> _est_pose;
     std::vector<double> _est_global_offset;
@@ -26,8 +29,11 @@ class PathGeneratorInterface : public RTT::TaskContext{
     std::vector<double> _ref_pose_path[3];
     std::vector<double> _ref_ffw_path[3];
 
-    int _control_sample_rate;
-    int _pathUpd_sample_rate;
+    double _period;
+    TimeService::ticks _timestamp;
+    int _init;
+    double _control_sample_rate;
+    double _pathupd_sample_rate;
     std::vector<double> _kin_limitations;
     int _obs_data_length;
 
@@ -40,8 +46,8 @@ class PathGeneratorInterface : public RTT::TaskContext{
     int _path_length;
 
     int getPathLength();
-    int getControlSampleRate();
-    int getPathUpdSampleRate();
+    double getControlSampleRate();
+    double getPathUpdSampleRate();
     int getObsDataLength();
     std::vector<double> getKinLimitations();
     std::vector<double> getEstPose();
@@ -56,5 +62,6 @@ class PathGeneratorInterface : public RTT::TaskContext{
     virtual bool configureHook();
     virtual bool startHook();
     virtual void updateHook();
+    virtual void stopHook();
 };
 #endif
