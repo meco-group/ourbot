@@ -2,10 +2,10 @@
 #include <iostream>
 #include <math.h>
 
-GamePad::GamePad(std::string const& name):USBInterface(name)
+GamePad::GamePad(std::string const& name):USBInterface(name), _laxis(2), _raxis(2)
 {
   this->ports()->addPort("gamepad_laxis_port", _gamepad_laxis_port).doc("X and Y value for left axis");
-  this->ports()->addPort("gamepad_raxis_port", _gamepad_laxis_port).doc("X and Y value for right axis");
+  this->ports()->addPort("gamepad_raxis_port", _gamepad_raxis_port).doc("X and Y value for right axis");
   this->ports()->addPort("gamepad_A_port", _gamepad_A_port).doc("Bool for A button");
   this->ports()->addPort("gamepad_B_port", _gamepad_B_port).doc("Bool for B button");
   this->ports()->addPort("gamepad_X_port", _gamepad_X_port).doc("Bool for X button");
@@ -23,57 +23,7 @@ GamePad::GamePad(std::string const& name):USBInterface(name)
   this->ports()->addPort("gamepad_rb_port", _gamepad_rb_port).doc("Bool for rb button");
   this->ports()->addPort("gamepad_lt_port", _gamepad_lt_port).doc("Double for lt button");
   this->ports()->addPort("gamepad_rt_port", _gamepad_rt_port).doc("Double for rt button");
-
-
-  // addOperation("deviceInfo", &GAMEPAD::deviceInfo, this).doc("Send request to the lidar to send its device info.");
-  // addProperty("lidar_angle_offset", _angle_offset).doc("Angular offset of the lidar in radians.");
 }
-
-// bool GamePad::sendCommand(uint8_t cmd, const void *payload, uint32_t payloadsize)
-// {
-//   uint8_t pkt_header[10];
-//   GAMEPAD_cmd_packet_t * header = reinterpret_cast<GAMEPAD_cmd_packet_t * >(pkt_header);
-//   uint8_t checksum = 0;
-//   uint8_t header_sent;
-
-//   if (!isConnectedSerial()){ RTT::log(RTT::Warning) << "Cannot send command to the lidar." << RTT::endlog(); return false; }
-
-//   if (payloadsize && payload) {
-//       cmd |= GAMEPAD_CMDFLAG_HAS_PAYLOAD;
-//   }
-
-//   header->syncByte = GAMEPAD_CMD_SYNC_BYTE;
-//   header->cmd_flag = cmd;
-
-//   // send header first
-//   header_sent = writeBytes(pkt_header, 2) ;
-
-//   if (cmd & GAMEPAD_CMDFLAG_HAS_PAYLOAD) {
-//       checksum ^= GAMEPAD_CMD_SYNC_BYTE;
-//       checksum ^= cmd;
-//       checksum ^= (payloadsize & 0xFF);
-
-//       // calc checksum
-//       for (size_t pos = 0; pos < payloadsize; ++pos) {
-//           checksum ^= ((uint8_t *)payload)[pos];
-//       }
-
-//       // send size
-//       uint8_t sizebyte = payloadsize;
-//       writeByte(sizebyte);
-
-//       // send payload
-//       writeBytes((uint8_t*)payload, sizebyte);
-
-//       // send checksum
-//       writeByte(checksum);
-//   }
-
-//   if(cmd == GAMEPAD_CMD_RESET){ _state = RESETTING; }
-//   else if(cmd == GAMEPAD_CMD_STOP) { _state = STOP_SCANNING; }
-//   else { _state = PENDING; }
-//   return (header_sent>0);
-// }
 
 bool GamePad::configureHook()
 {
@@ -86,65 +36,114 @@ bool GamePad::configureHook()
   return true;
 #else
   _usb_port_name = "/dev/input/js0";
+  std::cout << "changed usb_port_name to "<< _usb_port_name << std::endl;
   return setPeriod(0.01);
 #endif //GAMEPAD_TESTFLAG
 }
 
 bool GamePad::startHook()
 {
+  setReadWriteOptions(O_RDONLY);
   return USBInterface::startHook();
 }
 
 void GamePad::updateHook()
 {
-  //do nothing
-  int numbytes = readBytes((uint8_t*)&_event, sizeof(struct gamepad_event_t));
+  int numbytes = readBytes((uint8_t*)&_event, sizeof(_event));
 
   if(numbytes>0){
     GAMEPAD_DEBUG_PRINT("Bytes received: " << numbytes)
+
+    if (_event.type == GAMEPAD_EVENT_BUTTON) {
+      decodeButtons();
+    }
+    if (_event.type == GAMEPAD_EVENT_AXIS) {
+      decodeAxes();
+    }
   }
+}
 
-  //   //decode the buffer while bytes are available
-  //   numbytes += _buffer_offset;
-  //   uint32_t decoding_offset = 0;
-  //   uint32_t bytes_decoded = 0;
-  //   do{
-  //     switch(_state){
-  //       case IDLE:
-  //         GAMEPAD_DEBUG_PRINT("GAMEPAD internal error: received bytes which were not expected.")
-  //         break;
-  //       case PENDING:
-  //         bytes_decoded = handleRequest(_buffer + decoding_offset, numbytes);
-  //         break;
-  //       case SCANNING:
-  //         bytes_decoded = handleScan(_buffer + decoding_offset, numbytes);
-  //         break;
-  //       case STOP_SCANNING:
-  //         bytes_decoded = handleScan(_buffer + decoding_offset, numbytes);
-  //         break;
-  //       case RESETTING:
-  //         bytes_decoded = numbytes;
-  //         _request_status = RESET;
-  //         _state = IDLE;
-  //         break;
-  //     }
-  //     decoding_offset += bytes_decoded;
-  //     numbytes -= bytes_decoded;
+void GamePad::decodeButtons()
+{
+  switch(_event.number)
+  {
+    case BUTTON_A:
+      _gamepad_A_port.write(_event.value);
+      break;
+    case BUTTON_B:
+      _gamepad_B_port.write(_event.value);
+      break;
+    case BUTTON_X:
+      _gamepad_X_port.write(_event.value);
+      break;
+    case BUTTON_Y:
+      _gamepad_Y_port.write(_event.value);
+      break;
+    case BUTTON_LB:
+      _gamepad_lb_port.write(_event.value);
+      break;
+    case BUTTON_RB:
+      _gamepad_rb_port.write(_event.value);
+      break;
+    case BUTTON_BCK:
+      _gamepad_back_port.write(_event.value);
+      break;
+    case BUTTON_STRT:
+      _gamepad_start_port.write(_event.value);
+      break;
+    case BUTTON_LOG:
+      _gamepad_logitech_port.write(_event.value);
+      break;
+    case BUTTON_AXISL:
+      _gamepad_laxisbutton_port.write(_event.value);
+      break;
+    case BUTTON_AXISR:
+      _gamepad_raxisbutton_port.write(_event.value);
+      break;
+  }
+}
 
-  //     GAMEPAD_DEBUG_PRINT("Decoding offset " << decoding_offset)
-  //     GAMEPAD_DEBUG_PRINT("Numbytes: " << numbytes)
-  //   }while((bytes_decoded>0)&&(numbytes>0));
+void GamePad::decodeAxes()
+{
+  switch(_event.number)
+  {
+    case AXIS_LEFTX:
+      _laxis[0]   = transformData(_event.value);
+      _gamepad_laxis_port.write(_laxis);
+      break;
+    case AXIS_LEFTY:
+      _laxis[1]   = transformData(_event.value);
+      _gamepad_laxis_port.write(_laxis);
+      break;
+    case AXIS_RIGHTX:
+      _raxis[0]   = transformData(_event.value);
+      _gamepad_laxis_port.write(_raxis);
+      break;
+    case AXIS_RIGHTY:
+      _raxis[1]   = transformData(_event.value);
+      _gamepad_laxis_port.write(_raxis);
+      break;
+    case AXIS_LT:
+      _gamepad_lt_port.write(transformData(_event.value));
+      break;
+    case AXIS_RT:
+      _gamepad_rt_port.write(transformData(_event.value));
+      break;
+    case AXIS_LR:
+      _gamepad_left_port.write(_event.value == -MAXVALUE);
+      _gamepad_right_port.write(_event.value == MAXVALUE);
+      break;
+    case AXIS_UD:
+      _gamepad_up_port.write(_event.value == MAXVALUE);
+      _gamepad_down_port.write(_event.value == -MAXVALUE);
+      break;
+  }
+  std::cout << static_cast<int>(_event.number) << std::endl;
+}
 
-  //   //copy the remainder to the beginning of the buffer
-  //   if(numbytes>0){
-  //     memcpy(_buffer, _buffer + decoding_offset, numbytes);
-  //   }
-  //   _buffer_offset = numbytes;
-  //   GAMEPAD_DEBUG_PRINT("Remaining bytes in the buffer: " << _buffer_offset)
-  // } else if( _state == STOP_SCANNING ){
-  //   //Scanning has stopped: go to idle
-  //   _state = IDLE;
-  // }
+double GamePad::transformData(int value)
+{
+  return ((double)value)*100./MAXVALUE;
 }
 
 void GamePad::stopHook()

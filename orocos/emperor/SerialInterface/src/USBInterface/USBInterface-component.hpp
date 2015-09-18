@@ -5,22 +5,25 @@
 
 #include "../SerialInterface/SerialInterface-component.hpp"
 #include <fstream>
+#include <fcntl.h>
 
 class USBInterface : public SerialInterface
 {
 	protected:
 		std::string		_usb_port_name;
 		int _usb_fd;
+		int _rw_options;
 
 	public:
 		USBInterface(std::string const& name);
-		
+
 		virtual bool configureHook();
 		virtual bool startHook();
 		virtual void updateHook();
 		virtual void stopHook();
-		
+
 		void setUSBPortName(std::string usb_port_name);
+		void setReadWriteOptions(int);
 		bool connectSerial();
 		bool disconnectSerial();
 		bool isConnectedSerial();

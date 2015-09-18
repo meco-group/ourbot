@@ -1,12 +1,11 @@
 #include "USBInterface-component.hpp"
 #include <rtt/Component.hpp>
 #include <iostream>
-#include <fcntl.h>
 #include <termios.h>
 #include <sys/ioctl.h>
 
 USBInterface::USBInterface(std::string const& name) :
-	SerialInterface(name), _usb_port_name(std::string("/dev/ttyACM0")), _usb_fd(0)
+	SerialInterface(name), _usb_port_name(std::string("/dev/ttyACM0")), _usb_fd(0), _rw_options(O_RDWR | O_NOCTTY | O_NDELAY | O_TRUNC)
 {
 	addProperty("usb_port_name",_usb_port_name).doc("The usb port name.");
 
@@ -18,6 +17,7 @@ USBInterface::USBInterface(std::string const& name) :
 bool USBInterface::configureHook()
 {
 #ifndef USBINTERFACE_TESTFLAG
+	return true;
 	//do nothing
 #else
 	setUSBPortName("/dev/ttyACM0");
@@ -58,10 +58,14 @@ void USBInterface::setUSBPortName(std::string usb_port_name)
 	_usb_port_name = usb_port_name;
 }
 
+void USBInterface::setReadWriteOptions(int rw_options)
+{
+	_rw_options = rw_options;
+}
+
 bool USBInterface::connectSerial()
 {
-  _usb_fd = open(_usb_port_name.c_str(), O_RDWR | O_NOCTTY | O_NDELAY | O_TRUNC);
-
+  _usb_fd = open(_usb_port_name.c_str(), _rw_options);
   if (_usb_fd > 0)
 	{
 		struct termios options, oldopt;
@@ -88,16 +92,16 @@ bool USBInterface::connectSerial()
 
 		tcflush(_usb_fd,TCIFLUSH);
 
-		if (fcntl(_usb_fd, F_SETFL, FNDELAY))
-		{
-		    disconnectSerial();
-		    return false;
-		}
-		if (tcsetattr(_usb_fd, TCSANOW, &options))
-		{
-		    disconnectSerial();
-		    return false;
-		}
+		// if (fcntl(_usb_fd, F_SETFL, FNDELAY))
+		// {
+		//     disconnectSerial();
+		//     return false;
+		// }
+		// if (tcsetattr(_usb_fd, TCSANOW, &options))
+		// {
+		//     disconnectSerial();
+		//     return false;
+		// }
 
 		//Clear the DTR bit to let the motor spin
 		uint32_t controll = TIOCM_DTR;

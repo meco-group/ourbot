@@ -5,9 +5,9 @@
 #define GAMEPAD_DEBUGFLAG
 
 #ifdef GAMEPAD_DEBUGFLAG
-  #define RPLIDAR_DEBUG_PRINT(x)  std::cout << x << std::endl;
+  #define GAMEPAD_DEBUG_PRINT(x)  std::cout << x << std::endl;
 #else
-  #define RPLIDAR_DEBUG_PRINT(x)  //std::cout << x << std::endl;
+  #define GAMEPAD_DEBUG_PRINT(x)  //std::cout << x << std::endl;
 #endif
 
 #include "../USBInterface/USBInterface-component.hpp"
@@ -43,6 +43,11 @@ class GamePad : public USBInterface
     RTT::OutputPort<double > _gamepad_rt_port;
 
     gamepad_event_t _event;
+    std::vector<double> _laxis;
+    std::vector<double> _raxis;
+    void decodeButtons();
+    void decodeAxes();
+    double transformData(int);
 
   public:
     GamePad(std::string const& name);
@@ -51,7 +56,6 @@ class GamePad : public USBInterface
     bool startHook();
     void updateHook();
     void stopHook();
-
 };
 
 #endif //GAMEPAD_H
