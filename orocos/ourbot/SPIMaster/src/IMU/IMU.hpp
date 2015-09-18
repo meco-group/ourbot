@@ -4,6 +4,7 @@
 #define IMU_TESTFLAG //to manually set properties while testing
 
 #include <vector>
+#include <cmath>
 #include "sensor3d.hpp"
 //#include "/home/tim/orocos/ourbot/orocos/ourbot/SPIMaster/src/SPIDeviceInterface/SPIDeviceInterface.hpp" //for use on notebook
 #include "/home/odroid/orocos/SPIMaster/src/SPIDeviceInterface/SPIDeviceInterface.hpp" //for use on Odroid
@@ -198,6 +199,7 @@ class IMU : public SPIDeviceInterface{ //IMU inherits from SPIDeviceInterface
   	void 		readMag();
   	void 		readGyro();
   	void 		readTemp();
+  	std::vector<double> convertMag2rpy(); //convert magnetic field measurements to roll pitch yaw angles
 
   	//Assign measurements to variables
   	void setImuTransAcc				(std::vector<double> cal_imu_transacc);
@@ -216,6 +218,8 @@ class IMU : public SPIDeviceInterface{ //IMU inherits from SPIDeviceInterface
     void updateHook();
     void stopHook();
     void cleanupHook();
+
+    double const pi=4*atan(1);
 
   protected: 
 

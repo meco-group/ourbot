@@ -448,6 +448,10 @@ void IMU::updateMeasurements()
   std::cout<<"_cal_imu_temperature: "    <<_cal_imu_temperature[0]<<std::endl;
 
   //Todo: compensate for roll/pitch/yaw in angular velocity measurements? No, better translate to world frame when using these measurements
+  //Todo: or make separate variables for measurements in gauss and rpy angles?
+  _cal_imu_orientation_3d = convertMag2rpy(); //convert magnetic field measurements to roll pitch yaw angles
+
+  std::cout<<"calculated rpy [deg]"<<_cal_imu_orientation_3d[0]*180/pi<< " , "<< _cal_imu_orientation_3d[1]*180/pi<< " , "<<_cal_imu_orientation_3d[2]*180/pi<< " , "<<std::endl;
 
   //Write measurements
   _cal_imu_transacc_port.write        (_cal_imu_transacc);                
@@ -520,13 +524,6 @@ void IMU::readMag() {
   std::cout<<"mag_x = "<<(int)xhi<<std::endl;
   std::cout<<"mag_y = "<<(int)yhi<<std::endl;
   std::cout<<"mag_z = "<<(int)zhi<<std::endl;
-
-  //Todo: manipulate data to get roll pitch yaw angles
-  //https://www.pololu.com/file/download/LSM303DLH-compass-app-note.pdf?file_id=0J434
-  //Accelerometer calibration parameters: necessary?
-  // xhi = arcsin(acc_yhi/cos(mag_yhi))
-  // yhi = arcsin(-acc_xhi)
-  // zhi = ...
 
   std::vector<double> data(3);
   data[0] = xhi;
@@ -666,6 +663,54 @@ void IMU::readTemp() {
   // Shift values to create properly formed integer (low byte first)
   // temperature = xhi;
 }
+
+std::vector<double> IMU::convertMag2rpy(){
+	//Reference: https://www.pololu.com/file/download/LSM303DLH-compass-app-note.pdf?file_id=0J434
+	std::vector<double> rpy(3); //contains roll pitch yaw angles
+  std::vector<double> acc = _cal_imu_transacc; //copy accelerometer data
+  std::vector<double> mag = _cal_imu_orientation_3d; //copy magnetometer data
+
+  //Todo: accelerometer calibration parameters: necessary? --> the datasheet says that the IMU is factory calibrated and could be use immediately
+  //Normalize accelerometer measurements
+  double acc_norm=sqrt(pow(acc[0],2)+pow(acc[1],2)+pow(acc[2],2));
+	acc[0]=acc[0]/acc_norm;
+	acc[1]=acc[1]/acc_norm;
+	acc[2]=acc[2]/acc_norm;
+	//Normalize magnetometer measurements
+  double mag_norm=sqrt(pow(mag[0],2)+pow(mag[1],2)+pow(mag[2],2));
+	mag[0]=mag[0]/mag_norm;
+	mag[1]=mag[1]/mag_norm;
+	mag[2]=mag[2]/mag_norm;
+
+	//Roll pitch yaw calculation:
+  rpy[1] = asin(-acc[0]); //pitch
+  rpy[0] = asin( acc[1]/cos(rpy[1])); //roll
+  //Tilt compensation for heading/yaw calculation:
+  double magx =  mag[0]*cos(rpy[1]) + mag[2]*sin(rpy[1]);
+  double magy =  mag[0]*sin(rpy[0])*sin(rpy[1]) + mag[1]*cos(rpy[0]) - mag[2]*sin(rpy[0])*cos(rpy[1]);
+  // double magz = -mag[0]*cos(rpy[0])*sin(rpy[1]) + mag[1]*sin(rpy[0]) + mag[2]*cos(rpy[0])*cos(rpy[1]); //not used
+  
+  //Option 1: this puts the heading in the range [0...2*pi]
+  if (magx > 0 and magy >= 0){
+  	rpy[2] = atan(magy / magx);
+  }
+  else if (magx < 0 ){
+  	rpy[2] = pi + atan(magy / magx);
+  }
+  else if (magx > 0 and magy <= 0 ){
+  	rpy[2] = 2*pi + atan(magy / magx);
+  }
+  else if (magx = 0 and magy < 0 ){
+  	rpy[2] = pi/2.0;
+  }
+  else if (magx < 0 and magy > 0 ){
+  	rpy[2] = 3*pi/2.0;
+  }
+  //Option 2: this puts the heading in the range [-pi...pi]
+  // rpy[2] = atan2(magy,magx);
+  return rpy;
+}
+
 
 //Get sensor data
 std::vector<double> IMU::getImuTransAcc()      { return _cal_imu_transacc; }
