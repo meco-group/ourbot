@@ -595,6 +595,7 @@ void IMU::readGyro() {
   _gyr.writeData(data);
   _raw_imu_gyr_port.write(data); 
 
+
   // byte buffer[6];
   // readBuffer(GYROTYPE, 
   //      0x80 | LSM9DS0_REGISTER_OUT_X_L_G, 
