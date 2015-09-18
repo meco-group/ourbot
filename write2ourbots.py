@@ -11,7 +11,7 @@
 #  if arguments are not provided, default values are used:
 #   1: current directory/orocos/ourbot
 #   2; /home/odroid/orocos
-#
+
 # Options:
 #   -b, --build: build all components
 #   -n, --buildnew: build new created components
