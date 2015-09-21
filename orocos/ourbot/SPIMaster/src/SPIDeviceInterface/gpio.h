@@ -9,9 +9,9 @@ extern "C" {
 	#include <unistd.h>
 	#include <fcntl.h>
 
-	int gpioExport(unsigned int gpio);
+	int gpioExport(  unsigned int gpio);
 	int gpioUnexport(unsigned int gpio);
-	int gpioSetMode(unsigned int gpio, unsigned int dir );  //input or output port
+	int gpioSetMode( unsigned int gpio, unsigned int dir ); //input or output
 	int gpioSetValue(unsigned int gpio, unsigned int val); //high  or low
 
 #ifdef __cplusplus

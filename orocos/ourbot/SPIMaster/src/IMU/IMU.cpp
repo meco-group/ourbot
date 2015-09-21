@@ -68,7 +68,8 @@ bool IMU::configureHook(){
   //Todo: load properties here, from .cfg file
 
   std::cout << "IMU configured!" <<std::endl;
-  //TEMPORARY: to test data acquisition
+  
+  //TEST: to test data acquisition
   return this->setPeriod(1); 
   // return true;
 }
@@ -89,7 +90,7 @@ bool IMU::startHook(){
 
 	init(); //Set sensor mode, declare range, make Sensor3D instances
 
-	//Todo: connect ports to reporterNC for now. 
+	//Todo: connect ports to reporterNC for now. --> actually this is done in the ops script.
 
 	// //Check if all ports are connected
 	// bool portCheck = true;
@@ -156,7 +157,7 @@ void IMU::updateHook(){ //Is executed by the IO component actually
 
   SPIDeviceInterface::updateHook();
 
-  //TEMPORARY: re-set conversion factors
+  //Todo: re-set conversion factors, otherwise the initialized values are used --> some error, fix
   _acc.setConversionFactor(_acc_mg_lsb*SENSORS_GRAVITY_STANDARD/1000.0);
   _gyr.setConversionFactor(_gyr_dps_digit);
   _mag.setConversionFactor(_mag_mgauss_lsb/1000.0);

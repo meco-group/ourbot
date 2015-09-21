@@ -1,9 +1,9 @@
 #include "gpio.h"
 
 //Define function headers
-int gpioExport(unsigned int );
+int gpioExport(  unsigned int );
 int gpioUnexport(unsigned int);
-int gpioSetMode(unsigned int , unsigned int );  //input or output port
+int gpioSetMode( unsigned int , unsigned int );  //input or output
 int gpioSetValue(unsigned int , unsigned int ); //high  or low
 
 #define SYSFS_GPIO_DIR  "/sys/class/gpio"
