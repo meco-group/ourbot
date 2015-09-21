@@ -22,7 +22,7 @@ class IMU : public SPIDeviceInterface{ //IMU inherits from SPIDeviceInterface
   	OutputPort<std::vector<double> > _cal_imu_orientation_3d_port;  //orientation (3d) port
  	 	OutputPort<double>               _cal_imu_dorientation_port;    //angular velocity around z-axis port
   	OutputPort<double>               _cal_imu_orientation_port;     //orientation in x-y plane port
-  	OutputPort<std::vector<double> > _cal_imu_temperature_port;     //temperature port
+  	OutputPort<double>               _cal_imu_temperature_port;     //temperature port
 
 		//Define variables to send to output ports
 		std::vector<double> _cal_imu_transacc;

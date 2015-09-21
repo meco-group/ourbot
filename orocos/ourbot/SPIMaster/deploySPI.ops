@@ -1,3 +1,4 @@
+require("print")
 import("rtt_ros")
 
 ros.import("SPIMaster") 
@@ -5,8 +6,17 @@ ros.import("SPIMaster")
 //displayComponentTypes()
 loadComponent("SPIMaster", "SPIMaster")
 loadComponent("IMU", "IMU")
-
 //addPeer("IMU", "SPIMaster")
+
+//To report:
+//loadComponent("reporter","OCL::NetcdfReporting")
+//print.ln("Created reporting component")
+//loadService("reporter", "marshalling")
+// //reporter.marshalling.loadProperties("reporting.cpf")
+// //addPeer("reporter","teensy")
+// //reporter.reportComponent("teensy")
+//addPeer("reporter","IMU")
+//reporter.reportPort("IMU","cal_imu_temperature_port")
 
 var ConnPolicy cp;   //make a connection policy
 cp.type = DATA ; 

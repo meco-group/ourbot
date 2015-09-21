@@ -38,11 +38,11 @@ IMU::IMU(std::string const& name) :
   addProperty("gyr_range",  _pin_gyr).doc("Chip select pin of gyroscope");
 
 #else //if in Test-mode
-  _acc_offset[0] = 0; _acc_offset[1] = 0; _acc_offset[2] = 0;
+  _acc_offset[0] = 0.9582940; _acc_offset[1] = 0.0602544; _acc_offset[2] = 0.157349;
   _gyr_offset[0] = 0; _gyr_offset[1] = 0; _gyr_offset[2] = 0;
   _mag_offset[0] = 0; _mag_offset[1] = 0; _mag_offset[2] = 0;
   _tmp_offset = 21; //starting point, 0 value of sensor (see adafruit code)
-  _acc_scale[0] = 1; _acc_scale[1] = 1; _acc_scale[2] = 1;
+  _acc_scale[0] = 0.9993312; _acc_scale[1] = 1.0022333; _acc_scale[2] = 1.0001244;
   _gyr_scale[0] = 1; _gyr_scale[1] = 1; _gyr_scale[2] = 1;
   _mag_scale[0] = 1; _mag_scale[1] = 1; _mag_scale[2] = 1;
   _tmp_scale = 1;
@@ -68,7 +68,9 @@ bool IMU::configureHook(){
   //Todo: load properties here, from .cfg file
 
   std::cout << "IMU configured!" <<std::endl;
-  return true;
+  //TEMPORARY: to test data acquisition
+  return this->setPeriod(1); 
+  // return true;
 }
 
 bool IMU::startHook(){
@@ -154,12 +156,14 @@ void IMU::updateHook(){ //Is executed by the IO component actually
 
   SPIDeviceInterface::updateHook();
 
-  //TEMPORARY: reset conversion factors
+  //TEMPORARY: re-set conversion factors
   _acc.setConversionFactor(_acc_mg_lsb*SENSORS_GRAVITY_STANDARD/1000.0);
   _gyr.setConversionFactor(_gyr_dps_digit);
   _mag.setConversionFactor(_mag_mgauss_lsb/1000.0);
   _tmp.setConversionFactor(1.0/LSM9DS0_TEMP_LSB_DEGREE_CELSIUS);
   _tmp.setOffset(_tmp_offset,0,0);
+  _acc.setOffset(_acc_offset[0],_acc_offset[1], _acc_offset[2]);
+  _acc.setScale(_acc_scale[0],_acc_scale[1], _acc_scale[2]);
 
   double test0 = _acc.getConversionFactor();
   std::cout<<"got conversion factor in IMU updatehook point 2: "<<test0<<std::endl;
@@ -451,14 +455,15 @@ void IMU::updateMeasurements()
   //Todo: or make separate variables for measurements in gauss and rpy angles?
   _cal_imu_orientation_3d = convertMag2rpy(); //convert magnetic field measurements to roll pitch yaw angles
 
-  std::cout<<"calculated rpy [deg]"<<_cal_imu_orientation_3d[0]*180/pi<< " , "<< _cal_imu_orientation_3d[1]*180/pi<< " , "<<_cal_imu_orientation_3d[2]*180/pi<< " , "<<std::endl;
+  std::cout<<"calculated rpy [deg]: "<<_cal_imu_orientation_3d[0]*180/pi<< " , "<< _cal_imu_orientation_3d[1]*180/pi<< " , "<<_cal_imu_orientation_3d[2]*180/pi<< " , "<<std::endl;
 
   //Write measurements
   _cal_imu_transacc_port.write        (_cal_imu_transacc);                
   _cal_imu_dorientation_3d_port.write (_cal_imu_dorientation_3d);
   _cal_imu_orientation_3d_port.write  (_cal_imu_orientation_3d);
   _cal_imu_dorientation_port.write    (_cal_imu_dorientation);    
-  _cal_imu_orientation_port.write     (_cal_imu_orientation);               
+  _cal_imu_orientation_port.write     (_cal_imu_orientation);  
+  _cal_imu_temperature_port.write     (_cal_imu_temperature[0]);             
 }
 
 void IMU::readAccel() {
@@ -670,6 +675,9 @@ std::vector<double> IMU::convertMag2rpy(){
   std::vector<double> acc = _cal_imu_transacc; //copy accelerometer data
   std::vector<double> mag = _cal_imu_orientation_3d; //copy magnetometer data
 
+  std::cout<<"acceleration in rpy: "<<acc[0]<<" , "<<acc[1]<<" , "<<acc[2]<<std::endl;
+  std::cout<<"magnetic field in rpy: "<<mag[0]<<" , "<<mag[1]<<" , "<<mag[2]<<std::endl;
+
   //Todo: accelerometer calibration parameters: necessary? --> the datasheet says that the IMU is factory calibrated and could be use immediately
   //Normalize accelerometer measurements
   double acc_norm=sqrt(pow(acc[0],2)+pow(acc[1],2)+pow(acc[2],2));
@@ -682,6 +690,9 @@ std::vector<double> IMU::convertMag2rpy(){
 	mag[1]=mag[1]/mag_norm;
 	mag[2]=mag[2]/mag_norm;
 
+	std::cout<<"acc normalized: "<<acc[0]<<" , "<< acc[1]<<" , "<<acc[2]<<std::endl;
+	std::cout<<"mag normalized: "<<mag[0]<<" , "<< mag[1]<<" , "<<mag[2]<<std::endl;
+
 	//Roll pitch yaw calculation:
   rpy[1] = asin(-acc[0]); //pitch
   rpy[0] = asin( acc[1]/cos(rpy[1])); //roll
@@ -691,23 +702,27 @@ std::vector<double> IMU::convertMag2rpy(){
   // double magz = -mag[0]*cos(rpy[0])*sin(rpy[1]) + mag[1]*sin(rpy[0]) + mag[2]*cos(rpy[0])*cos(rpy[1]); //not used
   
   //Option 1: this puts the heading in the range [0...2*pi]
-  if (magx > 0 and magy >= 0){
-  	rpy[2] = atan(magy / magx);
-  }
-  else if (magx < 0 ){
-  	rpy[2] = pi + atan(magy / magx);
-  }
-  else if (magx > 0 and magy <= 0 ){
-  	rpy[2] = 2*pi + atan(magy / magx);
-  }
-  else if (magx = 0 and magy < 0 ){
-  	rpy[2] = pi/2.0;
-  }
-  else if (magx < 0 and magy > 0 ){
-  	rpy[2] = 3*pi/2.0;
-  }
+  // if (magx > 0 and magy >= 0){
+  // 	rpy[2] = atan(magy / magx);
+  // }
+  // else if (magx < 0 ){
+  // 	rpy[2] = pi + atan(magy / magx);
+  // }
+  // else if (magx > 0 and magy <= 0 ){
+  // 	rpy[2] = 2*pi + atan(magy / magx);
+  // }
+  // else if (magx = 0 and magy < 0 ){
+  // 	rpy[2] = pi/2.0;
+  // }
+  // else if (magx < 0 and magy > 0 ){
+  // 	rpy[2] = 3*pi/2.0;
+  // }
   //Option 2: this puts the heading in the range [-pi...pi]
-  // rpy[2] = atan2(magy,magx);
+  rpy[2] = atan2(magy,magx);
+  if (rpy[2]<0) { //shift to [0...2*pi]
+  	rpy[2] += 2*pi;
+  }
+  std::cout<<"roll: "<<rpy[0]<<" , "<<"pitch: "<<rpy[1]<<" , "<<"yaw: "<<rpy[2]<<std::endl;
   return rpy;
 }
 
