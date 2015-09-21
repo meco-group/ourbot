@@ -8,9 +8,11 @@ local fsm
 local fqn_out, events_in
 local start_time
 state = ''
+main_state = ''
 -- local menu_options = {{'VelocityControl','e_velocitycmdextern'},{'PathFollowing','e_updpathfollowing'}}
 local menu_options         = {'VelocityControl','PathFollowing'}
-local menu_options_events  = {'e_velocitycmdextern', 'e_updpathfollowing'}
+local main_states          = {'velocitycmdextern', 'updpathfollowing'}
+local sub_states           = {'idle', 'init', 'run', 'stop'}
 local menu_option_ind = 1
 
 --Create properties
@@ -28,6 +30,7 @@ _emperor_current_state_port  = rtt.OutputPort("string")
 
 --Ports to connect gamepad
 _gamepad_A_port      = rtt.InputPort("bool")
+_gamepad_B_port      = rtt.InputPort("bool")
 _gamepad_up_port     = rtt.InputPort("bool")
 _gamepad_down_port   = rtt.InputPort("bool")
 
@@ -37,6 +40,7 @@ tc:addPort(_emperor_failure_event_port,"emperor_failure_event_port","Port to sen
 tc:addPort(_emperor_current_state_port, "emperor_current_state_port", "current active state of the emperor FSM")
 
 tc:addEventPort(_gamepad_A_port, "gamepad_A_port", "A button of gamepad")
+tc:addEventPort(_gamepad_B_port, "gamepad_B_port", "B button of gamepad")
 tc:addEventPort(_gamepad_up_port, "gamepad_up_port", "Up button of gamepad")
 tc:addEventPort(_gamepad_down_port, "gamepad_down_port", "Down button of gamepad")
 
@@ -73,10 +77,11 @@ end
 
 function updateHook()
    rfsm.run(fsm)
-   if state == 'idle' then
+   if main_state == 'idle' then
       menuToggle()
-   elseif state == ''
-   if state == ''
+   elseif not (main_state == 'failure') then
+      switchStates()
+   end
 end
 
 function cleanupHook()
@@ -98,15 +103,35 @@ function menuToggle()
    end
    if ((fs_A == 'NewData') and data_A) then
       print('Entering Mode '..menu_options[menu_option_ind])
-      _emperor_send_event_port:write(menu_options_events[menu_option_ind])
+      _emperor_send_event_port:write('e_'..main_states[menu_option_ind])
    end
 end
 
--- function menuChoice()
---    if ((_gamepad_A_port.read(sample) == rtt.NewData) and sample) then
---       _emperor_send_event_port.write(menu_options[menu_option_ind[1]])
---    end
--- end
+function switchStates()
+   local fs_A, data_A         = _gamepad_A_port:read()
+   local fs_B, data_B         = _gamepad_B_port:read()
+   if ((fs_A == 'NewData') and data_A) then
+      if sub_state == 'idle' then
+         _emperor_send_event_port:write('e_init')
+      end
+      if sub_state == 'init' then
+         _emperor_send_event_port:write('e_run')
+      end
+      if sub_state == 'stop' then
+         _emperor_send_event_port:write('e_restart')
+      end
+   elseif ((fs_B == 'NewData') and data_B) then
+      if sub_state == 'idle' then
+         _emperor_send_event_port:write('e_idle')
+      end
+      if sub_state == 'run' then
+         _emperor_send_event_port:write('e_stop')
+      end
+      if sub_state == 'stop' then
+         _emperor_send_event_port:write('e_reset')
+      end
+   end
+end
 
 --Local function to get the current time in seconds
 function get_sec()

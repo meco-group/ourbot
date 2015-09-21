@@ -13,6 +13,7 @@ local reporter      = 'reporter'..index
 local io            = 'io'..index
 local teensy        = 'teensy'..index
 local lidar         = 'lidar'..index
+local imu           = 'imu'..index
   --add here extra components
 
 --Components to load
@@ -26,13 +27,14 @@ local components_to_load = {
   [reporter]        = 'OCL::NetcdfReporting',
   [io]              = 'Container',
   [teensy]          = 'TeensyBridge',
-  [lidar]           = 'RPLidar'
+  [lidar]           = 'RPLidar',
+  [imu]             = 'IMU'
    --add here componentname = 'componenttype'
 }
 
 --Containers to fill
 local containers_to_fill = {
-  [io]              = {teensy, lidar}
+  [io]              = {teensy, lidar, imu}
 }
 
 --Ports to report
@@ -41,7 +43,7 @@ local ports_to_report = {
   [estimator]       = {'est_pose_port', 'est_velocity_port', 'est_acceleration_port', 'est_global_offset_port'},
   [reference]       = {'ref_pose_port', 'ref_ffw_port'},
   [velocitycmd]     = {'cmd_velocity_port'},
-  [io]              = {'cal_enc_pose_port', 'cal_velocity_port', 'cal_lidar_node_port'},
+  [io]              = {'cal_enc_pose_port', 'cal_velocity_port', 'cal_lidar_node_port', 'cal_'},
   [coordinator]     = {'controlloop_duration', 'controlloop_jitter'}
   --add here componentname = 'portnames'
 }
