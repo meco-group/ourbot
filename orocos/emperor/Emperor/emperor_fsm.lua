@@ -2,7 +2,12 @@
 return rfsm.state {
   rfsm.trans{src = 'initial', tgt = 'idle'},
 
-  idle = rfsm.state{entry=function() print('\nWaiting for command...\nPossibilities: VelocityControl, PathFollowing') end},
+  idle = rfsm.state{
+    entry=function()
+      state='idle'
+      print('\nSelect mode...\n')
+    end
+  },
 
   rfsm.trans{src = 'idle', tgt = 'updpathfollowing', events={'e_updpathfollowing'}},
   rfsm.trans{src = 'idle', tgt = 'fixedpathfollowing', events={'e_fixedpathfollowing'}},

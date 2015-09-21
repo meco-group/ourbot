@@ -25,29 +25,11 @@ return rfsm.state {
 
   init = rfsm.state{
     entry = function(fsm)
-        -- test
-        -- port = estimator:getPort('est_pose_port')
-        smpl=rtt.Variable("array")
-        smpl:resize(3)
-        smpl:fromtab{0,0,0}
-        -- port:write(smpl)
-
-        -- setData
-      -- setData = estimator:getOperation("setData")
-      -- setData()
-
       if not io:start() then
         rtt.logl("Error","Could not start io component")
-        rfsm.send_events(fsm,'e_failed')
+        -- rfsm.send_events(fsm,'e_failed')
         return
       end
-
-      -- estimator:configure()
-      -- if not estimator:start() then
-      --   rtt.logl("Error","Could not start estimator component")
-      --   rfsm.send_events(fsm,'e_failed')
-      --   return
-      -- end
       print("Waiting on Run...")
     end
   },

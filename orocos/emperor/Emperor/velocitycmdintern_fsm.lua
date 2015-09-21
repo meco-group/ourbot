@@ -12,7 +12,7 @@ return rfsm.state {
   rfsm.trans{src = 'stop',    tgt = 'reset',  events = {'e_reset'}},
   rfsm.trans{src = 'reset',   tgt = 'idle'},
 
-  idle  = rfsm.state{ entry = function() print("Waiting on Init...") end },
+  idle  = rfsm.state{  entry = function() print("Waiting on Init...") end },
   init  = rfsm.state{ entry = function() print("Waiting on Run...") end},
   run   = rfsm.state{
     entry = function()

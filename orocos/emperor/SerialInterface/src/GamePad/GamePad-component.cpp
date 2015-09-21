@@ -35,8 +35,8 @@ bool GamePad::configureHook()
 #ifndef GAMEPAD_TESTFLAG
   return true;
 #else
-  _usb_port_name = "/dev/input/js0";
   std::cout << "changed usb_port_name to "<< _usb_port_name << std::endl;
+  _usb_port_name = "/dev/input/js0";
   return setPeriod(0.01);
 #endif //GAMEPAD_TESTFLAG
 }
@@ -117,11 +117,11 @@ void GamePad::decodeAxes()
       break;
     case AXIS_RIGHTX:
       _raxis[0]   = transformData(_event.value);
-      _gamepad_laxis_port.write(_raxis);
+      _gamepad_raxis_port.write(_raxis);
       break;
     case AXIS_RIGHTY:
       _raxis[1]   = transformData(_event.value);
-      _gamepad_laxis_port.write(_raxis);
+      _gamepad_raxis_port.write(_raxis);
       break;
     case AXIS_LT:
       _gamepad_lt_port.write(transformData(_event.value));
@@ -134,11 +134,10 @@ void GamePad::decodeAxes()
       _gamepad_right_port.write(_event.value == MAXVALUE);
       break;
     case AXIS_UD:
-      _gamepad_up_port.write(_event.value == MAXVALUE);
-      _gamepad_down_port.write(_event.value == -MAXVALUE);
+      _gamepad_up_port.write(_event.value == -MAXVALUE);
+      _gamepad_down_port.write(_event.value == MAXVALUE);
       break;
   }
-  std::cout << static_cast<int>(_event.number) << std::endl;
 }
 
 double GamePad::transformData(int value)

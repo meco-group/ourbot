@@ -1,8 +1,8 @@
 #ifndef GAMEPAD_H
 #define GAMEPAD_H
 
-#define GAMEPAD_TESTFLAG
-#define GAMEPAD_DEBUGFLAG
+// #define GAMEPAD_TESTFLAG
+// #define GAMEPAD_DEBUGFLAG
 
 #ifdef GAMEPAD_DEBUGFLAG
   #define GAMEPAD_DEBUG_PRINT(x)  std::cout << x << std::endl;
