@@ -1,14 +1,20 @@
 #ifndef OROCOS_IMU_HPP
 #define OROCOS_IMU_HPP
 
-#define IMU_TESTFLAG //to manually set properties while testing
-
 #include <vector>
 #include <cmath>
 #include "sensor3d.hpp"
-//#include "/home/tim/orocos/ourbot/orocos/ourbot/SPIMaster/src/SPIDeviceInterface/SPIDeviceInterface.hpp" //for use on notebook
 #include "/home/odroid/orocos/SPIMaster/src/SPIDeviceInterface/SPIDeviceInterface.hpp" //for use on Odroid
 //Todo: why specifically need to specify the path here? Normally #include "SPIDeviceInterface.hpp" should also work...
+
+// #define IMU_TESTFLAG //to manually set properties while testing
+// #define IMU_DEBUGFLAG
+
+#ifdef IMU_DEBUGFLAG
+	#define IMU_DEBUG_PRINT(x)	std::cout << x << std::endl;
+#else
+	#define IMU_DEBUG_PRINT(x)	//std::cout << x << std::endl;
+#endif
 
 using namespace RTT; //avoids that you have to put RTT::OutputPort, just use OutputPort
 
@@ -17,6 +23,12 @@ class IMU : public SPIDeviceInterface{ //IMU inherits from SPIDeviceInterface
   private: 
 	
 		//Define output ports
+  	//Raw data
+		OutputPort<std::vector<double> > _raw_imu_acc_port; //accelerometer data input port
+		OutputPort<std::vector<double> > _raw_imu_gyr_port; //gyroscope data input port
+  	OutputPort<std::vector<double> > _raw_imu_mag_port; //magnetometer data input port
+  	OutputPort<std::vector<double> > _raw_imu_tmp_port; //temperature data input port
+  	//Calibrated data
 		OutputPort<std::vector<double> > _cal_imu_transacc_port;		    //translational acceleration port
 		OutputPort<std::vector<double> > _cal_imu_dorientation_3d_port; //angular velocity (3d) port
   	OutputPort<std::vector<double> > _cal_imu_orientation_3d_port;  //orientation (3d) port
@@ -24,27 +36,19 @@ class IMU : public SPIDeviceInterface{ //IMU inherits from SPIDeviceInterface
   	OutputPort<double>               _cal_imu_orientation_port;     //orientation in x-y plane port
   	OutputPort<double>               _cal_imu_temperature_port;     //temperature port
 
-		//Define variables to send to output ports
+		//Define variables to send to output ports, will hold all sensor data
+		//Raw data  	
+		std::vector<double> _raw_imu_acc; //raw accelerometer data
+  	std::vector<double> _raw_imu_gyr; //raw gyroscope data
+  	std::vector<double> _raw_imu_mag; //raw magnetometer data
+  	std::vector<double> _raw_imu_tmp; //raw temperature sensor data
+  	//Calibrated data
 		std::vector<double> _cal_imu_transacc;
   	std::vector<double> _cal_imu_dorientation_3d;
   	std::vector<double> _cal_imu_orientation_3d;
   	double              _cal_imu_dorientation;
   	double              _cal_imu_orientation;
   	std::vector<double> _cal_imu_temperature;
-
-		//Define input ports
-		OutputPort<std::vector<double> > _raw_imu_acc_port; //accelerometer data input port
-		OutputPort<std::vector<double> > _raw_imu_gyr_port; //gyroscope data input port
-  	OutputPort<std::vector<double> > _raw_imu_mag_port; //magnetometer data input port
-  	OutputPort<std::vector<double> > _raw_imu_tmp_port; //temperature data input port
-
-		//Define variables for incoming signals
-		//Note: read out everything, afterwards select 3d or 1d orientation or dorientation in some method
-		std::vector<double> _raw_imu_acc;
-  	std::vector<double> _raw_imu_gyr;
-  	std::vector<double> _raw_imu_mag;
-  	std::vector<double> _raw_imu_tmp;
-
 
 		//Define sensor constants:
 		//for more info see datasheet section "register description" of LSM9DS0 STM sensor
@@ -53,16 +57,13 @@ class IMU : public SPIDeviceInterface{ //IMU inherits from SPIDeviceInterface
 		#define LSM9DS0_XM_ID             (0b01001001)  //Binary ID of the accmag
 		#define LSM9DS0_G_ID              (0b11010100)  //Binary ID of the gyro
 
-		// #define GYROTYPE                  (true)        //boolean to select the gyro
-		// #define XMTYPE                    (false)		    //boolean to select the accmag
-
 		//Define conversion factors to go to SI-units
 		// Linear Acceleration: mg per LSB
 		#define LSM9DS0_ACCEL_MG_LSB_2G  (0.061F)
 		#define LSM9DS0_ACCEL_MG_LSB_4G  (0.122F)
 		#define LSM9DS0_ACCEL_MG_LSB_6G  (0.183F)
 		#define LSM9DS0_ACCEL_MG_LSB_8G  (0.244F)
-		#define LSM9DS0_ACCEL_MG_LSB_16G (0.732F) // Is this right? Was expecting 0.488F
+		#define LSM9DS0_ACCEL_MG_LSB_16G (0.732F) // Is this right? I was expecting 0.488F
 
 		#define SENSORS_GRAVITY_STANDARD (9.80665F)// Earth's gravity in m/s^2
 
@@ -177,16 +178,16 @@ class IMU : public SPIDeviceInterface{ //IMU inherits from SPIDeviceInterface
 		double 	_acc_mg_lsb;     //holds conversion factor for accelerometer
   	double 	_mag_mgauss_lsb; //holds conversion factor for magnetometer
   	double 	_gyr_dps_digit;  //holds conversion factor for gyroscope
-  	uint8_t _acc_range_register;
-  	uint8_t _mag_range_register;
-  	uint8_t _gyr_range_register;
+  	uint8_t _acc_range_register; //holds the register corresponding to the acc range
+  	uint8_t _mag_range_register; //holds the register corresponding to the mag range
+  	uint8_t _gyr_range_register; //holds the register corresponding to the gyr range
   	Sensor3D 	_acc; //accelerometer
   	Sensor3D 	_mag; //magnetometer
   	Sensor3D 	_gyr; //gyroscope
   	Sensor3D 	_tmp; //temperature sensor
 
 		//Methods
-	  void  	init();   //initialize sensor
+	  void  	init();   //initialize sensor: set GPIO's, sensor ranges, make sensor3D objects and define offsets
 
     //Set-up sensor ranges
     void setupAccel (uint8_t range);
@@ -219,7 +220,7 @@ class IMU : public SPIDeviceInterface{ //IMU inherits from SPIDeviceInterface
     void stopHook();
     void cleanupHook();
 
-    double const pi=4*atan(1);
+    double const pi=4*atan(1); //define constant pi
 
   protected: 
 
@@ -230,7 +231,7 @@ class IMU : public SPIDeviceInterface{ //IMU inherits from SPIDeviceInterface
     double 							getImuDOrientation();
     double 							getImuOrientation();
 		
-		bool 	isConnected(); //Check if sensor is connected
+		bool 	isConnected(); //Check if sensor is connected by reading its ID
 
 };
 #endif //IMU

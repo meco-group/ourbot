@@ -1,13 +1,21 @@
 #ifndef OROCOS_SPIMASTER_COMPONENT_HPP
 #define OROCOS_SPIMASTER_COMPONENT_HPP
 
-#define SPIMASTER_TESTFLAG //to manually set properties while testing
+// #define SPIMASTER_TESTFLAG //to manually set properties while testing
+// #define SPIMASTER_DEBUGFLAG
+
+#ifdef SPIMASTER_DEBUGFLAG
+	#define SPIMASTER_DEBUG_PRINT(x)	std::cout << x << std::endl;
+#else
+	#define SPIMASTER_DEBUG_PRINT(x)	//std::cout << x << std::endl;
+#endif
 
 #include <sys/ioctl.h> //For use of ioctl
 #include <fcntl.h>    // For O_RDWR, open()...
 #include <unistd.h>   // For close()
 #include <linux/spi/spidev.h> //For SPI_IOC_WR_BITS_PER_WORD, SPI_IOC_WR_MODE,...
 
+//Orocos
 #include <rtt/Component.hpp>
 #include <rtt/RTT.hpp>
 #include <rtt/Port.hpp>
@@ -22,8 +30,8 @@ class SPIMaster : public RTT::TaskContext{
 		OutputPort <int> 	_spi_word_length_port;
 		OutputPort <int>  _spi_speed_port;
 
-		int	     		_fd; 					//file descriptor (SPI bus representation)
-		std::string	_device;			//= "/dev/spidev1.0";   //Select the spi-driver (of the odroid) --> 1.0 means master is 1, slave is with CS 0                           
+		int	     		_fd; 			//file descriptor (SPI bus representation)
+		std::string	_device;	//= "/dev/spidev1.0";   //Select the spi-driver (of the odroid) --> 1.0 means master is 1, slave is with CS 0                           
     int  		_mode; 				//SPI mode (0...3) depends on your SPI device                                                          
     int  		_bits; 				//bit per word = 8;                                                        
     int 		_speed; 			//= 500000; //500kHz   
@@ -41,10 +49,5 @@ class SPIMaster : public RTT::TaskContext{
     void cleanupHook();
 
     void pabort(const char *s);
-		
-    // uint8_t*  getSPIMode();
-		// uint8_t*  getSPIWordLength();
-		// uint32_t* getSPISpeed();
-		// int* 		  getFileDescriptor(); //pass file descriptor to SPI device 
 };
 #endif
