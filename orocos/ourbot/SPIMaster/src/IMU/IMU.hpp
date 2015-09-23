@@ -4,8 +4,7 @@
 #include <vector>
 #include <cmath>
 #include "sensor3d.hpp"
-#include "/home/odroid/orocos/SPIMaster/src/SPIDeviceInterface/SPIDeviceInterface.hpp" //for use on Odroid
-//Todo: why specifically need to specify the path here? Normally #include "SPIDeviceInterface.hpp" should also work...
+#include "../SPIDeviceInterface/SPIDeviceInterface.hpp"
 
 // #define IMU_TESTFLAG //to manually set properties while testing
 // #define IMU_DEBUGFLAG
@@ -20,8 +19,8 @@ using namespace RTT; //avoids that you have to put RTT::OutputPort, just use Out
 
 class IMU : public SPIDeviceInterface{ //IMU inherits from SPIDeviceInterface
 
-  private: 
-	
+  private:
+
 		//Define output ports
   	//Raw data
 		OutputPort<std::vector<double> > _raw_imu_acc_port; //accelerometer data input port
@@ -37,7 +36,7 @@ class IMU : public SPIDeviceInterface{ //IMU inherits from SPIDeviceInterface
   	OutputPort<double>               _cal_imu_temperature_port;     //temperature port
 
 		//Define variables to send to output ports, will hold all sensor data
-		//Raw data  	
+		//Raw data
 		std::vector<double> _raw_imu_acc; //raw accelerometer data
   	std::vector<double> _raw_imu_gyr; //raw gyroscope data
   	std::vector<double> _raw_imu_mag; //raw magnetometer data
@@ -164,10 +163,10 @@ class IMU : public SPIDeviceInterface{ //IMU inherits from SPIDeviceInterface
 		double _mag_scale[3];
 		double _tmp_scale;
 		int _acc_range;        //user-selected range for accelerometer
-		int _gyr_range; 
-		int _mag_range; 
+		int _gyr_range;
+		int _mag_range;
 		uint8_t _id;           //sensor id
-		
+
 		uint8_t _pin_accmag;//pin to which accmag cs is connected
 		uint8_t _pin_gyr;   //pin to which gyr cs is connected
 		uint8_t _cs_accmag; //GPIO to which accmag cs is connected
@@ -208,11 +207,11 @@ class IMU : public SPIDeviceInterface{ //IMU inherits from SPIDeviceInterface
     void setImuOrientation3D 	(std::vector<double> cal_imu_orientation_3d);
     void setImuDOrientation		(double cal_imu_dorientation);
     void setImuOrientation 		(double cal_imu_orientation);
-		
+
 		uint8_t pin2GPIO(uint8_t pin); //convert pin number to corresponding GPIO number
 
   public:
-	
+
     IMU(std::string const& name); //Constructor
     bool configureHook();
     bool startHook();
@@ -222,7 +221,7 @@ class IMU : public SPIDeviceInterface{ //IMU inherits from SPIDeviceInterface
 
     double const pi=4*atan(1); //define constant pi
 
-  protected: 
+  protected:
 
   	//IMU data getters
 		std::vector<double> getImuTransAcc();
@@ -230,7 +229,7 @@ class IMU : public SPIDeviceInterface{ //IMU inherits from SPIDeviceInterface
     std::vector<double> getImuOrientation3D();
     double 							getImuDOrientation();
     double 							getImuOrientation();
-		
+
 		bool 	isConnected(); //Check if sensor is connected by reading its ID
 
 };
