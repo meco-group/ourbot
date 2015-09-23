@@ -2,7 +2,7 @@
 #include <iostream>
 
 
-SPIMaster::SPIMaster(std::string const& name) : TaskContext(name), _fd(-1){
+SPIMaster::SPIMaster(std::string const& name) : TaskContext(name, PreOperational), _fd(-1){
 
 
 #ifndef SPIMASTER_TESTFLAG

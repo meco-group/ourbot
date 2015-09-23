@@ -4,7 +4,7 @@
 IMU::IMU(std::string const& name) : 
 	SPIDeviceInterface(name), //call constructor of mother class
 	_cal_imu_transacc(3), _cal_imu_dorientation_3d(3), _cal_imu_orientation_3d(3), _cal_imu_dorientation(0.), _cal_imu_orientation(0.),_cal_imu_temperature(3),
-	_raw_imu_acc(3), _raw_imu_gyr(3), _raw_imu_mag(3), _raw_imu_tmp(3){
+	_raw_imu_acc(3), _raw_imu_gyr(3), _raw_imu_mag(3), _raw_imu_tmp(3),_acc_offset(3,0.0), _gyr_offset(3,0.0), _mag_offset(3,0.0), _acc_scale(3,1.0), _gyr_scale(3,1.0), _mag_scale(3,1.0){
 
   //Add ports
   ports()->addPort("cal_imu_transacc_port",         _cal_imu_transacc_port).doc       ("Translational acceleration from IMU");
@@ -33,8 +33,8 @@ IMU::IMU(std::string const& name) :
   addProperty("acc_range",  _acc_range).doc("Range for accelerometer");
   addProperty("mag_range",  _mag_range).doc("Range for magnetometer");
   addProperty("gyr_range",  _gyr_range).doc("Range for gyroscope");
-  addProperty("accmag_pin",  _pin_accmag).doc("Chip select pin of accelerometer and magnetometer");
-  addProperty("gyr_pin",     _pin_gyr).doc("Chip select pin of gyroscope");
+  addProperty("accmag_pin", _pin_accmag).doc("Chip select pin of accelerometer and magnetometer");
+  addProperty("gyr_pin",    _pin_gyr).doc("Chip select pin of gyroscope");
 
 #else //if in Test-mode
   _acc_offset[0] = 0.9582940; _acc_offset[1] = 0.0602544; _acc_offset[2] = 0.157349; //based on calibration by inversion method

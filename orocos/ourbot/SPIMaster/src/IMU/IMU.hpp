@@ -155,13 +155,13 @@ class IMU : public SPIDeviceInterface{ //IMU inherits from SPIDeviceInterface
 
   	//Define properties:
   	//for calibration
-		double _acc_offset[3]; //user-defined offset of measurements
-		double _gyr_offset[3];
-		double _mag_offset[3];
+		std::vector<double> _acc_offset; //user-defined offset of measurements
+		std::vector<double> _gyr_offset;
+		std::vector<double> _mag_offset;
 		double _tmp_offset;
-		double _acc_scale[3];  //user-defined scaling of measurements
-		double _gyr_scale[3];
-		double _mag_scale[3];
+		std::vector<double> _acc_scale;  //user-defined scaling of measurements
+		std::vector<double> _gyr_scale;
+		std::vector<double> _mag_scale;
 		double _tmp_scale;
 		int _acc_range;        //user-selected range for accelerometer
 		int _gyr_range; 

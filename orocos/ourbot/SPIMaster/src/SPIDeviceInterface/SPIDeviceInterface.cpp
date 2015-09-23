@@ -1,7 +1,7 @@
 #include <iostream>
 #include "SPIDeviceInterface.hpp" 
 
-SPIDeviceInterface::SPIDeviceInterface(std::string const& name) : TaskContext(name){
+SPIDeviceInterface::SPIDeviceInterface(std::string const& name) : TaskContext(name, PreOperational){
 
   ports()->addPort( "fd_port",              _fd_port ).doc( "File descriptor input port" );
   ports()->addPort( "spi_mode_port",        _spi_mode_port ).doc( "SPI mode input port" );
