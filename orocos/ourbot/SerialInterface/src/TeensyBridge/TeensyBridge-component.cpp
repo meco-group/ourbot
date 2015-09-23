@@ -59,6 +59,7 @@ bool TeensyBridge::action(mavlink_message_t msg)
 			_motor_states[msg.compid] = motor_state;
 
 			recalculatePose();
+			recalculateVelocity();
 			writeRawDataToPorts();
 			TEENSYBRIDGE_DEBUG_PRINT("Motor State message received.")
 			break;}
@@ -105,7 +106,7 @@ void TeensyBridge::recalculateVelocity()
 	_velocity[0] = (_motor_states[0].velocity + _motor_states[1].velocity)*_kinematic_conversion_position;
 	_velocity[1] = (-_motor_states[0].velocity + _motor_states[2].velocity)*_kinematic_conversion_position;
 	_velocity[2] = (_motor_states[1].velocity - _motor_states[2].velocity)*_kinematic_conversion_orientation;
-	
+
 	_cal_velocity_port.write(_velocity);
 }
 

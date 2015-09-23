@@ -15,7 +15,7 @@ local teensy        = 'teensy'..index
 local lidar         = 'lidar'..index
 local imul          = 'imul'..index
 -- local imur          = 'imur'..index
-local spimaster     = 'spimaster'..index
+-- local spimaster     = 'spimaster'..index
   --add here extra components
 
 --Components to load
@@ -29,8 +29,8 @@ local components_to_load = {
   [reporter]        = 'OCL::NetcdfReporting',
   [io]              = 'Container',
   [teensy]          = 'TeensyBridge',
-  [lidar]           = 'RPLidar',
-  [spimaster]       = 'SPIMaster',
+  [lidar]           = 'RPLidar'
+  -- [spimaster]       = 'SPIMaster',
   -- [imul]            = 'IMU'
   -- [imur]            = 'IMU',
    --add here componentname = 'componenttype'
@@ -38,13 +38,13 @@ local components_to_load = {
 
 --Containers to fill
 local containers_to_fill = {
-  [io]              = {teensy, lidar, spimaster, imul} --, imur}
+  [io]              = {teensy, lidar, spimaster} --, imul} --, imur}
 }
 
 --SPI components
-local spi_components = {
-  [spimaster]       = {imul} -- ,imur}
-}
+-- local spi_components = {
+--   [spimaster]       = {imul} -- ,imur}
+-- }
 
 --Ports to report
 local ports_to_report = {
