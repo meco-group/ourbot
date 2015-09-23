@@ -13,10 +13,10 @@ SPIMaster::SPIMaster(std::string const& name) : TaskContext(name), _fd(-1){
   addProperty("speed",  _speed).doc ("SPI communication speed");
 
 #else //if in Test-mode
-  _device = "/dev/spidev1.0";
+  _device = "/dev/spidev1.0"; //locate SPI device on Odroid
   _mode = 0; //based on IMU datasheet
   _bits = 8;
-  _speed = 500000; //MAX: 1 000 000, depends on pull-up resistors, how higher these are how lower max speed is 
+  _speed = 500000; //MAX: 1 000 000, depends on pull-up resistors, the higher these are how lower max speed is 
 
 #endif //SPIMASTER_TESTFLAG
 
@@ -25,12 +25,21 @@ SPIMaster::SPIMaster(std::string const& name) : TaskContext(name), _fd(-1){
   ports()->addPort("spi_speed_port",       _spi_speed_port).doc("SPI speed output port");
   ports()->addPort("spi_word_length_port", _spi_word_length_port).doc("SPI word length output port");
 
-  std::cout << "SPIMaster constructed!" <<std::endl;
+  SPIMASTER_DEBUG_PRINT("SPIMaster constructed!")
 }
 
 bool SPIMaster::configureHook(){
 
-  std::cout << "SPIMaster configured!" <<std::endl;
+	// Show example data sample to output ports to make data flow real-time
+  int example = 0;
+  
+  _fd_port.setDataSample(example);
+  _spi_mode_port.setDataSample(example);
+  _spi_speed_port.setDataSample(example);
+  _spi_word_length_port.setDataSample(example);
+
+
+  SPIMASTER_DEBUG_PRINT("SPIMaster configured!")
   return true;
 }
 
@@ -42,48 +51,48 @@ bool SPIMaster::startHook(){
       return false;
     } 
 
-  //Write fd to output port
+  //Write _fd to output port
  	_fd_port.write(_fd); 
 	//Write SPI info to output ports
  	_spi_word_length_port.write(_bits);
  	_spi_mode_port.write(_mode);
  	_spi_speed_port.write(_speed);
 
- 	std::cout << "The file descriptor in SPIMaster: "<<_fd<<std::endl;
-  std::cout << "SPI mode: " << (int)_mode <<std::endl;
-  std::cout << "SPI speed: " << (int)_speed <<std::endl;
-  std::cout << "SPI word length: " << (int)_bits <<std::endl;
+ 	//Output SPI data to user
+ 	SPIMASTER_DEBUG_PRINT( "The file descriptor in SPIMaster: "<<_fd)
+ 	SPIMASTER_DEBUG_PRINT( "SPI mode: " << (int)_mode )
+ 	SPIMASTER_DEBUG_PRINT( "SPI speed: " << (int)_speed )
+ 	SPIMASTER_DEBUG_PRINT( "SPI word length: " << (int)_bits )
 
   //Assign SPI properties to the SPI device
 	setSPIMode();
 	setSPISpeed();
 	setSPIWordLength();
 
- 	std::cout << "SPIMaster started!" <<std::endl;
+  SPIMASTER_DEBUG_PRINT("SPIMaster started!")  
   return true;
 }
 
 void SPIMaster::updateHook(){
 
-  std::cout << "SPIMaster executes updateHook !" <<std::endl;
+  SPIMASTER_DEBUG_PRINT("SPIMaster executes updateHook !")
 }
 
 void SPIMaster::stopHook() {
-	std::cout << "Closing the file descriptor" <<std::endl;
+	SPIMASTER_DEBUG_PRINT("Closing the file descriptor")
   close(_fd); //Close SPI bus/file descriptor
   _fd = -1;   //Restore _fd to default value
 
+  //TEST: check if _fd is really gone
   //Write _fd to output port
   //_fd_port.write(_fd); 
-  
-  std::cout << "SPIMaster stopped" <<std::endl;
+  SPIMASTER_DEBUG_PRINT("SPIMaster stopped")
 }
 
 void SPIMaster::cleanupHook() {
-  std::cout << "SPIMaster cleaning up !" <<std::endl;
+	SPIMASTER_DEBUG_PRINT("SPIMaster cleaning up !")
 }
   
-
 //Define other functions  
 
 void	SPIMaster::pabort(const char *s){   //Catch errors                                                                            
@@ -112,6 +121,7 @@ void	SPIMaster::setSPISpeed(){
   }                                                          
 }
 
+//TEST: see if the SPI-settings were successfully made
 // uint8_t* SPIMaster::getSPIMode(){
 //   int ret = ioctl(_fd, SPI_IOC_RD_MODE, &_mode);  //read the mode: 0...3, limited to 8 bits
 //   if (ret == -1){
@@ -155,4 +165,4 @@ void	SPIMaster::setSPISpeed(){
  ORO_CREATE_COMPONENT_LIBRARY()
  ORO_LIST_COMPONENT_TYPE(SPIMaster)
 
-//ORO_CREATE_COMPONENT(SPIMaster)
+//ORO_CREATE_COMPONENT(SPIMaster) //Note: this is not allowed anymore since there is inheritance present

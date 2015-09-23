@@ -3,7 +3,6 @@ import("rtt_ros")
 
 ros.import("SPIMaster") 
 
-//displayComponentTypes()
 loadComponent("SPIMaster", "SPIMaster")
 loadComponent("IMU", "IMU")
 //addPeer("IMU", "SPIMaster")

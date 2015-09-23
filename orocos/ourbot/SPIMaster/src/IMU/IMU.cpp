@@ -1,5 +1,4 @@
 #include "IMU.hpp"
-//#include <rtt/Component.hpp>
 #include <iostream>
 
 IMU::IMU(std::string const& name) : 
@@ -34,15 +33,15 @@ IMU::IMU(std::string const& name) :
   addProperty("acc_range",  _acc_range).doc("Range for accelerometer");
   addProperty("mag_range",  _mag_range).doc("Range for magnetometer");
   addProperty("gyr_range",  _gyr_range).doc("Range for gyroscope");
-  addProperty("mag_range",  _pin_accmag).doc("Chip select pin of accelerometer and magnetometer");
-  addProperty("gyr_range",  _pin_gyr).doc("Chip select pin of gyroscope");
+  addProperty("accmag_pin",  _pin_accmag).doc("Chip select pin of accelerometer and magnetometer");
+  addProperty("gyr_pin",     _pin_gyr).doc("Chip select pin of gyroscope");
 
 #else //if in Test-mode
-  _acc_offset[0] = 0.9582940; _acc_offset[1] = 0.0602544; _acc_offset[2] = 0.157349;
+  _acc_offset[0] = 0.9582940; _acc_offset[1] = 0.0602544; _acc_offset[2] = 0.157349; //based on calibration by inversion method
   _gyr_offset[0] = 0; _gyr_offset[1] = 0; _gyr_offset[2] = 0;
   _mag_offset[0] = 0; _mag_offset[1] = 0; _mag_offset[2] = 0;
   _tmp_offset = 21; //starting point, 0 value of sensor (see adafruit code)
-  _acc_scale[0] = 0.9993312; _acc_scale[1] = 1.0022333; _acc_scale[2] = 1.0001244;
+  _acc_scale[0] = 0.9993312; _acc_scale[1] = 1.0022333; _acc_scale[2] = 1.0001244; //based on calibration by inversion method
   _gyr_scale[0] = 1; _gyr_scale[1] = 1; _gyr_scale[2] = 1;
   _mag_scale[0] = 1; _mag_scale[1] = 1; _mag_scale[2] = 1;
   _tmp_scale = 1;
@@ -57,32 +56,41 @@ IMU::IMU(std::string const& name) :
   _pin_gyr = 13;
 
 #endif //IMU_TESTFLAG
-
-  std::cout << "IMU constructed!" <<std::endl;
+  IMU_DEBUG_PRINT("IMU constructed!")
 }
 
 bool IMU::configureHook(){
 
-  std::cout << "Entering IMU configureHook!" <<std::endl;
-
-  //Todo: load properties here, from .cfg file
-
-  std::cout << "IMU configured!" <<std::endl;
+  IMU_DEBUG_PRINT("Entering IMU configureHook!")
+  IMU_DEBUG_PRINT("IMU configured!")
   
+  //Show example data sample to output ports to make data flow real-time
+  std::vector<double> example(3, 0.0);
+  //set 3D ports
+  _raw_imu_acc_port.setDataSample(example);
+  _raw_imu_gyr_port.setDataSample(example);
+  _raw_imu_mag_port.setDataSample(example);
+  _raw_imu_tmp_port.setDataSample(example);
+  _cal_imu_transacc_port.setDataSample(example);
+  _cal_imu_dorientation_3d_port.setDataSample(example);
+  _cal_imu_orientation_3d_port.setDataSample(example);
+
+  //set 1D ports
+  _cal_imu_dorientation_port.setDataSample(example[0]);
+  _cal_imu_orientation_port.setDataSample(example[0]);
+  _cal_imu_temperature_port.setDataSample(example[0]);
+
   //TEST: to test data acquisition
-  return this->setPeriod(1); 
+  // return this->setPeriod(1); 
   // return true;
 }
 
 bool IMU::startHook(){
-	
-  std::cout << "Entering IMU startHook!" <<std::endl;
-
-  std::cout << "Entering SPIDeviceInterface startHook!" <<std::endl;
+	IMU_DEBUG_PRINT("Entering IMU startHook!")
+	IMU_DEBUG_PRINT("Entering SPIDeviceInterface startHook!")
 
 	SPIDeviceInterface::startHook(); //To assign fd and SPI properties
-
-	std::cout<< "Continuing IMU configureHook"<<std::endl;
+  IMU_DEBUG_PRINT("Continuing IMU configureHook")
 
 	//TEST
 	//Test if sending an SPI message is possible
@@ -90,10 +98,9 @@ bool IMU::startHook(){
 
 	init(); //Set sensor mode, declare range, make Sensor3D instances
 
-	//Todo: connect ports to reporterNC for now. --> actually this is done in the ops script.
-
-	// //Check if all ports are connected
-	// bool portCheck = true;
+ //TEST:
+ // //Check if all ports are connected
+ // bool portCheck = true;
 	
  //  //Check output ports
  //  if (!_cal_imu_transacc_port.connected()){
@@ -136,8 +143,8 @@ bool IMU::startHook(){
  //    return false;
  //  }
 
-	double test4 = _acc.getConversionFactor();
-  std::cout<<"got conversion factor in IMU starthook: "<<test4<<std::endl;
+	// double test4 = _acc.getConversionFactor();
+	// IMU_DEBUG_PRINT("got conversion factor in IMU starthook: "<<test4)
 
   //Check sensor connection
   if (!isConnected()){
@@ -146,14 +153,14 @@ bool IMU::startHook(){
   }
 
 	//else: everything went good
-  std::cout << "IMU started!" <<std::endl;
+	IMU_DEBUG_PRINT("IMU started!")
   return true;
 }
 
 void IMU::updateHook(){ //Is executed by the IO component actually
   
-  double test3 = _acc.getConversionFactor();
-  std::cout<<"got conversion factor in IMU updatehook point 1: "<<test3<<std::endl;
+  // double test3 = _acc.getConversionFactor();
+  // IMU_DEBUG_PRINT("got conversion factor in IMU updatehook point 1: "<<test3)
 
   SPIDeviceInterface::updateHook();
 
@@ -166,42 +173,25 @@ void IMU::updateHook(){ //Is executed by the IO component actually
   _acc.setOffset(_acc_offset[0],_acc_offset[1], _acc_offset[2]);
   _acc.setScale(_acc_scale[0],_acc_scale[1], _acc_scale[2]);
 
-  double test0 = _acc.getConversionFactor();
-  std::cout<<"got conversion factor in IMU updatehook point 2: "<<test0<<std::endl;
+  // double test0 = _acc.getConversionFactor();
+  // IMU_DEBUG_PRINT("got conversion factor in IMU updatehook point 2: "<<test0)
 
-  //Get measurements
-  updateMeasurements();
-
-  //Todo: Fatal if at some time no data on port?	
-  //Todo: This is not possible, since these are all input ports?
-  // if (_raw_imu_acc_port.read(_raw_imu_acc) == RTT::NoData) {RTT::log(RTT::Error) << "No data on raw_imu_acc_port!" <<RTT::endlog(); error();}
-  // if (_raw_imu_gyr_port.read(_raw_imu_gyr) == RTT::NoData) {RTT::log(RTT::Error) << "No data on raw_imu_gyr_port!" <<RTT::endlog(); error();}
-  // if (_raw_imu_mag_port.read(_raw_imu_mag) == RTT::NoData) {RTT::log(RTT::Error) << "No data on raw_imu_mag_port!" <<RTT::endlog(); error();}
-  // if (_raw_imu_tmp_port.read(_raw_imu_tmp) == RTT::NoData) {RTT::log(RTT::Error) << "No data on raw_imu_tmp_port!" <<RTT::endlog(); error();}
-
-  //Todo: only read when new data? No, this updateHook is executed by the external I/O component
-	// std::vector<double> acc(3);
-	// std::vector<double> gyr(3);
-	// std::vector<double> mag(3);
-	// if(_raw_imu_acc_port.read(acc) == RTT::NewData) {_raw_imu_acc = acc}
-	// if(_raw_imu_gyr_port.read(gyr) == RTT::NewData) {_raw_imu_gyr = gyr}
-	// if(_raw_imu_mag_port.read(mag) == RTT::NewData) {_raw_imu_mag = mag}
-							
-	std::cout << "IMU data updated!" <<std::endl;
+  updateMeasurements(); //reads in the three sensors and assigns the latest data to the _data field of the 3Dsensor
+	IMU_DEBUG_PRINT("IMU data updated!")			
 }
 
 void IMU::stopHook() {
 
   //Clean up GPIO's:
-  std::cout << "Cleaning up the GPIO's" <<std::endl;
-  cleanupGPIO(_pin_accmag);
-  cleanupGPIO(_pin_gyr);
+  IMU_DEBUG_PRINT("Cleaning up the GPIO's")
+  cleanupGPIO(_cs_accmag);
+  cleanupGPIO(_cs_gyr);
 
-  std::cout << "IMU executes stopping!" <<std::endl;
+  IMU_DEBUG_PRINT("IMU executes stopping!")
 }
 
 void IMU::cleanupHook() {
-  std::cout << "IMU cleaning up!" <<std::endl;
+	IMU_DEBUG_PRINT("IMU cleaning up!")
 }
 
 //Define methods:
@@ -212,27 +202,19 @@ uint8_t IMU::pin2GPIO(uint8_t pin){
   //To make the GPIO accessible you need the GPIO number. 
   //The user only thas the pin number. This function makes the link between the two.
   uint8_t GPIO = 0; //need to initialize, otherwise its value is the same for different function calls
-  std::cout<< "The pin number is: " << (int)pin << std::endl;
+  IMU_DEBUG_PRINT("The pin number is: " << (int)pin)
   switch(pin){ 
     case 13:      //CSG
       GPIO = 21; 
-      std::cout<< "The GPIO number is: " << (int)GPIO << std::endl;
+      IMU_DEBUG_PRINT("The GPIO number is: " << (int)GPIO)
       break; //otherwise default is always selected afterwards
     case 15:			//CSXM
       GPIO = 18;
-      std::cout<< "The GPIO number is: " << (int)GPIO << std::endl;
+      IMU_DEBUG_PRINT("The GPIO number is: " << (int)GPIO)
       break; //otherwise default is always selected afterwards
-    // case 5:
-    // 	GPIO = 174; //Vin of IMU -temporary-
-    // 	std::cout<< "The GPIO number is: " << (int)GPIO << std::endl;
-    // 	break;
-    // case 24:
-    // 	GPIO = 25;  //OE of level shifter -temporary-
-    // 	std::cout<< "The GPIO number is: " << (int)GPIO << std::endl;
-    //   break; //otherwise default is always selected afterwards
     default:
       RTT::log(RTT::Error) << "Invalid pin selected, normally only pins 13 and 15 should be connected" << RTT::endlog();
-      //Todo: output some special GPIO then? Right now GPIO = 0 is output. An error seems enough?
+      //Todo: output some special GPIO then? Right now GPIO = 0 is output. No, an error seems enough?
   }
   return GPIO;
 }
@@ -243,20 +225,23 @@ void IMU::init(){
   _cs_accmag  = pin2GPIO(_pin_accmag);
   _cs_gyr     = pin2GPIO(_pin_gyr);
 
-  std::cout<< "Chip select of accmag is on GPIO: " << (int)_cs_accmag << std::endl;
-  std::cout<< "Chip select of gyro is on GPIO: " << (int)_cs_gyr << std::endl;
+  IMU_DEBUG_PRINT("Chip select of accmag is on GPIO: " << (int)_cs_accmag)
+  IMU_DEBUG_PRINT("Chip select of gyro is on GPIO: " << (int)_cs_gyr)
 
   //Initialize GPIO as output pin with value 1 (high)
   initGPIO(_cs_accmag);
   initGPIO(_cs_gyr);
 
   //Make sensor settings
-  std::cout<<"file descriptor before first write: " <<(int)_fd<<std::endl;
-  std::cout<<"address of cs_accmag before first write: " <<&_cs_accmag<<std::endl;
+  IMU_DEBUG_PRINT("file descriptor before first write: " <<(int)_fd)
+  IMU_DEBUG_PRINT("address of cs_accmag before first write: " <<&_cs_accmag)
+
   writeByte(_cs_accmag, LSM9DS0_REGISTER_CTRL_REG1_XM, 0x67);        // 100hz XYZ
-  std::cout<<"chip select accelerometer after first write: " <<(int)_cs_accmag<<std::endl;
-	std::cout<<"address of cs_accmag after first write: " <<&_cs_accmag<<std::endl;
-  std::cout<<"file descriptor after first write: " <<(int)_fd<<std::endl;
+
+  IMU_DEBUG_PRINT("chip select accelerometer after first write: " <<(int)_cs_accmag)
+  IMU_DEBUG_PRINT("address of cs_accmag after first write: " <<&_cs_accmag)
+  IMU_DEBUG_PRINT("file descriptor after first write: " <<(int)_fd)
+
   writeByte(_cs_accmag, LSM9DS0_REGISTER_CTRL_REG5_XM, 0b11110000);  //temp sensor enabled, high res, 50Hz mag
   // enable mag continuous
   writeByte(_cs_accmag, LSM9DS0_REGISTER_CTRL_REG7_XM, 0b00000000);  //normal mode
@@ -264,9 +249,9 @@ void IMU::init(){
   writeByte(_cs_gyr, LSM9DS0_REGISTER_CTRL_REG1_G, 0x0F);            // turn on XYZ
 
   //Assign the conversion factors and the range registers, corresponding to the selected ranges of the sensor
-  std::cout<<"acc range: "<<_acc_range<<std::endl;
-  std::cout<<"mag range: "<<_mag_range<<std::endl;
-  std::cout<<"gyr_range: "<<_gyr_range<<std::endl;
+  IMU_DEBUG_PRINT("acc range: "<<_acc_range)
+  IMU_DEBUG_PRINT("mag range: "<<_mag_range)
+  IMU_DEBUG_PRINT("gyr_range: "<<_gyr_range)
 
   switch(_acc_range)
   {
@@ -334,65 +319,65 @@ void IMU::init(){
       RTT::log(RTT::Error) << "Invalid gyroscope range selected, use 245, 500 or 2000, you used: "<<(int)_gyr_range<< RTT::endlog();
   }
 
-  std::cout<<"_acc_mg_lsb: "     <<_acc_mg_lsb<<std::endl;
-  std::cout<<"_mag_mgauss_lsb: " <<_mag_mgauss_lsb<<std::endl;
-  std::cout<<"_gyr_dps_digit: "  <<_gyr_dps_digit<<std::endl;
+  IMU_DEBUG_PRINT("_acc_mg_lsb: "     <<_acc_mg_lsb)
+  IMU_DEBUG_PRINT("_mag_mgauss_lsb: " <<_mag_mgauss_lsb)
+  IMU_DEBUG_PRINT("_gyr_dps_digit: "  <<_gyr_dps_digit)
 
   //Set default ranges for the various sensors  
   setupAccel(_acc_range_register);
   setupMag  (_mag_range_register);
   setupGyro (_gyr_range_register);
 
-  std::cout<<"_acc_range_register: "     <<_acc_range_register<<std::endl;
-  std::cout<<"_mag_range_register: " <<_mag_range_register<<std::endl;
-  std::cout<<"_gyr_range_register: "  <<_gyr_range_register<<std::endl;
-
+  IMU_DEBUG_PRINT("_acc_range_register: "  <<_acc_range_register)
+  IMU_DEBUG_PRINT("_mag_range_register: "  <<_mag_range_register)
+  IMU_DEBUG_PRINT("_gyr_range_register: "  <<_gyr_range_register)
+  
   //Make Sensor3D instances
-  _id = 0; //Todo: or not necessary?
-  Sensor3D _acc(_id+1);//, _cs_accmag, _acc_offset, _acc_scale, _acc_mg_lsb*SENSORS_GRAVITY_STANDARD/1000);
+  _id = 0;
+  Sensor3D _acc(_id+1);
   _acc.setOffset(_acc_offset[0],_acc_offset[1], _acc_offset[2]);
   _acc.setScale(_acc_scale[0],_acc_scale[1], _acc_scale[2]);
   _acc.setConversionFactor(_acc_mg_lsb*SENSORS_GRAVITY_STANDARD/1000.0);
-  std::cout<<"conversion factor accelerometer: "<<_acc_mg_lsb*SENSORS_GRAVITY_STANDARD/1000.0<<std::endl;
-  Sensor3D _gyr(_id+2);//, _cs_gyr,    _gyr_offset, _gyr_scale, _gyr_dps_digit/1000);
+  IMU_DEBUG_PRINT("conversion factor accelerometer: "<<_acc_mg_lsb*SENSORS_GRAVITY_STANDARD/1000.0)
+  Sensor3D _gyr(_id+2);
   _gyr.setOffset(_gyr_offset[0],_gyr_offset[1], _gyr_offset[2]);
   _gyr.setScale(_gyr_scale[0],_gyr_scale[1], _gyr_scale[2]);
   _gyr.setConversionFactor(_gyr_dps_digit);
-  std::cout<<"conversion factor gyroscope: "<<_gyr_dps_digit<<std::endl;
-  Sensor3D _mag(_id+3);//, _cs_accmag, _mag_offset, _mag_scale, _mag_mgauss_lsb/1000);
+  IMU_DEBUG_PRINT("conversion factor gyroscope: "<<_gyr_dps_digit)
+  Sensor3D _mag(_id+3);
   _mag.setOffset(_mag_offset[0],_mag_offset[1], _mag_offset[2]);
   _mag.setScale(_mag_scale[0],_mag_scale[1], _mag_scale[2]);
   _mag.setConversionFactor(_mag_mgauss_lsb/1000.0);
-  std::cout<<"conversion factor magnetometer: "<<_mag_mgauss_lsb/1000.0<<std::endl;
-  Sensor3D _tmp(_id+4);//, _cs_accmag, _tmp_offset, _tmp_scale, _tmp_conv);
+  IMU_DEBUG_PRINT("conversion factor magnetometer: "<<_mag_mgauss_lsb/1000.0)
+  Sensor3D _tmp(_id+4);
   _tmp.setOffset(_tmp_offset,0,0);
   _tmp.setScale(_tmp_scale,0,0);
   _tmp.setConversionFactor(1.0/LSM9DS0_TEMP_LSB_DEGREE_CELSIUS);
-  std::cout<<"conversion factor temperature: "<<1.0/LSM9DS0_TEMP_LSB_DEGREE_CELSIUS<<std::endl;
+  IMU_DEBUG_PRINT("conversion factor temperature: "<<1.0/LSM9DS0_TEMP_LSB_DEGREE_CELSIUS)
 
-  double test = _acc.getConversionFactor();
-  std::cout<<"got conversion factor: "<<test<<std::endl;
-} //init()
+  // double test = _acc.getConversionFactor();
+  // IMU_DEBUG_PRINT("got conversion factor: "<<test)
+} //END init()
 
 bool  IMU::isConnected(){
   //Check standard ID of sensor (see STM LSM9DS0 datasheet)
 
-  std::cout<<"in IMU::isConnected(), chip select accelerometer: "<<(int)_cs_accmag<<std::endl;
-  std::cout<<"in IMU::isConnected(), register: "<<(int)LSM9DS0_REGISTER_WHO_AM_I_XM<<std::endl;
-  uint8_t id = readByte(_cs_accmag, LSM9DS0_REGISTER_WHO_AM_I_XM);
-  std::cout<<"Accmag ID is: "<<(int)id<<std::endl;
-  if (id != LSM9DS0_XM_ID)
+  IMU_DEBUG_PRINT("in IMU::isConnected(), chip select accelerometer: "<<(int)_cs_accmag)
+  IMU_DEBUG_PRINT("in IMU::isConnected(), register: "<<(int)LSM9DS0_REGISTER_WHO_AM_I_XM)
+  uint8_t id = readByte(_cs_accmag, LSM9DS0_REGISTER_WHO_AM_I_XM); //read id
+  IMU_DEBUG_PRINT("Accmag ID is: "<<(int)id)
+  if (id != LSM9DS0_XM_ID) //check id
     return false;
 
-  std::cout<<"in IMU::isConnected(), chip select gyroscope: "<<(int)_cs_gyr<<std::endl;
-  std::cout<<"in IMU::isConnected(), register: "<<(int)LSM9DS0_REGISTER_WHO_AM_I_G<<std::endl;
-  id = readByte(_cs_gyr, LSM9DS0_REGISTER_WHO_AM_I_G);
-  std::cout<<"Gyro ID is: "<<(int)id<<std::endl;
-  if (id != LSM9DS0_G_ID) 
+  IMU_DEBUG_PRINT("in IMU::isConnected(), chip select gyroscope: "<<(int)_cs_gyr)
+  IMU_DEBUG_PRINT("in IMU::isConnected(), register: "<<(int)LSM9DS0_REGISTER_WHO_AM_I_G)
+  id = readByte(_cs_gyr, LSM9DS0_REGISTER_WHO_AM_I_G); //read id
+  IMU_DEBUG_PRINT("Gyro ID is: "<<(int)id)
+  if (id != LSM9DS0_G_ID) //check id
     return false;
 
   else
-  	std::cout<<"Both sensors are connected!"<<std::endl;
+  	IMU_DEBUG_PRINT("Both sensors are connected!")
     return true;
 }
 
@@ -406,7 +391,7 @@ void IMU::setupAccel (uint8_t range)
 
 void IMU::setupMag (uint8_t range)
 {
-  uint8_t reg = readByte(_cs_accmag, LSM9DS0_REGISTER_CTRL_REG6_XM);
+  uint8_t reg = readByte(_cs_accmag, LSM9DS0_REGISTER_CTRL_REG6_XM); //same principle as readByte
   reg &= ~(0b01100000);
   reg |= range;
   writeByte(_cs_accmag, LSM9DS0_REGISTER_CTRL_REG6_XM, reg);
@@ -414,7 +399,7 @@ void IMU::setupMag (uint8_t range)
 
 void IMU::setupGyro (uint8_t range)
 {
-  uint8_t reg = readByte(_cs_gyr, LSM9DS0_REGISTER_CTRL_REG4_G);
+  uint8_t reg = readByte(_cs_gyr, LSM9DS0_REGISTER_CTRL_REG4_G); //same principle as readByte
   reg &= ~(0b00110000);
   reg |= range;
   writeByte(_cs_gyr, LSM9DS0_REGISTER_CTRL_REG4_G, reg);
@@ -424,7 +409,7 @@ void IMU::updateMeasurements()
 {
 
   double test1 = _acc.getConversionFactor();
-  std::cout<<"got conversion factor in updateMeasurements: "<<test1<<std::endl;
+  IMU_DEBUG_PRINT("got conversion factor in updateMeasurements: ")
 
   //Read all the sensors
   readAccel();
@@ -432,10 +417,10 @@ void IMU::updateMeasurements()
   readGyro();
   readTemp();
 
-  std::cout<<"Ready to calibrate IMU data!"<<std::endl;
-
+  IMU_DEBUG_PRINT("Ready to calibrate IMU data!")
+  
   double test2 = _acc.getConversionFactor();
-  std::cout<<"got conversion factor after read: "<<test2<<std::endl;
+  IMU_DEBUG_PRINT("got conversion factor after read: "<<test2)  
 
   //Calibrate: convert raw measurements to SI-units, with user-defined offset and scaling factor and selected conversion factor
   _cal_imu_transacc         = _acc.calibrate(); //contains accelerations along all axes
@@ -445,20 +430,20 @@ void IMU::updateMeasurements()
   _cal_imu_orientation      = _cal_imu_orientation_3d[2]; //select yaw angle
   _cal_imu_temperature      = _tmp.calibrate(); //contains temperature
 
-  std::cout<<"_cal_imu_transacc: "       <<_cal_imu_transacc[0]<<" , "<<_cal_imu_transacc[1]<<" , "<<_cal_imu_transacc[2]<<" , "<<std::endl;
-  std::cout<<"_cal_imu_orientation_3d: " <<_cal_imu_orientation_3d[0]<<" , "<<_cal_imu_orientation_3d[1]<<" , "<<_cal_imu_orientation_3d[2]<<" , "<<std::endl;
-  std::cout<<"_cal_imu_dorientation_3d: "<<_cal_imu_dorientation_3d[0]<<" , "<<_cal_imu_dorientation_3d[1]<<" , "<<_cal_imu_dorientation_3d[2]<<" , "<<std::endl;
-  std::cout<<"_cal_imu_dorientation z-axis: "   <<_cal_imu_dorientation<<std::endl;
-  std::cout<<"_cal_imu_orientation z-axis: "    <<_cal_imu_orientation<<std::endl;
-  std::cout<<"_cal_imu_temperature: "    <<_cal_imu_temperature[0]<<std::endl;
+  IMU_DEBUG_PRINT("_cal_imu_transacc: "       <<_cal_imu_transacc[0]<<" , "<<_cal_imu_transacc[1]<<" , "<<_cal_imu_transacc[2])
+  IMU_DEBUG_PRINT("_cal_imu_orientation_3d: " <<_cal_imu_orientation_3d[0]<<" , "<<_cal_imu_orientation_3d[1]<<" , "<<_cal_imu_orientation_3d[2])
+  IMU_DEBUG_PRINT("_cal_imu_dorientation_3d: "<<_cal_imu_dorientation_3d[0]<<" , "<<_cal_imu_dorientation_3d[1]<<" , "<<_cal_imu_dorientation_3d[2])
+  IMU_DEBUG_PRINT("_cal_imu_dorientation z-axis: "   <<_cal_imu_dorientation)
+  IMU_DEBUG_PRINT("_cal_imu_orientation z-axis: "    <<_cal_imu_orientation)
+  IMU_DEBUG_PRINT("_cal_imu_temperature: "    <<_cal_imu_temperature[0])
 
   //Todo: compensate for roll/pitch/yaw in angular velocity measurements? No, better translate to world frame when using these measurements
   //Todo: or make separate variables for measurements in gauss and rpy angles?
   _cal_imu_orientation_3d = convertMag2rpy(); //convert magnetic field measurements to roll pitch yaw angles
 
-  std::cout<<"calculated rpy [deg]: "<<_cal_imu_orientation_3d[0]*180/pi<< " , "<< _cal_imu_orientation_3d[1]*180/pi<< " , "<<_cal_imu_orientation_3d[2]*180/pi<< " , "<<std::endl;
+  IMU_DEBUG_PRINT("calculated rpy [deg]: "<<_cal_imu_orientation_3d[0]*180/pi<< " , "<< _cal_imu_orientation_3d[1]*180/pi<< " , "<<_cal_imu_orientation_3d[2]*180/pi)
 
-  //Write measurements
+  //Write calibrated data to output ports
   _cal_imu_transacc_port.write        (_cal_imu_transacc);                
   _cal_imu_dorientation_3d_port.write (_cal_imu_dorientation_3d);
   _cal_imu_orientation_3d_port.write  (_cal_imu_orientation_3d);
@@ -471,16 +456,14 @@ void IMU::readAccel() {
 
   uint8_t length = 2 * 3; //read 3 16 bits (= 2 byte) numbers, so read out 6 bytes
   uint8_t reg = LSM9DS0_REGISTER_OUT_X_L_A;
-  uint8_t buffer[7]; //make a buffer to hold 6 bytes, being what you will read
-  //Todo: test if this works, maybe you always need to read/write a multiple of 4 bytes --> no
-  //Todo: maybe you also need to do +1 to account for the address/register, which you also write --> yes
+  uint8_t buffer[7]; //make a buffer to hold 6+1 bytes, being what you will read + byte for the register
 
-  std::cout<<"In readAccel"<<std::endl;
+  IMU_DEBUG_PRINT("In readAccel")
 
   readBytes(_cs_accmag, reg, length, buffer);
 
-  uint8_t xlo = buffer[1]; //Todo: test if this order is correct, maybe buffer[0] contains invalid data and real values only start from buffer[1]
-  int16_t xhi = buffer[2];
+  uint8_t xlo = buffer[1]; //low  bit of x-acceleration
+  int16_t xhi = buffer[2]; //high bit of x-acceleration
   uint8_t ylo = buffer[3];
   int16_t yhi = buffer[4];
   uint8_t zlo = buffer[5];
@@ -490,32 +473,32 @@ void IMU::readAccel() {
   xhi <<= 8; xhi |= xlo;
   yhi <<= 8; yhi |= ylo;
   zhi <<= 8; zhi |= zlo;
+  
+  IMU_DEBUG_PRINT("Reading raw accelerometer data: ")
+  IMU_DEBUG_PRINT("acc_x = "<<(int)xhi)
+  IMU_DEBUG_PRINT("acc_y = "<<(int)yhi)
+  IMU_DEBUG_PRINT("acc_z = "<<(int)zhi)
 
-  std::cout<<"Reading raw accelerometer data: "<<std::endl;
-  std::cout<<"acc_x = "<<(int)xhi<<std::endl;
-  std::cout<<"acc_y = "<<(int)yhi<<std::endl;
-  std::cout<<"acc_z = "<<(int)zhi<<std::endl;
-
-  std::vector<double> data(3);
+  std::vector<double> data(3); //create vector to hold measured data
   data[0] = xhi;
   data[1] = yhi;
   data[2] = zhi;
-  _acc.writeData(data); 
-  _raw_imu_acc_port.write(data); 
+  _acc.writeData(data); //save raw data
+  _raw_imu_acc_port.write(data); //write raw data to output port
 }
 
 void IMU::readMag() {
   
   uint8_t length = 2 * 3; //read 3 2 byte numbers
   uint8_t reg = LSM9DS0_REGISTER_OUT_X_L_M;
-  uint8_t buffer[7]; //make a buffer to hold 6 bytes (= 3*16bits), being what you will read
+  uint8_t buffer[7]; //make a buffer to hold 6+1 bytes (= 3*16bits), being what you will read + byte for the register
 
-  std::cout<<"In readMag"<<std::endl;
+  IMU_DEBUG_PRINT("In readMag")
 
   readBytes(_cs_accmag, reg, length, buffer);
 
-  uint8_t xlo = buffer[1];
-  int16_t xhi = buffer[2];
+  uint8_t xlo = buffer[1]; //low  bit of x-magnetometer
+  int16_t xhi = buffer[2]; //high bit of x-magnetometer
   uint8_t ylo = buffer[3];
   int16_t yhi = buffer[4];
   uint8_t zlo = buffer[5];
@@ -526,56 +509,32 @@ void IMU::readMag() {
   yhi <<= 8; yhi |= ylo;
   zhi <<= 8; zhi |= zlo;
 
-  std::cout<<"Reading raw magnetometer data: "<<std::endl;
-  std::cout<<"mag_x = "<<(int)xhi<<std::endl;
-  std::cout<<"mag_y = "<<(int)yhi<<std::endl;
-  std::cout<<"mag_z = "<<(int)zhi<<std::endl;
+  IMU_DEBUG_PRINT("Reading raw magnetometer data: ")
+  IMU_DEBUG_PRINT("mag_x = "<<(int)xhi)
+  IMU_DEBUG_PRINT("mag_y = "<<(int)yhi)
+  IMU_DEBUG_PRINT("mag_z = "<<(int)zhi)
 
-  std::vector<double> data(3);
+  std::vector<double> data(3); //create vector to hold measured data
   data[0] = xhi;
   data[1] = yhi;
   data[2] = zhi;
-  _mag.writeData(data);
-  _raw_imu_mag_port.write(data); 
+  _mag.writeData(data); //save raw data
+  _raw_imu_mag_port.write(data); //write raw data to output port
 
-  // byte buffer[6];
-  // readBuffer(XMTYPE, 
-  //      0x80 | LSM9DS0_REGISTER_OUT_X_L_M, 
-  //      6, buffer);
-  
-  // uint8_t xlo = buffer[0];
-  // int16_t xhi = buffer[1];
-  // uint8_t ylo = buffer[2];
-  // int16_t yhi = buffer[3];
-  // uint8_t zlo = buffer[4];
-  // int16_t zhi = buffer[5];
-  
-  // // Shift values to create properly formed integer (low byte first)
-  // xhi <<= 8; xhi |= xlo;
-  // yhi <<= 8; yhi |= ylo;
-  // zhi <<= 8; zhi |= zlo;
-  // <std::vector<double> > data[3];
-  // data[0] = xhi;
-  // data[1] = yhi;
-  // data[2] = zhi;
-  // _mag.writeData(data); 
-  // // magData.x = xhi;
-  // // magData.y = yhi;
-  // // magData.z = zhi;
 }
 
 void IMU::readGyro() {
   
   uint8_t length = 2 * 3; //read 3 2 byte numbers
   uint8_t reg = LSM9DS0_REGISTER_OUT_X_L_G;
-  uint8_t buffer[7]; //make a buffer to hold 6 bytes (= 3*16bits), being what you will read
+  uint8_t buffer[7]; //make a buffer to hold 6+1 bytes (= 3*16bits), being what you will read + byte for the register
 
-  std::cout<<"In readGyro"<<std::endl;
+  IMU_DEBUG_PRINT("In readGyro")
 
   readBytes(_cs_gyr, reg, length, buffer);
 
-  uint8_t xlo = buffer[1];
-  int16_t xhi = buffer[2];
+  uint8_t xlo = buffer[1]; //low  bit of x-gyroscope
+  int16_t xhi = buffer[2]; //high bit of x-gyroscope
   uint8_t ylo = buffer[3];
   int16_t yhi = buffer[4];
   uint8_t zlo = buffer[5];
@@ -586,43 +545,17 @@ void IMU::readGyro() {
   yhi <<= 8; yhi |= ylo;
   zhi <<= 8; zhi |= zlo;
 
-	std::cout<<"Reading raw gyroscope data: "<<std::endl;
-  std::cout<<"gyr_x = "<<(int)xhi<<std::endl;
-  std::cout<<"gyr_y = "<<(int)yhi<<std::endl;
-  std::cout<<"gyr_z = "<<(int)zhi<<std::endl;
+  IMU_DEBUG_PRINT("Reading raw gyroscope data: ")
+  IMU_DEBUG_PRINT("gyr_x = "<<(int)xhi)
+  IMU_DEBUG_PRINT("gyr_y = "<<(int)yhi)
+  IMU_DEBUG_PRINT("gyr_z = "<<(int)zhi)
 
-  std::vector<double> data(3);
+  std::vector<double> data(3); //create vector to hold measured data
   data[0] = xhi;
   data[1] = yhi;
   data[2] = zhi;
-  _gyr.writeData(data);
-  _raw_imu_gyr_port.write(data); 
-
-
-  // byte buffer[6];
-  // readBuffer(GYROTYPE, 
-  //      0x80 | LSM9DS0_REGISTER_OUT_X_L_G, 
-  //      6, buffer);
-  
-  // uint8_t xlo = buffer[0];
-  // int16_t xhi = buffer[1];
-  // uint8_t ylo = buffer[2];
-  // int16_t yhi = buffer[3];
-  // uint8_t zlo = buffer[4];
-  // int16_t zhi = buffer[5];
-  
-  // // Shift values to create properly formed integer (low byte first)
-  // xhi <<= 8; xhi |= xlo;
-  // yhi <<= 8; yhi |= ylo;
-  // zhi <<= 8; zhi |= zlo;
-  // <std::vector<double> > data[3];
-  // data[0] = xhi;
-  // data[1] = yhi;
-  // data[2] = zhi;
-  // _gyr.writeData(data); 
-  // // gyroData.x = xhi;
-  // // gyroData.y = yhi;
-  // // gyroData.z = zhi;
+  _gyr.writeData(data); //save raw data
+  _raw_imu_gyr_port.write(data); //write raw data to output port
 }
 
 void IMU::readTemp() {
@@ -631,43 +564,28 @@ void IMU::readTemp() {
   uint8_t reg = LSM9DS0_REGISTER_TEMP_OUT_L_XM;
   uint8_t buffer[3]; //make a buffer to hold 2 bytes (= 1*16bits), being what you will read
 
-  //Todo: or is this not possible and do you need to read 4 bytes?
-
-  std::cout<<"In readTemp"<<std::endl;
+  IMU_DEBUG_PRINT("In readTemp")
 
   readBytes(_cs_accmag, reg, length, buffer);
 
-  std::cout<<"reading temperature0: "<<(int)buffer[0]<<std::endl;
-  std::cout<<"reading temperature1: "<<(int)buffer[1]<<std::endl;
-  std::cout<<"reading temperature2: "<<(int)buffer[2]<<std::endl;
+  IMU_DEBUG_PRINT("reading temperature0: "<<(int)buffer[0])
+  IMU_DEBUG_PRINT("reading temperature1: "<<(int)buffer[1])
+  IMU_DEBUG_PRINT("reading temperature2: "<<(int)buffer[2])
 
-  uint8_t xlo = buffer[1];
-  int16_t xhi = buffer[2];  
+  uint8_t xlo = buffer[1]; //low bit of temperature sensor
+  int16_t xhi = buffer[2]; //high bit of temperature sensor
   
   // Shift values to create properly formed integer (low byte first)
   xhi <<= 8; xhi |= xlo;
 
-  std::cout<<"Reading raw temperature data: "<<std::endl;
-  std::cout<<"tmp = "<<(int)xhi<<std::endl;
+  IMU_DEBUG_PRINT("Reading raw temperature data: ")
+  IMU_DEBUG_PRINT("tmp = "<<(int)xhi)
 
-  std::vector<double> data(1);
+  std::vector<double> data(1); //create vector to hold measured data
   data[0] = xhi;
-  _tmp.writeData(data);
-  _raw_imu_tmp_port.write(data); 
+  _tmp.writeData(data); //save raw data
+  _raw_imu_tmp_port.write(data); //write raw data to output port
 
-  // byte buffer[2];
-  // readBuffer(XMTYPE, 
-  //      0x80 | LSM9DS0_REGISTER_TEMP_OUT_L_XM, 
-  //      2, buffer);
-  // uint8_t xlo = buffer[0];
-  // int16_t xhi = buffer[1];
-
-  // xhi <<= 8; xhi |= xlo;
-  // <std::vector<double> > data[1];
-  // data[0] = xhi;
-  // _tmp.writeData(data); 
-  // Shift values to create properly formed integer (low byte first)
-  // temperature = xhi;
 }
 
 std::vector<double> IMU::convertMag2rpy(){
@@ -676,10 +594,9 @@ std::vector<double> IMU::convertMag2rpy(){
   std::vector<double> acc = _cal_imu_transacc; //copy accelerometer data
   std::vector<double> mag = _cal_imu_orientation_3d; //copy magnetometer data
 
-  std::cout<<"acceleration in rpy: "<<acc[0]<<" , "<<acc[1]<<" , "<<acc[2]<<std::endl;
-  std::cout<<"magnetic field in rpy: "<<mag[0]<<" , "<<mag[1]<<" , "<<mag[2]<<std::endl;
+	IMU_DEBUG_PRINT("acceleration in rpy: "<<acc[0]<<" , "<<acc[1]<<" , "<<acc[2])
+  IMU_DEBUG_PRINT("magnetic field in rpy: "<<mag[0]<<" , "<<mag[1]<<" , "<<mag[2])
 
-  //Todo: accelerometer calibration parameters: necessary? --> the datasheet says that the IMU is factory calibrated and could be use immediately
   //Normalize accelerometer measurements
   double acc_norm=sqrt(pow(acc[0],2)+pow(acc[1],2)+pow(acc[2],2));
 	acc[0]=acc[0]/acc_norm;
@@ -691,8 +608,8 @@ std::vector<double> IMU::convertMag2rpy(){
 	mag[1]=mag[1]/mag_norm;
 	mag[2]=mag[2]/mag_norm;
 
-	std::cout<<"acc normalized: "<<acc[0]<<" , "<< acc[1]<<" , "<<acc[2]<<std::endl;
-	std::cout<<"mag normalized: "<<mag[0]<<" , "<< mag[1]<<" , "<<mag[2]<<std::endl;
+  IMU_DEBUG_PRINT("acc normalized: "<<acc[0]<<" , "<< acc[1]<<" , "<<acc[2])
+  IMU_DEBUG_PRINT("mag normalized: "<<mag[0]<<" , "<< mag[1]<<" , "<<mag[2])
 
 	//Roll pitch yaw calculation:
   rpy[1] = asin(-acc[0]); //pitch
@@ -723,7 +640,7 @@ std::vector<double> IMU::convertMag2rpy(){
   if (rpy[2]<0) { //shift to [0...2*pi]
   	rpy[2] += 2*pi;
   }
-  std::cout<<"roll: "<<rpy[0]<<" , "<<"pitch: "<<rpy[1]<<" , "<<"yaw: "<<rpy[2]<<std::endl;
+  IMU_DEBUG_PRINT("roll: "<<rpy[0]<<" , "<<"pitch: "<<rpy[1]<<" , "<<"yaw: "<<rpy[2])
   return rpy;
 }
 
@@ -737,7 +654,7 @@ double              IMU::getImuOrientation()   { return _cal_imu_orientation; }
 
 //Set sensor data
 //Todo: only useful for testing?
-//Todo: originally there was: std::vector<double>, const& cal_imu_transacc? pass by constant reference
+//Note: originally there was: std::vector<double>, const& cal_imu_transacc? pass by constant reference
 void IMU::setImuTransAcc      (std::vector<double> cal_imu_transacc)        { cal_imu_transacc        = _cal_imu_transacc; }
 void IMU::setImuDOrientation3D(std::vector<double> cal_imu_dorientation_3d) { cal_imu_dorientation_3d = _cal_imu_dorientation_3d; }
 void IMU::setImuOrientation3D (std::vector<double> cal_imu_orientation_3d)  { cal_imu_orientation_3d  = _cal_imu_orientation_3d; }
