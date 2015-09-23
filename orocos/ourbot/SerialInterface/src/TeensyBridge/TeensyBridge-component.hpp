@@ -1,7 +1,7 @@
 #ifndef TEENSYBRIDGE_H
 #define TEENSYBRIDGE_H
 
-//#define TEENSYBRIDGE_TESTFLAG
+#define TEENSYBRIDGE_TESTFLAG
 //#define TEENSYBRIDGE_DEBUGFLAG
 
 #ifdef TEENSYBRIDGE_DEBUGFLAG
@@ -39,6 +39,7 @@ class TeensyBridge : public USBInterface
 		double _kinematic_conversion_orientation;
 		double _kinematic_conversion_wheel;
 		std::vector<double>	_pose;
+		std::vector<double>	_velocity;
 
 		uint8_t _control_mode;
 		double _velocity_controller_P;
@@ -50,6 +51,7 @@ class TeensyBridge : public USBInterface
 		RTT::OutputPort<std::vector<double> > _cal_velocity_port;
 		RTT::OutputPort<std::vector<double> > _raw_enc_ticks_port;
 		RTT::OutputPort<std::vector<double> > _raw_enc_speed_port;
+		RTT::OutputPort<std::vector<double> > _raw_enc_cmd_speed_port;
 		RTT::OutputPort<std::vector<double> > _cal_motor_voltage_port;
 		RTT::OutputPort<std::vector<double> > _cal_motor_current_port;
 		RTT::OutputPort<std::vector<double> > _debug_port;
@@ -59,6 +61,7 @@ class TeensyBridge : public USBInterface
 		void setController(uint8_t controllerID, float P, float I, float D);
 
 		void recalculatePose();
+		void recalculateVelocity();
 		void writeRawDataToPorts();
 
 	public:
@@ -71,6 +74,7 @@ class TeensyBridge : public USBInterface
 		uint32_t getPacketsDropped();
 		uint32_t getPacketsReceived();
 		std::vector<double> getPose();
+		std::vector<double> getVelocity();
 
 		//Commands
 		void setControlMode(uint8_t control_mode);
