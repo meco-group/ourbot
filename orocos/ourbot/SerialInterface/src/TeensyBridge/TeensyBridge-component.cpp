@@ -25,6 +25,7 @@ TeensyBridge::TeensyBridge(std::string const& name) :
 	this->ports()->addPort( "cal_velocity_port", _cal_velocity_port ).doc( "Output port for calibrated encoder velocity values. Outputs the velocity (Dx,Dy,Dorientation) in [m/s,m/s,rad/s]" );
 	this->ports()->addPort( "raw_enc_ticks_port", _raw_enc_ticks_port ).doc( "Output port for raw encoder values. Outputs the raw encoder values (FL,FR,RL,RR) in [ticks]" );
 	this->ports()->addPort( "raw_enc_speed_port", _raw_enc_speed_port ).doc( "Output port for raw encoder speed values. Outputs the raw encoder speed values (FL,FR,RL,RR) in [ticks/s]" );
+	this->ports()->addPort( "raw_enc_cmd_speed_port", _raw_enc_cmd_speed_port ).doc("Output port for low level velocity controller reference speed. Vector contains [FL,FR,RL,RR] in [ticks/s]");
 	this->ports()->addPort( "cal_motor_voltage_port", _cal_motor_voltage_port ).doc( "Output port for the motor voltage values. (FL,FR,RL,RR) in [V]" );
 	this->ports()->addPort( "cal_mot_cur_port", _cal_motor_current_port ).doc( "Output port for the calibrated motor current values. (FL,FR,RL,RR) in [A]" );
 	this->ports()->addPort( "debug_port", _debug_port ).doc( "Debug variables port" );
@@ -98,19 +99,31 @@ void TeensyBridge::recalculatePose()
 	_cal_enc_pose_port.write(_pose);
 }
 
+void TeensyBridge::recalculateVelocity()
+{
+	// UPDATE 14/07/2015: Make reference frame conform youbot frame
+	_velocity[0] = (_motor_states[0].velocity + _motor_states[1].velocity)*_kinematic_conversion_position;
+	_velocity[1] = (-_motor_states[0].velocity + _motor_states[2].velocity)*_kinematic_conversion_position;
+	_velocity[2] = (_motor_states[1].velocity - _motor_states[2].velocity)*_kinematic_conversion_orientation;
+	
+	_cal_velocity_port.write(_velocity);
+}
+
 void TeensyBridge::writeRawDataToPorts()
 {
-	std::vector<double> enc(4), spd(4), cur(4), volt(4), debug(6);
+	std::vector<double> enc(4), spd(4), spd_cmd(4), cur(4), volt(4), debug(6);
 
 	for(uint8_t k=0;k<4;k++){
 		enc[k] = _motor_states[k].position;
 		spd[k] = _motor_states[k].velocity;
+		spd_cmd[k] = _motor_states[k].reference;
 		cur[k] = _motor_states[k].current;
 		volt[k] = (_motor_states[k].FFvoltage + _motor_states[k].FBvoltage)*0.001;
 	}
 	
 	_raw_enc_ticks_port.write(enc);
 	_raw_enc_speed_port.write(spd);
+	_raw_enc_cmd_speed_port.write(spd_cmd);
 	_cal_motor_voltage_port.write(volt);
 	_cal_motor_current_port.write(cur);
 	
@@ -135,6 +148,7 @@ bool TeensyBridge::configureHook()
   example.resize(4);
   _raw_enc_ticks_port.setDataSample(example);
   _raw_enc_speed_port.setDataSample(example);
+  _raw_enc_cmd_speed_port.setDataSample(example);
   _cal_motor_voltage_port.setDataSample(example);
   _cal_motor_current_port.setDataSample(example);
   // set 6D ports
@@ -195,6 +209,11 @@ uint32_t TeensyBridge::getPacketsReceived()
 std::vector<double> TeensyBridge::getPose()
 {
 	return _pose;
+}
+
+std::vector<double> TeensyBridge::getVelocity()
+{
+	return _velocity;
 }
 
 void TeensyBridge::setControlMode(uint8_t control_mode)
