@@ -13,13 +13,19 @@ ControllerInterface::ControllerInterface(std::string const& name) : TaskContext(
   ports()->addPort("cmd_velocity_port",_cmd_velocity_port).doc("Velocity command for actuator");
 
   addProperty("control_sample_rate",_control_sample_rate).doc("Frequency to update the control loop");
+
+  addOperation("writeSample",&ControllerInterface::writeSample, this).doc("Set data sample on output ports");
+}
+
+void ControllerInterface::writeSample(){
+  std::vector<double> example(3, 0.0);
+  _cmd_velocity_port.write(example);
 }
 
 bool ControllerInterface::configureHook(){
   // Show example data sample to ports to make data flow real-time
   std::vector<double> example(3, 0.0);
   _cmd_velocity_port.setDataSample(example);
-
   return true;
 }
 

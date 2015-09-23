@@ -6,6 +6,8 @@ VelocityCommandEmperorInterface::VelocityCommandEmperorInterface(std::string con
 _cmd_velocity(3){
   ports()->addPort("cmd_velocity_port",_cmd_velocity_port).doc("Velocity command for actuator");
   addOperation("setVelocity", &VelocityCommandEmperorInterface::setVelocity, this).doc("Set velocity cmd manually");
+  addProperty("max_velocity", _max_velocity);
+  addProperty("max_omega", _max_omega);
 }
 
 bool VelocityCommandEmperorInterface::configureHook(){

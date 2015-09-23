@@ -1,6 +1,7 @@
 local tc        = rtt.getTC()
 
 local velocitycmd = tc:getPeer('velocitycmd')
+local gamepad     = tc:getPeer('gamepad')
 local reporter    = tc:getPeer('reporter')
 local snapshot    = reporter:getOperation("snapshot")
 
@@ -13,10 +14,11 @@ return rfsm.state {
   rfsm.trans{src = 'stop',    tgt = 'reset',  events = {'e_reset'}},
   rfsm.trans{src = 'reset',   tgt = 'idle'},
 
-  idle  = rfsm.state{ entry = function() print("Waiting on Initialize...") end },
-  init  = rfsm.state{ },
+  idle  = rfsm.state{ entry = function() main_state = 'velocitycmdextern' sub_state='idle' print("Waiting on Init (Button A)...") end },
+  init  = rfsm.state{ entry = function() sub_state='init' print("Waiting on Run (Button A)...") end},
   run   = rfsm.state{
     entry = function()
+      sub_state='run'
       if (not reporter:start()) then
         rtt.log("Error","Could not start reporter component")
         rfsm.send_events(fsm,'e_failed')
@@ -28,6 +30,8 @@ return rfsm.state {
         rfsm.send_events(fsm,'e_failed')
         return
       end
+
+      print("System started. Abort by using Break (Button B).")
     end,
 
     doo = function()
@@ -38,7 +42,16 @@ return rfsm.state {
     end,
   },
 
-  stop  = rfsm.state{ entry = function() reporter:stop() end},
+  stop = rfsm.state{
+    entry = function(fsm)
+      sub_state='stop'
+      reporter:stop()
+      velocitycmd:stop()
+
+      print("System stopped. Waiting on Restart (Button A) or Reset (Button B)...")
+    end,
+  },
+
   reset = rfsm.state{ },
 
 }

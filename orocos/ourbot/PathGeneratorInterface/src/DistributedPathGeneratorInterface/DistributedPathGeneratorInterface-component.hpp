@@ -43,6 +43,7 @@ class DistributedPathGeneratorInterface : public PathGeneratorInterface{
     virtual bool configureHook();
     virtual bool startHook();
     virtual void updateHook();
+    void writeSample();
 };
 
 #endif

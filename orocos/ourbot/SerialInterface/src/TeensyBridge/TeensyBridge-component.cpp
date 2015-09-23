@@ -6,9 +6,9 @@
 #define MAVLINK_MSG_OVERHEAD					8
 
 TeensyBridge::TeensyBridge(std::string const& name) :
-	USBInterface(name), _platform_length(0.3), _platform_width(0.25), _wheel_radius(0.05), _encoder_ticks_per_revolution(38400), 
-	_current_sensor_gain(1.0), _current_sensor_offset(0.0), 
-	_kinematic_conversion_position(0.0), _kinematic_conversion_orientation(0.0), _kinematic_conversion_wheel(0.0), _pose(3,0.0), 
+	USBInterface(name), _platform_length(0.3), _platform_width(0.25), _wheel_radius(0.05), _encoder_ticks_per_revolution(38400),
+	_current_sensor_gain(1.0), _current_sensor_offset(0.0),
+	_kinematic_conversion_position(0.0), _kinematic_conversion_orientation(0.0), _kinematic_conversion_wheel(0.0), _pose(3,0.0),
 	_control_mode(TEENSYBRIDGE_CONTROL_MODE_SIMPLE), _velocity_controller_P(0.0f), _velocity_controller_I(0.0f), _velocity_controller_D(0.0f)
 {
 	this->addProperty("platform_length",_platform_length).doc("Property containing the platform length in [m].");
@@ -27,9 +27,9 @@ TeensyBridge::TeensyBridge(std::string const& name) :
 	this->ports()->addPort( "raw_enc_speed_port", _raw_enc_speed_port ).doc( "Output port for raw encoder speed values. Outputs the raw encoder speed values (FL,FR,RL,RR) in [ticks/s]" );
 	this->ports()->addPort( "raw_enc_cmd_speed_port", _raw_enc_cmd_speed_port ).doc("Output port for low level velocity controller reference speed. Vector contains [FL,FR,RL,RR] in [ticks/s]");
 	this->ports()->addPort( "cal_motor_voltage_port", _cal_motor_voltage_port ).doc( "Output port for the motor voltage values. (FL,FR,RL,RR) in [V]" );
-	this->ports()->addPort( "cal_mot_cur_port", _cal_motor_current_port ).doc( "Output port for the calibrated motor current values. (FL,FR,RL,RR) in [A]" );
+	this->ports()->addPort( "cal_motor_current_port", _cal_motor_current_port ).doc( "Output port for the calibrated motor current values. (FL,FR,RL,RR) in [A]" );
 	this->ports()->addPort( "debug_port", _debug_port ).doc( "Debug variables port" );
-	
+
 	addOperation("getPacketsDropped", &TeensyBridge::getPacketsDropped, this).doc("Returns the amount of dropped packets since the beginning.");
 	addOperation("getPacketsReceived", &TeensyBridge::getPacketsReceived, this).doc("Returns the amount of received packets since the beginning.");
 	addOperation("getPose", &TeensyBridge::getPose, this).doc("Returns the pose of the platform. (x,y,orientation) in [m,m,rad]");
@@ -43,10 +43,10 @@ TeensyBridge::TeensyBridge(std::string const& name) :
 	addOperation("showCurrents", &TeensyBridge::showCurrents, this).doc("Displays the motor currents.");
 	addOperation("showVelocities", &TeensyBridge::showVelocities, this).doc("Displays the motor velocity.");
 	addOperation("showEncoders", &TeensyBridge::showEncoders, this).doc("Displays the motor encoder ticks.");
-	addOperation("showPositions", &TeensyBridge::showPositions, this).doc("Displays the motor position.");	
-	addOperation("showMotorState", &TeensyBridge::showMotorState, this).doc("Displays the motor state.");	
-	addOperation("showDebug", &TeensyBridge::showDebug, this).doc("Displays the ourbot debug variables.");	
-	addOperation("showThreadTime", &TeensyBridge::showThreadTime, this).doc("Displays the ourbot onboard thread times.");	
+	addOperation("showPositions", &TeensyBridge::showPositions, this).doc("Displays the motor position.");
+	addOperation("showMotorState", &TeensyBridge::showMotorState, this).doc("Displays the motor state.");
+	addOperation("showDebug", &TeensyBridge::showDebug, this).doc("Displays the ourbot debug variables.");
+	addOperation("showThreadTime", &TeensyBridge::showThreadTime, this).doc("Displays the ourbot onboard thread times.");
 }
 
 bool TeensyBridge::action(mavlink_message_t msg)
@@ -57,30 +57,30 @@ bool TeensyBridge::action(mavlink_message_t msg)
 			mavlink_motor_state_t motor_state;
 			mavlink_msg_motor_state_decode(&msg, &motor_state); // can be done more efficiently
 			_motor_states[msg.compid] = motor_state;
-			
+
 			recalculatePose();
 			writeRawDataToPorts();
 			TEENSYBRIDGE_DEBUG_PRINT("Motor State message received.")
 			break;}
-			
+
 		case MAVLINK_MSG_ID_THREADTIME:{
 			mavlink_msg_threadtime_decode(&msg, &_threadtime);
 			TEENSYBRIDGE_DEBUG_PRINT("Threadtime message received.")
-			break;}	
-			
+			break;}
+
 		case MAVLINK_MSG_ID_HEARTBEAT:{
 			TEENSYBRIDGE_DEBUG_PRINT("Heartbeat message received.")
 			break; }
-			
+
 		case MAVLINK_MSG_ID_DEBUG:{
 			mavlink_msg_debug_decode(&msg, &_debug);
 			TEENSYBRIDGE_DEBUG_PRINT("Debug message received.")
 			break;}
-			
+
 		case MAVLINK_MSG_ID_MOTOR_COMMAND:{
 			TEENSYBRIDGE_DEBUG_PRINT("Motor Command message received.")
 			break;}
-			
+
 		default:{
 			message_handled = false;
 			TEENSYBRIDGE_DEBUG_PRINT("Mavlink message decoded, but no corresponding action found...")
@@ -95,7 +95,7 @@ void TeensyBridge::recalculatePose()
 	_pose[0] = (_motor_states[0].position + _motor_states[1].position)*_kinematic_conversion_position;
 	_pose[1] = (-_motor_states[0].position + _motor_states[2].position)*_kinematic_conversion_position;
 	_pose[2] = (_motor_states[1].position - _motor_states[2].position)*_kinematic_conversion_orientation;
-	
+
 	_cal_enc_pose_port.write(_pose);
 }
 
@@ -120,13 +120,13 @@ void TeensyBridge::writeRawDataToPorts()
 		cur[k] = _motor_states[k].current;
 		volt[k] = (_motor_states[k].FFvoltage + _motor_states[k].FBvoltage)*0.001;
 	}
-	
+
 	_raw_enc_ticks_port.write(enc);
 	_raw_enc_speed_port.write(spd);
 	_raw_enc_cmd_speed_port.write(spd_cmd);
 	_cal_motor_voltage_port.write(volt);
 	_cal_motor_current_port.write(cur);
-	
+
 	//debug port
 	debug[0] = _debug.int1;
 	debug[1] = _debug.int2;
@@ -134,7 +134,7 @@ void TeensyBridge::writeRawDataToPorts()
 	debug[3] = _debug.float1;
 	debug[4] = _debug.float2;
 	debug[5] = _debug.float3;
-	
+
 	_debug_port.write(debug);
 }
 
@@ -154,13 +154,13 @@ bool TeensyBridge::configureHook()
   // set 6D ports
   example.resize(6);
   _debug_port.setDataSample(example);
-  
+
   //calculate kinematic conversion
   _kinematic_conversion_position = _wheel_radius*M_PI/_encoder_ticks_per_revolution;
 	_kinematic_conversion_orientation = _wheel_radius*M_PI/_encoder_ticks_per_revolution/(_platform_length/2.0 + _platform_width/2.0);
 	_kinematic_conversion_wheel = _encoder_ticks_per_revolution/(2.0*M_PI*_wheel_radius);
-	
-#ifndef TEENSYBRIDGE_TESTFLAG  
+
+#ifndef TEENSYBRIDGE_TESTFLAG
   return true;
 #else
 	_usb_port_name = "/dev/ttyACM0";
@@ -182,13 +182,13 @@ void TeensyBridge::updateHook()
 {
 	uint8_t bytes[TEENSYBRIDGE_SERIALBUFFERSIZE];
 	int numbytes = readBytes(bytes, TEENSYBRIDGE_SERIALBUFFERSIZE);
-	
+
 	for(int k=0;k<numbytes;k++){
 		if(_protocol.decode(bytes[k])){
 			action(_protocol.getMsg());
 		}
 	}
-	
+
 	std::vector<double> cmd_velocity(3);
 	// Possible return values are: NoData, OldData and NewData.
 	if(_cmd_velocity_port.read(cmd_velocity) == RTT::NewData){
@@ -224,19 +224,19 @@ void TeensyBridge::setControlMode(uint8_t control_mode)
 
 void TeensyBridge::setMotorReference(int setpoint, int ID, int mode)
 {
-	if(_control_mode == TEENSYBRIDGE_CONTROL_MODE_INDIVIDUAL){	
+	if(_control_mode == TEENSYBRIDGE_CONTROL_MODE_INDIVIDUAL){
 		mavlink_motor_command_t motor_command;
 		mavlink_message_t msg;
 		uint8_t buffer[MAVLINK_MSG_ID_MOTOR_COMMAND_LEN+MAVLINK_MSG_OVERHEAD];
 		uint8_t numbytes = 0;
-		
+
 		//set all to zero
 		motor_command.command_left_front = 0;
 		motor_command.command_right_front = 0;
 		motor_command.command_left_rear = 0;
 		motor_command.command_right_rear = 0;
 		motor_command.command_type = mode;
-		
+
 		switch(ID){
 			case 0: motor_command.command_left_front = setpoint; break;
 			case 1: motor_command.command_right_front = setpoint; break;
@@ -244,13 +244,13 @@ void TeensyBridge::setMotorReference(int setpoint, int ID, int mode)
 			case 3: motor_command.command_right_rear = setpoint; break;
 			default: motor_command.command_type = 0; break;
 		}
-	
+
 		mavlink_msg_motor_command_encode(0,0,&msg,&motor_command);
 		numbytes = mavlink_msg_to_send_buffer(buffer, &msg);
 		writeBytes(buffer, numbytes);
 	}
 }
-		
+
 void TeensyBridge::setMotorVelocity(double rpm, int ID)
 {
 	int velocity_setpoint = rpm*_encoder_ticks_per_revolution/60;
@@ -277,9 +277,9 @@ void TeensyBridge::setVelocity(double vx, double vy, double w)
 		mavlink_message_t msg;
 		uint8_t buffer[MAVLINK_MSG_ID_MOTOR_COMMAND_LEN+MAVLINK_MSG_OVERHEAD];
 		uint8_t numbytes = 0;
-	
+
 		w = (_platform_length + _platform_width)*w/2.0;
-	
+
 		// UPDATE 14/07/2015: To have the same reference frame as the youbot, the y-axis has been changed
 		motor_command.command_left_front = (vx - vy - w)*_kinematic_conversion_wheel;
 		motor_command.command_right_front = (vx + vy + w)*_kinematic_conversion_wheel;

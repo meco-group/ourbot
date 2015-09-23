@@ -1,17 +1,9 @@
-export void VelocityCmdIntern(){
-  emperor_send_event_port.write("e_velocitycmdintern")
-}
-
-export void VelocityCmdExtern(){
+export void VelocityControl(){
   emperor_send_event_port.write("e_velocitycmdextern")
 }
 
-export void UpdPathFollowing(){
+export void PathFollowing(){
   emperor_send_event_port.write("e_updpathfollowing")
-}
-
-export void FixedPathFollowing(){
-  emperor_send_event_port.write("e_fixedpathfollowing")
 }
 
 export void Idle(){
@@ -30,10 +22,14 @@ export void Restart(){
   emperor_send_event_port.write("e_restart")
 }
 
-export void StopLoop(){
+export void Break(){
   emperor_send_event_port.write("e_stop")
 }
 
-export void Initialize(){
+export void Init(){
   emperor_send_event_port.write("e_init")
+}
+
+export string getState(){
+  return emperor_current_state_port.last()
 }

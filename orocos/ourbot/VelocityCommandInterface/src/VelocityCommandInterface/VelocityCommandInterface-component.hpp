@@ -23,5 +23,6 @@ class VelocityCommandInterface : public RTT::TaskContext{
     virtual void updateHook();
     virtual void stopHook();
     virtual void cleanupHook();
+    void writeSample();
 };
 #endif

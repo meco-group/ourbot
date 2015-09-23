@@ -6,13 +6,16 @@ require 'os'
 tc = rtt.getTC()
 
 --Property definitions
+_print_level         = rtt.Property("int","print_level","Level of output printing")
 _peers               = rtt.Property("ints","peers","Index numbers of peer agents")
 _velocitycmd_type    = rtt.Property("string","velocitycmd","VelocityCommand component to use (only for intern velocitycmd)")
 _velcmd_sample_rate  = rtt.Property("double","velcmd_sample_rate","Frequency to update velocity commander")
+_reporter_sample_rate= rtt.Property("double","reporter_sample_rate","Frequency to take snapshots for the reporter")
 
 tc:addProperty(_peers)
 tc:addProperty(_velcmd_sample_rate)
 tc:addProperty(_velocitycmd_type)
+tc:addProperty(_reporter_sample_rate)
 
 --Ports which drive/read the FSM
 _deployer_fsm_event_port      = rtt.InputPort("string")
@@ -25,9 +28,11 @@ tc:addPort(_deployer_current_state_port, "deployer_current_state_port", "current
 
 function configureHook()
    --Create local copies of the property values
+   print_level          = _print_level:get()
    peers                = _peers:get()
    velcmd_sample_rate   = _velcmd_sample_rate:get()
    velocitycmd_type     = _velocitycmd_type:get()
+   reporter_sample_rate = _reporter_sample_rate:get()
 
    --Create some variables referering to files
    emperor_file      = 'Emperor/emperor.lua'
@@ -40,13 +45,15 @@ function configureHook()
       return false
    end
 
-   --Add console printing for the state entry and exit
-   fsm.dbg = rfsmpp.gen_dbgcolor("Deployer FSM", { STATE_ENTER=true, STATE_EXIT=true}, false)
+   if print_level >= 2 then
+      --Add console printing for the state entry and exit
+      fsm.dbg = rfsmpp.gen_dbgcolor("Deployer FSM", { STATE_ENTER=true, STATE_EXIT=true}, false)
 
-   -- redirect rFSM output to rtt log
-   fsm.info=function(...) rtt.logl('Info', table.concat({...}, ' ')) end
-   fsm.warn=function(...) rtt.logl('Warning', table.concat({...}, ' ')) end
-   fsm.err=function(...) rtt.logl('Error', table.concat({...}, ' ')) end
+      -- redirect rFSM output to rtt log
+      fsm.info=function(...) rtt.logl('Info', table.concat({...}, ' ')) end
+      fsm.warn=function(...) rtt.logl('Warning', table.concat({...}, ' ')) end
+      fsm.err=function(...) rtt.logl('Error', table.concat({...}, ' ')) end
+   end
 
    -- connect event ports to state machine
    fsm.getevents = rfsm_rtt.gen_read_str_events(_deployer_fsm_event_port)

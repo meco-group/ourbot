@@ -12,8 +12,8 @@ return rfsm.state {
   rfsm.trans{src = 'stop',    tgt = 'reset',  events = {'e_reset'}},
   rfsm.trans{src = 'reset',   tgt = 'idle'},
 
-  idle  = rfsm.state{ entry = function() print("Waiting on Initialize...") end },
-  init  = rfsm.state{ },
+  idle  = rfsm.state{ entry = function() main_state = 'updpathfollowing' sub_state='idle' print("Waiting on Init (Button A)...") end },
+  init  = rfsm.state{ entry = function() sub_state='init' print("Waiting on Run (Button A)...") end},
   run   = rfsm.state{
     entry = function()
       if (not reporter:start()) then
@@ -21,6 +21,7 @@ return rfsm.state {
         rfsm.send_events(fsm,'e_failed')
         return
       end
+      print("System started. Abort by using Break (Button B).")
     end,
 
     doo = function()
@@ -31,7 +32,14 @@ return rfsm.state {
     end,
   },
 
-  stop  = rfsm.state{ entry = function() reporter:stop() end},
+  stop = rfsm.state{
+    entry = function(fsm)
+      sub_state='stop'
+      reporter:stop()
+      print("System stopped. Waiting on Restart (Button A) or Reset (Button B)...")
+    end,
+  },
+
   reset = rfsm.state{ },
 
 }

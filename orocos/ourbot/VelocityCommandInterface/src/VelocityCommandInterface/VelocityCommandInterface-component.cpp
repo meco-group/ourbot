@@ -6,6 +6,12 @@ VelocityCommandInterface::VelocityCommandInterface(std::string const& name) : Ta
   _cmd_velocity(3){
   ports()->addPort("cmd_velocity_port",_cmd_velocity_port).doc("Velocity command for actuator");
   addOperation("setVelocity", &VelocityCommandInterface::setVelocity, this).doc("Set velocity cmd manually");
+  addOperation("writeSample",&VelocityCommandInterface::writeSample, this).doc("Set data sample on output ports");
+}
+
+void VelocityCommandInterface::writeSample(){
+  std::vector<double> example(3, 0.0);
+  _cmd_velocity_port.write(example);
 }
 
 bool VelocityCommandInterface::configureHook(){

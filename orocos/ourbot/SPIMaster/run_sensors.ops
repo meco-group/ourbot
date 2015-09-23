@@ -1,0 +1,44 @@
+require("print")
+import("rtt_ros")
+ros.import("SerialInterface")
+ros.import("Container")
+
+print.ln("Script imported SerialInterface package:")
+displayComponentTypes()
+loadComponent("teensy", "TeensyBridge")
+print.ln("Script created TeensyBridge Component")
+loadComponent("lidar", "RPLidar")
+print.ln("Script created RPLidar Component")
+
+loadComponent("reporter","OCL::NetcdfReporting")
+print.ln("Created reporting component")
+loadService("reporter", "marshalling")
+//reporter.marshalling.loadProperties("reporting.cpf")
+//addPeer("reporter","teensy")
+//reporter.reportComponent("teensy")
+addPeer("reporter","lidar")
+reporter.reportPort("lidar","cal_lidar_node_port")
+
+loadComponent("IOComponent","Container")
+print.ln("Created IO component")
+addPeer("IOComponent","teensy")
+print.ln("added teensy as peer")
+IOComponent.addComponent("teensy")
+addPeer("IOComponent","lidar")
+print.ln("added lidar as peer")
+IOComponent.addComponent("lidar")
+print.ln("added lidar as component in the IO component container")
+
+addPeer("reporter","IOComponent")
+reporter.reportComponent("IOComponent")
+
+
+//teensy.configure
+//teensy.start
+//lidar.configure
+//lidar.start
+IOComponent.configure
+IOComponent.start
+
+reporter.configure
+reporter.start

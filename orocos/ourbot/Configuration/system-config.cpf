@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE properties SYSTEM "cpf.dtd">
 <properties>
+  <simple name="print_level" type="long">
+    <description>Level of output printing</description>
+    <value>0</value>
+  </simple>
   <simple name="estimator" type="string">
     <description>Estimator component to use</description>
     <value>ExampleEstimator</value>

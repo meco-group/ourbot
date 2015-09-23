@@ -12,7 +12,3 @@ lua.marshalling.loadProperties("Configuration/system-config.cpf")
 
 lua.configure()
 lua.start()
-
-
-
-

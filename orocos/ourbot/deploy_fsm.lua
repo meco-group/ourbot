@@ -13,6 +13,7 @@ local reporter      = 'reporter'..index
 local io            = 'io'..index
 local teensy        = 'teensy'..index
 local lidar         = 'lidar'..index
+-- local imu           = 'imu'..index
   --add here extra components
 
 --Components to load
@@ -27,12 +28,13 @@ local components_to_load = {
   [io]              = 'Container',
   [teensy]          = 'TeensyBridge',
   [lidar]           = 'RPLidar'
+  -- [imu]             = 'IMU'
    --add here componentname = 'componenttype'
 }
 
 --Containers to fill
 local containers_to_fill = {
-  [io]              = {teensy, lidar}
+  [io]              = {teensy, lidar, imu}
 }
 
 --Ports to report
@@ -41,8 +43,8 @@ local ports_to_report = {
   [estimator]       = {'est_pose_port', 'est_velocity_port', 'est_acceleration_port', 'est_global_offset_port'},
   [reference]       = {'ref_pose_port', 'ref_ffw_port'},
   [velocitycmd]     = {'cmd_velocity_port'},
-  [coordinator]     = {'controlloop_duration', 'controlloop_jitter'},
-  [io]              = {'cal_enc_pose_port', 'cal_velocity_port', 'cal_lidar_node_port'}
+  [io]              = {'cal_enc_pose_port', 'cal_velocity_port', 'cal_lidar_node_port'},
+  [coordinator]     = {'controlloop_duration', 'controlloop_jitter'}
   --add here componentname = 'portnames'
 }
 
@@ -69,7 +71,7 @@ local component_config_files  = {
 }
 
 --Accessible components over CORBA
-local server_components = {coordinator, io}
+local server_components = {coordinator}
 
 for comp,ports in pairs(ports_to_report) do
   table.insert(server_components,comp)
@@ -136,17 +138,10 @@ return rfsm.state {
             addToContainer(name)
           end
         end
-
-        -- dp:addPeer(io, teensy)
-        -- dp:addPeer(io, lidar)
-        -- addToIO = components[io]:getOperation("addComponent")
-        -- addToIO(teensy)
-        -- addToIO(lidar)
-
-        --Go through the table of components to make server
-        -- for i,name in pairs(server_components) do
-        --   if (not dp:server(name,true)) then rfsm.send_events(fsm,'e_failed') return end
-        -- end
+        -- Go through the table of components to make server
+        for i,name in pairs(server_components) do
+          if (not dp:server(name,true)) then rfsm.send_events(fsm,'e_failed') return end
+        end
       end
     },
 
@@ -171,22 +166,22 @@ return rfsm.state {
     connect_components = rfsm.state {
       entry = function(fsm)
         --Connect all components
-        if (not dp:connectPorts(io,estimator))        then rfsm.send_events(fsm,'e_failed') return end
-        if (not dp:connectPorts(estimator,controller))     then rfsm.send_events(fsm,'e_failed') return end
-        if (not dp:connectPorts(reference,controller))     then rfsm.send_events(fsm,'e_failed') return end
-        if (not dp:connectPorts(reference,pathgenerator))  then rfsm.send_events(fsm,'e_failed') return end
-        if (not dp:connectPorts(estimator,pathgenerator))  then rfsm.send_events(fsm,'e_failed') return end
-        if (not dp:connectPorts(velocitycmd,io))      then rfsm.send_events(fsm,'e_failed') return end
+        if (not dp:connectPorts(estimator,io))              then rfsm.send_events(fsm,'e_failed') return end
+        if (not dp:connectPorts(estimator,controller))      then rfsm.send_events(fsm,'e_failed') return end
+        if (not dp:connectPorts(reference,controller))      then rfsm.send_events(fsm,'e_failed') return end
+        if (not dp:connectPorts(reference,pathgenerator))   then rfsm.send_events(fsm,'e_failed') return end
+        if (not dp:connectPorts(estimator,pathgenerator))   then rfsm.send_events(fsm,'e_failed') return end
+        if (not dp:connectPorts(velocitycmd,io))            then rfsm.send_events(fsm,'e_failed') return end
           --add more connections here
 
         --Add every component as peer of coordinator
-        if (not dp:addPeer(coordinator,controller))   then rfsm.send_events(fsm,'e_failed') return end
-        if (not dp:addPeer(coordinator,estimator))    then rfsm.send_events(fsm,'e_failed') return end
-        if (not dp:addPeer(coordinator,pathgenerator))then rfsm.send_events(fsm,'e_failed') return end
-        if (not dp:addPeer(coordinator,reference))    then rfsm.send_events(fsm,'e_failed') return end
-        if (not dp:addPeer(coordinator,velocitycmd))  then rfsm.send_events(fsm,'e_failed') return end
-        if (not dp:addPeer(coordinator,reporter))     then rfsm.send_events(fsm,'e_failed') return end
-        if (not dp:addPeer(coordinator,io))           then rfsm.send_events(fsm,'e_failed') return end
+        if (not dp:addPeer(coordinator,controller))         then rfsm.send_events(fsm,'e_failed') return end
+        if (not dp:addPeer(coordinator,estimator))          then rfsm.send_events(fsm,'e_failed') return end
+        if (not dp:addPeer(coordinator,pathgenerator))      then rfsm.send_events(fsm,'e_failed') return end
+        if (not dp:addPeer(coordinator,reference))          then rfsm.send_events(fsm,'e_failed') return end
+        if (not dp:addPeer(coordinator,velocitycmd))        then rfsm.send_events(fsm,'e_failed') return end
+        if (not dp:addPeer(coordinator,reporter))           then rfsm.send_events(fsm,'e_failed') return end
+        if (not dp:addPeer(coordinator,io))                 then rfsm.send_events(fsm,'e_failed') return end
           --add more peers here
       end,
     },
@@ -201,15 +196,23 @@ return rfsm.state {
             --Estimator
             if (not dp:loadComponent('estimator'..tostring(neighbours[i]),'CORBA')) then rfsm.send_events(fsm,'e_failed') return end
             if (not dp:connect('estimator'..tostring(index)..'.com_in'..dir_tbl[nghb_cnt]..'_port', 'estimator'..tostring(neighbours[i])..'.est_pose_port', cp)) then rfsm.send_events(fsm,'e_failed') return end
+            distrcomponents['estimator'..tostring(neighbours[i])] = dp:getPeer('estimator'..tostring(neighbours[i]))
+            writeSample = distrcomponents['estimator'..tostring(neighbours[i])]:getOperation("writeSample")
+            writeSample()
             --Controller
             if (not dp:loadComponent('controller'..tostring(neighbours[i]),'CORBA')) then rfsm.send_events(fsm,'e_failed') return end
             if (not dp:connect('controller'..tostring(index)..'.com_in'..dir_tbl[nghb_cnt]..'_port', 'controller'..tostring(neighbours[i])..'.est_pose_port', cp)) then rfsm.send_events(fsm,'e_failed') return end
+            distrcomponents['controller'..tostring(neighbours[i])] = dp:getPeer('controller'..tostring(neighbours[i]))
+            writeSample = distrcomponents['controller'..tostring(neighbours[i])]:getOperation("writeSample")
+            writeSample()
             --Pathgenerator
             if (not dp:loadComponent('pathgenerator'..tostring(neighbours[i]),'CORBA')) then rfsm.send_events(fsm,'e_failed') return end
             if (not dp:connect('pathgenerator'..tostring(index)..'.ref_in'..dir_tbl[nghb_cnt]..'_path_x_port', 'controller'..tostring(neighbours[i])..'.ref_pose_path_x_port', cp)) then rfsm.send_events(fsm,'e_failed') return end
             if (not dp:connect('pathgenerator'..tostring(index)..'.ref_in'..dir_tbl[nghb_cnt]..'_path_y_port', 'controller'..tostring(neighbours[i])..'.ref_pose_path_y_port', cp)) then rfsm.send_events(fsm,'e_failed') return end
             if (not dp:connect('pathgenerator'..tostring(index)..'.ref_in'..dir_tbl[nghb_cnt]..'_path_t_port', 'controller'..tostring(neighbours[i])..'.ref_pose_path_t_port', cp)) then rfsm.send_events(fsm,'e_failed') return end
-
+            distrcomponents['pathgenerator'..tostring(neighbours[i])] = dp:getPeer('pathgenerator'..tostring(neighbours[i]))
+            writeSample = distrcomponents['pathgenerator'..tostring(neighbours[i])]:getOperation("writeSample")
+            writeSample()
             nghb_cnt = nghb_cnt + 1
           end
         end
@@ -243,6 +246,7 @@ return rfsm.state {
         if not components[coordinator]:exec_file(coordinator_file) then rfsm.send_events(fsm,'e_failed') return end
         --Copy the values of the application properties into the coordinator component
         components[coordinator]:getProperty('index'):set(index)
+        components[coordinator]:getProperty('print_level'):set(print_level)
         --Configure the coordinator
         if not components[coordinator]:configure() then rfsm.send_events(fsm,'e_failed') return end
         --Connect the deployer to coordinator (for receiving each others failure events)

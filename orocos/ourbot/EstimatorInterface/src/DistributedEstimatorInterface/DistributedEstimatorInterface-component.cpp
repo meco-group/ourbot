@@ -11,7 +11,15 @@ DistributedEstimatorInterface::DistributedEstimatorInterface(std::string const& 
   ports()->addPort("est_poseL_port",_est_poseL_port).doc("Estimated pose of neighbour via left going signal");
   ports()->addPort("est_poseR_port",_est_poseR_port).doc("Estimated pose of neighbour via right going signal");
 
+  addOperation("writeSample",&DistributedEstimatorInterface::writeSample, this).doc("Set data sample on output ports");
+
   _com_size = com_size;
+}
+
+void DistributedEstimatorInterface::writeSample(){
+  std::vector<double> example(3, 0.0);
+  _est_poseL_port.write(example);
+  _est_poseR_port.write(example);
 }
 
 bool DistributedEstimatorInterface::configureHook(){
@@ -23,7 +31,6 @@ bool DistributedEstimatorInterface::configureHook(){
   std::vector<double> example(3, 0.0);
   _est_poseL_port.setDataSample(example);
   _est_poseR_port.setDataSample(example);
-
   return EstimatorInterface::configureHook();
 }
 

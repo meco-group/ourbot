@@ -42,6 +42,7 @@ class DistributedReference : public Reference{
     virtual bool configureHook();
     virtual bool startHook();
     virtual void updateHook();
+    void writeSample();
 };
 
 #endif

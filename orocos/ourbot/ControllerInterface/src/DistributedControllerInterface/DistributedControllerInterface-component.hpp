@@ -45,6 +45,7 @@ class DistributedControllerInterface : public ControllerInterface{
     virtual bool configureHook();
     virtual bool startHook();
     virtual void updateHook();
+    void writeSample();
 };
 
 #endif

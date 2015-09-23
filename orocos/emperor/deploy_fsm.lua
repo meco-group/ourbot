@@ -4,7 +4,8 @@ require 'rfsmpp'
 
 --Components to load
 local components_to_load = {
-  velocitycmd     = velocitycmd_type,
+  velocitycmd     = 'GamePadCommand',
+  gamepad         = 'GamePad',
   emperor         = 'OCL::LuaTLSFComponent',
   reporter        = 'OCL::NetcdfReporting'
    --add here componentname = 'componenttype'
@@ -22,13 +23,15 @@ local distrports_to_report = {
   estimator         = {'est_pose_port', 'est_velocity_port', 'est_acceleration_port', 'est_global_offset_port'},
   reference         = {'ref_pose_port', 'ref_ffw_port'},
   velocitycmd       = {'cmd_velocity_port'},
+  io                = {'cal_enc_pose_port', 'cal_velocity_port', 'cal_lidar_node_port'},
   coordinator       = {'controlloop_duration', 'controlloop_jitter'}
   --add here componentname = 'portnames'
 }
 
 --Packages to import
 local packages_to_import = {
-  velocitycmd = 'VelocityCommandInterface'
+  velocitycmd     = 'VelocityCommandEmperorInterface',
+  gamepad         = 'SerialInterface'
   --add here componentname = 'parentcomponenttype'
 }
 
@@ -36,19 +39,24 @@ local packages_to_import = {
 local system_config_file      = 'Configuration/emperor-config.cpf'
 local reporter_config_file    = 'Configuration/reporter-config.cpf'
 local component_config_files  = {
+  gamepad     = 'Configuration/gamepad_config.cpf',
+  velocitycmd = 'Configuration/velocitycmd_config.cpf'
   --add here componentname = 'Configuration/component-config.cpf'
 }
 
 --Distributed components to load
 local distr_components_to_load = {}
-
+coordinator_reported = false
 for i=0,peers.size-1 do
-  table.insert(distr_components_to_load,'coordinator'..peers[i])
-  table.insert(distr_components_to_load,'io'..peers[i])
-  table.insert(distr_components_to_load,'controller'..peers[i])
-  table.insert(distr_components_to_load,'estimator'..peers[i])
-  table.insert(distr_components_to_load,'reference'..peers[i])
-  table.insert(distr_components_to_load,'velocitycmd'..peers[i])
+  for comp,ports in pairs(distrports_to_report) do
+    if comp == 'coordinator' then
+      coordinator_reported = true
+    end
+    table.insert(distr_components_to_load,comp..peers[i])
+  end
+  if not coordinator_reported then
+    table.insert(distr_components_to_load,'coordinator'..peers[i])
+  end
 end
 
 local components      = {}
@@ -60,7 +68,7 @@ return rfsm.state {
   rfsm.transition {src = 'initial',                  tgt = 'deploy'},
   rfsm.transition {src = 'deploy',                   tgt = 'failure',  events = {'e_failed'}},
   rfsm.transition {src = '.deploy.prepare_reporter', tgt = 'deployed', events = {'e_done'}},
-  rfsm.transition { src = 'failure',                 tgt = 'deploy',   events = {'e_reset'}},
+  rfsm.transition {src = 'failure',                  tgt = 'deploy',   events = {'e_reset'}},
 
   deployed = rfsm.conn{},
 
@@ -87,7 +95,6 @@ return rfsm.state {
     rfsm.transition {src = 'connect_components',    tgt = 'set_activities',         events = {'e_done'}},
     rfsm.transition {src = 'set_activities',        tgt = 'load_app_coordination',  events = {'e_done'}},
     rfsm.transition {src = 'load_app_coordination', tgt = 'prepare_reporter',       events = {'e_done'}},
-
 
     load_components = rfsm.state {
       entry = function(fsm)
@@ -122,10 +129,20 @@ return rfsm.state {
             if (not comp:provides('marshalling'):updateProperties(system_config_file)) then rfsm.send_events(fsm,'e_failed') return end
             --If available, a component loads its specific configurations
             if(component_config_files[name]) then
-              if (not comp:provides('marshalling'):updateProperties(component_config[name])) then rfsm.send_events(fsm,'e_failed') return end
+              if (not comp:provides('marshalling'):updateProperties(component_config_files[name])) then rfsm.send_events(fsm,'e_failed') return end
             end
             --Configure the components
             if (not comp:configure()) then rfsm.send_events(fsm,'e_failed') return end
+          end
+        end
+
+        -- write Data Sample for remote CORBA ports except io container and coordinator
+        for i=0,peers.size-1 do
+          for j,name in pairs(distr_components_to_load) do
+            if not (name == 'coordinator'..peers[i] or name == 'io'..peers[i]) then
+              writeSample = distrcomponents[name]:getOperation("writeSample")
+              writeSample()
+            end
           end
         end
       end,
@@ -134,29 +151,33 @@ return rfsm.state {
     connect_components = rfsm.state {
       entry = function(fsm)
         --Connect all components
+        if (not dp:connectPorts('velocitycmd','gamepad')) then rfsm.send_events(fsm,'e_failed') return end
+
         for i=0,peers.size-1 do
           if (not dp:connectPorts('velocitycmd','io'..peers[i])) then rfsm.send_events(fsm,'e_failed') return end
         end
           --add more connections here
 
-        --Add every component as peer of emperor
+        --Add every component's coordinator as peer of emperor
         for i=0,peers.size-1 do
           if (not dp:addPeer('emperor','coordinator'..peers[i])) then rfsm.send_events(fsm,'e_failed') return end
         end
         if (not dp:addPeer('emperor','reporter')) then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:addPeer('emperor','velocitycmd')) then rfsm.send_events(fsm,'e_failed') return end
+        if (not dp:addPeer('emperor','gamepad')) then rfsm.send_events(fsm,'e_failed') return end
           --add more peers here
       end,
     },
 
     set_activities = rfsm.state {
       entry = function(fsm)
-        dp:setActivity('velocitycmd',1./velcmd_sample_rate,10,rtt.globals.ORO_SCHED_RT)
+        dp:setActivity('emperor',1./reporter_sample_rate,10,rtt.globals.ORO_SCHED_RT)
+        -- dp:setActivity('velocitycmd',1./velcmd_sample_rate,10,rtt.globals.ORO_SCHED_RT)
+        dp:setActivity('gamepad',1./velcmd_sample_rate,10,rtt.globals.ORO_SCHED_RT)
         dp:setActivity('reporter',0,2,rtt.globals.ORO_SCHED_RT)
           --add here extra activities
       end,
     },
-
 
     load_app_coordination = rfsm.state {
       entry = function(fsm)
@@ -164,6 +185,7 @@ return rfsm.state {
         if not components.emperor:exec_file(emperor_file) then rfsm.send_events(fsm,'e_failed') return end
         --Copy the values of the application properties into the coordinator emperor
         components.emperor:getProperty('peers'):set(peers)
+        components.emperor:getProperty('print_level'):set(print_level)
         --Configure the emperor
         if not components.emperor:configure() then rfsm.send_events(fsm,'e_failed') return end
         --Connect emperor to each coordinator
@@ -187,8 +209,15 @@ return rfsm.state {
         --Load the local application script
         components.emperor:loadService("scripting")
         if not components.emperor:provides("scripting"):loadPrograms(app_file) then rfsm.send_events(fsm,'e_failed') return end
+
+
+        if (not dp:connectPorts('emperor','gamepad')) then rfsm.send_events(fsm,'e_failed') return end
+
+
         --Start the emperor
         if not components.emperor:start() then rfsm.send_events(fsm,'e_failed') return end
+        --Start gamepad
+        if not components.gamepad:start() then rfsm.send_events(fsm,'e_failed') return end
       end,
     },
 
@@ -213,10 +242,11 @@ return rfsm.state {
             end
           end
         end
+
         --Configure the reporter
         if (not components.reporter:configure()) then rfsm.send_events(fsm,'e_failed') end
-      end
-    },
-},
 
+      end,
+    },
+  },
 }
