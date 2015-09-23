@@ -1,0 +1,35 @@
+#ifndef USB_INTERFACE_H
+#define USB_INTERFACE_H
+
+//#define USBINTERFACE_TESTFLAG
+
+#include "../SerialInterface/SerialInterface-component.hpp"
+#include <fstream>
+
+class USBInterface : public SerialInterface
+{
+	protected:
+		std::string		_usb_port_name;
+		std::fstream	_usb_stream;
+		int _usb_fd;
+
+	public:
+		USBInterface(std::string const& name);
+		
+		virtual bool configureHook();
+		virtual void updateHook();
+		
+		void setUSBPortName(std::string usb_port_name);
+		bool connectSerial();
+		bool connectSerial(struct termios newtio);
+		bool disconnectSerial();
+		bool isConnectedSerial();
+
+		int available();
+    int readByte(uint8_t* byte);
+    int readBytes(uint8_t* bytes, uint32_t length);
+    int writeByte(uint8_t byte);
+    int writeBytes(uint8_t* bytes, uint32_t length);
+};
+
+#endif //USB_INTERFACE_H

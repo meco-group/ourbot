@@ -13,6 +13,7 @@ local reporter      = 'reporter'..index
 local io            = 'io'..index
 local teensy        = 'teensy'..index
 local lidar         = 'lidar'..index
+-- local imu           = 'imu'..index
   --add here extra components
 
 --Components to load
@@ -27,12 +28,13 @@ local components_to_load = {
   [io]              = 'Container',
   [teensy]          = 'TeensyBridge',
   [lidar]           = 'RPLidar'
+  -- [imu]             = 'IMU'
    --add here componentname = 'componenttype'
 }
 
 --Containers to fill
 local containers_to_fill = {
-  [io]              = {teensy, lidar}
+  [io]              = {teensy, lidar, imu}
 }
 
 --Ports to report
