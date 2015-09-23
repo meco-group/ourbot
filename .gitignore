@@ -22,3 +22,5 @@ ourbot.sublime-workspace
 orocos/*/TestCorba/
 orocos/ourbot/orocos/naming_distributed_agents.txt
 orocos/overview.txt
+
+orocos/emperor/reports.nc
