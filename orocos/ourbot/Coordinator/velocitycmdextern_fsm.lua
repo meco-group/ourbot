@@ -27,7 +27,7 @@ return rfsm.state {
     entry = function(fsm)
       if not io:start() then
         rtt.logl("Error","Could not start io component")
-        -- rfsm.send_events(fsm,'e_failed')
+        rfsm.send_events(fsm,'e_failed')
         return
       end
       print("Waiting on Run...")
