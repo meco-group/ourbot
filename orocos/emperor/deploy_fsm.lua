@@ -4,7 +4,8 @@ require 'rfsmpp'
 
 --Components to load
 local components_to_load = {
-  velocitycmd     = velocitycmd_type,
+  velocitycmd     = 'GamePadCommand',
+  gamepad         = 'GamePad',
   emperor         = 'OCL::LuaTLSFComponent',
   reporter        = 'OCL::NetcdfReporting'
    --add here componentname = 'componenttype'
@@ -29,7 +30,8 @@ local distrports_to_report = {
 
 --Packages to import
 local packages_to_import = {
-  velocitycmd     = 'VelocityCommandInterface'
+  velocitycmd     = 'VelocityCommandEmperorInterface',
+  gamepad         = 'SerialInterface'
   --add here componentname = 'parentcomponenttype'
 }
 
@@ -37,6 +39,8 @@ local packages_to_import = {
 local system_config_file      = 'Configuration/emperor-config.cpf'
 local reporter_config_file    = 'Configuration/reporter-config.cpf'
 local component_config_files  = {
+  gamepad     = 'Configuration/gamepad_config.cpf',
+  velocitycmd = 'Configuration/velocitycmd_config.cpf'
   --add here componentname = 'Configuration/component-config.cpf'
 }
 
@@ -125,7 +129,7 @@ return rfsm.state {
             if (not comp:provides('marshalling'):updateProperties(system_config_file)) then rfsm.send_events(fsm,'e_failed') return end
             --If available, a component loads its specific configurations
             if(component_config_files[name]) then
-              if (not comp:provides('marshalling'):updateProperties(component_config[name])) then rfsm.send_events(fsm,'e_failed') return end
+              if (not comp:provides('marshalling'):updateProperties(component_config_files[name])) then rfsm.send_events(fsm,'e_failed') return end
             end
             --Configure the components
             if (not comp:configure()) then rfsm.send_events(fsm,'e_failed') return end
@@ -134,7 +138,7 @@ return rfsm.state {
 
         -- write Data Sample for remote CORBA ports except io container and coordinator
         for i=0,peers.size-1 do
-          for i,name in pairs(distr_components_to_load) do
+          for j,name in pairs(distr_components_to_load) do
             if not (name == 'coordinator'..peers[i] or name == 'io'..peers[i]) then
               writeSample = distrcomponents[name]:getOperation("writeSample")
               writeSample()
@@ -147,6 +151,8 @@ return rfsm.state {
     connect_components = rfsm.state {
       entry = function(fsm)
         --Connect all components
+        if (not dp:connectPorts('velocitycmd','gamepad')) then rfsm.send_events(fsm,'e_failed') return end
+
         for i=0,peers.size-1 do
           if (not dp:connectPorts('velocitycmd','io'..peers[i])) then rfsm.send_events(fsm,'e_failed') return end
         end
@@ -158,6 +164,7 @@ return rfsm.state {
         end
         if (not dp:addPeer('emperor','reporter')) then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:addPeer('emperor','velocitycmd')) then rfsm.send_events(fsm,'e_failed') return end
+        if (not dp:addPeer('emperor','gamepad')) then rfsm.send_events(fsm,'e_failed') return end
           --add more peers here
       end,
     },
@@ -165,7 +172,8 @@ return rfsm.state {
     set_activities = rfsm.state {
       entry = function(fsm)
         dp:setActivity('emperor',1./reporter_sample_rate,10,rtt.globals.ORO_SCHED_RT)
-        dp:setActivity('velocitycmd',1./velcmd_sample_rate,10,rtt.globals.ORO_SCHED_RT)
+        -- dp:setActivity('velocitycmd',1./velcmd_sample_rate,10,rtt.globals.ORO_SCHED_RT)
+        dp:setActivity('gamepad',1./velcmd_sample_rate,10,rtt.globals.ORO_SCHED_RT)
         dp:setActivity('reporter',0,2,rtt.globals.ORO_SCHED_RT)
           --add here extra activities
       end,
@@ -201,8 +209,15 @@ return rfsm.state {
         --Load the local application script
         components.emperor:loadService("scripting")
         if not components.emperor:provides("scripting"):loadPrograms(app_file) then rfsm.send_events(fsm,'e_failed') return end
+
+
+        if (not dp:connectPorts('emperor','gamepad')) then rfsm.send_events(fsm,'e_failed') return end
+
+
         --Start the emperor
         if not components.emperor:start() then rfsm.send_events(fsm,'e_failed') return end
+        --Start gamepad
+        if not components.gamepad:start() then rfsm.send_events(fsm,'e_failed') return end
       end,
     },
 

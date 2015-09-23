@@ -13,6 +13,9 @@ local reporter      = 'reporter'..index
 local io            = 'io'..index
 local teensy        = 'teensy'..index
 local lidar         = 'lidar'..index
+local imul          = 'imul'..index
+-- local imur          = 'imur'..index
+-- local spimaster     = 'spimaster'..index
   --add here extra components
 
 --Components to load
@@ -27,13 +30,21 @@ local components_to_load = {
   [io]              = 'Container',
   [teensy]          = 'TeensyBridge',
   [lidar]           = 'RPLidar'
+  -- [spimaster]       = 'SPIMaster',
+  -- [imul]            = 'IMU'
+  -- [imur]            = 'IMU',
    --add here componentname = 'componenttype'
 }
 
 --Containers to fill
 local containers_to_fill = {
-  [io]              = {teensy, lidar}
+  [io]              = {teensy, lidar, spimaster} --, imul} --, imur}
 }
+
+--SPI components
+-- local spi_components = {
+--   [spimaster]       = {imul} -- ,imur}
+-- }
 
 --Ports to report
 local ports_to_report = {
@@ -56,6 +67,7 @@ local packages_to_import = {
   [io]              = 'Container',
   [teensy]          = 'SerialInterface',
   [lidar]           = 'SerialInterface'
+  -- [spimaster]       = 'SPIMaster'
   --add here componentname = 'parentcomponenttype'
 }
 
@@ -65,6 +77,9 @@ local reporter_config_file    = 'Configuration/reporter-config.cpf'
 local component_config_files  = {
   [teensy]          = 'Configuration/teensy-config.cpf',
   [lidar]           = 'Configuration/lidar-config.cpf'
+  -- [spimaster]       = 'Configuration/spimaster-config.cpf',
+  -- [imul]            = 'Configuration/imul-config.cpf'
+  -- [imur]            = 'Configuration/imur-config.cpf'
   --add here componentname = 'Configuration/component-config.cpf'
 }
 
@@ -163,6 +178,13 @@ return rfsm.state {
 
     connect_components = rfsm.state {
       entry = function(fsm)
+        --Connect SPI devices to SPI master
+        -- for master,devices in pairs(spi_components) do
+        --   for i,dev in pairs(devices) do
+        --     if (not dp:connectPorts(master,dev)) then rfsm.send_events(fsm,'e_failed') return end
+        --   end
+        -- end
+
         --Connect all components
         if (not dp:connectPorts(estimator,io))              then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:connectPorts(estimator,controller))      then rfsm.send_events(fsm,'e_failed') return end

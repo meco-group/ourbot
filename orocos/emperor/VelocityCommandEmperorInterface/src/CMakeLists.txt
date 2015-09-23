@@ -10,7 +10,7 @@
 # Creates a component library libVelocityCommandEmperorInterface-<target>.so
 # and installs in the directory lib/orocos/VelocityCommandEmperorInterface/
 #
-orocos_component(VelocityCommandEmperorInterface VelocityCommandEmperorInterface/VelocityCommandEmperorInterface-component.hpp VelocityCommandEmperorInterface/VelocityCommandEmperorInterface-component.cpp ExampleVelocityCommand/ExampleVelocityCommand-component.hpp ExampleVelocityCommand/ExampleVelocityCommand-component.cpp) # ...you may add multiple source files
+orocos_component(VelocityCommandEmperorInterface VelocityCommandEmperorInterface/VelocityCommandEmperorInterface-component.hpp VelocityCommandEmperorInterface/VelocityCommandEmperorInterface-component.cpp GamePadCommand/GamePadCommand-component.hpp GamePadCommand/GamePadCommand-component.cpp) # ...you may add multiple source files
 #
 # You may add multiple orocos_component statements.
 
@@ -19,7 +19,7 @@ orocos_component(VelocityCommandEmperorInterface VelocityCommandEmperorInterface
 #
 # Installs in the include/orocos/VelocityCommandEmperorInterface/ directory
 #
-orocos_install_headers(VelocityCommandEmperorInterface/VelocityCommandEmperorInterface-component.hpp ExampleVelocityCommand/ExampleVelocityCommand-component.hpp) # ...you may add multiple header files
+orocos_install_headers(VelocityCommandEmperorInterface/VelocityCommandEmperorInterface-component.hpp GamePadCommand/GamePadCommand-component.hpp) # ...you may add multiple header files
 #
 # You may add multiple orocos_install_headers statements.
 

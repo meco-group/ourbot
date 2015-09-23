@@ -14,6 +14,8 @@ class VelocityCommandEmperorInterface : public RTT::TaskContext{
 
   protected:
     void setCmdVelocity(std::vector<double> const&);
+    double _max_velocity;
+    double _max_omega;
 
   public:
     VelocityCommandEmperorInterface(std::string const& name);

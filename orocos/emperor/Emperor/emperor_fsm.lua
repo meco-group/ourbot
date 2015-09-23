@@ -2,7 +2,7 @@
 return rfsm.state {
   rfsm.trans{src = 'initial', tgt = 'idle'},
 
-  idle = rfsm.state{entry=function() print('\nWaiting for command...\nPossibilities: VelocityControl, PathFollowing') end},
+  idle = rfsm.state{entry=function() main_state='idle' print('\nSelect mode...\n') end},
 
   rfsm.trans{src = 'idle', tgt = 'updpathfollowing', events={'e_updpathfollowing'}},
   rfsm.trans{src = 'idle', tgt = 'fixedpathfollowing', events={'e_fixedpathfollowing'}},
@@ -25,7 +25,7 @@ return rfsm.state {
     --add more state transitions here
 
   --There is currently no logic to recover from a failure except telling others of failure
-  failure = rfsm.state{entry = function() _emperor_failure_event_port:write('e_failed') end},
+  failure = rfsm.state{entry = function() main_state='failure' rtt.logl("Error","System in Failure!") _emperor_failure_event_port:write('e_failed') end},
 
   updpathfollowing  = rfsm.load("Emperor/updpathfollowing_fsm.lua"),
   fixedpathfollowing= rfsm.load("Emperor/fixedpathfollowing_fsm.lua"),

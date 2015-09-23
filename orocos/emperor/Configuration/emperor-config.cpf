@@ -13,11 +13,11 @@
   </struct>
   <simple name="velocitycmd" type="string">
     <description>VelocityCommand component to use (only for intern velocitycmd)</description>
-    <value>ExampleVelocityCommand</value>
+    <value>GamePadCommand</value>
   </simple>
   <simple name="velcmd_sample_rate" type="double">
     <description>Frequency to update velocity commander</description>
-    <value>10.</value>
+    <value>100.</value>
   </simple>
   <simple name="reporter_sample_rate" type="double">
     <description>Frequency to take snapshots for the reporter</description>
