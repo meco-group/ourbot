@@ -8,7 +8,7 @@
 TeensyBridge::TeensyBridge(std::string const& name) :
 	USBInterface(name), _platform_length(0.3), _platform_width(0.25), _wheel_radius(0.05), _encoder_ticks_per_revolution(38400),
 	_current_sensor_gain(1.0), _current_sensor_offset(0.0),
-	_kinematic_conversion_position(0.0), _kinematic_conversion_orientation(0.0), _kinematic_conversion_wheel(0.0), _pose(3,0.0),
+	_kinematic_conversion_position(0.0), _kinematic_conversion_orientation(0.0), _kinematic_conversion_wheel(0.0), _pose(3,0.0), _velocity(3,0.0),
 	_control_mode(TEENSYBRIDGE_CONTROL_MODE_SIMPLE), _velocity_controller_P(0.0f), _velocity_controller_I(0.0f), _velocity_controller_D(0.0f)
 {
 	this->addProperty("platform_length",_platform_length).doc("Property containing the platform length in [m].");
@@ -181,6 +181,7 @@ bool TeensyBridge::startHook()
 
 void TeensyBridge::updateHook()
 {
+	std::cout << "in update!" << std::endl;
 	uint8_t bytes[TEENSYBRIDGE_SERIALBUFFERSIZE];
 	int numbytes = readBytes(bytes, TEENSYBRIDGE_SERIALBUFFERSIZE);
 
