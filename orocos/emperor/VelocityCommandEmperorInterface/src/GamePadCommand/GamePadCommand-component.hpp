@@ -8,6 +8,7 @@ class GamePadCommand : public VelocityCommandEmperorInterface{
     RTT::InputPort<std::vector<double> > _gamepad_laxis_port;
     RTT::InputPort<std::vector<double> > _gamepad_raxis_port;
     std::vector<double> _cmd_velocity;
+    double transformData(double);
   public:
     GamePadCommand(std::string const& name);
     virtual void updateHook();

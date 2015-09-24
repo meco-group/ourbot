@@ -181,6 +181,7 @@ bool TeensyBridge::startHook()
 
 void TeensyBridge::updateHook()
 {
+	std::cout << "in update!" << std::endl;
 	uint8_t bytes[TEENSYBRIDGE_SERIALBUFFERSIZE];
 	int numbytes = readBytes(bytes, TEENSYBRIDGE_SERIALBUFFERSIZE);
 

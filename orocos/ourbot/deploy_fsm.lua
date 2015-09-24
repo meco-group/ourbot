@@ -14,8 +14,8 @@ local io            = 'io'..index
 local teensy        = 'teensy'..index
 local lidar         = 'lidar'..index
 local imul          = 'imul'..index
--- local imur          = 'imur'..index
--- local spimaster     = 'spimaster'..index
+local imur          = 'imur'..index
+local spimaster     = 'spimaster'..index
   --add here extra components
 
 --Components to load
@@ -29,22 +29,22 @@ local components_to_load = {
   [reporter]        = 'OCL::NetcdfReporting',
   [io]              = 'Container',
   [teensy]          = 'TeensyBridge',
-  [lidar]           = 'RPLidar'
-  -- [spimaster]       = 'SPIMaster',
-  -- [imul]            = 'IMU'
-  -- [imur]            = 'IMU',
+  [lidar]           = 'RPLidar',
+  [spimaster]       = 'SPIMaster',
+  [imul]            = 'IMU',
+  [imur]            = 'IMU'
    --add here componentname = 'componenttype'
 }
 
 --Containers to fill
 local containers_to_fill = {
-  [io]              = {teensy, lidar, spimaster} --, imul} --, imur}
+  [io]  = {teensy, spimaster, imul, imur} --, lidar}
 }
 
---SPI components
--- local spi_components = {
---   [spimaster]       = {imul} -- ,imur}
--- }
+-- SPI components
+local spi_components = {
+  [spimaster]       = {imul ,imur}
+}
 
 --Ports to report
 local ports_to_report = {
@@ -52,7 +52,7 @@ local ports_to_report = {
   [estimator]       = {'est_pose_port', 'est_velocity_port', 'est_acceleration_port', 'est_global_offset_port'},
   [reference]       = {'ref_pose_port', 'ref_ffw_port'},
   [velocitycmd]     = {'cmd_velocity_port'},
-  [io]              = {'cal_enc_pose_port', 'cal_velocity_port', 'cal_lidar_node_port'},
+  [io]              = {'cal_imu_orientation_3d_port'},
   [coordinator]     = {'controlloop_duration', 'controlloop_jitter'}
   --add here componentname = 'portnames'
 }
@@ -66,8 +66,8 @@ local packages_to_import = {
   [velocitycmd]     = 'VelocityCommandInterface',
   [io]              = 'Container',
   [teensy]          = 'SerialInterface',
-  [lidar]           = 'SerialInterface'
-  -- [spimaster]       = 'SPIMaster'
+  [lidar]           = 'SerialInterface',
+  [spimaster]       = 'SPIMaster'
   --add here componentname = 'parentcomponenttype'
 }
 
@@ -76,10 +76,10 @@ local system_config_file      = 'Configuration/system-config.cpf'
 local reporter_config_file    = 'Configuration/reporter-config.cpf'
 local component_config_files  = {
   [teensy]          = 'Configuration/teensy-config.cpf',
-  [lidar]           = 'Configuration/lidar-config.cpf'
-  -- [spimaster]       = 'Configuration/spimaster-config.cpf',
-  -- [imul]            = 'Configuration/imul-config.cpf'
-  -- [imur]            = 'Configuration/imur-config.cpf'
+  [lidar]           = 'Configuration/lidar-config.cpf',
+  [spimaster]       = 'Configuration/spimaster-config.cpf',
+  [imul]            = 'Configuration/imul-config.cpf',
+  [imur]            = 'Configuration/imur-config.cpf'
   --add here componentname = 'Configuration/component-config.cpf'
 }
 
@@ -179,11 +179,11 @@ return rfsm.state {
     connect_components = rfsm.state {
       entry = function(fsm)
         --Connect SPI devices to SPI master
-        -- for master,devices in pairs(spi_components) do
-        --   for i,dev in pairs(devices) do
-        --     if (not dp:connectPorts(master,dev)) then rfsm.send_events(fsm,'e_failed') return end
-        --   end
-        -- end
+        for master,devices in pairs(spi_components) do
+          for i,dev in pairs(devices) do
+            if (not dp:connectPorts(master,dev)) then rfsm.send_events(fsm,'e_failed') return end
+          end
+        end
 
         --Connect all components
         if (not dp:connectPorts(estimator,io))              then rfsm.send_events(fsm,'e_failed') return end
@@ -245,8 +245,9 @@ return rfsm.state {
         dp:setActivity(pathgenerator,1./pathupd_sample_rate,10,rtt.globals.ORO_SCHED_RT)
         dp:setActivity(velocitycmd,1./velcmd_sample_rate,10,rtt.globals.ORO_SCHED_RT)
         dp:setActivity(reporter,0,2,rtt.globals.ORO_SCHED_RT)
-        dp:setActivity(io,1./200,10,rtt.globals.ORO_SCHED_RT)
+        dp:setActivity(io,1./200.,10,rtt.globals.ORO_SCHED_RT)
           --add here extra activities
+
         --The estimator, controller and reference component are triggered by the coordinator and executed in the same thread.
         dp:setMasterSlaveActivity(coordinator,estimator)
         dp:setMasterSlaveActivity(coordinator,controller)

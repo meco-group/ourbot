@@ -1,7 +1,7 @@
 #include "IMU.hpp"
 #include <iostream>
 
-IMU::IMU(std::string const& name) : 
+IMU::IMU(std::string const& name) :
 	SPIDeviceInterface(name), //call constructor of mother class
 	_cal_imu_transacc(3), _cal_imu_dorientation_3d(3), _cal_imu_orientation_3d(3), _cal_imu_dorientation(0.), _cal_imu_orientation(0.),_cal_imu_temperature(3),
 	_raw_imu_acc(3), _raw_imu_gyr(3), _raw_imu_mag(3), _raw_imu_tmp(3),_acc_offset(3,0.0), _gyr_offset(3,0.0), _mag_offset(3,0.0), _acc_scale(3,1.0), _gyr_scale(3,1.0), _mag_scale(3,1.0){
@@ -29,7 +29,7 @@ IMU::IMU(std::string const& name) :
   addProperty("mag_scale",  _mag_scale).doc("User defined  scaling factor for magnetometer");
   addProperty("gyr_scale",  _gyr_scale).doc("User defined  scaling factor for gyroscope");
   addProperty("tmp_scale",  _tmp_scale).doc("User defined  scaling factor for temperature sensor");
-  
+
   addProperty("acc_range",  _acc_range).doc("Range for accelerometer");
   addProperty("mag_range",  _mag_range).doc("Range for magnetometer");
   addProperty("gyr_range",  _gyr_range).doc("Range for gyroscope");
@@ -63,7 +63,7 @@ bool IMU::configureHook(){
 
   IMU_DEBUG_PRINT("Entering IMU configureHook!")
   IMU_DEBUG_PRINT("IMU configured!")
-  
+
   //Show example data sample to output ports to make data flow real-time
   std::vector<double> example(3, 0.0);
   //set 3D ports
@@ -81,8 +81,8 @@ bool IMU::configureHook(){
   _cal_imu_temperature_port.setDataSample(example[0]);
 
   //TEST: to test data acquisition
-  // return this->setPeriod(1); 
-  // return true;
+  // return this->setPeriod(1);
+  return true;
 }
 
 bool IMU::startHook(){
@@ -101,7 +101,7 @@ bool IMU::startHook(){
  //TEST:
  // //Check if all ports are connected
  // bool portCheck = true;
-	
+
  //  //Check output ports
  //  if (!_cal_imu_transacc_port.connected()){
  //    RTT::log(RTT::Error) << "cal_imu_transacc_port not connected!" <<RTT::endlog();
@@ -158,7 +158,7 @@ bool IMU::startHook(){
 }
 
 void IMU::updateHook(){ //Is executed by the IO component actually
-  
+
   // double test3 = _acc.getConversionFactor();
   // IMU_DEBUG_PRINT("got conversion factor in IMU updatehook point 1: "<<test3)
 
@@ -177,7 +177,7 @@ void IMU::updateHook(){ //Is executed by the IO component actually
   // IMU_DEBUG_PRINT("got conversion factor in IMU updatehook point 2: "<<test0)
 
   updateMeasurements(); //reads in the three sensors and assigns the latest data to the _data field of the 3Dsensor
-	IMU_DEBUG_PRINT("IMU data updated!")			
+	IMU_DEBUG_PRINT("IMU data updated!")
 }
 
 void IMU::stopHook() {
@@ -197,15 +197,15 @@ void IMU::cleanupHook() {
 //Define methods:
 //--------------
 
-uint8_t IMU::pin2GPIO(uint8_t pin){ 
-  //Odroid pins are internally connected to GPIO's which are located on GPIO chips. 
-  //To make the GPIO accessible you need the GPIO number. 
+uint8_t IMU::pin2GPIO(uint8_t pin){
+  //Odroid pins are internally connected to GPIO's which are located on GPIO chips.
+  //To make the GPIO accessible you need the GPIO number.
   //The user only thas the pin number. This function makes the link between the two.
   uint8_t GPIO = 0; //need to initialize, otherwise its value is the same for different function calls
   IMU_DEBUG_PRINT("The pin number is: " << (int)pin)
-  switch(pin){ 
+  switch(pin){
     case 13:      //CSG
-      GPIO = 21; 
+      GPIO = 21;
       IMU_DEBUG_PRINT("The GPIO number is: " << (int)GPIO)
       break; //otherwise default is always selected afterwards
     case 15:			//CSXM
@@ -220,7 +220,7 @@ uint8_t IMU::pin2GPIO(uint8_t pin){
 }
 
 void IMU::init(){
-  
+
   //Convert pin to GPIO number and activate GPIO's
   _cs_accmag  = pin2GPIO(_pin_accmag);
   _cs_gyr     = pin2GPIO(_pin_gyr);
@@ -323,7 +323,7 @@ void IMU::init(){
   IMU_DEBUG_PRINT("_mag_mgauss_lsb: " <<_mag_mgauss_lsb)
   IMU_DEBUG_PRINT("_gyr_dps_digit: "  <<_gyr_dps_digit)
 
-  //Set default ranges for the various sensors  
+  //Set default ranges for the various sensors
   setupAccel(_acc_range_register);
   setupMag  (_mag_range_register);
   setupGyro (_gyr_range_register);
@@ -331,7 +331,7 @@ void IMU::init(){
   IMU_DEBUG_PRINT("_acc_range_register: "  <<_acc_range_register)
   IMU_DEBUG_PRINT("_mag_range_register: "  <<_mag_range_register)
   IMU_DEBUG_PRINT("_gyr_range_register: "  <<_gyr_range_register)
-  
+
   //Make Sensor3D instances
   _id = 0;
   Sensor3D _acc(_id+1);
@@ -418,9 +418,9 @@ void IMU::updateMeasurements()
   readTemp();
 
   IMU_DEBUG_PRINT("Ready to calibrate IMU data!")
-  
+
   double test2 = _acc.getConversionFactor();
-  IMU_DEBUG_PRINT("got conversion factor after read: "<<test2)  
+  IMU_DEBUG_PRINT("got conversion factor after read: "<<test2)
 
   //Calibrate: convert raw measurements to SI-units, with user-defined offset and scaling factor and selected conversion factor
   _cal_imu_transacc         = _acc.calibrate(); //contains accelerations along all axes
@@ -444,12 +444,12 @@ void IMU::updateMeasurements()
   IMU_DEBUG_PRINT("calculated rpy [deg]: "<<_cal_imu_orientation_3d[0]*180/pi<< " , "<< _cal_imu_orientation_3d[1]*180/pi<< " , "<<_cal_imu_orientation_3d[2]*180/pi)
 
   //Write calibrated data to output ports
-  _cal_imu_transacc_port.write        (_cal_imu_transacc);                
+  _cal_imu_transacc_port.write        (_cal_imu_transacc);
   _cal_imu_dorientation_3d_port.write (_cal_imu_dorientation_3d);
   _cal_imu_orientation_3d_port.write  (_cal_imu_orientation_3d);
-  _cal_imu_dorientation_port.write    (_cal_imu_dorientation);    
-  _cal_imu_orientation_port.write     (_cal_imu_orientation);  
-  _cal_imu_temperature_port.write     (_cal_imu_temperature[0]);             
+  _cal_imu_dorientation_port.write    (_cal_imu_dorientation);
+  _cal_imu_orientation_port.write     (_cal_imu_orientation);
+  _cal_imu_temperature_port.write     (_cal_imu_temperature[0]);
 }
 
 void IMU::readAccel() {
@@ -468,12 +468,12 @@ void IMU::readAccel() {
   int16_t yhi = buffer[4];
   uint8_t zlo = buffer[5];
   int16_t zhi = buffer[6];
-  
+
   // Shift values to create properly formed integer (low byte first)
   xhi <<= 8; xhi |= xlo;
   yhi <<= 8; yhi |= ylo;
   zhi <<= 8; zhi |= zlo;
-  
+
   IMU_DEBUG_PRINT("Reading raw accelerometer data: ")
   IMU_DEBUG_PRINT("acc_x = "<<(int)xhi)
   IMU_DEBUG_PRINT("acc_y = "<<(int)yhi)
@@ -488,7 +488,7 @@ void IMU::readAccel() {
 }
 
 void IMU::readMag() {
-  
+
   uint8_t length = 2 * 3; //read 3 2 byte numbers
   uint8_t reg = LSM9DS0_REGISTER_OUT_X_L_M;
   uint8_t buffer[7]; //make a buffer to hold 6+1 bytes (= 3*16bits), being what you will read + byte for the register
@@ -503,7 +503,7 @@ void IMU::readMag() {
   int16_t yhi = buffer[4];
   uint8_t zlo = buffer[5];
   int16_t zhi = buffer[6];
-  
+
   // Shift values to create properly formed integer (low byte first)
   xhi <<= 8; xhi |= xlo;
   yhi <<= 8; yhi |= ylo;
@@ -524,7 +524,7 @@ void IMU::readMag() {
 }
 
 void IMU::readGyro() {
-  
+
   uint8_t length = 2 * 3; //read 3 2 byte numbers
   uint8_t reg = LSM9DS0_REGISTER_OUT_X_L_G;
   uint8_t buffer[7]; //make a buffer to hold 6+1 bytes (= 3*16bits), being what you will read + byte for the register
@@ -539,7 +539,7 @@ void IMU::readGyro() {
   int16_t yhi = buffer[4];
   uint8_t zlo = buffer[5];
   int16_t zhi = buffer[6];
-  
+
   // Shift values to create properly formed integer (low byte first)
   xhi <<= 8; xhi |= xlo;
   yhi <<= 8; yhi |= ylo;
@@ -559,7 +559,7 @@ void IMU::readGyro() {
 }
 
 void IMU::readTemp() {
-  
+
   uint8_t length = 2 * 1; //read 1 2 byte number
   uint8_t reg = LSM9DS0_REGISTER_TEMP_OUT_L_XM;
   uint8_t buffer[3]; //make a buffer to hold 2 bytes (= 1*16bits), being what you will read
@@ -574,7 +574,7 @@ void IMU::readTemp() {
 
   uint8_t xlo = buffer[1]; //low bit of temperature sensor
   int16_t xhi = buffer[2]; //high bit of temperature sensor
-  
+
   // Shift values to create properly formed integer (low byte first)
   xhi <<= 8; xhi |= xlo;
 
@@ -618,7 +618,7 @@ std::vector<double> IMU::convertMag2rpy(){
   double magx =  mag[0]*cos(rpy[1]) + mag[2]*sin(rpy[1]);
   double magy =  mag[0]*sin(rpy[0])*sin(rpy[1]) + mag[1]*cos(rpy[0]) - mag[2]*sin(rpy[0])*cos(rpy[1]);
   // double magz = -mag[0]*cos(rpy[0])*sin(rpy[1]) + mag[1]*sin(rpy[0]) + mag[2]*cos(rpy[0])*cos(rpy[1]); //not used
-  
+
   //Option 1: this puts the heading in the range [0...2*pi]
   // if (magx > 0 and magy >= 0){
   // 	rpy[2] = atan(magy / magx);
