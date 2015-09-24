@@ -41,7 +41,7 @@ bool Container::addComponent( const std::string& component )
 {
 	TaskContext* comp = getPeer(component);
 	if ( !comp ) {
-		RTT::log(RTT::Error) << "Could not report Component " << component << " : no such peer." << RTT::endlog();
+		RTT::log(RTT::Error) << "Could not add Component " << component << " : no such peer." << RTT::endlog();
 		return false;
 	}
 

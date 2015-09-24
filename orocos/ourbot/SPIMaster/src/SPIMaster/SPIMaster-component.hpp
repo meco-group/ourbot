@@ -20,6 +20,8 @@
 #include <rtt/RTT.hpp>
 #include <rtt/Port.hpp>
 
+#include <errno.h> //error logging 
+
 using namespace RTT; //otherwise you have to use RTT::OutputPort etc.
 
 class SPIMaster : public RTT::TaskContext{
@@ -34,7 +36,9 @@ class SPIMaster : public RTT::TaskContext{
 		std::string	_device;	//= "/dev/spidev1.0";   //Select the spi-driver (of the odroid) --> 1.0 means master is 1, slave is with CS 0                           
     int  		_mode; 				//SPI mode (0...3) depends on your SPI device                                                          
     int  		_bits; 				//bit per word = 8;                                                        
-    int 		_speed; 			//= 500000; //500kHz   
+    int 		_speed; 			//= 500000; //500kHz 
+
+    int _errno;  
 
 		void setSPIMode();       	//set mode 0,1,2 or 3
 		void setSPIWordLength(); 	//set bits per word 

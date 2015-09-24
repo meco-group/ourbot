@@ -1,19 +1,18 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE properties SYSTEM "cpf.dtd">
 <properties>
-  <simple name="_device" type="char">
+  <simple name="device" type="string">
     <description>Name of the SPI device, for the Odroid this is /dev/spidev1.0</description>
     <value>/dev/spidev1.0</value>
   </simple>
-  <simple name="_mode" type="uint8_t">
+  <simple name="mode" type="long">
     <description>SPI mode 0, 1, 2 or 3</description>
     <value>0</value>
   </simple>
-  <simple name="_speed" type="uint32_t">
+  <simple name="speed" type="long">
     <description>Communication speed</description>
     <value>500000</value>
   </simple>
-  <simple name="_bits" type="uint8_t">
+  <simple name="bits" type="long">
     <description>Number of bits per word</description>
     <value>8</value>
   </simple>

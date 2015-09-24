@@ -107,7 +107,11 @@ return rfsm.state {
 
   reset = rfsm.state{
     entry = function(fsm)
-      io:stop()
+      if not io:stop() then
+        rtt.logl("Error","Could not stop io component")
+        rfsm.send_events(fsm,'e_failed')
+        return
+      end
     end,
   }
 }

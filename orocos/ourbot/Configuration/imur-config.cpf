@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "cpf.dtd">
+<properties>
+  <struct name="acc_offset" type="array">
+    <description>Offset of the accelerometer</description>
+    <simple name="Element0" type="double">
+      <value>0.984377</value>
+    </simple>
+    <simple name="Element1" type="double">
+      <value>-0.11990</value>
+    </simple>
+    <simple name="Element2" type="double">
+      <value>0.325624</value>
+    </simple>
+  </struct>
+
+  <struct name="mag_offset" type="array">
+    <description>Offset of the magnetometer</description>
+    <simple name="Element0" type="double">
+      <value>0.</value>
+    </simple>
+    <simple name="Element1" type="double">
+      <value>0.</value>
+    </simple>
+    <simple name="Element2" type="double">
+      <value>0.</value>
+    </simple>
+  </struct>
+
+  <struct name="gyr_offset" type="array">
+    <description>Offset of the gyroscope</description>
+    <simple name="Element0" type="double">
+      <value>0.</value>
+    </simple>
+    <simple name="Element1" type="double">
+      <value>0.</value>
+    </simple>
+    <simple name="Element2" type="double">
+      <value>0.</value>
+    </simple>
+  </struct>
+
+  <simple name="tmp_offset" type="double">
+    <description>Offset of the temperature sensor</description>
+    <value>21</value>
+  </simple>
+
+  <struct name="acc_scale" type="array">
+    <description>Scale of the accelerometer</description>
+    <simple name="Element0" type="double">
+      <value>1.008924</value>
+    </simple>
+    <simple name="Element1" type="double">
+      <value>1.038506</value>
+    </simple>
+    <simple name="Element2" type="double">
+      <value>1.037258</value>
+    </simple>
+  </struct>
+
+  <struct name="mag_scale" type="array">
+    <description>Scale of the magnetometer</description>
+    <simple name="Element0" type="double">
+      <value>1.</value>
+    </simple>
+    <simple name="Element1" type="double">
+      <value>1.</value>
+    </simple>
+    <simple name="Element2" type="double">
+      <value>1.</value>
+    </simple>
+  </struct>
+
+  <struct name="gyr_scale" type="array">
+    <description>Scale of the gyroscope</description>
+    <simple name="Element0" type="double">
+      <value>1.</value>
+    </simple>
+    <simple name="Element1" type="double">
+      <value>1.</value>
+    </simple>
+    <simple name="Element2" type="double">
+      <value>1.</value>
+    </simple>
+  </struct>
+
+  <simple name="tmp_scale" type="double">
+    <description>Scale of the temperature sensor</description>
+    <value>1</value>
+  </simple>
+
+  <simple name="acc_range" type="long">
+    <description>Range of the accelerometer</description>
+    <value>2</value>
+  </simple>
+  <simple name="mag_range" type="long">
+    <description>Range of the magnetometer</description>
+    <value>2</value>
+  </simple>
+  <simple name="gyr_range" type="long">
+    <description>Range of the gyroscope</description>
+    <value>245</value>
+  </simple>
+
+  <simple name="accmag_pin" type="long">
+    <description>Chip select pin of the accelerometer and magnetometer</description>
+    <value>15</value>
+  </simple>
+  <simple name="gyr_pin" type="long">
+    <description>Chip select pin of the gyroscope</description>
+    <value>13</value>
+  </simple>
+</properties>
