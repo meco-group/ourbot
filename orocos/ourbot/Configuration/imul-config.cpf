@@ -4,13 +4,13 @@
   <struct name="acc_offset" type="array">
     <description>Offset of the accelerometer</description>
     <simple name="Element0" type="double">
-      <value>0.9582940</value>
+      <value>0.955348</value>
     </simple>
     <simple name="Element1" type="double">
-      <value>0.0602544</value>
+      <value>0.040480</value>
     </simple>
     <simple name="Element2" type="double">
-      <value>0.157349</value>
+      <value>0.190965</value>
     </simple>
   </struct>
 
@@ -48,13 +48,13 @@
   <struct name="acc_scale" type="array">
     <description>Scale of the accelerometer</description>
     <simple name="Element0" type="double">
-      <value>0.9993312</value>
+      <value>1.003799</value>
     </simple>
     <simple name="Element1" type="double">
-      <value>1.0022333</value>
+      <value>1.002724</value>
     </simple>
     <simple name="Element2" type="double">
-      <value>1.0001244</value>
+      <value>1.015012</value>
     </simple>
   </struct>
 
