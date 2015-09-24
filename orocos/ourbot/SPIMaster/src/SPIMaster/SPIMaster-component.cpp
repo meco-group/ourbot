@@ -96,8 +96,8 @@ void SPIMaster::cleanupHook() {
 //Define other functions
 
 void	SPIMaster::pabort(const char *s){   //Catch errors
-  perror(s);
-  abort();
+  char *errorString = strerror(_errno);
+  RTT::log(RTT::Error) <<"error string: "<<*s<<"value: "<<*errorString <<RTT::endlog();
 }
 
 void	SPIMaster::setSPIMode(){

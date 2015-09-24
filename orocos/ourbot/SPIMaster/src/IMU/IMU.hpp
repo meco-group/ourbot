@@ -165,6 +165,7 @@ class IMU : public SPIDeviceInterface{ //IMU inherits from SPIDeviceInterface
 		int _acc_range;        //user-selected range for accelerometer
 		int _gyr_range;
 		int _mag_range;
+		std::string _imu_name; //holds name of imu, e.g. imu_left
 		uint8_t _id;           //sensor id
 
 		uint8_t _pin_accmag;//pin to which accmag cs is connected

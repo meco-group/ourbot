@@ -33,6 +33,12 @@ bool SPIDeviceInterface::startHook(){
   if (_spi_mode_port.read(mode) == RTT::NewData )         {std::cout<<"reading mode port in startHook" <<std::endl; _mode = mode;}
   if (_spi_speed_port.read(speed) == RTT::NewData )       {std::cout<<"reading speed port in startHook"<<std::endl; _speed = speed;}
 
+  //check if there is data on the input ports
+  if (_fd_port.read(file_descriptor) == RTT::NoData )    {RTT::log(RTT::Error) << "No data on fd_port in SPIMaster" <<RTT::endlog();}
+  if (_spi_word_length_port.read(bits) == RTT::NoData )  {RTT::log(RTT::Error) << "No data on spi_word_length_port in SPIMaster" <<RTT::endlog();}
+  if (_spi_mode_port.read(mode) == RTT::NoData )         {RTT::log(RTT::Error) << "No data on spi_mode_port in SPIMaster" <<RTT::endlog();}
+  if (_spi_speed_port.read(speed) == RTT::NoData )       {RTT::log(RTT::Error) << "No data on spi_speed_port in SPIMaster" <<RTT::endlog();}
+
   //TEST: extra output to user to ensure data was read from port correctly
   SPIDEVICEINTERFACE_DEBUG_PRINT("fd: "    <<_fd)
   SPIDEVICEINTERFACE_DEBUG_PRINT("bits: "  <<(int)_bits)
@@ -60,12 +66,18 @@ void SPIDeviceInterface::updateHook(){
   if (_spi_mode_port.read(mode) == RTT::NewData )         {std::cout<<"reading mode port in updateHook" << std::endl; _mode = mode;}
   if (_spi_speed_port.read(speed) == RTT::NewData )       {std::cout<<"reading speed port in updateHook"<< std::endl; _speed = speed;}
 
+  //check if there is data on the input ports
+  if (_fd_port.read(file_descriptor) == RTT::NoData )    {RTT::log(RTT::Error) << "No data on fd_port in SPIMaster" <<RTT::endlog();}
+  if (_spi_word_length_port.read(bits) == RTT::NoData )  {RTT::log(RTT::Error) << "No data on spi_word_length_port in SPIMaster" <<RTT::endlog();}
+  if (_spi_mode_port.read(mode) == RTT::NoData )         {RTT::log(RTT::Error) << "No data on spi_mode_port in SPIMaster" <<RTT::endlog();}
+  if (_spi_speed_port.read(speed) == RTT::NoData )       {RTT::log(RTT::Error) << "No data on spi_speed_port in SPIMaster" <<RTT::endlog();}
+
   SPIDEVICEINTERFACE_DEBUG_PRINT("SPIDeviceInterface updates information!")
 }
 
 void SPIDeviceInterface::pabort(const char *s){   //error catching
-  perror(s);
-  abort();
+  char *errorString = strerror(_errno);
+  RTT::log(RTT::Error) <<"error string: "<<*s<<", with value: "<<*errorString <<RTT::endlog();
 }
 
 //TEST: if it is possible to send a single SPI message. Tells you if the settings are made and file descriptor is correct. Based on Odroid example code
@@ -224,8 +236,8 @@ void  SPIDeviceInterface::initGPIO(uint8_t GPIO){ //initialized as output GPIO
 void SPIDeviceInterface::cleanupGPIO(uint8_t GPIO){
 
   SPIDEVICEINTERFACE_DEBUG_PRINT("Cleaning up GPIO with number: " <<(int)GPIO)
-  gpioSetValue(GPIO,1); // make high = inactive
-  gpioUnexport(GPIO);   // delete GPIO
+  gpioSetValue(GPIO,0); // make low
+  // gpioUnexport(GPIO);   // delete GPIO --> not necessary actually
 }
 
 int SPIDeviceInterface::getFileDescriptor(){

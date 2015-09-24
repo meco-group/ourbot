@@ -36,12 +36,18 @@ IMU::IMU(std::string const& name) :
   addProperty("accmag_pin", _pin_accmag).doc("Chip select pin of accelerometer and magnetometer");
   addProperty("gyr_pin",    _pin_gyr).doc("Chip select pin of gyroscope");
 
+  addProperty("imu_name",  _imu_name).doc("Name of the IMU");
+
 #else //if in Test-mode
-  _acc_offset[0] = 0.9582940; _acc_offset[1] = 0.0602544; _acc_offset[2] = 0.157349; //based on calibration by inversion method
+  // _acc_offset[0] = 0; _acc_offset[1] = 0; _acc_offset[2] = 0; //based on calibration by inversion method
+  _acc_offset[0] = 0.955348; _acc_offset[1] = 0.040480; _acc_offset[2] = 0.190965; //based on calibration by inversion method 
+  // _acc_offset[0] = 0.984377; _acc_offset[1] = -0.11990; _acc_offset[2] = 0.325624; //based on calibration by inversion method   right
   _gyr_offset[0] = 0; _gyr_offset[1] = 0; _gyr_offset[2] = 0;
   _mag_offset[0] = 0; _mag_offset[1] = 0; _mag_offset[2] = 0;
   _tmp_offset = 21; //starting point, 0 value of sensor (see adafruit code)
-  _acc_scale[0] = 0.9993312; _acc_scale[1] = 1.0022333; _acc_scale[2] = 1.0001244; //based on calibration by inversion method
+  // _acc_scale[0] = 1; _acc_scale[1] = 1; _acc_scale[2] = 1; //based on calibration by inversion method
+  _acc_scale[0] = 1.003799; _acc_scale[1] = 1.002724; _acc_scale[2] = 1.015012; //based on calibration by inversion method
+  // _acc_scale[0] = 1.008924; _acc_scale[1] = 1.038506; _acc_scale[2] = 1.037258; //based on calibration by inversion method  right
   _gyr_scale[0] = 1; _gyr_scale[1] = 1; _gyr_scale[2] = 1;
   _mag_scale[0] = 1; _mag_scale[1] = 1; _mag_scale[2] = 1;
   _tmp_scale = 1;
@@ -54,6 +60,8 @@ IMU::IMU(std::string const& name) :
   _gyr_range = 245;
   _pin_accmag = 15;
   _pin_gyr = 13;
+
+  _imu_name = "imu_left";
 
 #endif //IMU_TESTFLAG
   IMU_DEBUG_PRINT("IMU constructed!")
@@ -82,7 +90,7 @@ bool IMU::configureHook(){
 
   //TEST: to test data acquisition
   // return this->setPeriod(1); 
-  // return true;
+  return true;
 }
 
 bool IMU::startHook(){
@@ -148,7 +156,7 @@ bool IMU::startHook(){
 
   //Check sensor connection
   if (!isConnected()){
-    RTT::log(RTT::Error) << "Error, the sensor is not connected, check wiring!" <<RTT::endlog();
+    RTT::log(RTT::Error) << "Error, "<<_imu_name<<" is not connected, check wiring!" <<RTT::endlog();
     return false;
   }
 
@@ -366,19 +374,24 @@ bool  IMU::isConnected(){
   IMU_DEBUG_PRINT("in IMU::isConnected(), register: "<<(int)LSM9DS0_REGISTER_WHO_AM_I_XM)
   uint8_t id = readByte(_cs_accmag, LSM9DS0_REGISTER_WHO_AM_I_XM); //read id
   IMU_DEBUG_PRINT("Accmag ID is: "<<(int)id)
-  if (id != LSM9DS0_XM_ID) //check id
+  if (id != LSM9DS0_XM_ID){ //check id
+  	RTT::log(RTT::Error) << "Received ID does not correspond to accelerometer/magnetometer ID!" <<RTT::endlog();
     return false;
+  }
 
   IMU_DEBUG_PRINT("in IMU::isConnected(), chip select gyroscope: "<<(int)_cs_gyr)
   IMU_DEBUG_PRINT("in IMU::isConnected(), register: "<<(int)LSM9DS0_REGISTER_WHO_AM_I_G)
   id = readByte(_cs_gyr, LSM9DS0_REGISTER_WHO_AM_I_G); //read id
   IMU_DEBUG_PRINT("Gyro ID is: "<<(int)id)
-  if (id != LSM9DS0_G_ID) //check id
+  if (id != LSM9DS0_G_ID){ //check id
+  	RTT::log(RTT::Error) << "Received ID does not correspond to gyroscope ID!" <<RTT::endlog();
     return false;
+  }
 
-  else
+  else{
   	IMU_DEBUG_PRINT("Both sensors are connected!")
     return true;
+  }
 }
 
 void IMU::setupAccel (uint8_t range)
