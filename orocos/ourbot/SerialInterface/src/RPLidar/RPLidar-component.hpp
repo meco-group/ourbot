@@ -1,11 +1,11 @@
 #ifndef RPLIDAR_H
 #define RPLIDAR_H
 
-// #define RPLIDAR_TESTFLAG
+//#define RPLIDAR_TESTFLAG
 //#define RPLIDAR_DEBUGFLAG
 
 #define RPLIDAR_BUFFER_SIZE				1024
-#define RPLIDAR_NODE_BUFFER_SIZE	128
+#define RPLIDAR_NODE_BUFFER_SIZE	    64
 
 #ifdef RPLIDAR_DEBUGFLAG
 	#define RPLIDAR_DEBUG_PRINT(x)	std::cout << x << std::endl;
@@ -86,6 +86,7 @@ class RPLidar : public USBInterface
 		bool deviceReset();
 		bool startScan();
 		bool stopScan();
+		bool reset();
 
 		void showState();
 		void showDeviceInfo();
