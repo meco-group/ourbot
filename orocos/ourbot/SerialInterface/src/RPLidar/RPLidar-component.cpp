@@ -143,7 +143,7 @@ int RPLidar::handleScan(uint8_t* buffer, uint32_t numbytes)
 	while(((numbytes-offset)>=sizeof(rplidar_response_measurement_node_t)) && (_measurement_status == DECODING)){ //iterate all bits to check for start bits
 		if(((buffer[offset] ^ (buffer[offset]>>1)) & 0x1) && (buffer[offset+1] & RPLIDAR_RESP_MEASUREMENT_CHECKBIT)){
 			//answer found. Let's handle the message now
-			RPLIDAR_DEBUG_PRINT("Received valid measurement from the rplidar.")
+			//RPLIDAR_DEBUG_PRINT("Received valid measurement from the rplidar.")
 			rplidar_response_measurement_node_t* node = reinterpret_cast<rplidar_response_measurement_node_t *>(buffer+offset);
 			/*#ifdef RPLIDAR_DEBUGFLAG
 				showMeasurement(*node);
@@ -178,7 +178,7 @@ bool RPLidar::configureHook()
 	return true;
 #else
 	_usb_port_name = "/dev/ttyUSB0";
-	return setPeriod(0.01);
+	return setPeriod(0.005);
 #endif //RPLIDAR_TESTFLAG
 }
 
@@ -205,6 +205,34 @@ void RPLidar::updateHook()
 		numbytes += _buffer_offset;
 		uint32_t decoding_offset = 0;
 		uint32_t bytes_decoded = 0;
+<<<<<<< HEAD
+		do{
+			switch(_state){
+				case IDLE:
+					RPLIDAR_DEBUG_PRINT("RPLidar internal error: received bytes which were not expected.")
+					break;
+				case PENDING:
+					bytes_decoded = handleRequest(_buffer + decoding_offset, numbytes);
+					break;
+				case SCANNING:
+					bytes_decoded = handleScan(_buffer + decoding_offset, numbytes);
+					break;
+				case STOP_SCANNING:
+					bytes_decoded = handleScan(_buffer + decoding_offset, numbytes);
+					break;
+				case RESETTING:
+					bytes_decoded = numbytes;
+					_request_status = RESET;
+					_state = IDLE;
+					break;
+			}
+			decoding_offset += bytes_decoded;
+			numbytes -= bytes_decoded;
+
+			//RPLIDAR_DEBUG_PRINT("Decoding offset " << decoding_offset)
+			//RPLIDAR_DEBUG_PRINT("Numbytes: " << numbytes)
+		}while((bytes_decoded>0)&&(numbytes>0));
+=======
 		// do{
 		// 	switch(_state){
 		// 		case IDLE:
@@ -231,13 +259,14 @@ void RPLidar::updateHook()
 		// 	RPLIDAR_DEBUG_PRINT("Decoding offset " << decoding_offset)
 		// 	RPLIDAR_DEBUG_PRINT("Numbytes: " << numbytes)
 		// }while((bytes_decoded>0)&&(numbytes>0));
+>>>>>>> 8adbfe757b0099adfb3a1ba1042ea87b256d3cba
 
 		//copy the remainder to the beginning of the buffer
 		if(numbytes>0){
 			memcpy(_buffer, _buffer + decoding_offset, numbytes);
 		}
 		_buffer_offset = numbytes;
-		RPLIDAR_DEBUG_PRINT("Remaining bytes in the buffer: " << _buffer_offset)
+		RPLIDAR_DEBUG_PRINT("Remaining bytes in the buffer: " << (int)_buffer_offset)
 	} else if( _state == STOP_SCANNING ){
 		//Scanning has stopped: go to idle
 		_state = IDLE;
@@ -246,7 +275,15 @@ void RPLidar::updateHook()
 
 void RPLidar::stopHook()
 {
-	stopScan();
+    // stop scanning (if we were scanning)
+    if(_state == SCANNING){
+	    stopScan();
+	}
+	
+	// reset the component so we don't get into trouble when restarting the component
+    reset();
+    
+    // close the usb device
 	USBInterface::stopHook();
 }
 
@@ -273,6 +310,21 @@ bool RPLidar::startScan()
 bool RPLidar::stopScan()
 {
 	return sendCommand(RPLIDAR_CMD_STOP);
+}
+
+bool RPLidar::reset()
+{
+    // send reset request to the lidar
+    deviceReset();
+    
+    // set the state to idle as we can predict what is going to happen, but cannot rely on the serial data because the link will be broken
+    _state = IDLE;
+    
+    // set the buffers to their initial states
+    _buffer_offset = 0;
+    _node_buffer_fill = 0;
+    _primary_node_buffer = _node_buffer1;
+    _secondary_node_buffer = _node_buffer2;
 }
 
 void RPLidar::showState()
