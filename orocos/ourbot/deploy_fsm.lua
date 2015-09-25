@@ -31,19 +31,19 @@ local components_to_load = {
   [teensy]          = 'TeensyBridge',
   [lidar]           = 'RPLidar',
   [spimaster]       = 'SPIMaster',
-  [imul]            = 'IMU',
-  [imur]            = 'IMU'
+  [imul]            = 'IMU'
+  -- [imur]            = 'IMU'
    --add here componentname = 'componenttype'
 }
 
 --Containers to fill
 local containers_to_fill = {
-  [io]  = {teensy, spimaster, imul, imur} --, lidar}
+  [io]  = {teensy, lidar, spimaster, imul}
 }
 
 -- SPI components
 local spi_components = {
-  [spimaster]       = {imul ,imur}
+  [spimaster]       = {imul}
 }
 
 --Ports to report
@@ -52,7 +52,7 @@ local ports_to_report = {
   [estimator]       = {'est_pose_port', 'est_velocity_port', 'est_acceleration_port', 'est_global_offset_port'},
   [reference]       = {'ref_pose_port', 'ref_ffw_port'},
   [velocitycmd]     = {'cmd_velocity_port'},
-  [io]              = {'cal_imu_orientation_3d_port'},
+  [io]              = {'cal_lidar_node_port','cal_imu_orientation_3d_port'},
   [coordinator]     = {'controlloop_duration', 'controlloop_jitter'}
   --add here componentname = 'portnames'
 }
@@ -78,8 +78,8 @@ local component_config_files  = {
   [teensy]          = 'Configuration/teensy-config.cpf',
   [lidar]           = 'Configuration/lidar-config.cpf',
   [spimaster]       = 'Configuration/spimaster-config.cpf',
-  [imul]            = 'Configuration/imul-config.cpf',
-  [imur]            = 'Configuration/imur-config.cpf'
+  [imul]            = 'Configuration/imul-config.cpf'
+  -- [imur]            = 'Configuration/imur-config.cpf'
   --add here componentname = 'Configuration/component-config.cpf'
 }
 

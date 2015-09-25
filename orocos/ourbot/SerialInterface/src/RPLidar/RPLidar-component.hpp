@@ -4,8 +4,8 @@
 //#define RPLIDAR_TESTFLAG
 //#define RPLIDAR_DEBUGFLAG
 
-#define RPLIDAR_BUFFER_SIZE				1024
-#define RPLIDAR_NODE_BUFFER_SIZE	    64
+#define RPLIDAR_BUFFER_SIZE					1024
+#define RPLIDAR_NODE_BUFFER_SIZE	    128
 
 #ifdef RPLIDAR_DEBUGFLAG
 	#define RPLIDAR_DEBUG_PRINT(x)	std::cout << x << std::endl;
@@ -67,7 +67,7 @@ class RPLidar : public USBInterface
 		RTT::OutputPort<std::vector<double> > _cal_lidar_x_port;
 		RTT::OutputPort<std::vector<double> > _cal_lidar_y_port;
 		RTT::OutputPort<std::vector<double> > _cal_lidar_quality_port;
-		// RTT::OutputPort<std::vector<double> > _cal_lidar_node_port;
+		RTT::OutputPort<std::vector<double> > _cal_lidar_node_port;
 
 		bool sendCommand(uint8_t cmd, const void *payload = NULL, uint32_t payloadsize = 0);
 		int handleRequest(uint8_t* buffer, uint32_t numbytes);

@@ -10,7 +10,7 @@ RPLidar::RPLidar(std::string const& name) :
 	this->ports()->addPort( "cal_lidar_x_port", _cal_lidar_x_port ).doc( "Output port for calibrated lidar node positions. Holds a vector of RPLIDAR_NODE_BUFFER_SIZE x-coordinates [m]." );
 	this->ports()->addPort( "cal_lidar_y_port", _cal_lidar_y_port ).doc( "Output port for calibrated lidar node positions. Holds a vector of RPLIDAR_NODE_BUFFER_SIZE y-coordinates [m]." );
 	this->ports()->addPort( "cal_lidar_quality_port", _cal_lidar_quality_port ).doc( "Output port for node quality. value between 0 and 1" );
-	// this->ports()->addPort( "cal_lidar_node_port", _cal_lidar_node_port ).doc( "Output port for the calibrated lidar nodes [m,m,-]" );
+	this->ports()->addPort( "cal_lidar_node_port", _cal_lidar_node_port ).doc( "Output port for the calibrated lidar nodes [m,m,-]" );
 
 	addOperation("deviceInfo", &RPLidar::deviceInfo, this).doc("Send request to the lidar to send its device info.");
 	addOperation("deviceHealth", &RPLidar::deviceHealth, this).doc("Send request to the lidar to send its health.");
@@ -205,7 +205,6 @@ void RPLidar::updateHook()
 		numbytes += _buffer_offset;
 		uint32_t decoding_offset = 0;
 		uint32_t bytes_decoded = 0;
-<<<<<<< HEAD
 		do{
 			switch(_state){
 				case IDLE:
@@ -232,34 +231,6 @@ void RPLidar::updateHook()
 			//RPLIDAR_DEBUG_PRINT("Decoding offset " << decoding_offset)
 			//RPLIDAR_DEBUG_PRINT("Numbytes: " << numbytes)
 		}while((bytes_decoded>0)&&(numbytes>0));
-=======
-		// do{
-		// 	switch(_state){
-		// 		case IDLE:
-		// 			RPLIDAR_DEBUG_PRINT("RPLidar internal error: received bytes which were not expected.")
-		// 			break;
-		// 		case PENDING:
-		// 			bytes_decoded = handleRequest(_buffer + decoding_offset, numbytes);
-		// 			break;
-		// 		case SCANNING:
-		// 			bytes_decoded = handleScan(_buffer + decoding_offset, numbytes);
-		// 			break;
-		// 		case STOP_SCANNING:
-		// 			bytes_decoded = handleScan(_buffer + decoding_offset, numbytes);
-		// 			break;
-		// 		case RESETTING:
-		// 			bytes_decoded = numbytes;
-		// 			_request_status = RESET;
-		// 			_state = IDLE;
-		// 			break;
-		// 	}
-		// 	decoding_offset += bytes_decoded;
-		// 	numbytes -= bytes_decoded;
-
-		// 	RPLIDAR_DEBUG_PRINT("Decoding offset " << decoding_offset)
-		// 	RPLIDAR_DEBUG_PRINT("Numbytes: " << numbytes)
-		// }while((bytes_decoded>0)&&(numbytes>0));
->>>>>>> 8adbfe757b0099adfb3a1ba1042ea87b256d3cba
 
 		//copy the remainder to the beginning of the buffer
 		if(numbytes>0){
@@ -279,10 +250,10 @@ void RPLidar::stopHook()
     if(_state == SCANNING){
 	    stopScan();
 	}
-	
+
 	// reset the component so we don't get into trouble when restarting the component
     reset();
-    
+
     // close the usb device
 	USBInterface::stopHook();
 }
@@ -316,10 +287,10 @@ bool RPLidar::reset()
 {
     // send reset request to the lidar
     deviceReset();
-    
+
     // set the state to idle as we can predict what is going to happen, but cannot rely on the serial data because the link will be broken
     _state = IDLE;
-    
+
     // set the buffers to their initial states
     _buffer_offset = 0;
     _node_buffer_fill = 0;
@@ -401,14 +372,14 @@ void RPLidar::addNodeToMeasurements(const rplidar_response_measurement_node_t &n
 		v[0] = _primary_node_buffer[0][_node_buffer_fill];
 		v[1] = _primary_node_buffer[1][_node_buffer_fill];
 		v[2] = _primary_node_buffer[2][_node_buffer_fill];
-		// _cal_lidar_node_port.write(v);
+		_cal_lidar_node_port.write(v);
 
 		_node_buffer_fill++;
 		if(_node_buffer_fill >= _lidar_data_length){
 			//set to ports
-			// _cal_lidar_x_port.write(*_primary_node_buffer);
-			// _cal_lidar_y_port.write(*_primary_node_buffer);
-			// _cal_lidar_quality_port.write(*_primary_node_buffer);
+			_cal_lidar_x_port.write(*_primary_node_buffer);
+			_cal_lidar_y_port.write(*_primary_node_buffer);
+			_cal_lidar_quality_port.write(*_primary_node_buffer);
 
 			//make other buffer current buffer
 			std::vector<double> *ptemp = _primary_node_buffer;

@@ -59,7 +59,7 @@ bool Container::addComponent( const std::string& component )
 				//Port not yet in use: we can add it to the container components ports
 				addPort(port_name, (**port));
 			} else {
-				RTT::log(RTT::Error) << "Could not add port " + port_name + " because it is already in use." << RTT::endlog();
+				RTT::log(RTT::Warning) << "Could not add port " + port_name + " because it is already in use." << RTT::endlog();
 			}
 		}
 	} else {

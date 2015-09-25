@@ -24,7 +24,7 @@ local distrports_to_report = {
   reference         = {'ref_pose_port', 'ref_ffw_port'},
   velocitycmd       = {'cmd_velocity_port'},
   -- io                = {'cal_enc_pose_port', 'cal_velocity_port'}, --, 'cal_lidar_node_port'},
-  io                = {'cal_imu_orientation_3d_port'},
+  io                = {'cal_lidar_node_port','cal_imu_orientation_3d_port'},
   coordinator       = {'controlloop_duration', 'controlloop_jitter'}
   --add here componentname = 'portnames'
 }
