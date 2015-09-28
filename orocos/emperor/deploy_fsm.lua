@@ -19,26 +19,27 @@ local ports_to_report = {
 
 --Distributed ports to report
 local distrports_to_report = {
-  controller        = {'cmd_velocity_port'},
-  estimator         = {'est_pose_port', 'est_velocity_port', 'est_acceleration_port', 'est_global_offset_port'},
-  reference         = {'ref_pose_port', 'ref_ffw_port'},
-  velocitycmd       = {'cmd_velocity_port'},
-  coordinator       = {'controlloop_duration', 'controlloop_jitter'},
-  io                = {'cal_lidar_node_port',
-                      'imul_cal_imu_transacc_port',
-                      'imul_cal_imu_orientation_3d_port',
-                      'imul_cal_imu_orientation_port',
-                      'imul_cal_imu_dorientation_3d_port',
-                      'imul_cal_imu_dorientation_port',
-                      'imul_cal_imu_temperature_port',
-                      'imur_cal_imu_transacc_port',
-                      'imur_cal_imu_orientation_3d_port',
-                      'imur_cal_imu_orientation_port',
-                      'imur_cal_imu_dorientation_3d_port',
-                      'imur_cal_imu_dorientation_port',
-                      'imur_cal_imu_temperature_port',
-                      'cal_enc_pose_port', 'cal_motor_current_port',
-                      'cal_motor_voltage_port', 'cal_velocity_port'}
+  -- controller        = {'cmd_velocity_port'},
+  -- estimator         = {'est_pose_port', 'est_velocity_port', 'est_acceleration_port', 'est_global_offset_port'},
+  -- reference         = {'ref_pose_port', 'ref_ffw_port'},
+  -- velocitycmd       = {'cmd_velocity_port'},
+  -- coordinator       = {'controlloop_duration', 'controlloop_jitter'},
+  io                = {--'cal_lidar_node_port',
+                      -- 'imul_cal_imu_transacc_port',
+                      -- 'imul_cal_imu_orientation_3d_port',
+                      -- 'imul_cal_imu_orientation_port',
+                      -- 'imul_cal_imu_dorientation_3d_port',
+                      -- 'imul_cal_imu_dorientation_port',
+                      -- 'imul_cal_imu_temperature_port',
+                      -- 'imur_cal_imu_transacc_port',
+                      -- 'imur_cal_imu_orientation_3d_port',
+                      -- 'imur_cal_imu_orientation_port',
+                      -- 'imur_cal_imu_dorientation_3d_port',
+                      -- 'imur_cal_imu_dorientation_port',
+                      -- 'imur_cal_imu_temperature_port',
+                      -- 'cal_enc_pose_port', 'cal_motor_current_port',
+                      -- 'cal_motor_voltage_port',
+                      'cal_velocity_port'}
   --add here componentname = 'portnames'
 }
 

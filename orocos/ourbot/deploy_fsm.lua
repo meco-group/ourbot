@@ -29,7 +29,7 @@ local components_to_load = {
   [reporter]        = 'OCL::NetcdfReporting',
   [io]              = 'Container',
   [teensy]          = 'TeensyBridge',
-  [lidar]           = 'RPLidar',
+  -- [lidar]           = 'RPLidar',
   [spimaster]       = 'SPIMaster',
   [imul]            = 'IMU',
   [imur]            = 'IMU'
@@ -38,7 +38,7 @@ local components_to_load = {
 
 --Containers to fill
 local containers_to_fill = {
-  [io]  = {teensy, lidar, spimaster, imul, imur}
+  [io]  = {teensy, spimaster, imul, imur}
 }
 
 -- SPI components
@@ -53,19 +53,19 @@ local ports_to_report = {
   [reference]       = {'ref_pose_port', 'ref_ffw_port'},
   [velocitycmd]     = {'cmd_velocity_port'},
   [coordinator]     = {'controlloop_duration', 'controlloop_jitter'},
-  [io]              = {'cal_lidar_node_port',
-                      'imul_cal_imu_transacc_port',
-                      'imul_cal_imu_orientation_3d_port',
-                      'imul_cal_imu_orientation_port',
-                      'imul_cal_imu_dorientation_3d_port',
-                      'imul_cal_imu_dorientation_port',
-                      'imul_cal_imu_temperature_port',
-                      'imur_cal_imu_transacc_port',
-                      'imur_cal_imu_orientation_3d_port',
-                      'imur_cal_imu_orientation_port',
-                      'imur_cal_imu_dorientation_3d_port',
-                      'imur_cal_imu_dorientation_port',
-                      'imur_cal_imu_temperature_port',
+  [io]              = {--'cal_lidar_node_port',
+                      -- 'imul_cal_imu_transacc_port',
+                      -- 'imul_cal_imu_orientation_3d_port',
+                      -- 'imul_cal_imu_orientation_port',
+                      -- 'imul_cal_imu_dorientation_3d_port',
+                      -- 'imul_cal_imu_dorientation_port',
+                      -- 'imul_cal_imu_temperature_port',
+                      -- 'imur_cal_imu_transacc_port',
+                      -- 'imur_cal_imu_orientation_3d_port',
+                      -- 'imur_cal_imu_orientation_port',
+                      -- 'imur_cal_imu_dorientation_3d_port',
+                      -- 'imur_cal_imu_dorientation_port',
+                      -- 'imur_cal_imu_temperature_port',
                       'cal_enc_pose_port', 'cal_motor_current_port',
                       'cal_motor_voltage_port', 'cal_velocity_port'}
   --add here componentname = 'portnames'
@@ -263,8 +263,8 @@ return rfsm.state {
       entry = function(fsm)
         dp:setActivity(coordinator,1./control_sample_rate,10,rtt.globals.ORO_SCHED_RT)
         dp:setActivity(pathgenerator,1./pathupd_sample_rate,10,rtt.globals.ORO_SCHED_RT)
-        dp:setActivity(velocitycmd,1./velcmd_sample_rate,10,rtt.globals.ORO_SCHED_RT)
-        dp:setActivity(reporter,0,2,rtt.globals.ORO_SCHED_RT)
+        -- dp:setActivity(velocitycmd,1./velcmd_sample_rate,10,rtt.globals.ORO_SCHED_RT)
+        dp:setActivity(reporter,0,4,rtt.globals.ORO_SCHED_RT)
         dp:setActivity(io,1./io_sample_rate,10,rtt.globals.ORO_SCHED_RT)
           --add here extra activities
 
