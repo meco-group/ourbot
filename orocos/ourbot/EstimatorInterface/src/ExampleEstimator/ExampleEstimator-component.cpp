@@ -16,13 +16,20 @@ bool ExampleEstimator::estimateUpdate(){
   std::vector<std::vector<double> > lidar_data  = getLidarData();
   std::vector<std::vector<double> > ir_data     = getIRData();
   std::vector<double> imul_trans_acc            = getImuLTransAcc();
-  double imul_dorientation                      = getImuLDOrientation();
   double imul_orientation                       = getImuLOrientation();
+  std::vector<double> imul_3d_orientation       = getImuL3dOrientation();
+  double imul_dorientation                      = getImuLDOrientation();
+  std::vector<double> imul_3d_dorientation      = getImuL3dDOrientation();
+  double imul_temperature                       = getImuLTemperature();
   std::vector<double> imur_trans_acc            = getImuRTransAcc();
-  double imur_dorientation                      = getImuRDOrientation();
   double imur_orientation                       = getImuROrientation();
+  std::vector<double> imur_3d_orientation       = getImuR3dOrientation();
+  double imur_dorientation                      = getImuRDOrientation();
+  std::vector<double> imur_3d_dorientation      = getImuR3dDOrientation();
+  double imur_temperature                       = getImuRTemperature();
   std::vector<double> enc_pose                  = getEncPose();
   std::vector<double> motor_current             = getMotorCurrent();
+  std::vector<double> motor_voltage             = getMotorVoltage();
   std::vector<double> cal_velocity              = getCalVelocity();
 
   // Dummy state update

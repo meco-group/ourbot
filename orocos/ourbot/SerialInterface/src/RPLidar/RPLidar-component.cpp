@@ -166,7 +166,7 @@ bool RPLidar::configureHook()
   // Show example data sample to ports to make data flow real-time
   std::vector<double> example(3, 0.0);
   // set 3D ports
-  // _cal_lidar_node_port.setDataSample(example);
+  _cal_lidar_node_port.setDataSample(example);
 
   // set RPLIDAR_NODE_BUFFER_SIZE-D ports
   example.resize(_lidar_data_length);
@@ -194,7 +194,6 @@ bool RPLidar::startHook()
 
 void RPLidar::updateHook()
 {
-  std::cout << "lidar in update" << std::endl;
 	//do nothing
 	int numbytes = readBytes(_buffer + _buffer_offset, RPLIDAR_BUFFER_SIZE - _buffer_offset);
 

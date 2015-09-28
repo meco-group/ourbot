@@ -17,6 +17,7 @@ _distributed         = rtt.Property("bool","distributed","Distributed working?")
 _control_sample_rate = rtt.Property("double","control_sample_rate","Frequency to update the control loop")
 _pathupd_sample_rate = rtt.Property("double","pathupd_sample_rate","Frequency to update the path")
 _velcmd_sample_rate  = rtt.Property("double","velcmd_sample_rate","Frequency to update velocity commander")
+_io_sample_rate      = rtt.Property("double","io_sample_rate","Frequency to update io's")
 
 tc:addProperty(_print_level)
 tc:addProperty(_estimator_type)
@@ -29,6 +30,7 @@ tc:addProperty(_distributed)
 tc:addProperty(_control_sample_rate)
 tc:addProperty(_pathupd_sample_rate)
 tc:addProperty(_velcmd_sample_rate)
+tc:addProperty(_io_sample_rate)
 
 --Ports which drive/read the FSM
 _deployer_fsm_event_port      = rtt.InputPort("string")
@@ -52,6 +54,7 @@ function configureHook()
    control_sample_rate  = _control_sample_rate:get()
    pathupd_sample_rate  = _pathupd_sample_rate:get()
    velcmd_sample_rate   = _velcmd_sample_rate:get()
+   io_sample_rate       = _io_sample_rate:get()
 
    --Define Reference type
    if distributed==false then
