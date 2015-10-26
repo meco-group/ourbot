@@ -37,7 +37,7 @@ void Container::cleanupHook() {
 	COMPONENTS_FUNCTION_ITERATOR_VOID(cleanup)
 }
 
-bool Container::addComponent( const std::string& component )
+bool Container::addComponent( const std::string& component, const std::string& component_name)
 {
 	TaskContext* comp = getPeer(component);
 	if ( !comp ) {
@@ -57,9 +57,9 @@ bool Container::addComponent( const std::string& component )
 			std::string port_name = (*port)->getName();
 			if(getPort(port_name) == NULL){
 				//Port not yet in use: we can add it to the container components ports
-				addPort(port_name, (**port));
+				addPort(component_name+port_name, (**port));
 			} else {
-				RTT::log(RTT::Error) << "Could not add port " + port_name + " because it is already in use." << RTT::endlog();
+				RTT::log(RTT::Warning) << "Could not add port " + port_name + " because it is already in use." << RTT::endlog();
 			}
 		}
 	} else {

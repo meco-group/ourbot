@@ -181,7 +181,6 @@ bool TeensyBridge::startHook()
 
 void TeensyBridge::updateHook()
 {
-	std::cout << "in update!" << std::endl;
 	uint8_t bytes[TEENSYBRIDGE_SERIALBUFFERSIZE];
 	int numbytes = readBytes(bytes, TEENSYBRIDGE_SERIALBUFFERSIZE);
 
@@ -295,7 +294,7 @@ void TeensyBridge::setVelocity(double vx, double vy, double w)
 	}
 }
 
-void TeensyBridge::setController(uint8_t controllerID, float P, float I, float D)
+void TeensyBridge::setController(uint8_t controllerID, double P, double I, double D)
 {
 	mavlink_motor_controller_t motor_controller;
 	mavlink_message_t msg;
@@ -311,12 +310,12 @@ void TeensyBridge::setController(uint8_t controllerID, float P, float I, float D
 	writeBytes(buffer, numbytes);
 }
 
-void TeensyBridge::setCurrentController(float P, float I, float D)
+void TeensyBridge::setCurrentController(double P, double I, double D)
 {
 	setController(2, P, I, D);
 }
 
-void TeensyBridge::setVelocityController(float P, float I, float D)
+void TeensyBridge::setVelocityController(double P, double I, double D)
 {
 	setController(3, P, I, D);
 }

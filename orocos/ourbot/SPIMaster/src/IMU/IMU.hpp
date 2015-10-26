@@ -168,10 +168,10 @@ class IMU : public SPIDeviceInterface{ //IMU inherits from SPIDeviceInterface
 		std::string _imu_name; //holds name of imu, e.g. imu_left
 		uint8_t _id;           //sensor id
 
-		uint8_t _pin_accmag;//pin to which accmag cs is connected
-		uint8_t _pin_gyr;   //pin to which gyr cs is connected
-		uint8_t _cs_accmag; //GPIO to which accmag cs is connected
-		uint8_t _cs_gyr;    //GPIO to which gyr cs is connected
+		int _pin_accmag;//pin to which accmag cs is connected
+		int _pin_gyr;   //pin to which gyr cs is connected
+		int _cs_accmag; //GPIO to which accmag cs is connected
+		int _cs_gyr;    //GPIO to which gyr cs is connected
 		//Some pin numbers correspond to a certain GPIO number. pin2GPIO() makes this conversion
 
 		//Define other variables:

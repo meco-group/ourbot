@@ -10,7 +10,7 @@ RPLidar::RPLidar(std::string const& name) :
 	this->ports()->addPort( "cal_lidar_x_port", _cal_lidar_x_port ).doc( "Output port for calibrated lidar node positions. Holds a vector of RPLIDAR_NODE_BUFFER_SIZE x-coordinates [m]." );
 	this->ports()->addPort( "cal_lidar_y_port", _cal_lidar_y_port ).doc( "Output port for calibrated lidar node positions. Holds a vector of RPLIDAR_NODE_BUFFER_SIZE y-coordinates [m]." );
 	this->ports()->addPort( "cal_lidar_quality_port", _cal_lidar_quality_port ).doc( "Output port for node quality. value between 0 and 1" );
-	// this->ports()->addPort( "cal_lidar_node_port", _cal_lidar_node_port ).doc( "Output port for the calibrated lidar nodes [m,m,-]" );
+	this->ports()->addPort( "cal_lidar_node_port", _cal_lidar_node_port ).doc( "Output port for the calibrated lidar nodes [m,m,-]" );
 
 	addOperation("deviceInfo", &RPLidar::deviceInfo, this).doc("Send request to the lidar to send its device info.");
 	addOperation("deviceHealth", &RPLidar::deviceHealth, this).doc("Send request to the lidar to send its health.");
@@ -166,7 +166,7 @@ bool RPLidar::configureHook()
   // Show example data sample to ports to make data flow real-time
   std::vector<double> example(3, 0.0);
   // set 3D ports
-  // _cal_lidar_node_port.setDataSample(example);
+  _cal_lidar_node_port.setDataSample(example);
 
   // set RPLIDAR_NODE_BUFFER_SIZE-D ports
   example.resize(_lidar_data_length);
@@ -194,7 +194,6 @@ bool RPLidar::startHook()
 
 void RPLidar::updateHook()
 {
-  std::cout << "lidar in update" << std::endl;
 	//do nothing
 	int numbytes = readBytes(_buffer + _buffer_offset, RPLIDAR_BUFFER_SIZE - _buffer_offset);
 
@@ -250,10 +249,10 @@ void RPLidar::stopHook()
     if(_state == SCANNING){
 	    stopScan();
 	}
-	
+
 	// reset the component so we don't get into trouble when restarting the component
     reset();
-    
+
     // close the usb device
 	USBInterface::stopHook();
 }
@@ -287,10 +286,10 @@ bool RPLidar::reset()
 {
     // send reset request to the lidar
     deviceReset();
-    
+
     // set the state to idle as we can predict what is going to happen, but cannot rely on the serial data because the link will be broken
     _state = IDLE;
-    
+
     // set the buffers to their initial states
     _buffer_offset = 0;
     _node_buffer_fill = 0;

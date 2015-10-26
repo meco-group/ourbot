@@ -3,6 +3,7 @@
 
 #include <rtt/RTT.hpp>
 #include <rtt/Port.hpp>
+typedef std::vector<RTT::base::PortInterface*> Ports;
 
 using namespace RTT;
 
@@ -12,12 +13,21 @@ class EstimatorInterface : public RTT::TaskContext{
     InputPort<std::vector<double> > _cal_lidar_y_port;
     InputPort<std::vector<double> > _cal_ir_x_port;
     InputPort<std::vector<double> > _cal_ir_y_port;
+
     InputPort<std::vector<double> > _cal_imul_transacc_port;
-    InputPort<double> _cal_imul_dorientation_port;
+    InputPort<std::vector<double> > _cal_imul_orientation_3d_port;
     InputPort<double> _cal_imul_orientation_port;
+    InputPort<std::vector<double> > _cal_imul_dorientation_3d_port;
+    InputPort<double> _cal_imul_dorientation_port;
+    InputPort<double> _cal_imul_temperature_port;
+
     InputPort<std::vector<double> > _cal_imur_transacc_port;
-    InputPort<double> _cal_imur_dorientation_port;
+    InputPort<std::vector<double> > _cal_imur_orientation_3d_port;
     InputPort<double> _cal_imur_orientation_port;
+    InputPort<std::vector<double> > _cal_imur_dorientation_3d_port;
+    InputPort<double> _cal_imur_dorientation_port;
+    InputPort<double> _cal_imur_temperature_port;
+
     InputPort<std::vector<double> > _cal_enc_pose_port;
     InputPort<std::vector<double> > _cal_motor_current_port;
     InputPort<std::vector<double> > _cal_motor_voltage_port;
@@ -33,12 +43,21 @@ class EstimatorInterface : public RTT::TaskContext{
     std::vector<double> _cal_lidar_y;
     std::vector<double> _cal_ir_x;
     std::vector<double> _cal_ir_y;
+
     std::vector<double> _cal_imul_transacc;
-    double _cal_imul_dorientation;
+    std::vector<double> _cal_imul_orientation_3d;
     double _cal_imul_orientation;
+    std::vector<double> _cal_imul_dorientation_3d;
+    double _cal_imul_dorientation;
+    double _cal_imul_temperature;
+
     std::vector<double> _cal_imur_transacc;
-    double _cal_imur_dorientation;
+    std::vector<double> _cal_imur_orientation_3d;
     double _cal_imur_orientation;
+    std::vector<double> _cal_imur_dorientation_3d;
+    double _cal_imur_dorientation;
+    double _cal_imur_temperature;
+
     std::vector<double> _cal_enc_pose;
     std::vector<double> _cal_motor_current;
     std::vector<double> _cal_motor_voltage;
@@ -67,11 +86,17 @@ class EstimatorInterface : public RTT::TaskContext{
     std::vector<std::vector<double> > getLidarData();
     std::vector<std::vector<double> > getIRData();
     std::vector<double> getImuLTransAcc();
-    double getImuLDOrientation();
     double getImuLOrientation();
+    std::vector<double> getImuL3dOrientation();
+    double getImuLDOrientation();
+    std::vector<double> getImuL3dDOrientation();
+    double getImuLTemperature();
     std::vector<double> getImuRTransAcc();
-    double getImuRDOrientation();
     double getImuROrientation();
+    std::vector<double> getImuR3dOrientation();
+    double getImuRDOrientation();
+    std::vector<double> getImuR3dDOrientation();
+    double getImuRTemperature();
     std::vector<double> getEncPose();
     std::vector<double> getMotorCurrent();
     std::vector<double> getMotorVoltage();

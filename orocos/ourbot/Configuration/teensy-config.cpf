@@ -10,7 +10,7 @@
     <value>/dev/ttyACM0</value>
   </simple>
 
-  <simple name="velocity_controller_P" type="double">
+<!--   <simple name="velocity_controller_P" type="double">
     <description>Standard velocity controller proportional gain</description>
     <value>10.0</value>
   </simple>
@@ -21,5 +21,18 @@
   <simple name="velocity_controller_D" type="double">
     <description>Standard velocity controller derivative gain</description>
     <value>0.01</value>
+  </simple> -->
+
+  <simple name="velocity_controller_P" type="double">
+    <description>Standard velocity controller proportional gain</description>
+    <value>0.2</value>
+  </simple>
+  <simple name="velocity_controller_I" type="double">
+    <description>Standard velocity controller integral gain</description>
+    <value>2.</value>
+  </simple>
+  <simple name="velocity_controller_D" type="double">
+    <description>Standard velocity controller derivative gain</description>
+    <value>0.0</value>
   </simple>
 </properties>

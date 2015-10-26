@@ -3,28 +3,42 @@
 #include <iostream>
 
 EstimatorInterface::EstimatorInterface(std::string const& name) : TaskContext(name, PreOperational),
-    _cal_imul_transacc(3), _cal_imul_dorientation(0.), _cal_imul_orientation(0.),
-    _cal_imur_transacc(3), _cal_imur_dorientation(0.), _cal_imur_orientation(0.),
-    _cal_enc_pose(3), _cal_motor_current(4), _cal_velocity(3),
+    _cal_imul_transacc(3), _cal_imul_orientation_3d(3), _cal_imul_orientation(0.),
+    _cal_imul_dorientation_3d(3), _cal_imul_dorientation(0.), _cal_imul_temperature(0.),
+    _cal_imur_transacc(3), _cal_imur_orientation_3d(3), _cal_imur_orientation(0.),
+    _cal_imur_dorientation_3d(3), _cal_imur_dorientation(0.), _cal_imur_temperature(0.),
+    _cal_enc_pose(3), _cal_motor_current(4), _cal_motor_voltage(4), _cal_velocity(3),
     _est_pose(3), _est_velocity(3), _est_acceleration(3), _est_global_offset(3){
 
   _est_pose_port.keepLastWrittenValue(true);
 
-  ports()->addPort("cal_lidar_distances_port", _cal_lidar_x_port).doc("Observed x positions wrt local frame from LIDAR");
-  ports()->addPort("cal_lidar_angles_port", _cal_lidar_y_port).doc("Observed y positions wrt local frame from LIDAR");
-  ports()->addPort("cal_ir_distances_port", _cal_ir_x_port).doc("Observed x positions wrt local frame from IR's");
-  ports()->addPort("cal_ir_angles_port", _cal_ir_y_port).doc("Observed y positions wrt local frame from IR's");
-  ports()->addPort("cal_imul_transacc_port", _cal_imul_transacc_port).doc("Translational accelerations of IMU left");
-  ports()->addPort("cal_imul_dorientation_port", _cal_imul_dorientation_port).doc("Derivative of orientation of IMU left");
-  ports()->addPort("cal_imul_orientation_port", _cal_imul_orientation_port).doc("Orientation of IMU left");
-  ports()->addPort("cal_imur_transacc_port", _cal_imur_transacc_port).doc("Translational accelerations of IMU right");
-  ports()->addPort("cal_imur_dorientation_port", _cal_imur_dorientation_port).doc("Derivative of orientation of right left");
-  ports()->addPort("cal_imur_orientation_port", _cal_imur_orientation_port).doc("Orientation of IMU right");
-  ports()->addPort("cal_enc_pose_port", _cal_enc_pose_port).doc("Pose derived from encoders");
-  ports()->addPort("cal_motor_current_port", _cal_motor_current_port).doc("Current of 4 motors");
-  ports()->addPort("cal_motor_voltage_port", _cal_motor_voltage_port).doc("Voltage of 4 motors");
-  ports()->addPort("cal_velocity_port", _cal_velocity_port).doc("Velocity input of system");
+  // lidar
+  ports()->addPort("cal_lidar_x_port", _cal_lidar_x_port).doc("lidar: Observed x positions wrt local frame");
+  ports()->addPort("cal_lidar_y_port", _cal_lidar_y_port).doc("lidar: Observed y positions wrt local frame");
+  // ir's
+  ports()->addPort("cal_ir_x_port", _cal_ir_x_port).doc("ir: Observed x positions wrt local frame");
+  ports()->addPort("cal_ir_y_port", _cal_ir_y_port).doc("ir: Observed y positions wrt local frame");
+  // imu left
+  ports()->addPort("imul_cal_imu_transacc_port", _cal_imul_transacc_port).doc("imul: Translational accelerations");
+  ports()->addPort("imul_cal_imu_orientation_3d_port", _cal_imul_orientation_3d_port).doc("imul: Roll Pitch Yaw");
+  ports()->addPort("imul_cal_imu_orientation_port", _cal_imul_orientation_port).doc("imul: Orientation around z-axis (Yaw)");
+  ports()->addPort("imul_cal_imu_dorientation_3d_port", _cal_imul_dorientation_3d_port).doc("imul: Derivative of Roll Pitch Yaw");
+  ports()->addPort("imul_cal_imu_dorientation_port", _cal_imul_dorientation_port).doc("imul: Derivative of orientation aroun z-axis (Yaw)");
+  ports()->addPort("imul_cal_imu_temperature_port", _cal_imul_temperature_port).doc("imul: Temperature");
+  // imu right
+  ports()->addPort("imur_cal_imu_transacc_port", _cal_imur_transacc_port).doc("imur: Translational accelerations");
+  ports()->addPort("imur_cal_imu_orientation_3d_port", _cal_imur_orientation_3d_port).doc("imur: Roll Pitch Yaw");
+  ports()->addPort("imur_cal_imu_orientation_port", _cal_imur_orientation_port).doc("imur: Orientation around z-axis (Yaw)");
+  ports()->addPort("imur_cal_imu_dorientation_3d_port", _cal_imur_dorientation_3d_port).doc("imur: Derivative of Roll Pitch Yaw");
+  ports()->addPort("imur_cal_imu_dorientation_port", _cal_imur_dorientation_port).doc("imur: Derivative of orientation aroun z-axis (Yaw)");
+  ports()->addPort("imur_cal_imu_temperature_port", _cal_imur_temperature_port).doc("imur: Temperature");
+  // teensy
+  ports()->addPort("cal_enc_pose_port", _cal_enc_pose_port).doc("teensy: Pose derived from encoders");
+  ports()->addPort("cal_motor_current_port", _cal_motor_current_port).doc("teensy: Current of 4 motors");
+  ports()->addPort("cal_motor_voltage_port", _cal_motor_voltage_port).doc("teensy: Voltage of 4 motors");
+  ports()->addPort("cal_velocity_port", _cal_velocity_port).doc("teensy: Velocity input of system");
 
+  // outputs
   ports()->addPort("est_pose_port", _est_pose_port).doc("Estimated pose wrt to initial frame");
   ports()->addPort("est_velocity_port", _est_velocity_port).doc("Estimated velocity wrt to initial frame");
   ports()->addPort("est_acceleration_port", _est_acceleration_port).doc("Estimated acceleration wrt to initial frame");
@@ -71,57 +85,16 @@ bool EstimatorInterface::configureHook(){
 
 bool EstimatorInterface::startHook(){
   // Check if input ports are connected
-  bool check = true;
-  if (!_cal_lidar_x_port.connected()){
-    log(Warning) << "_cal_lidar_distances_port not connected !" <<endlog();
-  }
-  if (!_cal_lidar_y_port.connected()){
-    log(Warning) << "_cal_lidar_angles_port not connected !" <<endlog();
-  }
-  if (!_cal_ir_x_port.connected()){
-    log(Warning) << "_cal_ir_distances_port not connected !" <<endlog();
-  }
-  if (!_cal_ir_y_port.connected()){
-    log(Warning) << "_cal_ir_angles_port not connected !" <<endlog();
-  }
-  if (!_cal_imul_transacc_port.connected()){
-    log(Warning) << "_cal_imul_transacc_port not connected !" <<endlog();
-  }
-  if (!_cal_imul_dorientation_port.connected()){
-    log(Warning) << "_cal_imul_dorientation_port not connected !" <<endlog();
-  }
-  if (!_cal_imul_orientation_port.connected()){
-    log(Warning) << "_cal_imul_orientation_port not connected !" <<endlog();
-  }
-  if (!_cal_imur_transacc_port.connected()){
-    log(Warning) << "_cal_imur_transacc_port not connected !" <<endlog();
-  }
-  if (!_cal_imur_dorientation_port.connected()){
-    log(Warning) << "_cal_imur_dorientation_port not connected !" <<endlog();
-  }
-  if (!_cal_imur_orientation_port.connected()){
-    log(Warning) << "_cal_imur_orientation_port not connected !" <<endlog();
-  }
-  if (!_cal_enc_pose_port.connected()){
-    log(Warning) << "_cal_enc_pose_port not connected !" <<endlog();
-  }
-  if (!_cal_motor_current_port.connected()){
-    log(Warning) << "_cal_motor_current_port not connected !" <<endlog();
-  }
-  if (!_cal_motor_current_port.connected()){
-    log(Warning) << "_cal_motor_voltage_port not connected !" <<endlog();
-  }
-  if (!_cal_velocity_port.connected()){
-    log(Warning) << "_cal_velocity_port not connected !" <<endlog();
+  Ports ports = this->ports()->getPorts();
+  for (Ports::iterator port = ports.begin(); port != ports.end() ; ++port) {
+    if (!(*port)->connected()){
+      log(Warning) << (*port)->getName() << " is not connected!" <<endlog();
+    }
   }
   if (!initialize()){
     log(Error) << "Error occured in initialize() !" <<endlog();
-    check = false;
-  }
-  if (!check){
     return false;
   }
-  std::cout << "Estimator started !" <<std::endl;
   return true;
 }
 
@@ -141,28 +114,26 @@ void EstimatorInterface::updateHook(){
   // if (_cal_motor_current_port.read(_cal_motor_current) == RTT::NoData) {log(Error) << "No data on _cal_motor_current_port !" <<endlog(); error();}
   // if (_cal_motor_voltage_port.read(_cal_motor_voltage) == RTT::NoData) {log(Error) << "No data on _cal_motor_voltage_port !" <<endlog(); error();}
 
-  // Read velocity command
-  std::vector<double> sample(3,0.0);
-  if (_cal_velocity_port.read(sample) == RTT::NoData) {
-    log(Warning) << "No data on _cal_velocity_port !" <<endlog();
-  }
-  else {
-    _cal_velocity = sample;
-  }
-
   _cal_lidar_x_port.read(_cal_lidar_x);
   _cal_lidar_y_port.read(_cal_lidar_y);
   _cal_ir_x_port.read(_cal_ir_x);
   _cal_ir_y_port.read(_cal_ir_y);
   _cal_imul_transacc_port.read(_cal_imul_transacc);
-  _cal_imul_dorientation_port.read(_cal_imul_dorientation);
+  _cal_imul_orientation_3d_port.read(_cal_imul_orientation_3d);
   _cal_imul_orientation_port.read(_cal_imul_orientation);
+  _cal_imul_dorientation_3d_port.read(_cal_imul_dorientation_3d);
+  _cal_imul_dorientation_port.read(_cal_imul_dorientation);
+  _cal_imul_temperature_port.read(_cal_imul_temperature);
   _cal_imur_transacc_port.read(_cal_imur_transacc);
-  _cal_imur_dorientation_port.read(_cal_imur_dorientation);
+  _cal_imur_orientation_3d_port.read(_cal_imur_orientation_3d);
   _cal_imur_orientation_port.read(_cal_imur_orientation);
+  _cal_imur_dorientation_3d_port.read(_cal_imur_dorientation_3d);
+  _cal_imur_dorientation_port.read(_cal_imur_dorientation);
+  _cal_imur_temperature_port.read(_cal_imur_temperature);
   _cal_enc_pose_port.read(_cal_enc_pose);
   _cal_motor_current_port.read(_cal_motor_current);
   _cal_motor_voltage_port.read(_cal_motor_voltage);
+  _cal_velocity_port.read(_cal_velocity);
 
   // Apply estimation update
   estimateUpdate();
@@ -176,7 +147,7 @@ void EstimatorInterface::updateHook(){
 }
 
 void EstimatorInterface::stopHook() {
-  std::cout << "Estimator stopped !" <<std::endl;
+
 }
 
 double EstimatorInterface::getControlSampleRate(){ return _control_sample_rate; }
@@ -198,11 +169,19 @@ std::vector<std::vector<double> > EstimatorInterface::getIRData(){
 }
 
 std::vector<double> EstimatorInterface::getImuLTransAcc(){ return _cal_imul_transacc; }
-double EstimatorInterface::getImuLDOrientation(){ return _cal_imul_dorientation; }
 double EstimatorInterface::getImuLOrientation(){ return _cal_imul_orientation; }
+std::vector<double> EstimatorInterface::getImuL3dOrientation(){ return _cal_imul_orientation_3d; }
+double EstimatorInterface::getImuLDOrientation(){ return _cal_imul_dorientation; }
+std::vector<double> EstimatorInterface::getImuL3dDOrientation(){ return _cal_imul_dorientation_3d; }
+double EstimatorInterface::getImuLTemperature(){ return _cal_imul_temperature; }
+
 std::vector<double> EstimatorInterface::getImuRTransAcc(){ return _cal_imur_transacc; }
-double EstimatorInterface::getImuRDOrientation(){return _cal_imur_dorientation; }
-double EstimatorInterface::getImuROrientation(){return _cal_imur_orientation; }
+double EstimatorInterface::getImuROrientation(){ return _cal_imur_orientation; }
+std::vector<double> EstimatorInterface::getImuR3dOrientation(){ return _cal_imur_orientation_3d; }
+double EstimatorInterface::getImuRDOrientation(){ return _cal_imur_dorientation; }
+std::vector<double> EstimatorInterface::getImuR3dDOrientation(){ return _cal_imur_dorientation_3d; }
+double EstimatorInterface::getImuRTemperature(){ return _cal_imur_temperature; }
+
 std::vector<double> EstimatorInterface::getEncPose(){ return _cal_enc_pose; }
 std::vector<double> EstimatorInterface::getMotorCurrent(){ return _cal_motor_current; }
 std::vector<double> EstimatorInterface::getMotorVoltage(){ return _cal_motor_voltage; }

@@ -58,7 +58,7 @@ class TeensyBridge : public USBInterface
 
 		bool action(mavlink_message_t msg);
 		void setMotorReference(int reference, int ID, int mode);
-		void setController(uint8_t controllerID, float P, float I, float D);
+		void setController(uint8_t controllerID, double P, double I, double D);
 
 		void recalculatePose();
 		void recalculateVelocity();
@@ -82,8 +82,8 @@ class TeensyBridge : public USBInterface
 		void setMotorCurrent(double current, int ID);
 		void setMotorVoltage(double voltage, int ID);
 		void setVelocity(double vx, double vy, double w);
-		void setCurrentController(float P, float I, float D);
-		void setVelocityController(float P, float I, float D);
+		void setCurrentController(double P, double I, double D);
+		void setVelocityController(double P, double I, double D);
 		void showCurrents();
 		void showVelocities();
 		void showEncoders();
