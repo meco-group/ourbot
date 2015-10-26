@@ -205,7 +205,6 @@ void RPLidar::updateHook()
 		numbytes += _buffer_offset;
 		uint32_t decoding_offset = 0;
 		uint32_t bytes_decoded = 0;
-<<<<<<< HEAD
 		do{
 			switch(_state){
 				case IDLE:
@@ -232,34 +231,6 @@ void RPLidar::updateHook()
 			//RPLIDAR_DEBUG_PRINT("Decoding offset " << decoding_offset)
 			//RPLIDAR_DEBUG_PRINT("Numbytes: " << numbytes)
 		}while((bytes_decoded>0)&&(numbytes>0));
-=======
-		// do{
-		// 	switch(_state){
-		// 		case IDLE:
-		// 			RPLIDAR_DEBUG_PRINT("RPLidar internal error: received bytes which were not expected.")
-		// 			break;
-		// 		case PENDING:
-		// 			bytes_decoded = handleRequest(_buffer + decoding_offset, numbytes);
-		// 			break;
-		// 		case SCANNING:
-		// 			bytes_decoded = handleScan(_buffer + decoding_offset, numbytes);
-		// 			break;
-		// 		case STOP_SCANNING:
-		// 			bytes_decoded = handleScan(_buffer + decoding_offset, numbytes);
-		// 			break;
-		// 		case RESETTING:
-		// 			bytes_decoded = numbytes;
-		// 			_request_status = RESET;
-		// 			_state = IDLE;
-		// 			break;
-		// 	}
-		// 	decoding_offset += bytes_decoded;
-		// 	numbytes -= bytes_decoded;
-
-		// 	RPLIDAR_DEBUG_PRINT("Decoding offset " << decoding_offset)
-		// 	RPLIDAR_DEBUG_PRINT("Numbytes: " << numbytes)
-		// }while((bytes_decoded>0)&&(numbytes>0));
->>>>>>> 8adbfe757b0099adfb3a1ba1042ea87b256d3cba
 
 		//copy the remainder to the beginning of the buffer
 		if(numbytes>0){
@@ -401,14 +372,14 @@ void RPLidar::addNodeToMeasurements(const rplidar_response_measurement_node_t &n
 		v[0] = _primary_node_buffer[0][_node_buffer_fill];
 		v[1] = _primary_node_buffer[1][_node_buffer_fill];
 		v[2] = _primary_node_buffer[2][_node_buffer_fill];
-		// _cal_lidar_node_port.write(v);
+		_cal_lidar_node_port.write(v);
 
 		_node_buffer_fill++;
 		if(_node_buffer_fill >= _lidar_data_length){
 			//set to ports
-			// _cal_lidar_x_port.write(*_primary_node_buffer);
-			// _cal_lidar_y_port.write(*_primary_node_buffer);
-			// _cal_lidar_quality_port.write(*_primary_node_buffer);
+			_cal_lidar_x_port.write(*_primary_node_buffer);
+			_cal_lidar_y_port.write(*(_primary_node_buffer+1));
+			_cal_lidar_quality_port.write(*(_primary_node_buffer+2));
 
 			//make other buffer current buffer
 			std::vector<double> *ptemp = _primary_node_buffer;
