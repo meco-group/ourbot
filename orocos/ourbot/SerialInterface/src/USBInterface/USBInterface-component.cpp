@@ -115,10 +115,10 @@ bool USBInterface::disconnectSerial()
 		if(close(_usb_fd) == 0){
 			_usb_fd = 0;
 		} else {
-			std::cout << "Error while closing USB port." << std::endl;
+			std::cout << "Error while closing USB port (" + getName() + ")." << std::endl;
 		}
 	}	else {
-		std::cout << "USB port was not yet connected." << std::endl;
+		std::cout << "USB port was not yet connected(" + getName() + ")." << std::endl;
 	}
 
 	return (_usb_fd == 0);
@@ -146,7 +146,7 @@ int USBInterface::readBytes(uint8_t* bytes, uint32_t length, uint8_t port_select
 {
 	uint32_t bytes_received = read(_usb_fd, bytes, length);
   if(bytes_received == -1){
-  	std::cout << "Error while reading file." << std::endl;
+  	std::cout << "Error while reading file(" + getName() + ")." << std::endl;
   	bytes_received = 0;
   }
 
