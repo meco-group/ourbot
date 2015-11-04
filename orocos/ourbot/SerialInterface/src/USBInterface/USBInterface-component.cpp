@@ -2,6 +2,8 @@
 #include <rtt/Component.hpp>
 #include <iostream>
 #include <fcntl.h>
+#include <error.h>
+#include <string.h>
 #include <termios.h>
 #include <sys/ioctl.h>
 
@@ -144,9 +146,10 @@ int USBInterface::readByte(uint8_t* byte, uint8_t port_select)
 
 int USBInterface::readBytes(uint8_t* bytes, uint32_t length, uint8_t port_select)
 {
-	uint32_t bytes_received = read(_usb_fd, bytes, length);
+  uint32_t bytes_received = read(_usb_fd, bytes, length);
   if(bytes_received == -1){
-  	std::cout << "Error while reading file(" + getName() + ")." << std::endl;
+  	std::cout << "Error while reading file(" + getName() + "). The error received was " + strerror(errno) << std::endl;
+  	
   	bytes_received = 0;
   }
 

@@ -26,10 +26,10 @@ class USBInterface : public SerialInterface
 		bool isConnectedSerial();
 
 		int available();
-    int readByte(uint8_t* byte, uint8_t port_select = 0);
-    int readBytes(uint8_t* bytes, uint32_t length, uint8_t port_select = 0);
-    int writeByte(uint8_t byte, uint8_t port_select = 0);
-    int writeBytes(uint8_t* bytes, uint32_t length, uint8_t port_select = 0);
+        int readByte(uint8_t* byte, uint8_t port_select = 0);
+        int readBytes(uint8_t* bytes, uint32_t length, uint8_t port_select = 0);
+        int writeByte(uint8_t byte, uint8_t port_select = 0);
+        int writeBytes(uint8_t* bytes, uint32_t length, uint8_t port_select = 0);
 };
 
 #endif //USB_INTERFACE_H
