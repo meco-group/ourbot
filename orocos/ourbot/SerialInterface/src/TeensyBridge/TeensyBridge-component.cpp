@@ -282,10 +282,10 @@ void TeensyBridge::setVelocity(double vx, double vy, double w)
 		w = (_platform_length + _platform_width)*w/2.0;
 
 		// UPDATE 14/07/2015: To have the same reference frame as the youbot, the y-axis has been changed
-		motor_command.command_left_front = (vx - vy - w)*_kinematic_conversion_wheel;
-		motor_command.command_right_front = (vx + vy + w)*_kinematic_conversion_wheel;
-		motor_command.command_left_rear = (vx + vy - w)*_kinematic_conversion_wheel;
-		motor_command.command_right_rear = (vx - vy + w)*_kinematic_conversion_wheel;
+		motor_command.command_left_front = (vx + vy - w)*_kinematic_conversion_wheel;
+		motor_command.command_right_front = (vx - vy + w)*_kinematic_conversion_wheel;
+		motor_command.command_left_rear = (vx - vy - w)*_kinematic_conversion_wheel;
+		motor_command.command_right_rear = (vx + vy + w)*_kinematic_conversion_wheel;
 		motor_command.command_type = 3;
 
 		mavlink_msg_motor_command_encode(0,0,&msg,&motor_command);
