@@ -10,7 +10,7 @@
 SOURCEDIR=/home/ruben/ourbot/orocos/ourbot/
 OROCOSDIR=/home/odroid/orocos
 USERNAME=odroid
-HOSTS="192.168.0.2"
+HOSTS="192.168.10.248"
 PASSWORD="odroid"
 
 for HOSTNAME in ${HOSTS} ; do

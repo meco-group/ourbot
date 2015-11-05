@@ -12,11 +12,11 @@ void GamePadCommand::updateHook(){
   if (_gamepad_raxis_port.read(sample) == RTT::NewData)
   {
     _cmd_velocity[0] = -transformData(sample[1])*_max_velocity/100.;
-    _cmd_velocity[1] = transformData(sample[0])*_max_velocity/100.;
+    _cmd_velocity[1] = -transformData(sample[0])*_max_velocity/100.;
   }
   if (_gamepad_laxis_port.read(sample) == RTT::NewData)
   {
-    _cmd_velocity[2] = transformData(sample[0])*_max_omega/100.;
+    _cmd_velocity[2] = -transformData(sample[0])*_max_omega/100.;
   }
   setCmdVelocity(_cmd_velocity);
   VelocityCommandEmperorInterface::updateHook();

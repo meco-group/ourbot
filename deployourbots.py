@@ -18,8 +18,8 @@ import optparse, sys, os, paramiko
 remote_root = '/home/odroid/orocos'
 username    = 'odroid'
 password    = 'odroid'
-hosts       = ['192.168.0.2']
-server      = '192.168.0.2'
+hosts       = ['192.168.10.248']
+server      = '192.168.10.248'
 
 if __name__ == "__main__":
     usage = ("Usage: %prog [options]")
