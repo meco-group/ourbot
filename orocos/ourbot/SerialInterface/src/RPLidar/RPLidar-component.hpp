@@ -64,10 +64,17 @@ class RPLidar : public USBInterface
 		uint32_t 						_lidar_data_length;			//size of the buffers
 		uint32_t 						_node_buffer_fill;			//amount of bytes stored in the buffer
 
+		RTT::OutputPort<std::vector<double> > _cal_lidar_angle_port;
+		RTT::OutputPort<std::vector<double> > _cal_lidar_distance_port;
 		RTT::OutputPort<std::vector<double> > _cal_lidar_x_port;
 		RTT::OutputPort<std::vector<double> > _cal_lidar_y_port;
 		RTT::OutputPort<std::vector<double> > _cal_lidar_quality_port;
-		RTT::OutputPort<std::vector<double> > _cal_lidar_node_port;
+		RTT::OutputPort<std::vector<double> > _cal_lidar_encoder_stamp_x_port;
+		RTT::OutputPort<std::vector<double> > _cal_lidar_encoder_stamp_y_port;
+		RTT::OutputPort<std::vector<double> > _cal_lidar_encoder_stamp_angle_port;
+		
+		RTT::OutputPort<std::vector<double> > _cal_lidar_local_node_port;
+		RTT::OutputPort<std::vector<double> > _cal_lidar_global_node_port;
 
 		bool sendCommand(uint8_t cmd, const void *payload = NULL, uint32_t payloadsize = 0);
 		int handleRequest(uint8_t* buffer, uint32_t numbytes);

@@ -7,6 +7,8 @@ RPLidar::RPLidar(std::string const& name) :
 	_node_buffer1{std::vector<double>(RPLIDAR_NODE_BUFFER_SIZE),std::vector<double>(RPLIDAR_NODE_BUFFER_SIZE),std::vector<double>(RPLIDAR_NODE_BUFFER_SIZE)},
 	_node_buffer2{std::vector<double>(RPLIDAR_NODE_BUFFER_SIZE),std::vector<double>(RPLIDAR_NODE_BUFFER_SIZE),std::vector<double>(RPLIDAR_NODE_BUFFER_SIZE)}
 {
+	this->ports()->addPort( "cal_lidar_angle_port", _cal_lidar_angle_port ).doc( "Output port for calibrated lidar angle. Holds a vector of RPLIDAR_NODE_BUFFER_SIZE angle values [rad]." );
+	this->ports()->addPort( "cal_lidar_distance_port", _cal_lidar_distance_port ).doc( "Output port for calibrated lidar node distances. Holds a vector of RPLIDAR_NODE_BUFFER_SIZE distances [m]." );
 	this->ports()->addPort( "cal_lidar_x_port", _cal_lidar_x_port ).doc( "Output port for calibrated lidar node positions. Holds a vector of RPLIDAR_NODE_BUFFER_SIZE x-coordinates [m]." );
 	this->ports()->addPort( "cal_lidar_y_port", _cal_lidar_y_port ).doc( "Output port for calibrated lidar node positions. Holds a vector of RPLIDAR_NODE_BUFFER_SIZE y-coordinates [m]." );
 	this->ports()->addPort( "cal_lidar_quality_port", _cal_lidar_quality_port ).doc( "Output port for node quality. value between 0 and 1" );
