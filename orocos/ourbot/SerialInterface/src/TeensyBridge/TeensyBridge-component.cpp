@@ -6,7 +6,7 @@
 #define MAVLINK_MSG_OVERHEAD					8
 
 TeensyBridge::TeensyBridge(std::string const& name) :
-	USBInterface(name), _platform_length(0.3), _platform_width(0.25), _wheel_radius(0.05), _encoder_ticks_per_revolution(38400),
+	USBInterface(name), _platform_length(0.3), _platform_width(0.265), _wheel_radius(0.05), _encoder_ticks_per_revolution(38400),
 	_current_sensor_gain(1.0), _current_sensor_offset(0.0),
 	_kinematic_conversion_position(0.0), _kinematic_conversion_orientation(0.0), _kinematic_conversion_wheel(0.0), _pose(3,0.0), _velocity(3,0.0),
 	_control_mode(TEENSYBRIDGE_CONTROL_MODE_SIMPLE), _velocity_controller_P(0.0f), _velocity_controller_I(0.0f), _velocity_controller_D(0.0f)
@@ -95,8 +95,10 @@ void TeensyBridge::recalculatePose()
 	// UPDATE 14/07/2015: Make reference frame conform youbot frame
 	_pose[0] = (_motor_states[0].position + _motor_states[1].position)*_kinematic_conversion_position;
 	_pose[1] = (-_motor_states[0].position + _motor_states[2].position)*_kinematic_conversion_position;
-	_pose[2] = (_motor_states[1].position - _motor_states[2].position)*_kinematic_conversion_orientation;
-
+	// UPDATE 5/11/2015: Average over all wheels so that the rotation is more accurate
+	//_pose[2] = (_motor_states[1].position - _motor_states[2].position)*_kinematic_conversion_orientation;
+  _pose[2] = 0.5*((_motor_states[1].position - _motor_states[2].position) + (_motor_states[3].position - _motor_states[0].position))*_kinematic_conversion_orientation;
+	
 	_cal_enc_pose_port.write(_pose);
 }
 
@@ -157,7 +159,7 @@ bool TeensyBridge::configureHook()
   _debug_port.setDataSample(example);
 
   //calculate kinematic conversion
-  _kinematic_conversion_position = _wheel_radius*M_PI/_encoder_ticks_per_revolution;
+  _kinematic_conversion_position = _wheel_radius*M_PI/_encoder_ticks_per_revolution; //2*R*pi/enc_res
 	_kinematic_conversion_orientation = _wheel_radius*M_PI/_encoder_ticks_per_revolution/(_platform_length/2.0 + _platform_width/2.0);
 	_kinematic_conversion_wheel = _encoder_ticks_per_revolution/(2.0*M_PI*_wheel_radius);
 
