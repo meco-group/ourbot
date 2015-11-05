@@ -4,15 +4,22 @@
 
 RPLidar::RPLidar(std::string const& name) :
 	USBInterface(name), _angle_offset(0.05), _state(IDLE), _buffer_offset(0), _lidar_data_length(RPLIDAR_NODE_BUFFER_SIZE), _node_buffer_fill(0), _primary_node_buffer(_node_buffer1), _secondary_node_buffer(_node_buffer2),
-	_node_buffer1{std::vector<double>(RPLIDAR_NODE_BUFFER_SIZE),std::vector<double>(RPLIDAR_NODE_BUFFER_SIZE),std::vector<double>(RPLIDAR_NODE_BUFFER_SIZE)},
-	_node_buffer2{std::vector<double>(RPLIDAR_NODE_BUFFER_SIZE),std::vector<double>(RPLIDAR_NODE_BUFFER_SIZE),std::vector<double>(RPLIDAR_NODE_BUFFER_SIZE)}
+	_node_buffer1{std::vector<double>(RPLIDAR_NODE_BUFFER_SIZE),std::vector<double>(RPLIDAR_NODE_BUFFER_SIZE),std::vector<double>(RPLIDAR_NODE_BUFFER_SIZE),std::vector<double>(RPLIDAR_NODE_BUFFER_SIZE),std::vector<double>(RPLIDAR_NODE_BUFFER_SIZE),std::vector<double>(RPLIDAR_NODE_BUFFER_SIZE),std::vector<double>(RPLIDAR_NODE_BUFFER_SIZE),std::vector<double>(RPLIDAR_NODE_BUFFER_SIZE)},
+	_node_buffer2{std::vector<double>(RPLIDAR_NODE_BUFFER_SIZE),std::vector<double>(RPLIDAR_NODE_BUFFER_SIZE),std::vector<double>(RPLIDAR_NODE_BUFFER_SIZE),std::vector<double>(RPLIDAR_NODE_BUFFER_SIZE),std::vector<double>(RPLIDAR_NODE_BUFFER_SIZE),std::vector<double>(RPLIDAR_NODE_BUFFER_SIZE),std::vector<double>(RPLIDAR_NODE_BUFFER_SIZE),std::vector<double>(RPLIDAR_NODE_BUFFER_SIZE)}
 {
+  this->ports()->addPort( "cal_enc_pose_port", _cal_enc_pose_port ).doc("Encoder pose input port. This is used to give encoder stamps to the data and to transform local node information to the global node information.");
+
 	this->ports()->addPort( "cal_lidar_angle_port", _cal_lidar_angle_port ).doc( "Output port for calibrated lidar angle. Holds a vector of RPLIDAR_NODE_BUFFER_SIZE angle values [rad]." );
 	this->ports()->addPort( "cal_lidar_distance_port", _cal_lidar_distance_port ).doc( "Output port for calibrated lidar node distances. Holds a vector of RPLIDAR_NODE_BUFFER_SIZE distances [m]." );
 	this->ports()->addPort( "cal_lidar_x_port", _cal_lidar_x_port ).doc( "Output port for calibrated lidar node positions. Holds a vector of RPLIDAR_NODE_BUFFER_SIZE x-coordinates [m]." );
 	this->ports()->addPort( "cal_lidar_y_port", _cal_lidar_y_port ).doc( "Output port for calibrated lidar node positions. Holds a vector of RPLIDAR_NODE_BUFFER_SIZE y-coordinates [m]." );
 	this->ports()->addPort( "cal_lidar_quality_port", _cal_lidar_quality_port ).doc( "Output port for node quality. value between 0 and 1" );
-	this->ports()->addPort( "cal_lidar_node_port", _cal_lidar_node_port ).doc( "Output port for the calibrated lidar nodes [m,m,-]" );
+	this->ports()->addPort( "cal_lidar_encoder_stamp_x_port", _cal_lidar_encoder_stamp_x_port ).doc( "Output port for lidar calibrated encoder stamps. Holds a vector of RPLIDAR_NODE_BUFFER_SIZE x-coordinates [m] wrt to the local robot frame." );
+	this->ports()->addPort( "cal_lidar_encoder_stamp_y_port", _cal_lidar_encoder_stamp_y_port ).doc( "Output port for lidar calibrated encoder stamps. Holds a vector of RPLIDAR_NODE_BUFFER_SIZE y-coordinates [m] wrt to the local robot frame." );
+	this->ports()->addPort( "cal_lidar_encoder_stamp_angle_port", _cal_lidar_encoder_stamp_angle_port ).doc( "Output port for lidar calibrated encoder stamps. Holds a vector of RPLIDAR_NODE_BUFFER_SIZE angles [rad] wrt to the initial frame." );
+	
+	this->ports()->addPort( "cal_lidar_local_node_port", _cal_lidar_local_node_port ).doc( "Output port for the calibrated local lidar nodes [m,m,-]" );
+	this->ports()->addPort( "cal_lidar_global_node_port", _cal_lidar_global_node_port ).doc( "Output port for the calibrated global lidar nodes [m,m,-]" );
 
 	addOperation("deviceInfo", &RPLidar::deviceInfo, this).doc("Send request to the lidar to send its device info.");
 	addOperation("deviceHealth", &RPLidar::deviceHealth, this).doc("Send request to the lidar to send its health.");
@@ -168,13 +175,19 @@ bool RPLidar::configureHook()
   // Show example data sample to ports to make data flow real-time
   std::vector<double> example(3, 0.0);
   // set 3D ports
-  _cal_lidar_node_port.setDataSample(example);
+  _cal_lidar_local_node_port.setDataSample(example);
+  _cal_lidar_global_node_port.setDataSample(example);
 
   // set RPLIDAR_NODE_BUFFER_SIZE-D ports
   example.resize(_lidar_data_length);
+  _cal_lidar_angle_port.setDataSample(example);
+  _cal_lidar_distance_port.setDataSample(example);
   _cal_lidar_x_port.setDataSample(example);
   _cal_lidar_y_port.setDataSample(example);
   _cal_lidar_quality_port.setDataSample(example);
+  _cal_lidar_encoder_stamp_x_port.setDataSample(example);
+  _cal_lidar_encoder_stamp_y_port.setDataSample(example);
+  _cal_lidar_encoder_stamp_angle_port.setDataSample(example);
 
 #ifndef RPLIDAR_TESTFLAG
 	return true;
@@ -364,23 +377,44 @@ void RPLidar::addNodeToMeasurements(const rplidar_response_measurement_node_t &n
 	double distance = node.distance_q2*0.00025; //node.distance_q2/4000.0
 
 	if(distance > 0.1){ //check if the node is far enough, otherwise discard measurement
+		//angle and distance both get a minus to make the reference frame compliant to the robot frame
+		angle = -angle;
+		distance = -distance;
+		
 		//add node to current buffer
-		_primary_node_buffer[0][_node_buffer_fill] = -distance*cos(angle);
-		_primary_node_buffer[1][_node_buffer_fill] = distance*sin(angle);
-		_primary_node_buffer[2][_node_buffer_fill] = (node.sync_quality && 0x3F)/64.0;
+		_primary_node_buffer[0][_node_buffer_fill] = angle;                             //lidar raw angle
+		_primary_node_buffer[1][_node_buffer_fill] = distance;		                      //lidar raw distance
+		_primary_node_buffer[2][_node_buffer_fill] = distance*cos(angle);               //lidar x value
+		_primary_node_buffer[3][_node_buffer_fill] = distance*sin(angle);               //lidar y value
+		_primary_node_buffer[4][_node_buffer_fill] = (node.sync_quality && 0x3F)/64.0;  //lidar quality 
+		
+		// Read encoder data from the encoder port and add to the node as encoder stamp
+		std::vector<double> pose(3,0.0), node(3,0.0);
+		_cal_enc_pose_port.read(pose);
+		
+		for(int k=0;k<3;k++){
+		  _primary_node_buffer[k+5][_node_buffer_fill] = pose[k]; //copy encoder stamp to the stamp vector
+		  node[k] = _primary_node_buffer[k+2][_node_buffer_fill]; //write the node value to the vector v		  
+		}
+		_cal_lidar_local_node_port.write(node);
 
-		std::vector<double> v(3);
-		v[0] = _primary_node_buffer[0][_node_buffer_fill];
-		v[1] = _primary_node_buffer[1][_node_buffer_fill];
-		v[2] = _primary_node_buffer[2][_node_buffer_fill];
-		_cal_lidar_node_port.write(v);
+    // Calculate the calibrated lidar measurements in x and y
+    node[0] = distance*cos(angle + pose[2]) + pose[0];
+    node[1] = distance*sin(angle + pose[2]) + pose[1];
+    _cal_lidar_global_node_port.write(node);
 
+    // Increment node buffer fill count and switch buffers if necessary
 		_node_buffer_fill++;
 		if(_node_buffer_fill >= _lidar_data_length){
 			//set to ports
-			_cal_lidar_x_port.write(*_primary_node_buffer);
-			_cal_lidar_y_port.write(*(_primary_node_buffer+1));
-			_cal_lidar_quality_port.write(*(_primary_node_buffer+2));
+			_cal_lidar_angle_port.write(*_primary_node_buffer);
+			_cal_lidar_distance_port.write(*(_primary_node_buffer+1));			
+			_cal_lidar_x_port.write(*(_primary_node_buffer+2));
+			_cal_lidar_y_port.write(*(_primary_node_buffer+3));
+			_cal_lidar_quality_port.write(*(_primary_node_buffer+4));			
+			_cal_lidar_encoder_stamp_x_port.write(*(_primary_node_buffer+5));
+			_cal_lidar_encoder_stamp_y_port.write(*(_primary_node_buffer+6));
+			_cal_lidar_encoder_stamp_angle_port.write(*(_primary_node_buffer+7));
 
 			//make other buffer current buffer
 			std::vector<double> *ptemp = _primary_node_buffer;

@@ -57,12 +57,14 @@ class RPLidar : public USBInterface
 		rplidar_decode_status_t	_request_status;		//decoding status in case of request.
 		rplidar_decode_status_t _measurement_status;//decoding status in case of measurement
 
-		std::vector<double> _node_buffer1[3];				//measurement node buffer - 1 | 3x1 vector of x,y,quality
-		std::vector<double> _node_buffer2[3];				//measurement node buffer - 2 | 3x1 vector of x,y,quality
+		std::vector<double> _node_buffer1[8];				//measurement node buffer - 1 | 3x1 vector of x,y,quality
+		std::vector<double> _node_buffer2[8];				//measurement node buffer - 2 | 3x1 vector of x,y,quality
 		std::vector<double> *_primary_node_buffer;	//pointer to the primary node buffer, i.e thhe active buffer
 		std::vector<double> *_secondary_node_buffer;//pointer to the secondary, waiting buffer
 		uint32_t 						_lidar_data_length;			//size of the buffers
 		uint32_t 						_node_buffer_fill;			//amount of bytes stored in the buffer
+
+    RTT::InputPort<std::vector<double> > _cal_enc_pose_port;
 
 		RTT::OutputPort<std::vector<double> > _cal_lidar_angle_port;
 		RTT::OutputPort<std::vector<double> > _cal_lidar_distance_port;
