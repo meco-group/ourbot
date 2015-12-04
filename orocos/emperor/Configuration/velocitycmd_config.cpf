@@ -3,7 +3,7 @@
 <properties>
   <simple name="max_velocity" type="double">
     <description>Maximum allowed translational command velocity</description>
-    <value>0.8</value>
+    <value>0.5</value>
   </simple>
   <simple name="max_omega" type="double">
     <description>Maximum allowed rotational command velocity</description>

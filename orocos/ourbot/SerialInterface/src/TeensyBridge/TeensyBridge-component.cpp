@@ -98,7 +98,7 @@ void TeensyBridge::recalculatePose()
 	// UPDATE 5/11/2015: Average over all wheels so that the rotation is more accurate
 	//_pose[2] = (_motor_states[1].position - _motor_states[2].position)*_kinematic_conversion_orientation;
   _pose[2] = 0.5*((_motor_states[1].position - _motor_states[2].position) + (_motor_states[3].position - _motor_states[0].position))*_kinematic_conversion_orientation;
-	
+
 	_cal_enc_pose_port.write(_pose);
 }
 
@@ -289,7 +289,6 @@ void TeensyBridge::setVelocity(double vx, double vy, double w)
 		motor_command.command_left_rear = (vx + vy - w)*_kinematic_conversion_wheel;
 		motor_command.command_right_rear = (vx - vy + w)*_kinematic_conversion_wheel;
 		motor_command.command_type = 3;
-
 		mavlink_msg_motor_command_encode(0,0,&msg,&motor_command);
 		numbytes = mavlink_msg_to_send_buffer(buffer, &msg);
 		writeBytes(buffer, numbytes);

@@ -42,9 +42,28 @@ class GamePad : public USBInterface
     RTT::OutputPort<double > _gamepad_lt_port;
     RTT::OutputPort<double > _gamepad_rt_port;
 
+    std::vector<double> _gamepad_laxis;
+    std::vector<double> _gamepad_raxis;
+    bool _gamepad_A;
+    bool _gamepad_B;
+    bool _gamepad_X;
+    bool _gamepad_Y;
+    bool _gamepad_back;
+    bool _gamepad_start;
+    bool _gamepad_logitech;
+    bool _gamepad_laxisbutton;
+    bool _gamepad_raxisbutton;
+    bool _gamepad_up;
+    bool _gamepad_down;
+    bool _gamepad_left;
+    bool _gamepad_right;
+    bool _gamepad_lb;
+    bool _gamepad_rb;
+    double _gamepad_lt;
+    double _gamepad_rt;
+
     gamepad_event_t _event;
-    std::vector<double> _laxis;
-    std::vector<double> _raxis;
+    void writePorts();
     void decodeButtons();
     void decodeAxes();
     double transformData(int);

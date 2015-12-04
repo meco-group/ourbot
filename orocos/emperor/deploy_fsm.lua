@@ -37,9 +37,11 @@ local distrports_to_report = {
                       -- 'imur_cal_imu_dorientation_3d_port',
                       -- 'imur_cal_imu_dorientation_port',
                       -- 'imur_cal_imu_temperature_port',
-                      'cal_lidar_x_port',
-                      'cal_lidar_y_port',
-                      'cal_enc_pose_port'}
+                      -- 'cal_lidar_x_port',
+                      -- 'cal_lidar_y_port',
+                      -- 'cal_enc_pose_port'
+                      'cal_lidar_global_node_port'
+                    }
                       -- 'cal_motor_current_port',
                       -- 'cal_motor_voltage_port', 'cal_velocity_port'}
   --add here componentname = 'portnames'
