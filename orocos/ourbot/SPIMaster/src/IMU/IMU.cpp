@@ -212,12 +212,20 @@ uint8_t IMU::pin2GPIO(uint8_t pin){
   uint8_t GPIO = 0; //need to initialize, otherwise its value is the same for different function calls
   IMU_DEBUG_PRINT("The pin number is: " << (int)pin)
   switch(pin){
-    case 13:      //CSG
-      GPIO = 21;
+    case 19:     //CSG_r
+      GPIO = 30;
       IMU_DEBUG_PRINT("The GPIO number is: " << (int)GPIO)
       break; //otherwise default is always selected afterwards
-    case 15:			//CSXM
-      GPIO = 18;
+    case 20:	 //CSXM_r
+      GPIO = 28;
+      IMU_DEBUG_PRINT("The GPIO number is: " << (int)GPIO)
+      break; //otherwise default is always selected afterwards
+    case 21:	 //CSG_l
+      GPIO = 29;
+      IMU_DEBUG_PRINT("The GPIO number is: " << (int)GPIO)
+      break; //otherwise default is always selected afterwards
+    case 22:	 //CSXM_l
+      GPIO = 31;
       IMU_DEBUG_PRINT("The GPIO number is: " << (int)GPIO)
       break; //otherwise default is always selected afterwards
     default:
