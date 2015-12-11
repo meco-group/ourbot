@@ -104,10 +104,10 @@
 
   <simple name="accmag_pin" type="long">
     <description>Chip select pin of the accelerometer and magnetometer</description>
-    <value>31</value>
+    <value>22</value>
   </simple>
   <simple name="gyr_pin" type="long">
     <description>Chip select pin of the gyroscope</description>
-    <value>29</value>
+    <value>21</value>
   </simple>
 </properties>
