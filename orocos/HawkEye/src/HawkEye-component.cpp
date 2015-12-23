@@ -11,11 +11,13 @@ HawkEye::HawkEye(std::string const& name) : TaskContext(name, PreOperational){
   addProperty("resolution", _resolution).doc("Resolution");
 
 #else //if in Test-mode
-  _device = "/dev/video0"; //locate video device on Odroid
+  _device = "/dev/video1"; //locate video device on Odroid
   _resolution = LOW;
   _fps = 256;   //max for this resolution, if using USB 3.0
-  _workspace_path = "home/odroid/orocos/ourbot/orocos/ourbot"; //TODO: adapt to right path
-  setenv("WORKSPACE", _workspace_path, 1); //assign path to environmental variable 'WORKSPACE'
+  _workspace_path = "/home/tim/orocos/ourbot/orocos"; //TODO: adapt to right path
+  _brightness = 15; //0...40
+  _exposure = 200; //1...10000
+  // setenv("WORKSPACE", _workspace_path, 1); //assign path to environmental variable 'WORKSPACE'
 
 #endif //HAWKEYE_TESTFLAG
 
@@ -32,13 +34,13 @@ bool HawkEye::configureHook(){
 
   //Set operating flags and paths
   _stillsrun= false;    //operate from still images not live video, for testing
-  _save_image = false;  //record images
+  _save_image = true;  //record images/get new background at start
   _load_background_from_file = false; //select if you want to use an old background or make a new one
   _draw_markers = true; // draw detected and computed markers from templated matching
   _print_cam_info = true; //print camera capabilities while starting the camera
   _cntapprox= 0.025; //
   _diffthresh= 30; //
-  _save_img_path = *getenv("WORKSPACE") + "/SerialInterface/src/HawkEye/Images/"; //working directory is saved in environment variable
+  _save_img_path = _workspace_path + "/HawkEye/src/Images/"; //working directory is saved in environment variable
 
   //Initialize class variables
   _robobox = cv::RotatedRect(cv::Point2f(0,0), cv::Size2f(0,0), 0);
@@ -46,12 +48,14 @@ bool HawkEye::configureHook(){
   if (_stillsrun){
       _path = ""; //Todo: add correct path
   }
-  else{   
-      _path = *getenv("WORKSPACE") + "/SerialInterface/src/HawkEye/";
+  else{  
+      _path = _workspace_path + "/HawkEye/src/";
   }
 
   //Read in templates
+  HAWKEYE_DEBUG_PRINT("circle template path: "<<_path+"Images/templates/mod1.tiff")
   _template_circle= cv::imread(_path+"Images/templates/mod1.tiff", CV_LOAD_IMAGE_GRAYSCALE);
+  HAWKEYE_DEBUG_PRINT("template_circle type: "<<_template_circle.type())
   if(! _template_circle.data )                              // Check for invalid input
   {
       RTT::log(RTT::Error)<<"Could not open or find the circle template"<<RTT::endlog();
@@ -71,10 +75,8 @@ bool HawkEye::configureHook(){
   }
 
   setResolution(_resolution); //load resolution into class variables
-  setBrightness(_brightness); //load brightness into class variable
 
   checkFPS(_resolution); //check if selected fps is compatible with the resolution
-
 
   // Show example data sample to output ports to make data flow real-time
   int example = 0;
@@ -95,6 +97,9 @@ bool HawkEye::startHook(){
   //Set-up camera
   startCamera();
 
+  setBrightness(_brightness); //set camera brightness
+  setExposure(_exposure); //set camera exposure
+
   //Capture background and save for further use in backgroundSubtraction()
   getBackground(); 
 
@@ -105,11 +110,16 @@ bool HawkEye::startHook(){
 void HawkEye::updateHook(){
   
   //Todo: do we also work with a fifo here?
-
+  HAWKEYE_DEBUG_PRINT("Starting processImage")
+  
   processImage(); //grab image, find patterns, discern obstacles from robot, save contours
-
+  
+  HAWKEYE_DEBUG_PRINT("Starting processResults")
+  
   processResults(); //process contours into obstacles
-
+  
+  HAWKEYE_DEBUG_PRINT("Starting writeResults")
+  
   writeResults(); //write results to output ports
 
   if (HAWKEYE_PLOT){ 
@@ -130,8 +140,7 @@ void HawkEye::stopHook() {
 }
 
 void HawkEye::pabort(const char *s){   //error catching
-    char *errorString = strerror(_errno);
-    RTT::log(RTT::Error) <<"error string: "<<*s<<", with value: "<<*errorString <<RTT::endlog();
+    RTT::log(RTT::Error) <<"error string: "<<std::strerror(_errno)<<RTT::endlog();
 }
 
 int HawkEye::xioctl(int fd, int request, void *arg){ //adapted ioctl implementation
@@ -246,14 +255,12 @@ void HawkEye::startCamera(){ //Open file descriptor, set resolution, initialize 
         pabort("Error while querying Buffer");
     }
  
-    _buffer = (int*)mmap (NULL, buf.length, PROT_READ | PROT_WRITE, MAP_SHARED, _fd, buf.m.offset); //mmap: create a "virtual" memory map for the whole file, without actually reading it into memory
+    _buffer = (uint8_t*)mmap (NULL, buf.length, PROT_READ | PROT_WRITE, MAP_SHARED, _fd, buf.m.offset); //mmap: create a "virtual" memory map for the whole file, without actually reading it into memory
     HAWKEYE_DEBUG_PRINT("Length: "<<buf.length)
-    HAWKEYE_DEBUG_PRINT("Address: "<<buffer)
+    HAWKEYE_DEBUG_PRINT("Address: "<<_buffer)
     HAWKEYE_DEBUG_PRINT("Image length: "<<buf.bytesused)
 
     //Prepare for capturing images 
-    //Todo: remove this part, already done above?
-    // struct v4l2_buffer buf = {0};
     buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     buf.memory = V4L2_MEMORY_MMAP;
     buf.index = 0;
@@ -296,6 +303,7 @@ void HawkEye::setResolution(resolution_t resolution) {
 }
 
 void HawkEye::setBrightness(int brightness){ //From Videostreaming::changeSettings()
+    HAWKEYE_DEBUG_PRINT("Setting brightness to: "<<brightness)
     struct v4l2_control c;
     c.id = V4L2_CID_BRIGHTNESS;
     c.value = brightness;    
@@ -304,6 +312,16 @@ void HawkEye::setBrightness(int brightness){ //From Videostreaming::changeSettin
     }
   }
 
+void HawkEye::setExposure(int exposure){ //From Videostreaming::changeSettings()
+  HAWKEYE_DEBUG_PRINT("Setting exposure to: "<<exposure)
+  struct v4l2_control c;
+  c.id = V4L2_CID_EXPOSURE;
+  c.value = exposure;    
+  if (-1 == ioctl(_fd, VIDIOC_S_CTRL, &c)) { //VIDIOC_G_CTRL, VIDIOC_S_CTRL — Get or set the value of a control
+      pabort("Error in setting the value of the exposure");        
+  }
+}
+
 void HawkEye::checkFPS(resolution_t resolution) {
 
     //Check if _fps for selected resolution is not too high
@@ -311,23 +329,35 @@ void HawkEye::checkFPS(resolution_t resolution) {
       if (_fps > 256){
         RTT::log(RTT::Error)<<"For the selected resolution: "<<_width<<"x"<<_height<<", "<<_fps<<"fps is too high, maximum value is 256."<<RTT::endlog();
       }
+      else{
+        HAWKEYE_DEBUG_PRINT("Checked FPS: the selected "<<_fps<< " frames per second are appropriate for the selected resolution")
+      }
     }
 
     if (resolution == HD720p){
       if (_fps > 90){
         RTT::log(RTT::Error)<<"For the selected resolution: "<<_width<<"x"<<_height<<", "<<_fps<<"fps is too high, maximum value is 90."<<RTT::endlog();
       } 
+      else{
+        HAWKEYE_DEBUG_PRINT("Checked FPS: the selected "<<_fps<< " frames per second are appropriate for the selected resolution")
+      }
     }
 
     if (resolution == HD1080p){
       if (_fps > 40){
         RTT::log(RTT::Error)<<"For the selected resolution: "<<_width<<"x"<<_height<<", "<<_fps<<"fps is too high, maximum value is 40."<<RTT::endlog();
       }
+      else{
+        HAWKEYE_DEBUG_PRINT("Checked FPS: the selected "<<_fps<< " frames per second are appropriate for the selected resolution")
+      }
     }
 
     if (resolution == FULL){
       if (_fps > 14){
         RTT::log(RTT::Error)<<"For the selected resolution: "<<_width<<"x"<<_height<<", "<<_fps<<"fps is too high, maximum value is 14."<<RTT::endlog();
+      }
+      else{
+        HAWKEYE_DEBUG_PRINT("Checked FPS: the selected "<<_fps<< " frames per second are appropriate for the selected resolution")
       }
     }
 }
@@ -371,7 +401,6 @@ void HawkEye::capture_image(){
     if(-1 == xioctl(_fd, VIDIOC_DQBUF, &buf)){
         pabort("Error while retrieving frame");
     }
-    HAWKEYE_DEBUG_PRINT("saving image")
     // cv::Mat frame;
     cv::Mat m_RGB(cv::Size(_width, _height), CV_8UC3);
     
@@ -380,13 +409,21 @@ void HawkEye::capture_image(){
     bayer10_to_rgb24(reinterpret_cast<uint16_t*>(_buffer), m_RGB.data, _width, _height, 2); //TODO: is this a new buffer or _buffer?
 
     // extractIRImage((unsigned short int *)buffer, (unsigned char *)m_IR->imageData, _width,_height);
- 
+    HAWKEYE_DEBUG_PRINT("RGB channels: "<<m_RGB.channels())
+    // HAWKEYE_DEBUG_PRINT("RGB channels: "<<m_RGB.data)
     cv::Mat grayImg( cv::Size(_width,_height), CV_8UC1 );
-    cv::cvtColor(m_RGB , grayImg, CV_BGR2GRAY );
-    cv::imwrite("image_rgb.jpg", grayImg);
+    if (!m_RGB.empty() && !grayImg.empty()){
+      cv::cvtColor(m_RGB , grayImg, CV_BGR2GRAY);
+      HAWKEYE_DEBUG_PRINT("saving image")
+      HAWKEYE_DEBUG_PRINT("m_RGB type: "<<m_RGB.type())
+    }
+    cv::imwrite("image_rgb.jpg", m_RGB);
+    cv::imwrite("image_gray.jpg", grayImg);
     // cv::Mat tmpMat = cv::cvarrToMat(grayImg, true); //convert iplImage to Mat
-    _f = grayImg; //save as current frame _f
-    
+    _f = m_RGB; //save as current frame _f
+    // _f = grayImg; //save as current frame _f
+    HAWKEYE_DEBUG_PRINT("current frame channels: "<<_f.channels())
+    HAWKEYE_DEBUG_PRINT("current frame type: "<<_f.type())
     // cvSaveImage("image_ir.bmp",m_IR,0);
 
     // cvReleaseImage(&grayImg); //free memory
@@ -415,7 +452,7 @@ void HawkEye::getBackground()
         }
     }
     else{    
-        _background.create(_f.size(),CV_32FC1);
+        _background.create(_f.size(),CV_32FC3); //RGB image
         // old: _background = np.float32(f); //initialize average as current captured frame 
         
         //loop over images and estimate background
@@ -425,7 +462,7 @@ void HawkEye::getBackground()
             cv::accumulateWeighted(_f,_background,0.1);
         }
         HAWKEYE_DEBUG_PRINT("Average aquired over 50 frames")
-        _background.convertTo(_background, CV_8UC1); //convert background to uint8_t presentation
+        _background.convertTo(_background, CV_8UC3); //convert background to uint8_t presentation
         // old: _background.astype("uint8_t");
     }
         
@@ -439,8 +476,14 @@ void HawkEye::processImage()
 
   std::vector<std::vector<cv::Point> > contours;
   std::vector<cv::Vec4i> hierarchy; //<Vec4i> is a vector: [x1,y1,x2,y2]
-
+  HAWKEYE_DEBUG_PRINT("Starting background subtraction")
+  
   backgroundSubtraction(&contours, &hierarchy);
+
+  HAWKEYE_DEBUG_PRINT("Finished background subtraction")
+  if (hierarchy.empty()){
+    HAWKEYE_DEBUG_PRINT("No contours were found...")
+  }
 
   if (!hierarchy.empty()){
     for (int c_i = 0; c_i < contours.size(); c_i++){ //goal is to take first element of hierarchy and combine with first contour etc.
@@ -501,32 +544,37 @@ void HawkEye::processImage()
 
 void HawkEye::backgroundSubtraction(std::vector<std::vector<cv::Point> > *contours, std::vector<cv::Vec4i> *hierarchy){
     double read_time = 0;
-    while (read_time < 1/(_fps)){//while read_time is too low, i.e., it's buffered... discard the buffered one 
+    // while (read_time < 1/(_fps)){//while read_time is too low, i.e., it's buffered... discard the buffered one 
         _capture_time = time(0); //before reading
         // meta,f = _cap.read();
         //Todo: deal with meta data
         // _cap >> _f;
         capture_image(); //update _f to current frame
         read_time =  difftime(time(0) , _capture_time); //time it took to read image
-    }    
+    // }    
 
     if (_save_image){
+        HAWKEYE_DEBUG_PRINT("Saving current frame")
+        HAWKEYE_DEBUG_PRINT(_save_img_path + "1img-" + std::to_string(_capture_time) + ".png")
         cv::imwrite(_save_img_path + "1img-" + std::to_string(_capture_time) + ".png" ,_f);
     }
 
-    cv::absdiff(_background, _f, _diff);  //background subtraction
-    cv::cvtColor(_diff, _diff , CV_RGB2GRAY); //convert to grayscale
+    cv::absdiff(_background, _f, _diff);  //background subtraction on RGB images
+    cv::cvtColor(_diff, _diff , CV_RGB2GRAY); //convert _diff to grayscale 
     
     if (_save_image){
+        HAWKEYE_DEBUG_PRINT("Saving current difference with background")
         cv::imwrite(_save_img_path + "2diff-" + std::to_string(_capture_time) + ".png",_diff);
     }
     cv::threshold(_diff, _mask,_diffthresh, 255, cv::THRESH_BINARY); //gives a black/white image: compared background to captured frame and makes pixels which differ enough from background black (= obstacle)
 
     if (_save_image){
+        HAWKEYE_DEBUG_PRINT("Saving current mask")
         cv::imwrite(_save_img_path + "3mask-" + std::to_string(_capture_time) + ".png",_mask);
     }
 
     if (HAWKEYE_PLOT){ //Plot results of background subtraction
+        HAWKEYE_DEBUG_PRINT("Showing current frame, difference and mask")
         cv::imshow("unprocessed", _f);
         cv::imshow("diffimage", _diff);
         cv::imshow("mask",_mask);
@@ -534,6 +582,8 @@ void HawkEye::backgroundSubtraction(std::vector<std::vector<cv::Point> > *contou
     } 
 
     _maskcopy = _mask.clone();//Todo: is this correct or does mask change now if copy changes?
+
+    HAWKEYE_DEBUG_PRINT("Starting to look for contours")
 
     cv::findContours(_maskcopy, *contours, *hierarchy, cv::RETR_EXTERNAL,cv::CHAIN_APPROX_SIMPLE); //find contours in the mask
     //Todo: get these contours and hierarchy out of this function: class variables or pointers?
@@ -911,7 +961,7 @@ void HawkEye::printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat templat
         double max_val;
         std::vector<int> maxpoints;
         try{
-            multiObject(image, template_circle, matchThresh, &temp_circle_size.width, &temp_circle_size.height, &max_val, maxpoints); //returns most probable position, width and height of robot circle markers (=mod)
+            multiObject(image, template_circle, matchThresh, &temp_circle_size.width, &temp_circle_size.height, &max_val, &maxpoints); //returns most probable position, width and height of robot circle markers (=mod)
             
             robottocks[0] = maxpoints[0]; //[x1,y1,x2,y2,w,h,max_val]
             robottocks[1] = maxpoints[1];
@@ -939,8 +989,7 @@ void HawkEye::printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat templat
               cv::imshow("mods", image);
             }
             //Todo: it seemed like no patterns detected was always printed?
-            HAWKEYE_DEBUG_PRINT("No mod patterns detected!")
-            HAWKEYE_DEBUG_PRINT(e)
+            RTT::log(RTT::Error) << "No mod patterns detected! Error message: "<<e.what()<< RTT::endlog();
             mods = false;
         }
       // print traceback.format_exc()
@@ -949,7 +998,7 @@ void HawkEye::printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat templat
         double max_val1;
         cv::Point temploc1;
         try{
-            oneObject(image, template_star1, matchThresh, &temp_star1_size.width, &temp_star1_size.height, &max_val1, temploc1); //star candidate1
+            oneObject(image, template_star1, matchThresh, &temp_star1_size.width, &temp_star1_size.height, &max_val1, &temploc1); //star candidate1
             starcand1[0] = temploc1.x; //x,y,w,h,max_val
             starcand1[1] = temploc1.y;
             starcand1[2] = max_val1;
@@ -968,15 +1017,14 @@ void HawkEye::printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat templat
             if (HAWKEYE_PLOT){
               cv::imshow("star1", image);
             }
-            HAWKEYE_DEBUG_PRINT("No star1 patterns detected!")
-            HAWKEYE_DEBUG_PRINT(e)
+            RTT::log(RTT::Error) << "No star1 patterns detected! Error message: "<<e.what()<< RTT::endlog();
         }
       // print traceback.format_exc()
         double starcand2[5] = {0};
         double max_val2;
         cv::Point temploc2;
         try{
-            oneObject(image, template_star2, matchThresh, &temp_star2_size.width, &temp_star2_size.height, &max_val2, temploc2);
+            oneObject(image, template_star2, matchThresh, &temp_star2_size.width, &temp_star2_size.height, &max_val2, &temploc2);
             starcand2[0] = temploc2.x; //x,y,w,h,max_val
             starcand2[1] = temploc2.y;
             starcand2[2] = max_val2;
@@ -995,8 +1043,7 @@ void HawkEye::printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat templat
             if (HAWKEYE_PLOT){
               cv::imshow("star2", image);
             }
-            HAWKEYE_DEBUG_PRINT("No star2 patterns detected!")
-            HAWKEYE_DEBUG_PRINT(e)
+            RTT::log(RTT::Error) << "No star2 patterns detected! Error message: "<<e.what()<< RTT::endlog();
         }
         // print traceback.format_exc()
             
@@ -1020,11 +1067,12 @@ void HawkEye::printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat templat
     }
 }
 
-void HawkEye::oneObject(cv::Mat image, cv::Mat templim, float thresh, int *w, int *h, double *max_val, cv::Point temploc){ //captured frame, limits from the template you want to match
+void HawkEye::oneObject(cv::Mat image, cv::Mat templim, float thresh, int *w, int *h, double *max_val, cv::Point *temploc){ //captured frame, limits from the template you want to match
     cv::Size templim_size = templim.size(); 
     *h = templim_size.height;
     *w = templim_size.width;
     cv::Size image_size = image.size(); 
+    cv::cvtColor(image, image , CV_RGB2GRAY); //Convert current frame (i.e. image) to grayscale, for use in matchtemplate (since templim is grayscale)
 
     cv::Mat result ;
     double min_val;
@@ -1032,11 +1080,13 @@ void HawkEye::oneObject(cv::Mat image, cv::Mat templim, float thresh, int *w, in
     cv::Point max_loc;
 
     if (*h < image_size.height && *w < image_size.width){ //image is bigger than the template
+        HAWKEYE_DEBUG_PRINT("image type: "<<image.type())
+        HAWKEYE_DEBUG_PRINT("template type: "<<templim.type())
         cv::matchTemplate(image , templim , result, cv::TM_CCOEFF_NORMED); //match the template
         cv::minMaxLoc(result, &min_val, max_val, &min_loc, &max_loc); //get best matches + their positions e.g. star pattern position of robot
-        HAWKEYE_DEBUG_PRINT("match score: "<<std::to_string(max_val))
+        HAWKEYE_DEBUG_PRINT("match score: "<<std::to_string(*max_val))
         if (*max_val > thresh){ //accept the match
-            temploc = max_loc;
+            *temploc = max_loc;
             HAWKEYE_DEBUG_PRINT("template location: "<<temploc<<"template width: "<<w<<"template height: "<<h)    
         }
         else{
@@ -1045,13 +1095,14 @@ void HawkEye::oneObject(cv::Mat image, cv::Mat templim, float thresh, int *w, in
     }
 }
     
-void HawkEye::multiObject(cv::Mat image, cv::Mat templim, float thresh, int *w, int *h, double *max_val, std::vector<int> maxpoints){ //use this for the circles, since there are two circle patterns on the robot
-    maxpoints.clear(); //initialize vector as empty
+void HawkEye::multiObject(cv::Mat image, cv::Mat templim, float thresh, int *w, int *h, double *max_val, std::vector<int> *maxpoints){ //use this for the circles, since there are two circle patterns on the robot
+    maxpoints->clear(); //initialize vector as empty
 
     cv::Size templim_size = templim.size(); 
     *h = templim_size.height;
     *w = templim_size.width;
     cv::Size image_size = image.size(); 
+    cv::cvtColor(image, image , CV_RGB2GRAY); //Convert current frame (i.e. image) to grayscale, for use in matchtemplate (since templim is grayscale)
 
     cv::Mat result;
     double min_val;
@@ -1079,9 +1130,9 @@ void HawkEye::multiObject(cv::Mat image, cv::Mat templim, float thresh, int *w, 
             for (int j = 0 ; j < result.cols; j++){
                 // if (result.at<double>(Point(j, k)) > thresh){ //without pointers
                 if (myData[k + j] > thresh){ //By using pointers, should be faster
-                    if (maxpoints.empty()){ //test if vector is still empty
-                        maxpoints.push_back(k); //add first point
-                        maxpoints.push_back(j);
+                    if (maxpoints->empty()){ //test if vector is still empty
+                        maxpoints->push_back(k); //add first point
+                        maxpoints->push_back(j);
                         a.x = k;
                         a.y = j;
                     }
@@ -1090,16 +1141,17 @@ void HawkEye::multiObject(cv::Mat image, cv::Mat templim, float thresh, int *w, 
                         b.y = j;
                         double dist = cv::norm(cv::Mat(a), cv::Mat(b),cv::NORM_L2); //Euclidean distance
                         if (dist > *w){ //test if distance of point you check > template width, if so then add
-                            maxpoints.push_back(k);
-                            maxpoints.push_back(j);
+                            maxpoints->push_back(k);
+                            maxpoints->push_back(j);
                         }
                     }
                 }
             }
         }
 
-        HAWKEYE_DEBUG_PRINT("maximum value of match: "<<max_val)        
-        HAWKEYE_DEBUG_PRINT("template locations: "<<maxpoints<<"template width: "<<w<<"template height: "<<h)  
+        HAWKEYE_DEBUG_PRINT("maximum value of match: "<<*max_val)    
+        //something wrong with maxpoints???  make class variable of it?  
+        HAWKEYE_DEBUG_PRINT("template locations: "<<(*maxpoints)[0]<<" template width: "<<*w<<"template height: "<<*h)  
 
     }
 }
@@ -1118,6 +1170,8 @@ std::vector<int> HawkEye::twoTemplate(cv::Mat image, cv::Mat templim1, cv::Mat t
     double max_val1;
     cv::Point2i min_loc1;
     cv::Point2i max_loc1;
+
+    cv::cvtColor(image, image , CV_RGB2GRAY); //Convert current frame (i.e. image) to grayscale, for use in matchtemplate (since templim is grayscale)
 
     cv::matchTemplate(image, templim1, result1, cv::TM_CCOEFF_NORMED);
     cv::minMaxLoc(result1, &min_val1, &max_val1, &min_loc1, &max_loc1);

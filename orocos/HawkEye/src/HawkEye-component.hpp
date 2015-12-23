@@ -2,9 +2,9 @@
 #define OROCOS_HAWKEYE_COMPONENT_HPP
 
 //Set flags:
-//#define HAWKEYE_TESTFLAG
-//#define HAWKEYE_PLOTFLAG
-//#define HAWKEYE_DEBUGFLAG
+#define HAWKEYE_TESTFLAG
+// #define HAWKEYE_PLOTFLAG
+#define HAWKEYE_DEBUGFLAG
 
 #ifdef HAWKEYE_DEBUGFLAG //Print statements on/off
 	#define HAWKEYE_DEBUG_PRINT(x)	std::cout << x << std::endl;
@@ -77,13 +77,14 @@ class HawkEye : public RTT::TaskContext{
 
     //Class variables
     std::string  _device; // standard value is "/dev/video1" , since video0 is the webcam. The name is: See3CAM_CU40
-    std::string *_workspace_path; 
+    std::string  _workspace_path; 
     int _fps;
     int _brightness; 
+    int _exposure;
     int _width;
     int _height;
     resolution_t _resolution;
-    int *_buffer;
+    uint8_t *_buffer;
     int _errno;  //error handling
     // int _shutter_speed;
 
@@ -140,6 +141,7 @@ class HawkEye : public RTT::TaskContext{
     //Class methods - general
     void setResolution(resolution_t resolution);
     void setBrightness(int brightness);
+    void setExposure(int exposure);
     void checkFPS(resolution_t resolution);
     void getBackground();
     void backgroundSubtraction(std::vector<std::vector<cv::Point> > *contours, std::vector<cv::Vec4i> *hierarchy);
@@ -160,8 +162,8 @@ class HawkEye : public RTT::TaskContext{
 
     //Class methods - matcher
     void printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat template_star1, cv::Mat template_star2, bool *success, double *robottocks, double *starpat, float matchThresh, bool draw_markers, std::vector<int> rorig);
-    void oneObject(cv::Mat image, cv::Mat templim, float thresh, int *w, int *h, double *max_val, cv::Point temploc);
-    void multiObject(cv::Mat image, cv::Mat templim, float thresh, int *w, int *h, double *max_val, std::vector<int> maxpoints);
+    void oneObject(cv::Mat image, cv::Mat templim, float thresh, int *w, int *h, double *max_val, cv::Point *temploc);
+    void multiObject(cv::Mat image, cv::Mat templim, float thresh, int *w, int *h, double *max_val, std::vector<int> *maxpoints);
     std::vector<int> twoTemplate(cv::Mat image, cv::Mat templim1, cv::Mat templim2, float thresh);
 
   public:
