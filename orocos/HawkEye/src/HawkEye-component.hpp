@@ -22,6 +22,7 @@
 #include <iostream>
 #include <stdlib.h>  //setenv and getenv
 #include <time.h> //to get timing information: difftime(), time(),...
+#include <chrono> //to get time in milliseconds
 #include <math.h> //atan2
 
 #include <string> //for std::to_string
@@ -93,6 +94,7 @@ class HawkEye : public RTT::TaskContext{
     bool _save_image;   //record images
     bool _load_background_from_file; //if you don't want to make a new background
     bool _draw_markers; //draw detected and computed markers from templated matching
+    bool _draw_contours; //draw detected contours
     bool _print_cam_info; //print the camera info while starting the camera (resolution, pixel format, capabilities,...)
     double _cntapprox;
     int _diffthresh;
@@ -109,7 +111,7 @@ class HawkEye : public RTT::TaskContext{
     int _fd; //file descriptor for camera
 
     //Images
-    time_t _capture_time; //timestamp for current frame
+    unsigned long _capture_time; //timestamp for current frame
     cv::Mat _f; //current frame
     cv::Mat _background; //background image
     cv::Mat _diff; //current difference with background image
@@ -129,6 +131,10 @@ class HawkEye : public RTT::TaskContext{
     std::vector<std::vector<double> > _circlesflip;     //holds all circle representations of obstacles, flipped
     std::vector<std::vector<double> > _circlesflip_correct; //holds all circle representations of obstacles, when the robot was touching an obstacle
     std::vector<std::vector<double> > _circlesDetected; //holds all detected circles
+
+    std::vector<int> _template_circles_pos; 
+    cv::Point _template_star_pos; 
+
     cv::RotatedRect _robobox; //hold contours of robot
     double _robcenflip[2]; //holds flipped center of robot
     double _roboState[3]; //holds State of the robot
