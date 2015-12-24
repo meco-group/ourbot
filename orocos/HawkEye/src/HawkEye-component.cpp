@@ -608,12 +608,14 @@ void HawkEye::findRobots()
     double robottocks[7] = {0}; //maxpoints((x,y),(x,y)), w, h, max_val --> positions of circular markers
     double starpat[5] = {0};    //temploc(x,y), w, h, max_val --> position of star marker
     printedMatch(_roi, _template_circle, _template_star1, _template_star2, &success, robottocks, starpat, _matchThresh, _draw_markers, _rorig);
+    HAWKEYE_DEBUG_PRINT("printedMatch completed")
     if (success == true){
         for (int k = 0 ; k<7 ; k++){
           _drawmods[k] = robottocks[k];
         }
         for (int k = 0 ; k<5 ; k++){
           _drawstar[k] = starpat[k];
+          HAWKEYE_DEBUG_PRINT("starpat in findrobots():"<<starpat[k])
         }
         // std::copy(std::begin(robottocks[0]), std::end(robottocks[6]), std::begin(_drawmods[0])); //copy arrays
         // std::copy(std::begin(starpat[0]), std::end(starpat[4]), std::begin(_drawstar[0]));
@@ -1157,7 +1159,7 @@ void HawkEye::multiObject(cv::Mat image, cv::Mat templim, float thresh, int *w, 
     if (*h < image_size.height && *w < image_size.width){
         cv::matchTemplate(image , templim , result, cv::TM_CCOEFF_NORMED); //match the template
         cv::normalize( result, result, 0, 1, cv::NORM_MINMAX, -1, cv::Mat() );
-        cv::minMaxLoc(result, &min_val, max_val, &min_loc, &max_loc);
+        // cv::minMaxLoc(result, &min_val, max_val, &min_loc, &max_loc);
         //Image is a matrix with each element being a pixel in grayscale so with a value 0...255
         //result is a matrix with each element being the correspondance with the template
         //Loop over all elements of the result matrix, see which pixels are >= thresh
@@ -1167,6 +1169,25 @@ void HawkEye::multiObject(cv::Mat image, cv::Mat templim, float thresh, int *w, 
 
         //Todo: how do you make sure that you get the midpoint of the template and not a random point on the template?      
 
+        while (true) 
+        {
+            // double minval, maxval, threshold = 0.8;
+            // cv::Point minloc, maxloc;
+            cv::minMaxLoc(result, &min_val, max_val, &min_loc, &max_loc);
+
+            if (*max_val >= thresh)
+            {
+                maxpoints->push_back(max_loc.x);
+                maxpoints->push_back(max_loc.y);
+                cv::rectangle(image, max_loc, cv::Point(max_loc.x + templim.cols, max_loc.y + templim.rows), CV_RGB(0,255,0), 2);
+                cv::floodFill(result, max_loc, cv::Scalar(0), 0, cv::Scalar(.1), cv::Scalar(1.));
+            }
+            else
+                break;
+        }
+
+
+        /* REMOVED OLD IMPLEMENTATION OF NP.WHERE()
         unsigned char *myData = result.data; //By using pointers, should be faster
 
         cv::Point2i a; //help variables for Euclidean distance
@@ -1208,6 +1229,7 @@ void HawkEye::multiObject(cv::Mat image, cv::Mat templim, float thresh, int *w, 
                 }
             }
         }
+        */
 
         HAWKEYE_DEBUG_PRINT("maximum circle template location: x = "<<max_loc.x<<" y = "<<max_loc.y)
         if (1){ //Todo: remove
