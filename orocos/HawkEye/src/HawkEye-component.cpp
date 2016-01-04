@@ -15,8 +15,8 @@ HawkEye::HawkEye(std::string const& name) : TaskContext(name, PreOperational), _
   _resolution = LOW;
   _fps = 256;   //max for this resolution, if using USB 3.0
   _workspace_path = "/home/tim/orocos/ourbot/orocos"; //TODO: adapt to right path
-  _brightness = 5; //0...40
-  _exposure = 50; //1...10000
+  _brightness = 6; //0...40
+  _exposure = 100; //1...10000
   // setenv("WORKSPACE", _workspace_path, 1); //assign path to environmental variable 'WORKSPACE'
 
 #endif //HAWKEYE_TESTFLAG
@@ -492,15 +492,19 @@ void HawkEye::processImage()
   }
 
   if (!hierarchy.empty()){
+    std::vector<cv::Point> c;
+    cv::Rect rectangle;
+    double area;
+    cv::RotatedRect rotrect; //minimum area rectangle around contour
+    cv::Point2f ccenter;
+    float cradius;
+
     for (int c_i = 0; c_i < contours.size(); c_i++){ //goal is to take first element of hierarchy and combine with first contour etc.
-        std::vector<cv::Point> c;
         cv::convexHull(contours[c_i], c); //convex hull of the detected obstacle/contour
-        cv::Rect rectangle = cv::boundingRect(c); //rectangle around contour: rectangle.x, y, width, height
-        double area = cv::contourArea(c);
+        rectangle = cv::boundingRect(c); //rectangle around contour: rectangle.x, y, width, height
+        area = cv::contourArea(c);
         HAWKEYE_DEBUG_PRINT("Area: "<<area);
-        cv::RotatedRect rotrect= cv::minAreaRect(c); //minimum area rectangle around contour
-        cv::Point2f ccenter;
-        float cradius; 
+        rotrect= cv::minAreaRect(c); //minimum area rectangle around contour
         cv::minEnclosingCircle(c, ccenter, cradius); //circle around obstacle
 
         // add small sized objects to object contours
@@ -516,11 +520,22 @@ void HawkEye::processImage()
         }
         
         // process large objects, this is where the robot will be detected
-        if (area>900){// and hier[3]==-1:
-            double cx = ccenter.x;
-            double cy = ccenter.y;
-            cv::Size fsize = _f.size(); 
-            double cyflip= fsize.height-cy; //Todo: selected correct dimension?
+        double cx;
+        double cy;
+        double cyflip;
+        cv::Size fsize;
+
+        int rorigx; 
+        int rorigy; 
+        int rorigh; 
+        int rorigw; 
+        int roriArray[4];
+
+        if (area>900){// and hier[3]==-1: //Todo: adapt value for new camera
+            cx = ccenter.x;
+            cy = ccenter.y;
+            fsize = _f.size(); 
+            cyflip= fsize.height-cy; //Todo: selected correct dimension?
             
 
             // integer coordinates only
@@ -531,11 +546,14 @@ void HawkEye::processImage()
             ccenter.y = cy;
             cradius = static_cast<int>(cradius);
 
-            int rorigx= rectangle.x;
-            int rorigy= rectangle.y;
-            int rorigh= rectangle.height;
-            int rorigw= rectangle.width;
-            int roriArray[] = { rorigx, rorigy, rorigh, rorigw };
+            rorigx= rectangle.x;
+            rorigy= rectangle.y;
+            rorigh= rectangle.height;
+            rorigw= rectangle.width;
+            roriArray[0] = rorigx;
+            roriArray[1] = rorigy;
+            roriArray[2] = rorigh;
+            roriArray[3] = rorigw;
             _rorig.assign(roriArray,roriArray + 4); 
             _roi = _f(rectangle);
             // _roi= f[rorigy:rorigy+rorigh,rorigx:rorigx+rorigw, 0]; //crop frame to ROI
@@ -1020,7 +1038,7 @@ void HawkEye::printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat templat
             mods = false;
         }
       // print traceback.format_exc()
-        starpat = NULL;
+        // starpat = NULL;
         double starcand1[5] = {0};
         double max_val1;
         cv::Point temploc1;
@@ -1073,12 +1091,19 @@ void HawkEye::printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat templat
             RTT::log(RTT::Error) << "No star2 patterns detected! Error message: "<<e.what()<< RTT::endlog();
         }
         // print traceback.format_exc()
-            
+        
+        HAWKEYE_DEBUG_PRINT("Deciding about type of star pattern")
         if (starcand1[2] > starcand2[2]){ //compare scores to decide which is the detected star pattern
-            starpat = starcand1;
+            for (int k = 0 ; k <=4 ; k++){
+              starpat[k] = starcand1[k];
+            }
+            // starpat = starcand1;
         }
         else{
-            starpat = starcand2;
+            for (int k = 0 ; k <=4 ; k++){
+              starpat[k] = starcand2[k];
+            }
+            // starpat = starcand2;
         }
         HAWKEYE_DEBUG_PRINT("star pos x"<<(starpat)[0]<<"star pos y"<<(starpat)[1])
     }
@@ -1177,6 +1202,7 @@ void HawkEye::multiObject(cv::Mat image, cv::Mat templim, float thresh, int *w, 
 
             if (*max_val >= thresh)
             {
+                HAWKEYE_DEBUG_PRINT("loop in multiObject, printing")
                 maxpoints->push_back(max_loc.x);
                 maxpoints->push_back(max_loc.y);
                 cv::rectangle(image, max_loc, cv::Point(max_loc.x + templim.cols, max_loc.y + templim.rows), CV_RGB(0,255,0), 2);
@@ -1233,8 +1259,8 @@ void HawkEye::multiObject(cv::Mat image, cv::Mat templim, float thresh, int *w, 
 
         HAWKEYE_DEBUG_PRINT("maximum circle template location: x = "<<max_loc.x<<" y = "<<max_loc.y)
         if (1){ //Todo: remove
-          cv::circle(result, cv::Point(max_loc.x , max_loc.y), 4, cv::Scalar(255,255,0), 2); //plot marker location on images
-          cv::circle(image, cv::Point(max_loc.x , max_loc.y), 4, cv::Scalar(255,255,0), 2); //plot marker location on images
+          cv::circle(result, cv::Point(max_loc.x + templim.cols , max_loc.y + templim.rows), 4, cv::Scalar(255,255,0), 2); //plot marker location on images
+          cv::circle(image, cv::Point(max_loc.x + templim.cols, max_loc.y + templim.rows), 4, cv::Scalar(255,255,0), 2); //plot marker location on images
           cv::imwrite("resultMultiMatch.jpg", result); //Todo: why is this all black? Normed the image 0...1! But image data goes 0...255??
           cv::imwrite("inputMultiMatch.jpg", image); 
           cv::imwrite("templateMultiMatch.jpg", templim); 
