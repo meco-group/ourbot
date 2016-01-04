@@ -15,8 +15,8 @@ HawkEye::HawkEye(std::string const& name) : TaskContext(name, PreOperational), _
   _resolution = LOW;
   _fps = 256;   //max for this resolution, if using USB 3.0
   _workspace_path = "/home/tim/orocos/ourbot/orocos"; //TODO: adapt to right path
-  _brightness = 6; //0...40
-  _exposure = 100; //1...10000
+  _brightness = 7; //0...40
+  _exposure = 60; //1...10000
   // setenv("WORKSPACE", _workspace_path, 1); //assign path to environmental variable 'WORKSPACE'
 
 #endif //HAWKEYE_TESTFLAG
@@ -562,6 +562,9 @@ void HawkEye::processImage()
 
             findBigObstacles(rotrect, c, cx, cyflip, cradius, &contours, &hierarchy);  
         }
+        else{
+          HAWKEYE_DEBUG_PRINT("No contours with area > 900 found")
+        }
     }
   }
 }
@@ -646,7 +649,7 @@ void HawkEye::findRobots()
     // determine robot direction from detected markers
     // robcen = NULL; //Todo: why was this here?
     HAWKEYE_DEBUG_PRINT("Starting to calculate robot center and orientation")
-    if (starpat[2] != 0){ //if a star was detected (width != 0) do further processing to get coordinates and robot direction
+    if (starpat[4] != 0){ //if a star was detected (width != 0) do further processing to get coordinates and robot direction
         try{
             double lineside = (robottocks[2] - robottocks[0])*(starpat[1]-robottocks[1]) - (robottocks[3] - robottocks[1])*(starpat[0] - robottocks[0]); //(circle2_x-circle1_x)*(star_y-circle1_y) - (circle2_y-circle1_y)*(star_x-circle1_x)
             //original robottocks syntax: [[[x1,y1],[x2,y2]],w,h,maxval] --> stacked in an array of [7] now
@@ -918,7 +921,7 @@ void HawkEye::drawResults(){
         for (int k = 0 ; k <= 1 ; k++ ){
             HAWKEYE_DEBUG_PRINT("pos x and y: "<<_drawmods[2*k]<<" , "<<_drawmods[2*k+1])
             HAWKEYE_DEBUG_PRINT("radius: "<<_drawmods[4])
-            cv::circle(_f, cv::Point(_drawmods[2*k]+_drorigx, _drawmods[2*k+1]+_drorigy), _drawmods[4]/2, cv::Scalar(255,0,0), 2);
+            cv::circle(_f, cv::Point(_drawmods[2*k]+_drorigx, _drawmods[2*k+1]+_drorigy), _drawmods[4]/2.0, cv::Scalar(255,0,0), 2);
         }
     }
     else{
@@ -929,7 +932,7 @@ void HawkEye::drawResults(){
     if (_draw_markers){
         HAWKEYE_DEBUG_PRINT("pos x and y: "<<_drawstar[0]<<" , "<<_drawstar[1])
         HAWKEYE_DEBUG_PRINT("radius: "<<_drawstar[2])
-        cv::circle(_f, cv::Point(_drawstar[0]+_drorigx, _drawstar[1]+_drorigy), _drawstar[2]/2, cv::Scalar(255,255,0), 2);
+        cv::circle(_f, cv::Point(_drawstar[0]+_drorigx, _drawstar[1]+_drorigy), _drawstar[2]/2.0, cv::Scalar(255,255,0), 2);
     }
     else{
         HAWKEYE_DEBUG_PRINT("No star markers can be drawn...")
@@ -1046,12 +1049,12 @@ void HawkEye::printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat templat
             oneObject(image, template_star1, matchThresh, &temp_star1_size.width, &temp_star1_size.height, &max_val1, &temploc1); //star candidate1
             starcand1[0] = temploc1.x; //x,y,w,h,max_val
             starcand1[1] = temploc1.y;
-            starcand1[2] = max_val1;
-            starcand1[3] = temp_star1_size.width;
-            starcand1[4] = temp_star1_size.height;
-            HAWKEYE_DEBUG_PRINT("Star1 max score: "<<std::to_string(starcand1[2]))
-            starcand1[0] = starcand1[0]+starcand1[3]/2;
-            starcand1[1] = starcand1[1]+starcand1[4]/2;
+            starcand1[2] = temp_star1_size.width;
+            starcand1[3] = temp_star1_size.height;
+            starcand1[4] = max_val1;
+            HAWKEYE_DEBUG_PRINT("Star1 max score: "<<std::to_string(starcand1[4]))
+            starcand1[0] = starcand1[0]+starcand1[2]/2;
+            starcand1[1] = starcand1[1]+starcand1[3]/2;
             starcand1[2] = starcand1[2];
             starcand1[3] = starcand1[3];
             starcand1[4] = starcand1[4]; 
@@ -1072,12 +1075,12 @@ void HawkEye::printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat templat
             oneObject(image, template_star2, matchThresh, &temp_star2_size.width, &temp_star2_size.height, &max_val2, &temploc2);
             starcand2[0] = temploc2.x; //x,y,w,h,max_val
             starcand2[1] = temploc2.y;
-            starcand2[2] = max_val2;
-            starcand2[3] = temp_star2_size.width;
-            starcand2[4] = temp_star2_size.height;
-            HAWKEYE_DEBUG_PRINT("Star2 max score: "<<std::to_string(starcand2[2]))
-            starcand2[0] = starcand2[0]+starcand2[3]/2;
-            starcand2[1] = starcand2[1]+starcand2[4]/2;
+            starcand2[2] = temp_star2_size.width;
+            starcand2[3] = temp_star2_size.height;
+            starcand2[4] = max_val2;
+            HAWKEYE_DEBUG_PRINT("Star2 max score: "<<std::to_string(starcand2[4]))
+            starcand2[0] = starcand2[0]+starcand2[2]/2;
+            starcand2[1] = starcand2[1]+starcand2[3]/2;
             starcand2[2] = starcand2[2];
             starcand2[3] = starcand2[3];
             starcand2[4] = starcand2[4];
@@ -1093,7 +1096,7 @@ void HawkEye::printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat templat
         // print traceback.format_exc()
         
         HAWKEYE_DEBUG_PRINT("Deciding about type of star pattern")
-        if (starcand1[2] > starcand2[2]){ //compare scores to decide which is the detected star pattern
+        if (starcand1[4] > starcand2[4]){ //compare scores to decide which is the detected star pattern
             for (int k = 0 ; k <=4 ; k++){
               starpat[k] = starcand1[k];
             }
@@ -1149,8 +1152,8 @@ void HawkEye::oneObject(cv::Mat image, cv::Mat templim, float thresh, int *w, in
             HAWKEYE_DEBUG_PRINT("template pos x: "<<(*temploc).x<<" template pos y: "<<(*temploc).y<<" template width: "<<*w<<" template height: "<<*h)    
             if (1){ //Todo: remove
               HAWKEYE_DEBUG_PRINT("Plotting results of star template matching")
-              cv::circle(result, cv::Point(max_loc.x , max_loc.y), 4, cv::Scalar(255,255,0), 2); //plot marker location on images
-              cv::circle(image, cv::Point(max_loc.x , max_loc.y), 4, cv::Scalar(255,255,0), 2); //plot marker location on images
+              cv::circle(result, cv::Point(max_loc.x + templim.cols/2.0 , max_loc.y + templim.rows/2.0), 4, cv::Scalar(255,255,0), 2); //plot marker location on images
+              cv::circle(image,  cv::Point(max_loc.x + templim.cols/2.0 , max_loc.y + templim.rows/2.0), 4, cv::Scalar(255,255,0), 2); //plot marker location on images
               cv::imwrite("resultOneMatch.jpg", result); //Todo: why is this all black? Normed the image 0...1! But image data goes 0...255??
               cv::imwrite("inputOneMatch.jpg", image); 
               cv::imwrite("templateOneMatch.jpg", templim); 
@@ -1202,7 +1205,6 @@ void HawkEye::multiObject(cv::Mat image, cv::Mat templim, float thresh, int *w, 
 
             if (*max_val >= thresh)
             {
-                HAWKEYE_DEBUG_PRINT("loop in multiObject, printing")
                 maxpoints->push_back(max_loc.x);
                 maxpoints->push_back(max_loc.y);
                 cv::rectangle(image, max_loc, cv::Point(max_loc.x + templim.cols, max_loc.y + templim.rows), CV_RGB(0,255,0), 2);
@@ -1259,8 +1261,10 @@ void HawkEye::multiObject(cv::Mat image, cv::Mat templim, float thresh, int *w, 
 
         HAWKEYE_DEBUG_PRINT("maximum circle template location: x = "<<max_loc.x<<" y = "<<max_loc.y)
         if (1){ //Todo: remove
-          cv::circle(result, cv::Point(max_loc.x + templim.cols , max_loc.y + templim.rows), 4, cv::Scalar(255,255,0), 2); //plot marker location on images
-          cv::circle(image, cv::Point(max_loc.x + templim.cols, max_loc.y + templim.rows), 4, cv::Scalar(255,255,0), 2); //plot marker location on images
+          cv::circle(result, cv::Point((*maxpoints)[0] + templim.cols/2.0, (*maxpoints)[1] + templim.rows/2.0 ), 4, cv::Scalar(255,255,0), 2); //plot marker location on images
+          cv::circle(result, cv::Point((*maxpoints)[2] + templim.cols/2.0, (*maxpoints)[3] + templim.rows/2.0), 4, cv::Scalar(255,255,0), 2); //plot marker location on images
+          cv::circle(image,  cv::Point((*maxpoints)[0] + templim.cols/2.0, (*maxpoints)[1] + templim.rows/2.0), 4, cv::Scalar(255,255,0), 2); //plot marker location on images
+          cv::circle(image,  cv::Point((*maxpoints)[2] + templim.cols/2.0, (*maxpoints)[3] + templim.rows/2.0), 4, cv::Scalar(255,255,0), 2); //plot marker location on images
           cv::imwrite("resultMultiMatch.jpg", result); //Todo: why is this all black? Normed the image 0...1! But image data goes 0...255??
           cv::imwrite("inputMultiMatch.jpg", image); 
           cv::imwrite("templateMultiMatch.jpg", templim); 
@@ -1272,7 +1276,7 @@ void HawkEye::multiObject(cv::Mat image, cv::Mat templim, float thresh, int *w, 
         else{
           HAWKEYE_DEBUG_PRINT("Found a circle pattern!")
           HAWKEYE_DEBUG_PRINT("maximum value of match: "<<*max_val)    
-          //something wrong with maxpoints???  make class variable of it?  
+          //Todo: something wrong with maxpoints???  make class variable of it?  
           HAWKEYE_DEBUG_PRINT("template locations: "<<(*maxpoints)[0]<<" , "<<(*maxpoints)[1]<<" , "<<(*maxpoints)[2]<<" , "<<(*maxpoints)[3]<<" template width: "<<*w<<"template height: "<<*h)  
         }
 
