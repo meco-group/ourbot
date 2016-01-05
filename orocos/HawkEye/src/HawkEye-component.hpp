@@ -49,6 +49,11 @@
 #include <fcntl.h>
 #include <linux/videodev2.h> //v4l2
 
+//To use Robot and Obstacle classes
+#include "Robot.hpp"
+#include "Circle.hpp"
+#include "Rectangle.hpp"
+
 //Define For use in image acquisition
 typedef uint16_t WORD; //or use int?
 typedef uint8_t  BYTE; //or use int?
@@ -69,12 +74,11 @@ class HawkEye : public RTT::TaskContext{
   private:
 
     //Ports
-    OutputPort <std::map<char,double> >  _obstacles_state_port; //state of all obstacles
-    OutputPort <std::map<char,double> >  _robots_state_port;    //state of all (3) robots 
+    OutputPort <std::vector<double> >  _obstacles_state_port; //state of all obstacles
+    OutputPort <std::vector<double> >  _robots_state_port;    //state of all robots (we will have 3)
     OutputPort <int>  _width_port;
     OutputPort <int>  _height_port;
     OutputPort <int>  _fps_port;
-    // OutputPort <int>  _shutter_speed_port;
 
     //Class variables
     std::string  _device; // standard value is "/dev/video1" , since video0 is the webcam. The name is: See3CAM_CU40
@@ -88,6 +92,8 @@ class HawkEye : public RTT::TaskContext{
     uint8_t *_buffer;
     int _errno;  //error handling
     // int _shutter_speed;
+
+    double const pi=4*atan(1); //define constant pi
 
     //operating flags and paths
     bool _stillsrun;    //operate from still images not live video, for testing
@@ -123,6 +129,10 @@ class HawkEye : public RTT::TaskContext{
     cv::Mat _roi; //Todo: add size? Always 4?
 
     //Output
+    Robot _robot; //Make instance of robot
+    Circle _circle; //Make instance of circle
+    Rectangle _rectangle; //Make instance of rectangle
+    std::vector<Obstacle*> _obstacles;
     std::vector<std::vector<cv::Point> > _boxcontours; //holds contours of all obstacles contours
     std::vector<std::vector<cv::Point> > _rectanglesDetectedContours; //holds contours of all detected rectangles
     std::vector<cv::RotatedRect> _boxes;       //holds all rectangle representations of obstacles
