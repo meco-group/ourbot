@@ -2,6 +2,7 @@
 #define OBSTACLE_H
 
 #include <vector>
+#include <iostream>
 
 typedef enum shape_t{ //define enum to hold possible shapes
     CIRCLE = 1,

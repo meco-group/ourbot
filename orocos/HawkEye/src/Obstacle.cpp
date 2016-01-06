@@ -51,17 +51,22 @@ int Obstacle::getArea()
 void Obstacle::obj2vec(Obstacle obstacle, std::vector<double> *obstacleVector)
 {   
     //shape,x,y,vx,vy,area
-
+    std::cout<<"in Obstacle obj2vec"<<std::endl;
+    std::cout<<"obstacle shape: "<<double(obstacle.getShape())<<std::endl;
     (*obstacleVector)[0] = double(obstacle.getShape());
 
+    std::cout<<"Getting position"<<std::endl;
     std::vector<int> posVector = obstacle.getPos();
+    std::cout<<"obstacle pos 0: "<<double(posVector[0])<<std::endl;
     (*obstacleVector)[1] = double(posVector[0]);
     (*obstacleVector)[2] = double(posVector[1]);
 
     std::vector<double> velVector = obstacle.getVel();
+    std::cout<<"obstacle vel 0: "<<double(velVector[0])<<std::endl;
     (*obstacleVector)[3] = velVector[0];
     (*obstacleVector)[4] = velVector[1];    
 
+    std::cout<<"obstacle area: "<<double(obstacle.getArea())<<std::endl;
     (*obstacleVector)[5] = double(obstacle.getArea());
 }
 

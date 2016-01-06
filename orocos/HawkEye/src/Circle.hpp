@@ -18,7 +18,7 @@ public:
 	int getRadius();
 
 	static void obj2vec(Circle obstacle, std::vector<double> *obstacleVector);
-	static void vec2obj(std::vector<double> obstacleVector, Obstacle *obstacle);
+	static void vec2obj(std::vector<double> obstacleVector, Circle *obstacle);
 
 };
 

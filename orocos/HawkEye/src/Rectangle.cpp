@@ -56,9 +56,9 @@ double Rectangle::getOmega()
 
 void Rectangle::obj2vec(Rectangle obstacle, std::vector<double> *obstacleVector)
 {
-	
+	std::cout<<"in Rectangle obj2vec"<<std::endl;
 	Obstacle::obj2vec(obstacle, obstacleVector);
-
+	std::cout<<"in Rectangle obj2vec, pushing back width, length,..."<<std::endl;
 	obstacleVector->push_back(obstacle.getWidth());
 	obstacleVector->push_back(obstacle.getLength());
 	obstacleVector->push_back(obstacle.getTheta());
@@ -66,7 +66,7 @@ void Rectangle::obj2vec(Rectangle obstacle, std::vector<double> *obstacleVector)
 
 }
 
-void Rectangle::vec2obj(std::vector<double> obstacleVector, Obstacle *obstacle)
+void Rectangle::vec2obj(std::vector<double> obstacleVector, Rectangle *obstacle)
 {
 	
 	obstacle = new Rectangle();

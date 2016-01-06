@@ -15,8 +15,8 @@ HawkEye::HawkEye(std::string const& name) : TaskContext(name, PreOperational), _
   _resolution = LOW;
   _fps = 256;   //max for this resolution, if using USB 3.0
   _workspace_path = "/home/tim/orocos/ourbot/orocos"; //TODO: adapt to right path
-  _brightness = 7; //0...40
-  _exposure = 80; //1...10000
+  _brightness = 15; //0...40
+  _exposure = 200; //1...10000
 
 #endif //HAWKEYE_TESTFLAG
 
@@ -663,8 +663,8 @@ void HawkEye::findRobots()
 
     // determine robot direction from detected markers
     // robcen = NULL; //Todo: why was this here?
-    HAWKEYE_DEBUG_PRINT("Starting to calculate robot center and orientation")
-    if (starpat[4] != 0){ //if a star was detected (width != 0) do further processing to get coordinates and robot direction
+    if ((starpat[4] != 0) && (success == true)){ //if a star was detected (width != 0) do further processing to get coordinates and robot direction
+      HAWKEYE_DEBUG_PRINT("Starting to calculate robot center and orientation")
         try{
             double lineside = (robottocks[2] - robottocks[0])*(starpat[1]-robottocks[1]) - (robottocks[3] - robottocks[1])*(starpat[0] - robottocks[0]); //(circle2_x-circle1_x)*(star_y-circle1_y) - (circle2_y-circle1_y)*(star_x-circle1_x)
             //original robottocks syntax: [[[x1,y1],[x2,y2]],w,h,maxval] --> stacked in an array of [7] now
@@ -887,32 +887,42 @@ void HawkEye::processResults(){
   _robot.setTheta(_robobox.angle);
   _robot.setOmega(0); //Todo: combine with Kalman
 
+  HAWKEYE_DEBUG_PRINT("Made robot instance")
+
   //For each obstacle decide if it is best represented by a circle or by a rectangle
-  for (int k = 0 ; k < _obstacles.size() ; k++) //since we used new below
-  {
-    delete _obstacles[k];
-  }
+  _obstacles.clear();
+  // for (int k = 0 ; k < _obstacles.size() ; k++) //since we used new below
+  // {
+  //   HAWKEYE_DEBUG_PRINT("Deleting previous obstacles")
+  //   delete _obstacles[k]; //Todo gives an error?
+  // }
 
   for (int k = 0 ; k < _rectanglesDetected.size() ; k++){ //size of rectanglesDetected and circlesDetected is the same
     double circleArea = pi * _circlesDetected[k][2] * _circlesDetected[k][2];
     double rectangleArea = _rectanglesDetected[k].size.width * _rectanglesDetected[k].size.height;
-    Circle circle = new Circle(); //I was here
-    Rectangle rectangle = new Rectangle();
+    Circle *circle = new Circle(); //I was here
+    Rectangle *rectangle = new Rectangle();
     if (circleArea < rectangleArea){
+      HAWKEYE_DEBUG_PRINT("Processresults: new circle pushed")
       circle->setPos(_circlesDetected[k][0], _circlesDetected[k][1]);
       circle->setRadius(_circlesDetected[k][2]); //radius
+      circle->setArea(int(circleArea));//Todo: this shouldn't be an int, change in circle.cpp
       _obstacles.push_back(circle);
       delete rectangle; //declared in the loop but was not used
     }
     else {
+      HAWKEYE_DEBUG_PRINT("Processresults: new rectangle pushed")
       rectangle->setPos(_rectanglesDetected[k].center.x, _rectanglesDetected[k].center.y);
       rectangle->setWidth(_rectanglesDetected[k].size.width);
       rectangle->setLength(_rectanglesDetected[k].size.height);
       rectangle->setTheta(_rectanglesDetected[k].angle);
-      _obstacles.push_back(rectangle);
+      rectangle->setArea(rectangleArea);
+      _obstacles.push_back(int(rectangle));
       delete circle; //declared in the loop but was not used
     }
   }
+
+HAWKEYE_DEBUG_PRINT("constructed obstacle vector")
 
 }
 
@@ -958,26 +968,37 @@ void HawkEye::writeResults(){
 
   //Convert Robot and Obstacle objects to a vector
   std::vector<double> robotVec(9);
+
+  HAWKEYE_DEBUG_PRINT("Calling obj2vec for robot")
+
   _robot.obj2vec(_robot, &robotVec);
 
   std::vector<double> obstacleVec(80); //80 = 8*10 = number of entrances per obstacle * a max of 10 obstacles
-  std::vector<double> tmpObstacleVec;
+  std::vector<double> tmpObstacleVec(10);
+
+  HAWKEYE_DEBUG_PRINT("Calling obj2vec for obstacles")
+  HAWKEYE_DEBUG_PRINT("size of _obstacles: "<<_obstacles.size())
   for (int k = 0 ; k < _obstacles.size() ; k++){
-    if(_obstacles[k].getShape() == CIRCLE){
-      Circle::obj2vec(dynamic_cast<Circle*>(_obstacles[k]), &tmpObstacleVec);
-      for (int j = 0 ; j < 7 ; j++){
+    HAWKEYE_DEBUG_PRINT("shape of obstacle: "<<int(_obstacles[k]->getShape()))
+    if(_obstacles[k]->getShape() == CIRCLE){
+      Circle::obj2vec(*static_cast<Circle*>(_obstacles[k]), &tmpObstacleVec);
+      for (int j = 0 ; j < 7 ; j++){ //Todo: check if 7 is right
+        HAWKEYE_DEBUG_PRINT("Pushing back circle")
         obstacleVec.push_back(tmpObstacleVec[j]);  
       }
     }
-    if(_obstacles[k].getShape() == RECTANGLE){
-      Rectangle::obj2vec(dynamic_cast<Rectangle*>(_obstacles[k]), &tmpObstacleVec);
-      for (int j = 0 ; j < 10 ; j++){
+    if(_obstacles[k]->getShape() == RECTANGLE){
+      Rectangle::obj2vec(*static_cast<Rectangle*>(_obstacles[k]), &tmpObstacleVec);
+      for (int j = 0 ; j < 10 ; j++){ //Todo: check if 10 is right
+        HAWKEYE_DEBUG_PRINT("Pushing back rectangle attributes into obstacleVec")
         obstacleVec.push_back(tmpObstacleVec[j]);
       }
     }    
   }
 
   //Todo: check if size of obstacleVec is not exceeded?
+
+  HAWKEYE_DEBUG_PRINT("Starting to write data to the Orocos ports")
 
   //Put data on output ports
   _robots_state_port.write(robotVec);
@@ -1092,7 +1113,7 @@ void HawkEye::printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat templat
     
     // only process when roi is larger than the template
     if (rorigw > temp_circle_size.width && rorigh > temp_circle_size.height){ //Todo: selected right dimensions? Or flip width and height? 
-        double max_val;
+        double max_val = 0;
         std::vector<int> maxpoints;
         try{
             multiObject(image, template_circle, matchThresh, &temp_circle_size.width, &temp_circle_size.height, &max_val, &maxpoints); //returns most probable position, width and height of robot circle markers (=mod)
@@ -1104,18 +1125,18 @@ void HawkEye::printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat templat
             robottocks[3] = maxpoints[3];
             robottocks[4] = temp_circle_size.width;
             robottocks[5] = temp_circle_size.height;
-            robottocks[6] = max_val;
+            // robottocks[6] = max_val;
 
-            //Todo: translated this correctly? robottocks[6] = max_value was forgotten in original code?
+            //Todo: translated this correctly? robottocks[6] = max_value was forgotten in original code? This is the value of the first template which did not reach the threshold --> no info!
             robottocks[0] = robottocks[0]+robottocks[4]/2; // the coords of the should be at the centre of the pattern //calculate pos, w, h of marker
             robottocks[1] = robottocks[1]+robottocks[5]/2;
             robottocks[2] = robottocks[2]+robottocks[4]/2;
             robottocks[3] = robottocks[3]+robottocks[5]/2;
-            robottocks[4] = robottocks[4];
-            robottocks[5] = robottocks[5];
-            robottocks[6] = robottocks[6];
+            // robottocks[4] = robottocks[4];
+            // robottocks[5] = robottocks[5];
+            // robottocks[6] = robottocks[6];
 
-            HAWKEYE_DEBUG_PRINT("Mod max score: "<<std::to_string(robottocks[6]))
+            // HAWKEYE_DEBUG_PRINT("Mod max score: "<<robottocks[6])
             HAWKEYE_DEBUG_PRINT("circle1 pos x: "<<(robottocks)[0]<<" circle1 pos y: "<<(robottocks)[1]<<" circle2 pos x: "<<(robottocks)[2]<<" circle2 pos y: "<<(robottocks)[3])
 
             mods = true;
@@ -1146,7 +1167,6 @@ void HawkEye::printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat templat
             starcand1[2] = starcand1[2];
             starcand1[3] = starcand1[3];
             starcand1[4] = starcand1[4]; 
-            star = true;
         }
         catch(const std::exception &e){
             // starcand1 = {0, 0, 0, 0, 0};
@@ -1172,7 +1192,6 @@ void HawkEye::printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat templat
             starcand2[2] = starcand2[2];
             starcand2[3] = starcand2[3];
             starcand2[4] = starcand2[4];
-            star = true;
         }
         catch(const std::exception &e){
             // starcand2 = {0 , 0 , 0 , 0 , 0};
@@ -1184,15 +1203,17 @@ void HawkEye::printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat templat
         // print traceback.format_exc()
         
         HAWKEYE_DEBUG_PRINT("Deciding about type of star pattern")
-        if (starcand1[4] > starcand2[4]){ //compare scores to decide which is the detected star pattern
+        if (starcand1[4] > starcand2[4] && starcand1[4] > matchThresh){ //compare scores to decide which is the detected star pattern
             for (int k = 0 ; k <=4 ; k++){
               starpat[k] = starcand1[k];
+              star = true;
             }
             // starpat = starcand1;
         }
-        else{
+        else if (starcand1[4] < starcand2[4] && starcand2[4] > matchThresh){
             for (int k = 0 ; k <=4 ; k++){
               starpat[k] = starcand2[k];
+              star = true;
             }
             // starpat = starcand2;
         }
@@ -1293,6 +1314,8 @@ void HawkEye::multiObject(cv::Mat image, cv::Mat templim, float thresh, int *w, 
 
             if (*max_val >= thresh)
             {
+                HAWKEYE_DEBUG_PRINT("Found a circle pattern!")
+                HAWKEYE_DEBUG_PRINT("maximum value of match: "<<*max_val)  
                 maxpoints->push_back(max_loc.x);
                 maxpoints->push_back(max_loc.y);
                 cv::rectangle(image, max_loc, cv::Point(max_loc.x + templim.cols, max_loc.y + templim.rows), CV_RGB(0,255,0), 2);
@@ -1361,14 +1384,10 @@ void HawkEye::multiObject(cv::Mat image, cv::Mat templim, float thresh, int *w, 
         if(maxpoints->empty()){ //if maxpoints still empty no patterns were found
             RTT::log(RTT::Error)<<"Maximum value of detection was lower than threshold:"<<*max_val<<" < "<<thresh<<" No circle patterns detected"<<RTT::endlog();
         }
-        else{
-          HAWKEYE_DEBUG_PRINT("Found a circle pattern!")
-          HAWKEYE_DEBUG_PRINT("maximum value of match: "<<*max_val)    
+        else{   
           //Todo: something wrong with maxpoints???  make class variable of it?  
           HAWKEYE_DEBUG_PRINT("template locations: "<<(*maxpoints)[0]<<" , "<<(*maxpoints)[1]<<" , "<<(*maxpoints)[2]<<" , "<<(*maxpoints)[3]<<" template width: "<<*w<<"template height: "<<*h)  
         }
-
-        
 
     }
 }

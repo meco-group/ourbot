@@ -27,7 +27,7 @@ public:
 	double getOmega();
 
 	static void obj2vec(Rectangle obstacle, std::vector<double> *obstacleVector);
-	static void vec2obj(std::vector<double> obstacleVector, Obstacle *obstacle);
+	static void vec2obj(std::vector<double> obstacleVector, Rectangle *obstacle);
 
 };
 

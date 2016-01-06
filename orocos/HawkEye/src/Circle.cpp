@@ -26,14 +26,14 @@ int Circle::getRadius()
 
 void Circle::obj2vec(Circle obstacle, std::vector<double> *obstacleVector) 
 {
-	
+	std::cout<<"in Circle obj2vec"<<std::endl;
 	Obstacle::obj2vec(obstacle, obstacleVector);
-
+	std::cout<<"in Circle obj2vec, pushing back radius"<<std::endl;
 	obstacleVector->push_back(obstacle.getRadius());
 
 }
 
-void Circle::vec2obj(std::vector<double> obstacleVector, Obstacle *obstacle)
+void Circle::vec2obj(std::vector<double> obstacleVector, Circle *obstacle)
 {
 
 	obstacle = new Circle();
