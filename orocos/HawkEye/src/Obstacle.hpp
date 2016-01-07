@@ -20,6 +20,7 @@ private:
 public:
 	
 	Obstacle(int x, int y, double vx, double vy, shape_t shape, int area); //specific constructor
+	virtual ~Obstacle(){} //virtual destructor to be able to delete inherited classes
 
 	void setPos(int x, int y);
 	void setVel(double vx, double vy);

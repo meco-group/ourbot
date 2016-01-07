@@ -12,6 +12,7 @@ private:
 public:
 	Circle();
 	Circle(int radius); //specific constructor
+	virtual ~Circle(){} //virtual destructor, to be able to delete instances of Circle
 
 	void setRadius(int radius);
 

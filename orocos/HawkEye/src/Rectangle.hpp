@@ -15,6 +15,7 @@ private:
 public:
 	Rectangle();
 	Rectangle(int width, int length, double theta, double omega); //specific constructor
+	virtual ~Rectangle(){} //virtual destructor, to be able to delete instances of Rectangle
 
 	void setWidth(int width);
 	void setLength(int length);
