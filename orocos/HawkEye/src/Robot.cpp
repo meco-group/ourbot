@@ -110,8 +110,8 @@ void Robot::vec2obj(std::vector<double> robotVector, Robot *robot)
 {
     robot->setPos(int(robotVector[0]), int(robotVector[1]));
     robot->setVel(robotVector[2], robotVector[3]);
-    robot->setOmega(robotVector[4]);
-    robot->setTheta(robotVector[5]);
+    robot->setTheta(robotVector[4]);
+    robot->setOmega(robotVector[5]);    
     robot->setWidth(int(robotVector[6]));
     robot->setLength(int(robotVector[7]));
     robot->setRadius(int(robotVector[8]));

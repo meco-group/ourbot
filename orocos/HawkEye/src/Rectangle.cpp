@@ -59,20 +59,24 @@ void Rectangle::obj2vec(Rectangle obstacle, std::vector<double> *obstacleVector)
 	std::cout<<"in Rectangle obj2vec"<<std::endl;
 	Obstacle::obj2vec(obstacle, obstacleVector);
 	std::cout<<"in Rectangle obj2vec, pushing back width, length,..."<<std::endl;
-	obstacleVector->push_back(obstacle.getWidth());
-	obstacleVector->push_back(obstacle.getLength());
-	obstacleVector->push_back(obstacle.getTheta());
-	obstacleVector->push_back(obstacle.getOmega());
-
+	std::cout<<"Obstacle width: "<<obstacle.getWidth()<<std::endl;
+	std::cout<<"Obstacle length: "<<obstacle.getLength()<<std::endl;
+	std::cout<<"Obstacle theta: "<<obstacle.getTheta()<<std::endl;
+	std::cout<<"Obstacle omega: "<<obstacle.getOmega()<<std::endl;
+	(*obstacleVector)[6] = obstacle.getWidth();
+	(*obstacleVector)[7] = obstacle.getLength();
+	(*obstacleVector)[8] = obstacle.getTheta();
+	(*obstacleVector)[9] = obstacle.getOmega();
 }
 
 void Rectangle::vec2obj(std::vector<double> obstacleVector, Rectangle *obstacle)
 {
 	
-	obstacle = new Rectangle();
-
+	// obstacle = new Rectangle();
+	std::cout<<"in Rectangle vec2obj"<<std::endl;
 	Obstacle::vec2obj(obstacleVector, obstacle);
-	
+	std::cout<<"in Rectangle vec2obj, setting width, length,..."<<std::endl;
+	std::cout<<"rectangle width: "<<obstacleVector[6]<<std::endl;
 	obstacle->setWidth(int(obstacleVector[6]));
 	obstacle->setLength(int(obstacleVector[7]));
 	obstacle->setTheta(int(obstacleVector[8]));

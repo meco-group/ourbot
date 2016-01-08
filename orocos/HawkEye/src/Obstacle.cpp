@@ -72,7 +72,7 @@ void Obstacle::obj2vec(Obstacle obstacle, std::vector<double> *obstacleVector)
 
 void Obstacle::vec2obj(std::vector<double> obstacleVector, Obstacle *obstacle)
 {
-    
+    std::cout<<"in Obstacle vec2obj: setting Pos, Vel, Area"<<std::endl;
     obstacle->setPos(int(obstacleVector[1]), int(obstacleVector[2]));
     obstacle->setVel(obstacleVector[3], obstacleVector[4]);
     obstacle->setArea(int(obstacleVector[5]));

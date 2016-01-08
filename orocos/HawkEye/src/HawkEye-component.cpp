@@ -15,8 +15,8 @@ HawkEye::HawkEye(std::string const& name) : TaskContext(name, PreOperational), _
   _resolution = HD720p;
   _fps = 90;   //max for this resolution, if using USB 3.0
   _workspace_path = "/home/tim/orocos/ourbot/orocos"; //TODO: adapt to right path
-  _brightness = 10; //0...40
-  _exposure = 200; //1...10000
+  _brightness = 8; //0...40
+  _exposure = 50; //1...10000
 
 #endif //HAWKEYE_TESTFLAG
 
@@ -897,9 +897,10 @@ void HawkEye::processResults(){
 
   //For each obstacle decide if it is best represented by a circle or by a rectangle
   // _obstacles.clear(); //No, this will cause a memory leak since the pointers to the object will be deleted, but not the objects themselves
+  //But it seems like vector.clear() also clears the objects, so you can still use this. An alternative is:
   for (int k = 0 ; k < _obstacles.size() ; k++) //since we used new below
   {
-    HAWKEYE_DEBUG_PRINT(k)
+    HAWKEYE_DEBUG_PRINT("k: "<<k)
     HAWKEYE_DEBUG_PRINT("Deleting previous obstacles")
     delete _obstacles[k]; 
   }
@@ -911,7 +912,7 @@ void HawkEye::processResults(){
     double rectangleArea = _rectanglesDetected[k].size.width * _rectanglesDetected[k].size.height;
     HAWKEYE_DEBUG_PRINT("circleArea: "<<circleArea)
     HAWKEYE_DEBUG_PRINT("rectangleArea: "<<rectangleArea)
-    Circle *circle = new Circle(); //I was here
+    Circle *circle = new Circle(); 
     Rectangle *rectangle = new Rectangle();
     if (circleArea < rectangleArea){
       HAWKEYE_DEBUG_PRINT("Processresults: new circle pushed")
@@ -981,14 +982,15 @@ void HawkEye::writeResults(){
   // }
 
   //Convert Robot and Obstacle objects to a vector
-  std::vector<double> robotVec(9);
+  std::vector<double> robotVec; //(9) but then this makes a 9*0 vector first and then the real robot if you use push_back in Robot.cpp
 
   HAWKEYE_DEBUG_PRINT("Calling obj2vec for robot")
 
   _robot.obj2vec(_robot, &robotVec);
 
-  std::vector<double> obstacleVec(80); //80 = 8*10 = number of entrances per obstacle * a max of 10 obstacles
+  std::vector<double> obstacleVec; //(80) 80 = 8*10 = number of entrances per obstacle * a max of 10 obstacles
   std::vector<double> tmpObstacleVec(10);
+  tmpObstacleVec.clear();
 
   HAWKEYE_DEBUG_PRINT("Calling obj2vec for obstacles")
   HAWKEYE_DEBUG_PRINT("size of _obstacles: "<<_obstacles.size())
@@ -1000,15 +1002,22 @@ void HawkEye::writeResults(){
         HAWKEYE_DEBUG_PRINT("Pushing back circle")
         obstacleVec.push_back(tmpObstacleVec[j]);  
       }
+      for (int j = 0 ; j < 3 ; j++){ //fill remaining spaces with zeros, in order to get 10 entries for both circles and rectangles
+        HAWKEYE_DEBUG_PRINT("Filling rest of circle vector with zeros")
+        obstacleVec.push_back(0); 
+      }
     }
     if(_obstacles[k]->getShape() == RECTANGLE){
       Rectangle::obj2vec(*static_cast<Rectangle*>(_obstacles[k]), &tmpObstacleVec);
       for (int j = 0 ; j < 10 ; j++){ //Todo: check if 10 is right
         HAWKEYE_DEBUG_PRINT("Pushing back rectangle attributes into obstacleVec")
+        HAWKEYE_DEBUG_PRINT("elements: "<<tmpObstacleVec[j])
         obstacleVec.push_back(tmpObstacleVec[j]);
       }
     }    
   }
+
+  obstacleVec.resize(80); //resize to 80 elements
 
   //Todo: check if size of obstacleVec is not exceeded?
 
