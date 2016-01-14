@@ -4,6 +4,7 @@
 //Set flags:
 #define HAWKEYE_TESTFLAG
 // #define HAWKEYE_PLOTFLAG
+#define HAWKEYE_SAVEFLAG
 #define HAWKEYE_DEBUGFLAG
 
 #ifdef HAWKEYE_DEBUGFLAG //Print statements on/off
@@ -16,6 +17,12 @@
     #define HAWKEYE_PLOT 1
 #else
     #define HAWKEYE_PLOT 0
+#endif
+
+#ifdef HAWKEYE_SAVEFLAG //save image processing results on/off
+    #define HAWKEYE_SAVE 1
+#else
+    #define HAWKEYE_SAVE 0
 #endif
 
 //General

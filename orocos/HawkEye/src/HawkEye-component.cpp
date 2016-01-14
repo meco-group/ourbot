@@ -29,26 +29,26 @@ HawkEye::HawkEye(std::string const& name) : TaskContext(name, PreOperational), _
 
 bool HawkEye::configureHook(){
 
-  //Set operating flags and paths
+  //Set operating flags and constants
   _save_image = true;  //record images/get new background at start
   _load_background_from_file = false; //select if you want to use an old background or make a new one
   _draw_markers = true; // draw detected and computed markers from templated matching
   _draw_contours = false; //draw detected obstacles and their contours
   _print_cam_info = true; //print camera capabilities while starting the camera
-  _cntapprox = 0.025; //
-  _diffthresh = 30; //when is there a difference between captured image and background
-  _matchThresh = 0.6; //threshold for match, got value from Python code
-  _save_img_path = _workspace_path + "/HawkEye/src/Images/"; //working directory is saved in environment variable
+  
+  _cntapprox = 0.025; //parameter of approxPolyDP which approximates a polygon/contour by another, simplified, polygon/contour
+  _diffthresh = 30; //threshold for background subtraction for captured image vs background: determines diff image
+  _matchThresh = 0.6; //threshold for template matching
 
   //Initialize class variables
   _robobox = cv::RotatedRect(cv::Point2f(0,0), cv::Size2f(0,0), 0);
-
+  _save_img_path = _workspace_path + "/HawkEye/src/Images/"; //path where to save captured images
   _path = _workspace_path + "/HawkEye/src/";
 
-  //Read in templates
+  //Read in templates of robot markers
   HAWKEYE_DEBUG_PRINT("circle template path: "<<_path+"Images/templates/mod1.tiff")
   _template_circle= cv::imread(_path+"Images/templates/mod1.tiff", CV_LOAD_IMAGE_GRAYSCALE);
-  HAWKEYE_DEBUG_PRINT("template_circle type: "<<_template_circle.type())
+  HAWKEYE_DEBUG_PRINT("template_circle type: "<<_template_circle.type()) // 0 = CV_8U, see: http://ninghang.blogspot.be/2012/11/list-of-mat-type-in-opencv.html
   if(! _template_circle.data )                              // Check for invalid input
   {
       RTT::log(RTT::Error)<<"Could not open or find the circle template"<<RTT::endlog();
@@ -68,7 +68,6 @@ bool HawkEye::configureHook(){
   }
 
   setResolution(_resolution); //load resolution into class variables
-
   checkFPS(_resolution); //check if selected fps is compatible with the resolution
 
   // Show example data sample to output ports to make data flow real-time
@@ -115,12 +114,9 @@ void HawkEye::updateHook(){
   
   writeResults(); //write results to output ports
 
-  HAWKEYE_DEBUG_PRINT("Starting drawResults")
-
-  drawResults(); //Todo: remove
-
-  if (HAWKEYE_PLOT){ 
-    drawResults(); //visualize all contours
+  if (HAWKEYE_SAVE){ 
+    HAWKEYE_DEBUG_PRINT("Starting drawResults")
+    drawResults(); //save images of image processing
   }
 
   HAWKEYE_DEBUG_PRINT("HawkEye executes updateHook!")
@@ -524,7 +520,7 @@ void HawkEye::processImage()
         // add medium sized objects to object contours
         if (area>=140 and area<=900){
             // simplify contour and add to box contours              
-            cv::approxPolyDP(c, c, _cntapprox*cv::arcLength(c,true), true); // approximate contours: the function approxPolyDP approximate a curve or a polygon with another curve/polygon with less vertices so that the distance between them is less or equal to the specified precision. 
+            cv::approxPolyDP(c, c, _cntapprox*cv::arcLength(c,true), true); // approximate contours: the function approxPolyDP approximates a curve or a polygon with another curve/polygon with less vertices so that the distance between them is less or equal to the specified precision. 
             _boxcontours.push_back(c);
         }
         
