@@ -136,7 +136,7 @@ void HawkEye::pabort(const char *s){   //error catching
     RTT::log(RTT::Error) <<"error string: "<<std::strerror(_errno)<<RTT::endlog();
 }
 
-int HawkEye::xioctl(int fd, int request, void *arg){ //adapted ioctl implementation
+int HawkEye::xioctl(int fd, int request, void *arg){ //adapted ioctl implementation for image capturing
     int r;
 
     do r = ioctl (fd, request, arg);
@@ -145,10 +145,10 @@ int HawkEye::xioctl(int fd, int request, void *arg){ //adapted ioctl implementat
     return r;
 }
 
-void HawkEye::startCamera(){ //Open file descriptor, set resolution, initialize buffers
+void HawkEye::startCamera(){ //Open file descriptor, set resolution, initialize buffers. Adapted from v4l2_app of e-con systems
 
     //Set file descriptor
-    _fd = open(_device.c_str(), O_RDWR); //open video device on Odroid, _device = /dev/video0 normally
+    _fd = open(_device.c_str(), O_RDWR); //open video device on Odroid, _device = /dev/video0 normally (or video1 if webcam present)
     if (_fd == -1){
       pabort("Error while opening video device");
     }
@@ -291,11 +291,11 @@ void HawkEye::setResolution(resolution_t resolution) {
         HAWKEYE_DEBUG_PRINT("Selected resolution: 2688x1520")
         break;
       default: 
-        RTT::log(RTT::Error) << "Invalid resolution selected, you selected: "<<resolution<<". The possiblities are: 672x380 , 1280x720 , 1920x1080, 2688x1520."<< RTT::endlog();
+        RTT::log(RTT::Error) << "Invalid resolution selected, you selected: "<<resolution<<". The possiblities are: LOW(672x380) , HD720(1280x720) , HD1080(1920x1080), FULL(2688x1520)."<< RTT::endlog();
     }
 }
 
-void HawkEye::setBrightness(int brightness){ //From Videostreaming::changeSettings()
+void HawkEye::setBrightness(int brightness){ //From Qtcam source code Videostreaming::changeSettings()
     HAWKEYE_DEBUG_PRINT("Setting brightness to: "<<brightness)
     if (brightness < 0 || brightness > 40){
       RTT::log(RTT::Error) << "Invalid brightness selected, you selected: "<<brightness<<", but this value must lie in the interval [0,40]"<< RTT::endlog(); 
@@ -326,7 +326,7 @@ void HawkEye::checkFPS(resolution_t resolution) {
     //Check if _fps for selected resolution is not too high
     if (resolution == LOW){
       if (_fps > 256){
-        RTT::log(RTT::Error)<<"For the selected resolution: "<<_width<<"x"<<_height<<", "<<_fps<<"fps is too high, maximum value is 256."<<RTT::endlog();
+        RTT::log(RTT::Error)<<"For the selected resolution: "<<_width<<"x"<<_height<<", "<<_fps<<"fps is too high, maximum value is 256 for USB 3.0."<<RTT::endlog();
       }
       else{
         HAWKEYE_DEBUG_PRINT("Checked FPS: the selected "<<_fps<< " frames per second are appropriate for the selected resolution")
@@ -335,7 +335,7 @@ void HawkEye::checkFPS(resolution_t resolution) {
 
     if (resolution == HD720p){
       if (_fps > 90){
-        RTT::log(RTT::Error)<<"For the selected resolution: "<<_width<<"x"<<_height<<", "<<_fps<<"fps is too high, maximum value is 90."<<RTT::endlog();
+        RTT::log(RTT::Error)<<"For the selected resolution: "<<_width<<"x"<<_height<<", "<<_fps<<"fps is too high, maximum value is 90 for USB 3.0."<<RTT::endlog();
       } 
       else{
         HAWKEYE_DEBUG_PRINT("Checked FPS: the selected "<<_fps<< " frames per second are appropriate for the selected resolution")
@@ -344,7 +344,7 @@ void HawkEye::checkFPS(resolution_t resolution) {
 
     if (resolution == HD1080p){
       if (_fps > 40){
-        RTT::log(RTT::Error)<<"For the selected resolution: "<<_width<<"x"<<_height<<", "<<_fps<<"fps is too high, maximum value is 40."<<RTT::endlog();
+        RTT::log(RTT::Error)<<"For the selected resolution: "<<_width<<"x"<<_height<<", "<<_fps<<"fps is too high, maximum value is 40 for USB 3.0."<<RTT::endlog();
       }
       else{
         HAWKEYE_DEBUG_PRINT("Checked FPS: the selected "<<_fps<< " frames per second are appropriate for the selected resolution")
@@ -353,7 +353,7 @@ void HawkEye::checkFPS(resolution_t resolution) {
 
     if (resolution == FULL){
       if (_fps > 14){
-        RTT::log(RTT::Error)<<"For the selected resolution: "<<_width<<"x"<<_height<<", "<<_fps<<"fps is too high, maximum value is 14."<<RTT::endlog();
+        RTT::log(RTT::Error)<<"For the selected resolution: "<<_width<<"x"<<_height<<", "<<_fps<<"fps is too high, maximum value is 14 for USB 3.0."<<RTT::endlog();
       }
       else{
         HAWKEYE_DEBUG_PRINT("Checked FPS: the selected "<<_fps<< " frames per second are appropriate for the selected resolution")
@@ -361,7 +361,10 @@ void HawkEye::checkFPS(resolution_t resolution) {
     }
 }
 
-void HawkEye::bayer10_to_rgb24(uint16_t *pBay, uint8_t *pRGB24, int width, int height, int pix_order){ //Convert 10bit raw to RGB
+void HawkEye::bayer10_to_rgb24(uint16_t *pBay, uint8_t *pRGB24, int width, int height, int pix_order){ //Convert 10bit raw to RGB. Adapted from v4l2_app from e-con systems
+//This function translates a bayer 10 bit RAW datatype to RGB data. The CMOS sensor captures a certain color in each element of its matrix, so you have to combine elements to get RGB
+//values. This algorithm uses a nearest neighbour to translate Bayer10 bit RAW to RGB, but there are better solutions. What this algorithm does is actually interpolating
+//between several pixels, which gives a bad resolution and the impression that pixels are grouped per 2x2. 
 #define B(a,x,y) a[0 + 3 * ((x) + width * (y))]
 #define G(a,x,y) a[1 + 3 * ((x) + width * (y))]
 #define R(a,x,y) a[2 + 3 * ((x) + width * (y))]
@@ -381,7 +384,7 @@ void HawkEye::bayer10_to_rgb24(uint16_t *pBay, uint8_t *pRGB24, int width, int h
   }  
 }
 
-void HawkEye::capture_image(){
+void HawkEye::capture_image(){ //save the current image in _f
     struct v4l2_buffer buf = {0};
     buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     buf.memory = V4L2_MEMORY_MMAP;
@@ -397,19 +400,16 @@ void HawkEye::capture_image(){
         pabort("Error while waiting for frame");
     }
  
+    //Todo: _capture time should be set here? or after xioctl?
+    _capture_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();    
     if(-1 == xioctl(_fd, VIDIOC_DQBUF, &buf)){
         pabort("Error while retrieving frame");
     }
-    // cv::Mat frame;
     cv::Mat m_RGB(cv::Size(_width, _height), CV_8UC3);
     
-    // IplImage* m_IR = cvCreateImage(cvSize(_width/2, _height/2), IPL_DEPTH_8U, 1);
+    bayer10_to_rgb24(reinterpret_cast<uint16_t*>(_buffer), m_RGB.data, _width, _height, 2); //Todo: is this a new buffer or _buffer?
 
-    bayer10_to_rgb24(reinterpret_cast<uint16_t*>(_buffer), m_RGB.data, _width, _height, 2); //TODO: is this a new buffer or _buffer?
-
-    // extractIRImage((unsigned short int *)buffer, (unsigned char *)m_IR->imageData, _width,_height);
     HAWKEYE_DEBUG_PRINT("RGB channels: "<<m_RGB.channels())
-    // HAWKEYE_DEBUG_PRINT("RGB channels: "<<m_RGB.data)
     cv::Mat grayImg( cv::Size(_width,_height), CV_8UC1 );
     if (!m_RGB.empty() && !grayImg.empty()){
       cv::cvtColor(m_RGB , grayImg, CV_BGR2GRAY);
@@ -418,19 +418,12 @@ void HawkEye::capture_image(){
     }
     cv::imwrite("image_rgb.jpg", m_RGB);
     cv::imwrite("image_gray.jpg", grayImg);
-    // cv::Mat tmpMat = cv::cvarrToMat(grayImg, true); //convert iplImage to Mat
     _f = m_RGB; //save as current frame _f
 
-    cv::resize(_f, _f, cv::Size(), 0.5, 0.5, cv::INTER_NEAREST); //capture at double resolution and resize to half the size because pixels are grouped per 4
+    cv::resize(_f, _f, cv::Size(), 0.5, 0.5, cv::INTER_NEAREST); //Todo: improve this, now we capture at double resolution and resize to half the size because pixels are grouped per 4
     // _f = grayImg; //save as current frame _f
     HAWKEYE_DEBUG_PRINT("current frame channels: "<<_f.channels())
     HAWKEYE_DEBUG_PRINT("current frame type: "<<_f.type())
-    // cvSaveImage("image_ir.bmp",m_IR,0);
-
-    // cvReleaseImage(&grayImg); //free memory
-    // cvReleaseImage(&m_RGB);
-    
-    // cvReleaseImage(&m_IR);
 
     buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     buf.memory = V4L2_MEMORY_MMAP;
@@ -440,10 +433,9 @@ void HawkEye::capture_image(){
     }
 }
 
-void HawkEye::getBackground()
+void HawkEye::getBackground() //save background as average of 50 captured images
 {
     //read frames from camera and take average of multiple background frames
-    // _cap >> _f;  //put the output of cap into the variable _f
     capture_image(); //update _f to current frame
 
     if (_load_background_from_file){
@@ -454,17 +446,14 @@ void HawkEye::getBackground()
     }
     else{    
         _background.create(_f.size(),CV_32FC3); //RGB image
-        // old: _background = np.float32(f); //initialize average as current captured frame 
-        
+
         //loop over images and estimate background
         for (int i = 0; i < 50; ++i){
-            // _cap >> _f;
             capture_image(); //update _f to current frame
             cv::accumulateWeighted(_f,_background,0.1);
         }
         HAWKEYE_DEBUG_PRINT("Average aquired over 50 frames")
         _background.convertTo(_background, CV_8UC3); //convert background to uint8_t presentation
-        // old: _background.astype("uint8_t");
     }
         
     if (_save_image){
@@ -485,11 +474,11 @@ void HawkEye::processImage()
   _circlesflip_correct.clear();
   _circlesDetected.clear();
 
-  std::vector<std::vector<cv::Point> > contours;
-  std::vector<cv::Vec4i> hierarchy; //<Vec4i> is a vector: [x1,y1,x2,y2]
+  std::vector<std::vector<cv::Point> > contours; //will hold all contours
+  std::vector<cv::Vec4i> hierarchy; //<Vec4i> is a vector of integers: [x1,y1,x2,y2]
   HAWKEYE_DEBUG_PRINT("Starting background subtraction")
   
-  backgroundSubtraction(&contours, &hierarchy);
+  backgroundSubtraction(&contours, &hierarchy); //find obstacle contours
 
   HAWKEYE_DEBUG_PRINT("Finished background subtraction")
   if (hierarchy.empty()){
@@ -497,20 +486,20 @@ void HawkEye::processImage()
   }
 
   if (!hierarchy.empty()){
-    std::vector<cv::Point> c;
-    cv::Rect rectangle;
-    double area;
+    std::vector<cv::Point> c; //holds a contour
+    cv::Rect rectangle; 
+    double area; //rectangle or circle area
     cv::RotatedRect rotrect; //minimum area rectangle around contour
-    cv::Point2f ccenter;
-    float cradius;
+    cv::Point2f ccenter; //circle center
+    float cradius; //circle radius
 
-    for (int c_i = 0; c_i < contours.size(); c_i++){ //goal is to take first element of hierarchy and combine with first contour etc.
+    for (int c_i = 0; c_i < contours.size(); c_i++){ //take first element of hierarchy and combine with first contour etc.
         cv::convexHull(contours[c_i], c); //convex hull of the detected obstacle/contour
         rectangle = cv::boundingRect(c); //rectangle around contour: rectangle.x, y, width, height
         area = cv::contourArea(c);
-        HAWKEYE_DEBUG_PRINT("Area: "<<area);
+        HAWKEYE_DEBUG_PRINT("Contour area: "<<area);
         rotrect= cv::minAreaRect(c); //minimum area rectangle around contour
-        cv::minEnclosingCircle(c, ccenter, cradius); //circle around obstacle
+        cv::minEnclosingCircle(c, ccenter, cradius); //minimum area circle around contour
 
         // add small sized objects to object contours
         if (area>10 and area<140){ //shuttle-sized obstacles
@@ -524,10 +513,9 @@ void HawkEye::processImage()
             _boxcontours.push_back(c);
         }
         
-        // process large objects, this is where the robot will be detected
+        // process large objects: this is where the robot will be detected
         double cx;
         double cy;
-        // double cyflip;
         cv::Size fsize;
 
         int rorigx; 
@@ -539,14 +527,11 @@ void HawkEye::processImage()
         if (area>900){// and hier[3]==-1: //Todo: adapt value for new camera
             cx = ccenter.x;
             cy = ccenter.y;
-            fsize = _f.size(); 
-            // cyflip= fsize.height-cy; //Todo: selected correct dimension?
-            
+            fsize = _f.size();             
 
             // integer coordinates only
             cx = static_cast<int>(cx);
             cy = static_cast<int>(cy);
-            // cyflip = static_cast<int>(cyflip); //Todo: added this, okay?
             ccenter.x = cx;
             ccenter.y = cy;
             cradius = static_cast<int>(cradius);
@@ -561,7 +546,6 @@ void HawkEye::processImage()
             roriArray[3] = rorigw;
             _rorig.assign(roriArray,roriArray + 4); 
             _roi = _f(rectangle);
-            // _roi= f[rorigy:rorigy+rorigh,rorigx:rorigx+rorigw, 0]; //crop frame to ROI
 
             findRobots();
 
@@ -577,13 +561,9 @@ void HawkEye::processImage()
 void HawkEye::backgroundSubtraction(std::vector<std::vector<cv::Point> > *contours, std::vector<cv::Vec4i> *hierarchy){
     double read_time = 0;
     // while (read_time < 1/(_fps)){//while read_time is too low, i.e., it's buffered... discard the buffered one
-        _capture_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        // _capture_time = time(0); //before reading
-        // meta,f = _cap.read();
-        //Todo: deal with meta data
-        // _cap >> _f;
+        // _capture_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         capture_image(); //update _f to current frame
-        read_time =  difftime(time(0) , _capture_time); //time it took to read image
+        read_time =  difftime(time(0) , _capture_time); //Todo: not used? Time it took to read image
     // }    
 
     if (_save_image){
@@ -622,13 +602,11 @@ void HawkEye::backgroundSubtraction(std::vector<std::vector<cv::Point> > *contou
     //Todo: get these contours and hierarchy out of this function: class variables or pointers?
 }
 
-void HawkEye::findRobots()
+void HawkEye::findRobots() // match printed patterns on robot's back
 {
 
     //Todo: expand functionality to detect multiple robots
-
-    // match printed patterns on robot's back
-    // cv::Mat templates[3] = (_template_circle, _template_star1, _template_star2);
+    
     bool success;
     //Todo: put in vector<double> or in double[array]?
     double robottocks[7] = {0}; //maxpoints((x,y),(x,y)), w, h, max_val --> positions of circular markers
@@ -643,10 +621,6 @@ void HawkEye::findRobots()
           _drawstar[k] = starpat[k];
           HAWKEYE_DEBUG_PRINT("starpat in findrobots():"<<starpat[k])
         }
-        // std::copy(std::begin(robottocks[0]), std::end(robottocks[6]), std::begin(_drawmods[0])); //copy arrays
-        // std::copy(std::begin(starpat[0]), std::end(starpat[4]), std::begin(_drawstar[0]));
-        // _drawmods = robottocks;
-        // _drawstar = starpat;
         _drorigx  = _rorig[0]; //rorigx
         _drorigy  = _rorig[1]; //rorigy   
     }
