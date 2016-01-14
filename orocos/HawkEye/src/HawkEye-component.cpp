@@ -30,7 +30,6 @@ HawkEye::HawkEye(std::string const& name) : TaskContext(name, PreOperational), _
 bool HawkEye::configureHook(){
 
   //Set operating flags and paths
-  _stillsrun = false;    //operate from still images not live video, for testing
   _save_image = true;  //record images/get new background at start
   _load_background_from_file = false; //select if you want to use an old background or make a new one
   _draw_markers = true; // draw detected and computed markers from templated matching
@@ -44,12 +43,7 @@ bool HawkEye::configureHook(){
   //Initialize class variables
   _robobox = cv::RotatedRect(cv::Point2f(0,0), cv::Size2f(0,0), 0);
 
-  if (_stillsrun){
-      _path = ""; //Todo: add correct path
-  }
-  else{  
-      _path = _workspace_path + "/HawkEye/src/";
-  }
+  _path = _workspace_path + "/HawkEye/src/";
 
   //Read in templates
   HAWKEYE_DEBUG_PRINT("circle template path: "<<_path+"Images/templates/mod1.tiff")
@@ -1116,18 +1110,14 @@ void HawkEye::drawResults(){
         HAWKEYE_DEBUG_PRINT("No star markers can be drawn...")
     }
 
-    // cv::imshow("Processed",_f);
-    // cv::waitKey();
+    if (_draw_contours){
+        HAWKEYE_DEBUG_PRINT("Plotting contours of rectangles")     
+        cv::drawContours(_f , _rectanglesDetectedContours , -1 , cv::Scalar(128,200,255) , 2); 
+    }
+
     if (_save_image){
         HAWKEYE_DEBUG_PRINT("Saving final image with markers")
         cv::imwrite(_save_img_path + "4final-" + std::to_string(_capture_time) + ".png" , _f);    
-        
-        HAWKEYE_DEBUG_PRINT("Plotting contours of rectangles")     
-        cv::drawContours(_f , _rectanglesDetectedContours , -1 , cv::Scalar(128,200,255) , 2);
-        cv::imwrite(_save_img_path + "5contours-" + std::to_string(_capture_time) + ".png" , _f);  
-    }
-    if (_stillsrun == false){
-        cv::waitKey(1) % 256; // needed to show images
     }
 }
 

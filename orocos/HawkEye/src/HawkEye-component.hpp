@@ -96,7 +96,6 @@ class HawkEye : public RTT::TaskContext{
     double const pi=4*atan(1); //define constant pi
 
     //operating flags and paths
-    bool _stillsrun;    //operate from still images not live video, for testing
     bool _save_image;   //record images
     bool _load_background_from_file; //if you don't want to make a new background
     bool _draw_markers; //draw detected and computed markers from templated matching
