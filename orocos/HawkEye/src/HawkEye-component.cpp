@@ -1,6 +1,4 @@
 #include "HawkEye-component.hpp"
-#include <rtt/Component.hpp> //Todo: remove?
-#include <iostream> //Todo: remove?
 
 HawkEye::HawkEye(std::string const& name) : TaskContext(name, PreOperational), _drawstar{0}, _drawmods{0}, _robcenflip{0}, _roboState{0}{
 
@@ -14,14 +12,14 @@ HawkEye::HawkEye(std::string const& name) : TaskContext(name, PreOperational), _
   _device = "/dev/video1"; //locate video device on Odroid
   _resolution = HD720p;
   _fps = 90;   //max for this resolution, if using USB 3.0
-  _workspace_path = "/home/tim/orocos/ourbot/orocos"; //TODO: adapt to right path
-  _brightness = 8; //0...40
-  _exposure = 50; //1...10000
+  _workspace_path = "/home/tim/orocos/ourbot/orocos"; //TODO: adapt to right path //directory where Orocos component is situated in
+  _brightness = 15; //0...40
+  _exposure = 200; //1...10000
 
 #endif //HAWKEYE_TESTFLAG
 
   ports()->addPort("obstacles_state_port",_obstacles_state_port).doc("Obstacles state output port");
-  ports()->addPort("robots_state_port",   _robots_state_port).doc("Robots state output port");
+  ports()->addPort("robots_state_port",   _robots_state_port).doc("Robots state output port"); //We will have multiple robots
   ports()->addPort("width_port",          _width_port).doc("Frame width output port");
   ports()->addPort("height_port",         _height_port).doc("Frame height output port");
   ports()->addPort("fps_port",            _fps_port).doc("Frames per second output port");
