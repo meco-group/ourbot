@@ -33,7 +33,7 @@ bool HawkEye::configureHook(){
   _save_image = true;  //record images/get new background at start
   _load_background_from_file = false; //select if you want to use an old background or make a new one
   _draw_markers = true; // draw detected and computed markers from templated matching
-  _draw_contours = false; //draw detected obstacles and their contours
+  _draw_contours = true; //draw detected obstacles and their contours
   _print_cam_info = true; //print camera capabilities while starting the camera
   
   _cntapprox = 0.025; //parameter of approxPolyDP which approximates a polygon/contour by another, simplified, polygon/contour
@@ -572,7 +572,7 @@ void HawkEye::backgroundSubtraction(std::vector<std::vector<cv::Point> > *contou
         cv::imwrite(_save_img_path + "1img-" + std::to_string(_capture_time) + ".png" ,_f);
     }
 
-    cv::absdiff(_background, _f, _diff);  //background subtraction on RGB images
+    cv::absdiff(_background, _f, _diff);  //Todo: why on RGB? Background subtraction on RGB images
     cv::cvtColor(_diff, _diff , CV_RGB2GRAY); //convert _diff to grayscale 
     
     if (_save_image){
@@ -580,7 +580,7 @@ void HawkEye::backgroundSubtraction(std::vector<std::vector<cv::Point> > *contou
         cv::imwrite(_save_img_path + "2diff-" + std::to_string(_capture_time) + ".png",_diff);
     }
     cv::threshold(_diff, _mask,_diffthresh, 255, cv::THRESH_BINARY); //gives a black/white image: compared background to captured frame and makes pixels which differ enough from background black (= obstacle)
-                                                                  //+cv::THRESH_OTSU 
+                                                                  //+cv::THRESH_OTSU: didn't seem to work better 
     if (_save_image){
         HAWKEYE_DEBUG_PRINT("Saving current mask")
         cv::imwrite(_save_img_path + "3mask-" + std::to_string(_capture_time) + ".png",_mask);
@@ -599,10 +599,9 @@ void HawkEye::backgroundSubtraction(std::vector<std::vector<cv::Point> > *contou
     HAWKEYE_DEBUG_PRINT("Starting to look for contours")
 
     cv::findContours(_maskcopy, *contours, *hierarchy, cv::RETR_EXTERNAL,cv::CHAIN_APPROX_SIMPLE); //find contours in the mask
-    //Todo: get these contours and hierarchy out of this function: class variables or pointers?
 }
 
-void HawkEye::findRobots() // match printed patterns on robot's back
+void HawkEye::findRobots() //match templates of robot
 {
 
     //Todo: expand functionality to detect multiple robots
@@ -626,7 +625,7 @@ void HawkEye::findRobots() // match printed patterns on robot's back
     }
 
     //determine robot direction from detected markers
-    if ((starpat[4] != 0) && (success == true)){ //if a star was detected (width != 0) do further processing to get coordinates and robot direction
+    if ((starpat[4] != 0) && (success == true)){ //if a star was detected (width != 0) do further processing to get coordinates and robot direction and save everything in _robobox
       HAWKEYE_DEBUG_PRINT("Starting to calculate robot center and orientation")
         try{
             double lineside = (robottocks[2] - robottocks[0])*(starpat[1]-robottocks[1]) - (robottocks[3] - robottocks[1])*(starpat[0] - robottocks[0]); //(circle2_x-circle1_x)*(star_y-circle1_y) - (circle2_y-circle1_y)*(star_x-circle1_x)
@@ -649,7 +648,7 @@ void HawkEye::findRobots() // match printed patterns on robot's back
                 robdirection += 360;   
             }
             
-            //Todo: adapt to ourBot, scale is used to determine the reference point on the youbot. starpat is the location of the star. xrobcen and yrobcen are computed by adding to the position of the star a certain scale times the distance between the star and the midpoint of the two circles. In reality, this distance is 100 mm. The distance from the center of the star to the front of the plate on which the markers are placed is 75.9 mm, and the distance from the front of this plate to the center of the youbot (midpoint between the 4 wheels) is 40.0 mm. This 40.0 mm is only a rough measurement done by Kurt Geebelen and can be off a few milimeters. If you do not trust this, you can remeasure it and propose to change it.
+            //Todo: adapt to ourBot scale, scale is used to determine the reference point on the youbot. starpat is the location of the star. xrobcen and yrobcen are computed by adding to the position of the star a certain scale times the distance between the star and the midpoint of the two circles. In reality, this distance is 100 mm. The distance from the center of the star to the front of the plate on which the markers are placed is 75.9 mm, and the distance from the front of this plate to the center of the youbot (midpoint between the 4 wheels) is 40.0 mm. This 40.0 mm is only a rough measurement done by Kurt Geebelen and can be off a few milimeters. If you do not trust this, you can remeasure it and propose to change it.
             double scale = (40.0 + 75.9)/100.0;
             double xrobcen= starpat[0] + std::abs(starpat[0] - xmodcen) * scale * std::sin(M_PI/180 * robdirection);
             double yrobcen= starpat[1] - std::abs(starpat[1] - ymodcen) * scale * std::cos(M_PI/180 * robdirection);
@@ -664,9 +663,8 @@ void HawkEye::findRobots() // match printed patterns on robot's back
 
         }  
         catch (const std::exception &e){
-            HAWKEYE_DEBUG_PRINT("No direction and centre can be calculated!") 
+            HAWKEYE_DEBUG_PRINT("No direction and center can be calculated!") 
             HAWKEYE_DEBUG_PRINT(e.what())
-            // print traceback.format_exc()
         }
     }
 }
@@ -677,10 +675,10 @@ void HawkEye::findBigObstacles(cv::RotatedRect rotrect, std::vector<cv::Point> c
     HAWKEYE_DEBUG_PRINT("In findBigObstacles")
     HAWKEYE_DEBUG_PRINT("width and height of rotatedrectangle: "<<rotrect.size.width<<rotrect.size.height)
 
-    //If there is a large obstacle (rotrect) without markers, i.e. if the robot centre is not inside the box, then you have a big obstacle --> add contours to boxcontour list
+    //If there is a large obstacle (rotrect) without markers, i.e. if the robot center is not inside the box, then you have a big obstacle --> add contours to boxcontour list
     cv::Point2f box[4];
     rotrect.points(box);
-    std::vector<cv::Point> boxPoints;//put into std::vector<cv::Point>
+    std::vector<cv::Point> boxPoints;
     for (int k = 0 ; k < 4 ; k++){
       boxPoints.push_back(box[k]);
     }
@@ -689,25 +687,24 @@ void HawkEye::findBigObstacles(cv::RotatedRect rotrect, std::vector<cv::Point> c
 
     double isrobotbox= cv::pointPolygonTest(boxPoints, _robobox.center, false); // only add boxes that don't contain the robot //i.e. test if robot center lies in box
     if (isrobotbox<0){
-        HAWKEYE_DEBUG_PRINT("Found obstacle which is not the robot")
+        HAWKEYE_DEBUG_PRINT("Found obstacle with area > 900 which is not the robot")
         _boxes.push_back(rotrect); //save rectangle representation of obstacle
         _boxcontours.push_back(c); //rectangle was an obstacle, so add it to contours
         std::vector<double> current_circle; //set up a vector to push in circles
         current_circle.push_back(cx); 
         current_circle.push_back(cy); 
         current_circle.push_back(cradius);
-        _circles.push_back(current_circle);
+        _circles.push_back(current_circle); //save circle representation of obstacle
     }
     else{//rectangle/box contained the robot, so delete its contour from the mask = draw the contour on the mask (via drawContours)
         _robobox.points(roboboxcontour);
-        std::vector<cv::Point> roboboxcontourPoints;//put into std::vector<cv::Point>
+        std::vector<cv::Point> roboboxcontourPoints;
         for (int k = 0 ; k < 4 ; k++){
           roboboxcontourPoints.push_back(roboboxcontour[k]);
         }
-        // roboboxcontour = np.int0(roboboxcontour) //Todo: replaced by float roboboxcontour (4bytes) --> allowed?
         if ( cv::contourArea(boxPoints) > cv::contourArea(roboboxcontourPoints) ){ //if area of new contour is bigger than previous robobox area, merge boxes
             HAWKEYE_DEBUG_PRINT("--------merged boxes--------") //since cv::drawContours updates your mask
-            //TODO: move drawing code outside main algo
+            //Todo: move drawing code outside main algo
             std::vector<std::vector<cv::Point> > roboboxVectorPoints;
             roboboxVectorPoints.push_back(roboboxcontourPoints);
             cv::drawContours(_mask, roboboxVectorPoints, 0, cv::Scalar(0,0,0), -1); //draw robot contour on the mask = update the mask
@@ -718,7 +715,7 @@ void HawkEye::findBigObstacles(cv::RotatedRect rotrect, std::vector<cv::Point> c
 
             cv::findContours(_mask, *contours, *hierarchy, cv::RETR_EXTERNAL,cv::CHAIN_APPROX_SIMPLE); //find object in the remaining contours, to see if there were overlapping or touching objects with the robot box
             
-            //this will only return obstacles touching the original robot box?
+            //Todo: this will only return obstacles touching the original robot box?
             if (hierarchy != NULL){
                 for (int c_i = 0; c_i < contours->size(); c_i++){
                     // std::vector<Point> c = cv::convexHull(contours[c_i]); //Todo: was there in previous loop of this kind and now not anymore?
@@ -729,26 +726,19 @@ void HawkEye::findBigObstacles(cv::RotatedRect rotrect, std::vector<cv::Point> c
                     cv::RotatedRect rotrect= cv::minAreaRect(c);
                     cv::Point2f ccenter;
                     float cradius; 
-                    cv::minEnclosingCircle(c, ccenter, cradius); //circle around obstacle    
+                    cv::minEnclosingCircle(c, ccenter, cradius); //circle around contour   
         
                     if (area > 4){// and hier[3]==-1: //minimum area to see something as an obstacle
                         int cx = ccenter.x;
                         int cy = ccenter.y;
                         cv::Size fsize = _f.size(); 
-                        // cyflip= fsize.height-cy;
-                        
-                        // _circles.append((cx,cy,cradius));
-                        // cv::boxPoints(rotrect, float box[4]);
-                        // _boxes.push_back(box); //Todo: why is this not done on line below if (isrobotbox<0)? there you push rotrect without cv::boxPoints...
-                        // boxesflip.append(cv2.boxPoints(rotrectflip))
-                        // boxesflip.append(cv2.boxPoints(rotrectflip))
                         std::vector<double> current_circle; //set up a vector to push in circles
                         current_circle.push_back(cx); 
                         current_circle.push_back(cy); 
                         current_circle.push_back(cradius);
-                        _circles_correct.push_back(current_circle);
+                        _circles_correct.push_back(current_circle); //save circle representation of contour
 
-                        _boxes_correct.push_back(rotrect);
+                        _boxes_correct.push_back(rotrect); //save rectangle representation of contour
                     }
                 }
             }
@@ -777,60 +767,56 @@ void HawkEye::processResults(){
   // result['time']=meta["timestamp_grabbed"] //the most accurate one, gives the time at which the image was taken (without influence of encoding, sending, decoding)
 
   HAWKEYE_DEBUG_PRINT("in processResults")
-  if (_robobox.size.width != 0 && (_rectanglesDetected.size()) > 0){ //Todo, replaced _robobox != NULL by this because _robobox initialized with size = 0,0
+  if (_robobox.size.width != 0 && (_rectanglesDetected.size()) > 0){ //replaced _robobox != NULL by this because _robobox initialized with size = (0,0)
       std::vector<cv::RotatedRect> filter_boxes;
       cv::Point2f roboboxcontour[4];
       _robobox.points(roboboxcontour);
-      std::vector<cv::Point> roboboxcontourPoints;//put into std::vector<cv::Point>
+      std::vector<cv::Point> roboboxcontourPoints;
       for (int k = 0 ; k < 4 ; k++){
-        roboboxcontourPoints.push_back(roboboxcontour[k]);
+        roboboxcontourPoints.push_back(roboboxcontour[k]); //add robobox vertices to contour points
       }
-      // std::vector<cv::Point> roboboxcontour;
-      // cv::boxPoints(_robobox, roboboxcontour);
-      // roboboxcontour = np.int0(roboboxcontour); //Todo made float instead of int0, correct?
       for (int k = 0 ; k < _rectanglesDetected.size() ; k++){
           double isboxwithinrobot= cv::pointPolygonTest(roboboxcontourPoints, _rectanglesDetected[k].center, false); //only add boxes that are not within the robot
           if (isboxwithinrobot < 0){ //not within robot
-              filter_boxes.push_back(_rectanglesDetected[k]);
+              filter_boxes.push_back(_rectanglesDetected[k]); //save rectangle in filtered boxes
           }
       }
-      _rectanglesDetected = filter_boxes;
+      _rectanglesDetected = filter_boxes; //overwrite detected rectangles vector with filtered version
   }
 
-  _rectanglesDetectedContours = _boxcontours;
-  
+  if (_draw_contours){ //this part only needs to be executed if _draw_contours is true
 
-  if (_robobox.size.width != 0 && _rectanglesDetectedContours.size() > 0){
-      std::vector<std::vector<cv::Point> > filter_objcontours;
-      cv::Point2f roboboxcontour[4];
-      _robobox.points(roboboxcontour);
-      std::vector<cv::Point> roboboxcontourPoints;//put into std::vector<cv::Point>
-      for (int k = 0 ; k < 4 ; k++){
-        roboboxcontourPoints.push_back(roboboxcontour[k]);
-      }
-      // std::vector<cv::Point> roboboxcontour;
-      // cv::boxPoints(_robobox, roboboxcontour);
-      // roboboxcontour = np.int0(roboboxcontour);
-      cv::Moments rectangleMoments;
-      double iscontwithinrobot;
-      for (int k = 0 ; k < _rectanglesDetectedContours.size() ; k++){
-          std::vector<std::vector<cv::Point> > conthull ( _rectanglesDetectedContours.size() ); //Todo: or put this _rectanglesDetectedContours.size()?
-          cv::convexHull(_rectanglesDetectedContours[k], conthull[k]); // avoid butterfly contours as they have m00= 0
-          rectangleMoments = cv::moments(conthull[k]);
-          if (rectangleMoments.m00!=0){
-              cv::Point2f contcen(static_cast<int>(rectangleMoments.m10/rectangleMoments.m00), static_cast<int>(rectangleMoments.m01/rectangleMoments.m00));
-              iscontwithinrobot= cv::pointPolygonTest(roboboxcontourPoints, contcen, false);    // only add boxes that are not within the robot
-          }
-          else{
-              iscontwithinrobot = -1;
-          }
-          if (iscontwithinrobot < 0){
-              cv::approxPolyDP(_rectanglesDetectedContours[k], _rectanglesDetectedContours[k], _cntapprox*cv::arcLength(_rectanglesDetectedContours[k],true), true); // approximate contours
-              filter_objcontours.push_back(_rectanglesDetectedContours[k]); //add contours which are not within the robot
-          }
-      }
-      HAWKEYE_DEBUG_PRINT("filtered the object contours")
-      _rectanglesDetectedContours = filter_objcontours;
+    _rectanglesDetectedContours = _boxcontours;   
+
+    if (_robobox.size.width != 0 && _rectanglesDetectedContours.size() > 0){
+        std::vector<std::vector<cv::Point> > filter_objcontours;
+        cv::Point2f roboboxcontour[4];
+        _robobox.points(roboboxcontour);
+        std::vector<cv::Point> roboboxcontourPoints;
+        for (int k = 0 ; k < 4 ; k++){
+          roboboxcontourPoints.push_back(roboboxcontour[k]);
+        }
+        cv::Moments rectangleMoments;
+        double iscontwithinrobot;
+        for (int k = 0 ; k < _rectanglesDetectedContours.size() ; k++){
+            std::vector<std::vector<cv::Point> > conthull ( _rectanglesDetectedContours.size() ); //Todo: or put this _rectanglesDetectedContours.size()?
+            cv::convexHull(_rectanglesDetectedContours[k], conthull[k]); // avoid butterfly contours as they have m00= 0
+            rectangleMoments = cv::moments(conthull[k]);
+            if (rectangleMoments.m00!=0){
+                cv::Point2f contcen(static_cast<int>(rectangleMoments.m10/rectangleMoments.m00), static_cast<int>(rectangleMoments.m01/rectangleMoments.m00));
+                iscontwithinrobot= cv::pointPolygonTest(roboboxcontourPoints, contcen, false);    // only add boxes that are not within the robot
+            }
+            else{
+                iscontwithinrobot = -1;
+            }
+            if (iscontwithinrobot < 0){
+                cv::approxPolyDP(_rectanglesDetectedContours[k], _rectanglesDetectedContours[k], _cntapprox*cv::arcLength(_rectanglesDetectedContours[k],true), true); // approximate contours
+                filter_objcontours.push_back(_rectanglesDetectedContours[k]); //add contours which are not within the robot
+            }
+        }
+        HAWKEYE_DEBUG_PRINT("filtered the object contours")
+        _rectanglesDetectedContours = filter_objcontours;
+    }
   }
 
   //Process results to put on data port
