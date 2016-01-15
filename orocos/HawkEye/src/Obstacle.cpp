@@ -1,6 +1,6 @@
 #include "Obstacle.hpp"
 
-Obstacle::Obstacle(int x, int y, double vx, double vy, shape_t shape, int area) :
+Obstacle::Obstacle(int x, int y, double vx, double vy, shape_t shape, double area) :
     _pos({x,y}),
     _vel({vx,vy}),
     _shape(shape),
@@ -24,7 +24,7 @@ void Obstacle::setVel(double vx , double vy)
 // {
 //     _shape = shape;
 // }
-void Obstacle::setArea(int area)
+void Obstacle::setArea(double area)
 {
     _area = area;
 }
@@ -42,7 +42,7 @@ shape_t Obstacle::getShape()
 {
     return _shape;
 }
-int Obstacle::getArea()
+double Obstacle::getArea()
 {
     return _area;
 }
@@ -75,5 +75,5 @@ void Obstacle::vec2obj(std::vector<double> obstacleVector, Obstacle *obstacle)
     std::cout<<"in Obstacle vec2obj: setting Pos, Vel, Area"<<std::endl;
     obstacle->setPos(int(obstacleVector[1]), int(obstacleVector[2]));
     obstacle->setVel(obstacleVector[3], obstacleVector[4]);
-    obstacle->setArea(int(obstacleVector[5]));
+    obstacle->setArea(obstacleVector[5]);
 }

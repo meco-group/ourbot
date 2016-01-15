@@ -1,14 +1,14 @@
 #include "Circle.hpp"
 
 Circle::Circle() :
-	Obstacle(0, 0, 0.0, 0.0, CIRCLE, 0),
+	Obstacle(0, 0, 0.0, 0.0, CIRCLE, 0.0),
     _radius(0)
 {
 
 }
 
 Circle::Circle(int radius) :
-	Obstacle(0, 0, 0.0, 0.0, CIRCLE, 0),
+	Obstacle(0, 0, 0.0, 0.0, CIRCLE, 0.0),
     _radius(radius)
 {
 

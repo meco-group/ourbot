@@ -855,7 +855,7 @@ void HawkEye::processResults(){
       HAWKEYE_DEBUG_PRINT("Processresults: new circle pushed")
       circle->setPos(_circlesDetected[k][0], _circlesDetected[k][1]);
       circle->setRadius(_circlesDetected[k][2]); //radius
-      circle->setArea(int(circleArea));//Todo: this shouldn't be an int, change in circle.cpp
+      circle->setArea(circleArea);
       _obstacles.push_back(circle);
       delete rectangle; //declared in the loop but was not used
     }
@@ -868,7 +868,7 @@ void HawkEye::processResults(){
       rectangle->setWidth(_rectanglesDetected[k].size.width);
       rectangle->setLength(_rectanglesDetected[k].size.height);
       rectangle->setTheta(_rectanglesDetected[k].angle);
-      rectangle->setArea(int(rectangleArea));
+      rectangle->setArea(rectangleArea);
       _obstacles.push_back(rectangle);
       delete circle; //declared in the loop but was not used
     }
