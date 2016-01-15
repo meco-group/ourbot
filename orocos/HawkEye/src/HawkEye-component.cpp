@@ -625,18 +625,15 @@ void HawkEye::findRobots() // match printed patterns on robot's back
         _drorigy  = _rorig[1]; //rorigy   
     }
 
-    // determine robot direction from detected markers
-    // robcen = NULL; //Todo: why was this here?
+    //determine robot direction from detected markers
     if ((starpat[4] != 0) && (success == true)){ //if a star was detected (width != 0) do further processing to get coordinates and robot direction
       HAWKEYE_DEBUG_PRINT("Starting to calculate robot center and orientation")
         try{
             double lineside = (robottocks[2] - robottocks[0])*(starpat[1]-robottocks[1]) - (robottocks[3] - robottocks[1])*(starpat[0] - robottocks[0]); //(circle2_x-circle1_x)*(star_y-circle1_y) - (circle2_y-circle1_y)*(star_x-circle1_x)
-            //original robottocks syntax: [[[x1,y1],[x2,y2]],w,h,maxval] --> stacked in an array of [7] now
-            //original starpat syntax: [[x1,y1],w,h,max_val] --> stacked in an array of [5] now
             double moddirection = 180/M_PI*(std::atan2((robottocks[3]-robottocks[1]),(robottocks[2]-robottocks[0])));
             double robdirection;
             if (lineside>0){
-                robdirection = moddirection + 90;   // we need the direction of the orthogonal to the line of the mod points
+                robdirection = moddirection + 90; //we need the direction of the orthogonal to the line of the mod points
             }
             else{
                 robdirection = moddirection - 90;
@@ -652,7 +649,7 @@ void HawkEye::findRobots() // match printed patterns on robot's back
                 robdirection += 360;   
             }
             
-            // scale is used to determine the reference point on the youbot. starpat is the location of the star. xrobcen and yrobcen are computed by adding to the position of the star a certain scale times the distance between the star and the midpoint of the two circles. In reality, this distance is 100 mm. The distance from the center of the star to the front of the plate on which the markers are placed is 75.9 mm, and the distance from the front of this plate to the center of the youbot (midpoint between the 4 wheels) is 40.0 mm. This 40.0 mm is only a rough measurement done by Kurt Geebelen and can be off a few milimeters. If you do not trust this, you can remeasure it and propose to change it.
+            //Todo: adapt to ourBot, scale is used to determine the reference point on the youbot. starpat is the location of the star. xrobcen and yrobcen are computed by adding to the position of the star a certain scale times the distance between the star and the midpoint of the two circles. In reality, this distance is 100 mm. The distance from the center of the star to the front of the plate on which the markers are placed is 75.9 mm, and the distance from the front of this plate to the center of the youbot (midpoint between the 4 wheels) is 40.0 mm. This 40.0 mm is only a rough measurement done by Kurt Geebelen and can be off a few milimeters. If you do not trust this, you can remeasure it and propose to change it.
             double scale = (40.0 + 75.9)/100.0;
             double xrobcen= starpat[0] + std::abs(starpat[0] - xmodcen) * scale * std::sin(M_PI/180 * robdirection);
             double yrobcen= starpat[1] - std::abs(starpat[1] - ymodcen) * scale * std::cos(M_PI/180 * robdirection);

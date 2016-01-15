@@ -7,7 +7,7 @@
 #define HAWKEYE_SAVEFLAG
 #define HAWKEYE_DEBUGFLAG
 
-#ifdef HAWKEYE_DEBUGFLAG //Print statements on/off
+#ifdef HAWKEYE_DEBUGFLAG //print statements on/off
 	#define HAWKEYE_DEBUG_PRINT(x)	std::cout << x << std::endl;
 #else
 	#define HAWKEYE_DEBUG_PRINT(x)	//std::cout << x << std::endl;
@@ -27,14 +27,11 @@
 
 //General
 #include <iostream>
-#include <stdlib.h>  //setenv and getenv
 #include <time.h> //to get timing information: difftime(), time(),...
 #include <chrono> //to get time in milliseconds
 #include <math.h> //atan2
 
 #include <string> //for std::to_string
-#include <sstream>
-#include <iterator> //for std::begin, std::end,...
 #include <stdint.h> //for uint8_t
 
 //Orocos
@@ -62,8 +59,8 @@
 #include "Rectangle.hpp"
 
 //Define For use in image acquisition
-typedef uint16_t WORD; //or use int?
-typedef uint8_t  BYTE; //or use int?
+typedef uint16_t WORD; 
+typedef uint8_t  BYTE; 
 
 
 typedef enum resolution_t{ //define enum to hold possibilities for resolution
@@ -72,7 +69,6 @@ typedef enum resolution_t{ //define enum to hold possibilities for resolution
     HD1080p = 3,
     FULL = 4
 } resolution_t;
-
 
 using namespace RTT; //otherwise you have to use RTT::OutputPort etc.
 
@@ -98,7 +94,6 @@ class HawkEye : public RTT::TaskContext{
     resolution_t _resolution;
     uint8_t *_buffer;
     int _errno;  //error handling
-    // int _shutter_speed;
 
     double const pi=4*atan(1); //define constant pi
 
@@ -108,14 +103,14 @@ class HawkEye : public RTT::TaskContext{
     bool _draw_markers; //draw detected and computed markers from templated matching
     bool _draw_contours; //draw detected contours
     bool _print_cam_info; //print the camera info while starting the camera (resolution, pixel format, capabilities,...)
-    double _cntapprox;
-    int _diffthresh;
-    float _matchThresh;
+    double _cntapprox; //setting of approxPolyDP function which approximates polygons/contours by simplified versions
+    int _diffthresh; //threshold for background subtraction
+    float _matchThresh; //threshold for template matching
     std::string _save_img_path; //where to save images
     std::string _path; //workspace directory
 
     //Templates
-    cv::Mat _template_circle; //Mat is the cpp type of an image
+    cv::Mat _template_circle; //Mat is the openCV type of an image, it's a kind of vector
     cv::Mat _template_star1;
     cv::Mat _template_star2;  
 
