@@ -1,6 +1,6 @@
 #include "HawkEye-component.hpp"
 
-HawkEye::HawkEye(std::string const& name) : TaskContext(name, PreOperational), _drawstar{0}, _drawmods{0}, _robcenflip{0}, _roboState{0}{
+HawkEye::HawkEye(std::string const& name) : TaskContext(name, PreOperational), _drawstar{0}, _drawmods{0}{
 
 #ifndef HAWKEYE_TESTFLAG
   //Add properties
@@ -470,8 +470,8 @@ void HawkEye::processImage()
   _rectanglesDetected.clear();
   _boxes.clear();
   _boxes_correct.clear();
-  _circlesflip.clear();
-  _circlesflip_correct.clear();
+  _circles.clear();
+  _circles_correct.clear();
   _circlesDetected.clear();
 
   std::vector<std::vector<cv::Point> > contours; //will hold all contours
@@ -655,7 +655,6 @@ void HawkEye::findRobots() // match printed patterns on robot's back
             double yrobcen= starpat[1] - std::abs(starpat[1] - ymodcen) * scale * std::cos(M_PI/180 * robdirection);
             double robcen[2] = {xrobcen + _rorig[0], yrobcen + _rorig[1]};
             cv::Size fsize = _f.size(); 
-            double _robcenflip[2] = {xrobcen + _rorig[0], fsize.height - (yrobcen + _rorig[1])}; 
 
             if (_draw_markers){
                 cv::circle(_f, cv::Point(static_cast<int>(robcen[0]),static_cast<int>(robcen[1])), 2, cv::Scalar(255,0,255), 4);
@@ -685,22 +684,19 @@ void HawkEye::findBigObstacles(cv::RotatedRect rotrect, std::vector<cv::Point> c
     for (int k = 0 ; k < 4 ; k++){
       boxPoints.push_back(box[k]);
     }
-    // std::vector<cv::Point> box;
-    // cv::boxPoints(rotrect, box); //Finds the four vertices of a rotated rect
-    // box = np.int0(box) //int0 = smallest integer word size available --> Todo: I did this by making box a float (4bytes), correct?
 
     cv::Point2f roboboxcontour[4];
 
-    double isrobotbox= cv::pointPolygonTest(boxPoints, _robobox.center, false);    // only add boxes that don't contain the robot //i.e. test if robot center lies in box
+    double isrobotbox= cv::pointPolygonTest(boxPoints, _robobox.center, false); // only add boxes that don't contain the robot //i.e. test if robot center lies in box
     if (isrobotbox<0){
         HAWKEYE_DEBUG_PRINT("Found obstacle which is not the robot")
         _boxes.push_back(rotrect); //save rectangle representation of obstacle
         _boxcontours.push_back(c); //rectangle was an obstacle, so add it to contours
-        std::vector<double> current_circle; //set up a vector to push in circlesflip
+        std::vector<double> current_circle; //set up a vector to push in circles
         current_circle.push_back(cx); 
-        current_circle.push_back(cy); //Todo: not cyflip?
+        current_circle.push_back(cy); 
         current_circle.push_back(cradius);
-        _circlesflip.push_back(current_circle);
+        _circles.push_back(current_circle);
     }
     else{//rectangle/box contained the robot, so delete its contour from the mask = draw the contour on the mask (via drawContours)
         _robobox.points(roboboxcontour);
@@ -746,11 +742,11 @@ void HawkEye::findBigObstacles(cv::RotatedRect rotrect, std::vector<cv::Point> c
                         // _boxes.push_back(box); //Todo: why is this not done on line below if (isrobotbox<0)? there you push rotrect without cv::boxPoints...
                         // boxesflip.append(cv2.boxPoints(rotrectflip))
                         // boxesflip.append(cv2.boxPoints(rotrectflip))
-                        std::vector<double> current_circle; //set up a vector to push in circlesflip
+                        std::vector<double> current_circle; //set up a vector to push in circles
                         current_circle.push_back(cx); 
-                        current_circle.push_back(cy); //Todo: not cyflip?
+                        current_circle.push_back(cy); 
                         current_circle.push_back(cradius);
-                        _circlesflip_correct.push_back(current_circle);
+                        _circles_correct.push_back(current_circle);
 
                         _boxes_correct.push_back(rotrect);
                     }
@@ -762,15 +758,11 @@ void HawkEye::findBigObstacles(cv::RotatedRect rotrect, std::vector<cv::Point> c
 
 void HawkEye::processResults(){
   
-  //Todo: decide if something is a rectangle or a circle: calculate area for both shape, the correct shape is the one with the smallest area
-
-  _roboState[0] =_robcenflip[0];
-  _roboState[1] =_robcenflip[1];
-  if ( (_circlesflip_correct.size())>0 ){
-      _circlesDetected =_circlesflip_correct;
+  if ( (_circles_correct.size())>0 ){
+      _circlesDetected =_circles_correct;
   }
   else {
-      _circlesDetected =_circlesflip;      
+      _circlesDetected =_circles;      
   }
 
   if (_boxes_correct.size() > 0){

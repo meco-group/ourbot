@@ -139,16 +139,14 @@ class HawkEye : public RTT::TaskContext{
     std::vector<cv::RotatedRect> _boxes;       //holds all rectangle representations of obstacles
     std::vector<cv::RotatedRect> _boxes_correct;//holds all rectangle representations of obstacles, when the robot was touching an obstacle
     std::vector<cv::RotatedRect> _rectanglesDetected; // holds all detected rectangular obstacles
-    std::vector<std::vector<double> > _circlesflip;     //holds all circle representations of obstacles, flipped
-    std::vector<std::vector<double> > _circlesflip_correct; //holds all circle representations of obstacles, when the robot was touching an obstacle
+    std::vector<std::vector<double> > _circles;     //holds all circle representations of obstacles, flipped
+    std::vector<std::vector<double> > _circles_correct; //holds all circle representations of obstacles, when the robot was touching an obstacle
     std::vector<std::vector<double> > _circlesDetected; //holds all detected circles
 
     std::vector<int> _template_circles_pos; 
     cv::Point _template_star_pos; 
 
-    cv::RotatedRect _robobox; //hold contours of robot
-    double _robcenflip[2]; //holds flipped center of robot
-    double _roboState[3]; //holds State of the robot
+    cv::RotatedRect _robobox; //holds robot state: position, width, height, angle
 
     double _drawmods[7]; //draw circular patterns
     double _drawstar[5]; //draw star pattern
@@ -165,7 +163,7 @@ class HawkEye : public RTT::TaskContext{
     void startCamera();
     void processImage(); 
     void findRobots();  
-    void findBigObstacles(cv::RotatedRect rotrect, std::vector<cv::Point> c, int cx, int cyflip, int cradius, std::vector<std::vector<cv::Point> > *contours, std::vector<cv::Vec4i> *hierarchy);
+    void findBigObstacles(cv::RotatedRect rotrect, std::vector<cv::Point> c, int cx, int cy, int cradius, std::vector<std::vector<cv::Point> > *contours, std::vector<cv::Vec4i> *hierarchy);
     void processResults();
     void writeResults();
     void drawResults();
