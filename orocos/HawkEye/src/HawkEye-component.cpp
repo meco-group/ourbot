@@ -33,7 +33,7 @@ bool HawkEye::configureHook(){
   _save_image = true;  //record images/get new background at start
   _load_background_from_file = false; //select if you want to use an old background or make a new one
   _draw_markers = true; // draw detected and computed markers from templated matching
-  _draw_contours = true; //draw detected obstacles and their contours
+  _draw_contours = false; //draw detected obstacles and their contours
   _print_cam_info = true; //print camera capabilities while starting the camera
   
   _cntapprox = 0.025; //parameter of approxPolyDP which approximates a polygon/contour by another, simplified, polygon/contour
@@ -73,7 +73,7 @@ bool HawkEye::configureHook(){
   // Show example data sample to output ports to make data flow real-time
   int example = 0;
   std::vector<double> exampleObstacle(80, 0.0); //Todo: 8 inputs per obstacle required --> suppose you have 10 obstacles maximum
-  std::vector<double> exampleRobot(18, 0.0); //Todo: 6 inputs per robot required --> suppose you have 3 robots maximum
+  std::vector<double> exampleRobot(27, 0.0); //Todo: 9 inputs per robot required --> suppose you have 3 robots maximum
   _obstacles_state_port.setDataSample(exampleObstacle);
   _robots_state_port.setDataSample(exampleRobot);
   _width_port.setDataSample(example);
@@ -879,45 +879,7 @@ HAWKEYE_DEBUG_PRINT("constructed obstacle vector")
 }
 
 void HawkEye::writeResults(){
-  //Reformat results
-
-  // def clean_contour_list(cnt):
-  //   return [x[0] for x in cnt.tolist()]
-
-  // try{
-  //   cnts = result['object contours'];
-  //   r = [];
-  //   for c in cnts:
-  //     r.append(clean_contour_list(c));
-  //   result['object contours'] = r;
-  // }
-  // catch(){
-  //   HAWKEYE_DEBUG_PRINT("can't convert contours to list")
-  //   result['object contours'] = [];
-  //   print result.keys();
-  // }
-  // for cnt in result['object contours']{
-  //     print len(cnt);
-  //       return result;
-  // }
-  // catch (const std::exception &e){
-        
-  //       HAWKEYE_DEBUG_PRINT("Video stream frame not captured! Skipping...")
-  //       HAWKEYE_DEBUG_PRINT(e.what())
-  //       // print traceback.format_exc()
-  //       cap.release()
-  //       if (!stillsrun){
-  //           cap = cv::VideoCapture(os.getenv('HOME')+'/camera');
-  //       }
-  //       try{
-  //           return result;
-  //       }
-  //       catch(std::exception){
-  //           result = dict();
-  //           return result;
-  //       }
-  // }
-
+  
   //Convert Robot and Obstacle objects to a vector
   std::vector<double> robotVec; //(9) but then this makes a 9*0 vector first and then the real robot if you use push_back in Robot.cpp
 
@@ -955,6 +917,7 @@ void HawkEye::writeResults(){
   }
 
   obstacleVec.resize(80); //resize to 80 elements
+  robotVec.resize(27); //resize to 27 elements, i.e. 9 elements per robot, max 3 robots
 
   //Todo: check if size of obstacleVec is not exceeded?
 
