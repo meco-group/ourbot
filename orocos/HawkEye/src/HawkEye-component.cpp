@@ -933,55 +933,42 @@ void HawkEye::writeResults(){
 
 void HawkEye::drawResults(){
         
-    if (1){ //_draw_obstacles
-      HAWKEYE_DEBUG_PRINT("Plotting obstacles")
-      int circleRadius;
-      cv::Point2i circleCenter;
+    HAWKEYE_DEBUG_PRINT("Plotting obstacles")
+    int circleRadius;
+    cv::Point2i circleCenter;
 
-      cv::Point2i rectanglePt1; //holds bottom left vertex
-      cv::Point2i rectanglePt2; //holds top right vertex
+    cv::Point2i rectanglePt1; //holds bottom left vertex
+    cv::Point2i rectanglePt2; //holds top right vertex
 
-      for (int k = 0 ; k < _obstacles.size(); k++){
-          if(_obstacles[k]->getShape() == CIRCLE){
+    for (int k = 0 ; k < _obstacles.size(); k++){
+        if(_obstacles[k]->getShape() == CIRCLE){
 
-            circleRadius = static_cast<Circle*>(_obstacles[k])->getRadius();
-            circleCenter.x = _obstacles[k]->getPos()[0];
-            circleCenter.y = _obstacles[k]->getPos()[1];
-            cv::circle(_f, circleCenter, circleRadius, cv::Scalar(0,0,255), 2);
+          circleRadius = static_cast<Circle*>(_obstacles[k])->getRadius();
+          circleCenter.x = _obstacles[k]->getPos()[0];
+          circleCenter.y = _obstacles[k]->getPos()[1];
+          cv::circle(_f, circleCenter, circleRadius, cv::Scalar(0,0,255), 2);
 
+        }
+        if(_obstacles[k]->getShape() == RECTANGLE){
+
+          //Plot non-rotated rectangle around obstacle
+          // rectanglePt1.x = _obstacles[k]->getPos()[0] - static_cast<Rectangle*>(_obstacles[k])->getWidth()/2.0; //bottom left vertex
+          // rectanglePt1.y = _obstacles[k]->getPos()[1] - static_cast<Rectangle*>(_obstacles[k])->getLength()/2.0;
+
+          // rectanglePt2.x = _obstacles[k]->getPos()[0] + static_cast<Rectangle*>(_obstacles[k])->getWidth()/2.0; //top right vertex
+          // rectanglePt2.y = _obstacles[k]->getPos()[1] + static_cast<Rectangle*>(_obstacles[k])->getLength()/2.0;
+          // cv::rectangle(_f, rectanglePt1, rectanglePt2, cv::Scalar(128,200,255), 2);
+
+          //Plot rotated rectangle around obstacle
+          cv::RotatedRect rRect = cv::RotatedRect(cv::Point2f(_obstacles[k]->getPos()[0],_obstacles[k]->getPos()[1]), cv::Size2f(static_cast<Rectangle*>(_obstacles[k])->getWidth(),static_cast<Rectangle*>(_obstacles[k])->getLength()), static_cast<Rectangle*>(_obstacles[k])->getTheta());
+          cv::Point2f vertices[4];
+          rRect.points(vertices);
+          for (int k = 0; k < 4; k++){
+            cv::line(_f, vertices[k], vertices[(k+1)%4], cv::Scalar(0,0,255), 2);
           }
-          if(_obstacles[k]->getShape() == RECTANGLE){
 
-            //Plot non-rotated rectangle around obstacle
-            // rectanglePt1.x = _obstacles[k]->getPos()[0] - static_cast<Rectangle*>(_obstacles[k])->getWidth()/2.0; //bottom left vertex
-            // rectanglePt1.y = _obstacles[k]->getPos()[1] - static_cast<Rectangle*>(_obstacles[k])->getLength()/2.0;
-
-            // rectanglePt2.x = _obstacles[k]->getPos()[0] + static_cast<Rectangle*>(_obstacles[k])->getWidth()/2.0; //top right vertex
-            // rectanglePt2.y = _obstacles[k]->getPos()[1] + static_cast<Rectangle*>(_obstacles[k])->getLength()/2.0;
-            // cv::rectangle(_f, rectanglePt1, rectanglePt2, cv::Scalar(128,200,255), 2);
-
-            //Plot rotated rectangle around obstacle
-            cv::RotatedRect rRect = cv::RotatedRect(cv::Point2f(_obstacles[k]->getPos()[0],_obstacles[k]->getPos()[1]), cv::Size2f(static_cast<Rectangle*>(_obstacles[k])->getWidth(),static_cast<Rectangle*>(_obstacles[k])->getLength()), static_cast<Rectangle*>(_obstacles[k])->getTheta());
-            cv::Point2f vertices[4];
-            rRect.points(vertices);
-            for (int k = 0; k < 4; k++){
-              cv::line(_f, vertices[k], vertices[(k+1)%4], cv::Scalar(0,0,255), 2);
-            }
-
-          }
-          // cv::Point2f box[4];
-          // _rectanglesDetected[k].points(box);
-          // std::vector<cv::Point> boxPoints;//put into std::vector<cv::Point>
-          // for (int k = 0 ; k < 4 ; k++){
-          //   boxPoints.push_back(box[k]);
-          // }
-          // HAWKEYE_DEBUG_PRINT("boxPoints: "<<boxPoints[0].x<<" , "<<boxPoints[0].y<<" , "<<boxPoints[1].x<<" , "<<boxPoints[1].y)
-          // std::vector<std::vector<cv::Point> > vectorBoxPoints;
-          // vectorBoxPoints.push_back(boxPoints);
-          // cv::drawContours(_f,vectorBoxPoints,-1,cv::Scalar(0,0,255),2); 
-      }
-
-    }
+        }
+    }    
 
     HAWKEYE_DEBUG_PRINT("Plotting robot")
     cv::Point2f roboboxPoints[4];
@@ -1066,9 +1053,6 @@ void HawkEye::printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat templat
             robottocks[1] = robottocks[1]+robottocks[5]/2;
             robottocks[2] = robottocks[2]+robottocks[4]/2;
             robottocks[3] = robottocks[3]+robottocks[5]/2;
-            // robottocks[4] = robottocks[4];
-            // robottocks[5] = robottocks[5];
-            // robottocks[6] = robottocks[6];
 
             // HAWKEYE_DEBUG_PRINT("Mod max score: "<<robottocks[6])
             HAWKEYE_DEBUG_PRINT("circle1 pos x: "<<(robottocks)[0]<<" circle1 pos y: "<<(robottocks)[1]<<" circle2 pos x: "<<(robottocks)[2]<<" circle2 pos y: "<<(robottocks)[3])
@@ -1083,8 +1067,6 @@ void HawkEye::printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat templat
             RTT::log(RTT::Error) << "No mod patterns detected! Error message: "<<e.what()<< RTT::endlog();
             mods = false;
         }
-      // print traceback.format_exc()
-        // starpat = NULL;
         double starcand1[5] = {0};
         double max_val1;
         cv::Point temploc1;
@@ -1109,7 +1091,6 @@ void HawkEye::printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat templat
             }
             RTT::log(RTT::Error) << "No star1 patterns detected! Error message: "<<e.what()<< RTT::endlog();
         }
-      // print traceback.format_exc()
         double starcand2[5] = {0};
         double max_val2;
         cv::Point temploc2;
@@ -1134,29 +1115,26 @@ void HawkEye::printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat templat
             }
             RTT::log(RTT::Error) << "No star2 patterns detected! Error message: "<<e.what()<< RTT::endlog();
         }
-        // print traceback.format_exc()
         
         HAWKEYE_DEBUG_PRINT("Deciding about type of star pattern")
         if (starcand1[4] > starcand2[4] && starcand1[4] > matchThresh){ //compare scores to decide which is the detected star pattern
             for (int k = 0 ; k <=4 ; k++){
               starpat[k] = starcand1[k];
-              star = true;
             }
-            // starpat = starcand1;
+            star = true;
+            HAWKEYE_DEBUG_PRINT("star pos x"<<(starpat)[0]<<"star pos y"<<(starpat)[1])
         }
         else if (starcand1[4] < starcand2[4] && starcand2[4] > matchThresh){
             for (int k = 0 ; k <=4 ; k++){
               starpat[k] = starcand2[k];
-              star = true;
             }
-            // starpat = starcand2;
+            star = true;
+            HAWKEYE_DEBUG_PRINT("star pos x"<<(starpat)[0]<<"star pos y"<<(starpat)[1])
         }
-        HAWKEYE_DEBUG_PRINT("star pos x"<<(starpat)[0]<<"star pos y"<<(starpat)[1])
+        //else{star keeps standard value = false}        
     }
     else{
-        // starpat = {0, 0, 0, 0, 0};
-        // robottocks = {0, 0, 0, 0, 0, 0, 0};
-        *success = false;
+        *success = false; //robot was not detected
     }
     if (mods == true && star == true){
         *success = true; //robot was detected
@@ -1193,7 +1171,7 @@ void HawkEye::oneObject(cv::Mat image, cv::Mat templim, float thresh, int *w, in
             *temploc = max_loc;
             HAWKEYE_DEBUG_PRINT("Found a star pattern!")
             HAWKEYE_DEBUG_PRINT("template pos x: "<<(*temploc).x<<" template pos y: "<<(*temploc).y<<" template width: "<<*w<<" template height: "<<*h)    
-            if (1){ //Todo: remove
+            if (HAWKEYE_SAVE){ 
               HAWKEYE_DEBUG_PRINT("Plotting results of star template matching")
               cv::circle(result, cv::Point(max_loc.x + templim.cols/2.0 , max_loc.y + templim.rows/2.0), 4, cv::Scalar(255,255,0), 2); //plot marker location on images
               cv::circle(image,  cv::Point(max_loc.x + templim.cols/2.0 , max_loc.y + templim.rows/2.0), 4, cv::Scalar(255,255,0), 2); //plot marker location on images
@@ -1238,7 +1216,7 @@ void HawkEye::multiObject(cv::Mat image, cv::Mat templim, float thresh, int *w, 
         //Postprocess vector to kick out points which are too close to each other: euclidean distance
         //Finally you get 2 points which give the position of the templates
 
-        //Todo: how do you make sure that you get the midpoint of the template and not a random point on the template?      
+        //Todo: how do you make sure that you get the midpoint of the template and not a random point on the template? You find the whole template so...     
 
         while (true) 
         {
@@ -1305,7 +1283,7 @@ void HawkEye::multiObject(cv::Mat image, cv::Mat templim, float thresh, int *w, 
         */
 
         HAWKEYE_DEBUG_PRINT("maximum circle template location: x = "<<max_loc.x<<" y = "<<max_loc.y)
-        if (1){ //Todo: remove
+        if (HAWKEYE_SAVE){
           cv::circle(result, cv::Point((*maxpoints)[0] + templim.cols/2.0, (*maxpoints)[1] + templim.rows/2.0 ), 4, cv::Scalar(255,255,0), 2); //plot marker location on images
           cv::circle(result, cv::Point((*maxpoints)[2] + templim.cols/2.0, (*maxpoints)[3] + templim.rows/2.0), 4, cv::Scalar(255,255,0), 2); //plot marker location on images
           cv::circle(image,  cv::Point((*maxpoints)[0] + templim.cols/2.0, (*maxpoints)[1] + templim.rows/2.0), 4, cv::Scalar(255,255,0), 2); //plot marker location on images
@@ -1318,15 +1296,14 @@ void HawkEye::multiObject(cv::Mat image, cv::Mat templim, float thresh, int *w, 
         if(maxpoints->empty()){ //if maxpoints still empty no patterns were found
             RTT::log(RTT::Error)<<"Maximum value of detection was lower than threshold:"<<*max_val<<" < "<<thresh<<" No circle patterns detected"<<RTT::endlog();
         }
-        else{   
-          //Todo: something wrong with maxpoints???  make class variable of it?  
+        else{    
           HAWKEYE_DEBUG_PRINT("template locations: "<<(*maxpoints)[0]<<" , "<<(*maxpoints)[1]<<" , "<<(*maxpoints)[2]<<" , "<<(*maxpoints)[3]<<" template width: "<<*w<<"template height: "<<*h)  
         }
 
     }
 }
 
-std::vector<int> HawkEye::twoTemplate(cv::Mat image, cv::Mat templim1, cv::Mat templim2, float thresh){ //Only used for testing now. Can also be used if you have two templates with a different shape in one image?
+std::vector<int> HawkEye::twoTemplate(cv::Mat image, cv::Mat templim1, cv::Mat templim2, float thresh){ //Todo: Only used for testing now. Can also be used if you have two templates with a different shape in one image?
     cv::Size templim1_size = templim1.size(); 
     int h1 = templim1_size.height;
     int w1 = templim1_size.width;
