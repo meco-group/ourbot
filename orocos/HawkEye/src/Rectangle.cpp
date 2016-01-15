@@ -1,7 +1,7 @@
 #include "Rectangle.hpp"
 
 Rectangle::Rectangle() :
-	Obstacle(0, 0, 0.0, 0.0, RECTANGLE, 0),
+	Obstacle(0, 0, 0.0, 0.0, RECTANGLE, 0.0),
     _width(0),
     _length(0),
     _theta(0),
@@ -11,7 +11,7 @@ Rectangle::Rectangle() :
 }
 
 Rectangle::Rectangle(int width, int length, double theta, double omega) :
-	Obstacle(0, 0, 0.0, 0.0, RECTANGLE, 0),
+	Obstacle(0, 0, 0.0, 0.0, RECTANGLE, 0.0),
     _width(width),
     _length(length),
     _theta(theta),
