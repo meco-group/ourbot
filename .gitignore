@@ -10,7 +10,7 @@ orocos/setup.*
 *.log
 *.ior
 *~
-orocos/ourbot/Test/
+*.nc
 orocos/setup.bash
 orocos/setup.sh
 orocos/setup.zsh
@@ -23,4 +23,7 @@ orocos/*/TestCorba/
 orocos/ourbot/orocos/naming_distributed_agents.txt
 orocos/overview.txt
 
+identify_velcontrol/
+.test/
 orocos/emperor/reports.nc
+*.txt

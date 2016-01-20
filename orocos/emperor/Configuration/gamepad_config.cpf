@@ -5,4 +5,16 @@
     <description>Port name for the USB device. Full path required.</description>
     <value>/dev/input/js0</value>
   </simple>
+  <simple name="max_velocity" type="double">
+    <description>Maximum allowed translational command velocity</description>
+    <value>0.8</value>
+  </simple>
+  <simple name="max_omega" type="double">
+    <description>Maximum allowed rotational command velocity</description>
+    <value>2.</value>
+  </simple>
+  <simple name="filter_bandwidth" type="double">
+    <description>Bandwidth of low pass filter (Hz)</description>
+    <value>3</value>
+  </simple>
 </properties>

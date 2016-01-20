@@ -4,7 +4,6 @@ require 'rfsmpp'
 
 --Components to load
 local components_to_load = {
-  velocitycmd     = 'GamePadCommand',
   gamepad         = 'GamePad',
   emperor         = 'OCL::LuaTLSFComponent',
   reporter        = 'OCL::NetcdfReporting'
@@ -13,7 +12,7 @@ local components_to_load = {
 
 --Ports to report
 local ports_to_report = {
-  velocitycmd       = {'cmd_velocity_port'}
+  gamepad         = {'cmd_velocity_port'}
   --add here componentname = 'portnames'
 }
 
@@ -22,7 +21,6 @@ local distrports_to_report = {
   -- controller        = {'cmd_velocity_port'},
   -- estimator         = {'est_pose_port', 'est_velocity_port', 'est_acceleration_port', 'est_global_offset_port'},
   -- reference         = {'ref_pose_port', 'ref_ffw_port'},
-  -- velocitycmd       = {'cmd_velocity_port'},
   -- coordinator       = {'controlloop_duration', 'controlloop_jitter'},
   io                = {--'cal_lidar_node_port',
                       -- 'imul_cal_imu_transacc_port',
@@ -40,16 +38,16 @@ local distrports_to_report = {
                       -- 'cal_lidar_x_port',
                       -- 'cal_lidar_y_port',
                       -- 'cal_enc_pose_port'
-                      'cal_lidar_global_node_port'
-                    }
+                      -- 'cal_lidar_global_node_port'
                       -- 'cal_motor_current_port',
-                      -- 'cal_motor_voltage_port', 'cal_velocity_port'}
+                      -- 'cal_motor_voltage_port',
+                      'cal_velocity_port'
+                      }
   --add here componentname = 'portnames'
 }
 
 --Packages to import
 local packages_to_import = {
-  velocitycmd     = 'VelocityCommandEmperorInterface',
   gamepad         = 'SerialInterfaceEmperor'
   --add here componentname = 'parentcomponenttype'
 }
@@ -58,8 +56,7 @@ local packages_to_import = {
 local system_config_file      = 'Configuration/emperor-config.cpf'
 local reporter_config_file    = 'Configuration/reporter-config.cpf'
 local component_config_files  = {
-  gamepad     = 'Configuration/gamepad_config.cpf',
-  velocitycmd = 'Configuration/velocitycmd_config.cpf'
+  gamepad     = 'Configuration/gamepad_config.cpf'
   --add here componentname = 'Configuration/component-config.cpf'
 }
 
@@ -170,10 +167,8 @@ return rfsm.state {
     connect_components = rfsm.state {
       entry = function(fsm)
         --Connect all components
-        if (not dp:connectPorts('velocitycmd','gamepad')) then rfsm.send_events(fsm,'e_failed') return end
-
         for i=0,peers.size-1 do
-          if (not dp:connectPorts('velocitycmd','io'..peers[i])) then rfsm.send_events(fsm,'e_failed') return end
+          if (not dp:connectPorts('gamepad','io'..peers[i])) then rfsm.send_events(fsm,'e_failed') return end
         end
           --add more connections here
 
@@ -182,7 +177,6 @@ return rfsm.state {
           if (not dp:addPeer('emperor','coordinator'..peers[i])) then rfsm.send_events(fsm,'e_failed') return end
         end
         if (not dp:addPeer('emperor','reporter')) then rfsm.send_events(fsm,'e_failed') return end
-        if (not dp:addPeer('emperor','velocitycmd')) then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:addPeer('emperor','gamepad')) then rfsm.send_events(fsm,'e_failed') return end
           --add more peers here
       end,
@@ -191,7 +185,6 @@ return rfsm.state {
     set_activities = rfsm.state {
       entry = function(fsm)
         dp:setActivity('emperor',1./reporter_sample_rate,10,rtt.globals.ORO_SCHED_RT)
-        -- dp:setActivity('velocitycmd',1./velcmd_sample_rate,10,rtt.globals.ORO_SCHED_RT)
         dp:setActivity('gamepad',1./velcmd_sample_rate,10,rtt.globals.ORO_SCHED_RT)
         dp:setActivity('reporter',0,2,rtt.globals.ORO_SCHED_RT)
           --add here extra activities

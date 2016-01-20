@@ -1,6 +1,5 @@
 local tc        = rtt.getTC()
 
-local velocitycmd = tc:getPeer('velocitycmd')
 local gamepad     = tc:getPeer('gamepad')
 local reporter    = tc:getPeer('reporter')
 local snapshot    = reporter:getOperation("snapshot")
@@ -24,13 +23,6 @@ return rfsm.state {
         rfsm.send_events(fsm,'e_failed')
         return
       end
-
-      if not velocitycmd:start() then
-        rtt.logl("Error","Could not start velocitycmd component")
-        rfsm.send_events(fsm,'e_failed')
-        return
-      end
-
       print("System started. Abort by using Break (Button B).")
     end,
 
@@ -46,8 +38,6 @@ return rfsm.state {
     entry = function(fsm)
       sub_state='stop'
       reporter:stop()
-      velocitycmd:stop()
-
       print("System stopped. Waiting on Restart (Button A) or Reset (Button B)...")
     end,
   },

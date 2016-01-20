@@ -1,4 +1,0 @@
-import("rtt_ros")
-ros.import("SerialInterface")
-
-loadComponent("gamepad","GamePad")

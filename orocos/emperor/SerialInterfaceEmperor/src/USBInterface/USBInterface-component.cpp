@@ -65,7 +65,7 @@ void USBInterface::setReadWriteOptions(int rw_options)
 
 bool USBInterface::connectSerial()
 {
-  _usb_fd = open(_usb_port_name.c_str(), _rw_options);
+  _usb_fd = open(_usb_port_name.c_str(), _rw_options|O_NONBLOCK);
   if (_usb_fd > 0)
 	{
 		struct termios options, oldopt;
@@ -150,7 +150,7 @@ int USBInterface::readBytes(uint8_t* bytes, uint32_t length, uint8_t port_select
 {
 	uint32_t bytes_received = read(_usb_fd, bytes, length);
   if(bytes_received == -1){
-  	std::cout << "Error while reading file." << std::endl;
+  	// std::cout << "Error while reading file." << std::endl;
   	bytes_received = 0;
   }
 

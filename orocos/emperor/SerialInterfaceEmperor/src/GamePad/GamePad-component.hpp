@@ -19,28 +19,30 @@
 #include "GamePad_protocol.h"
 #include "GamePad_cmd.h"
 
+using namespace RTT;
+
 class GamePad : public USBInterface
 {
   private:
-    RTT::OutputPort<std::vector<double> > _gamepad_laxis_port;
-    RTT::OutputPort<std::vector<double> > _gamepad_raxis_port;
-    RTT::OutputPort<bool > _gamepad_A_port;
-    RTT::OutputPort<bool > _gamepad_B_port;
-    RTT::OutputPort<bool > _gamepad_X_port;
-    RTT::OutputPort<bool > _gamepad_Y_port;
-    RTT::OutputPort<bool > _gamepad_back_port;
-    RTT::OutputPort<bool > _gamepad_start_port;
-    RTT::OutputPort<bool > _gamepad_logitech_port;
-    RTT::OutputPort<bool > _gamepad_laxisbutton_port;
-    RTT::OutputPort<bool > _gamepad_raxisbutton_port;
-    RTT::OutputPort<bool > _gamepad_up_port;
-    RTT::OutputPort<bool > _gamepad_down_port;
-    RTT::OutputPort<bool > _gamepad_left_port;
-    RTT::OutputPort<bool > _gamepad_right_port;
-    RTT::OutputPort<bool > _gamepad_lb_port;
-    RTT::OutputPort<bool > _gamepad_rb_port;
-    RTT::OutputPort<double > _gamepad_lt_port;
-    RTT::OutputPort<double > _gamepad_rt_port;
+    OutputPort<std::vector<double> > _gamepad_laxis_port;
+    OutputPort<std::vector<double> > _gamepad_raxis_port;
+    OutputPort<bool > _gamepad_A_port;
+    OutputPort<bool > _gamepad_B_port;
+    OutputPort<bool > _gamepad_X_port;
+    OutputPort<bool > _gamepad_Y_port;
+    OutputPort<bool > _gamepad_back_port;
+    OutputPort<bool > _gamepad_start_port;
+    OutputPort<bool > _gamepad_logitech_port;
+    OutputPort<bool > _gamepad_laxisbutton_port;
+    OutputPort<bool > _gamepad_raxisbutton_port;
+    OutputPort<bool > _gamepad_up_port;
+    OutputPort<bool > _gamepad_down_port;
+    OutputPort<bool > _gamepad_left_port;
+    OutputPort<bool > _gamepad_right_port;
+    OutputPort<bool > _gamepad_lb_port;
+    OutputPort<bool > _gamepad_rb_port;
+    OutputPort<double > _gamepad_lt_port;
+    OutputPort<double > _gamepad_rt_port;
 
     std::vector<double> _gamepad_laxis;
     std::vector<double> _gamepad_raxis;
@@ -68,9 +70,21 @@ class GamePad : public USBInterface
     void decodeAxes();
     double transformData(int);
 
+    // velocity command related attributes
+    OutputPort<std::vector<double> > _cmd_velocity_port;
+    std::vector<double> _cmd_velocity;
+    std::vector<double> _filter_state;
+    double _filter_bandwidth;
+    double _max_velocity;
+    double _max_omega;
+    double _velcmd_sample_rate;
+    void VelocityCommand();
+    std::vector<double> lowPassFilter(std::vector<double>);
+    double treshold(double);
+
   public:
     GamePad(std::string const& name);
-
+    void setVelocity(double, double, double);
     bool configureHook();
     bool startHook();
     void updateHook();
