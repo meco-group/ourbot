@@ -224,23 +224,21 @@ void GamePad::VelocityCommand(){
 }
 
 double GamePad::treshold(double data){
-  // double data_tf;
-  // if (data > 0.05){
-  //   data_tf = (100./95.)*(data-0.05);
-  // }
-  // else if (data < -0.05){
-  //   data_tf = (100./95.)*(data+0.05);
-  // }
-  // else{
-  //   data_tf = 0.;
-  // }
-  // return data_tf;
-  return data;
+  double data_tf;
+  if (data > 0.05){
+    data_tf = (100./95.)*(data-0.05);
+  }
+  else if (data < -0.05){
+    data_tf = (100./95.)*(data+0.05);
+  }
+  else{
+    data_tf = 0.;
+  }
+  return data_tf;
 }
 
 std::vector<double> GamePad::lowPassFilter(std::vector<double> input) {
-  double alpha = (_filter_bandwidth)/(2*M_PI*_velcmd_sample_rate);
-  std::cout << alpha << std::endl;
+  double alpha = (_filter_bandwidth*2*M_PI)/(_velcmd_sample_rate);
   _filter_state[0] = (1.-alpha)*_filter_state[0] + alpha*input[0];
   _filter_state[1] = (1.-alpha)*_filter_state[1] + alpha*input[1];
   _filter_state[2] = (1.-alpha)*_filter_state[2] + alpha*input[2];

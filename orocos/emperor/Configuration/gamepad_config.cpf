@@ -15,6 +15,6 @@
   </simple>
   <simple name="filter_bandwidth" type="double">
     <description>Bandwidth of low pass filter (Hz)</description>
-    <value>3</value>
+    <value>0.7</value>
   </simple>
 </properties>
