@@ -17,7 +17,7 @@ local ports_to_report = {
 }
 
 --Distributed ports to report
-local distrports_to_report = {
+local remote_ports_to_report = {
   -- controller        = {'cmd_velocity_port'},
   -- estimator         = {'est_pose_port', 'est_velocity_port', 'est_acceleration_port', 'est_global_offset_port'},
   -- reference         = {'ref_pose_port', 'ref_ffw_port'},
@@ -38,7 +38,7 @@ local distrports_to_report = {
                       -- 'cal_lidar_x_port',
                       -- 'cal_lidar_y_port',
                       -- 'cal_enc_pose_port'
-                      -- 'cal_lidar_global_node_port'
+                      -- 'cal_lidar_global_node_port',
                       -- 'cal_motor_current_port',
                       -- 'cal_motor_voltage_port',
                       'cal_velocity_port'
@@ -56,27 +56,27 @@ local packages_to_import = {
 local system_config_file      = 'Configuration/emperor-config.cpf'
 local reporter_config_file    = 'Configuration/reporter-config.cpf'
 local component_config_files  = {
-  gamepad     = 'Configuration/gamepad_config.cpf'
+  gamepad = 'Configuration/gamepad_config.cpf'
   --add here componentname = 'Configuration/component-config.cpf'
 }
 
---Distributed components to load
-local distr_components_to_load = {}
+--Remote components to load
+local remote_components_to_load = {}
 coordinator_reported = false
 for i=0,peers.size-1 do
-  for comp,ports in pairs(distrports_to_report) do
+  for comp,ports in pairs(remote_ports_to_report) do
     if comp == 'coordinator' then
       coordinator_reported = true
     end
-    table.insert(distr_components_to_load,comp..peers[i])
+    table.insert(remote_components_to_load,comp..peers[i])
   end
   if not coordinator_reported then
-    table.insert(distr_components_to_load,'coordinator'..peers[i])
+    table.insert(remote_components_to_load,'coordinator'..peers[i])
   end
 end
 
 local components      = {}
-local distrcomponents = {}
+local remote_components = {}
 local dp = rtt.getTC():getPeer('Deployer')
 
 return rfsm.state {
@@ -129,9 +129,9 @@ return rfsm.state {
 
     load_peers = rfsm.state {
       entry = function(fsm)
-        for i,name in pairs(distr_components_to_load) do
+        for i,name in pairs(remote_components_to_load) do
           if (not dp:loadComponent(name,'CORBA')) then rfsm.send_events(fsm,'e_failed') return end
-          distrcomponents[name] = dp:getPeer(name)
+          remote_components[name] = dp:getPeer(name)
         end
       end
     },
@@ -154,9 +154,9 @@ return rfsm.state {
 
         -- write Data Sample for remote CORBA ports except io container and coordinator
         for i=0,peers.size-1 do
-          for j,name in pairs(distr_components_to_load) do
+          for j,name in pairs(remote_components_to_load) do
             if not (name == 'coordinator'..peers[i] or name == 'io'..peers[i]) then
-              writeSample = distrcomponents[name]:getOperation("writeSample")
+              writeSample = remote_components[name]:getOperation("writeSample")
               writeSample()
             end
           end
@@ -203,15 +203,15 @@ return rfsm.state {
         --Connect emperor to each coordinator
         for i=0,peers.size-1 do
           port1 = components.emperor:getPort('emperor_send_event_port')
-          port2 = distrcomponents['coordinator'..tostring(peers[i])]:getPort('coordinator_fsm_event_port')
+          port2 = remote_components['coordinator'..tostring(peers[i])]:getPort('coordinator_fsm_event_port')
           if (not port1:connect(port2)) then rfsm.send_events(fsm,'e_failed') return end
         end
         --Connect failure event ports from coordinators to emperor and visa versa
         for i=0,peers.size-1 do
           port1 = components.emperor:getPort('emperor_fsm_event_port')
-          port2 = distrcomponents['coordinator'..tostring(peers[i])]:getPort('coordinator_failure_event_port')
+          port2 = remote_components['coordinator'..tostring(peers[i])]:getPort('coordinator_failure_event_port')
           if (not port1:connect(port2)) then rfsm.send_events(fsm,'e_failed') return end
-          port1 = distrcomponents['coordinator'..tostring(peers[i])]:getPort('coordinator_fsm_event_port')
+          port1 = remote_components['coordinator'..tostring(peers[i])]:getPort('coordinator_fsm_event_port')
           port2 = components.emperor:getPort('emperor_failure_event_port')
           if (not port1:connect(port2)) then rfsm.send_events(fsm,'e_failed') return end
         end
@@ -222,10 +222,7 @@ return rfsm.state {
         components.emperor:loadService("scripting")
         if not components.emperor:provides("scripting"):loadPrograms(app_file) then rfsm.send_events(fsm,'e_failed') return end
 
-
         if (not dp:connectPorts('emperor','gamepad')) then rfsm.send_events(fsm,'e_failed') return end
-
-
         --Start the emperor
         if not components.emperor:start() then rfsm.send_events(fsm,'e_failed') return end
         --Start gamepad
@@ -245,8 +242,8 @@ return rfsm.state {
             if (not components.reporter:reportPort(comp,port)) then rfsm.send_events(fsm,'e_failed') end
           end
         end
-        --Add distributed components to report
-        for comp,portlist in pairs(distrports_to_report) do
+        --Add remote components to report
+        for comp,portlist in pairs(remote_ports_to_report) do
           for i,port in pairs(portlist) do
             for i=0,peers.size-1 do
               if (not dp:addPeer('reporter',comp..peers[i])) then rfsm.send_events(fsm,'e_failed') end
@@ -254,10 +251,8 @@ return rfsm.state {
             end
           end
         end
-
         --Configure the reporter
         if (not components.reporter:configure()) then rfsm.send_events(fsm,'e_failed') end
-
       end,
     },
   },
