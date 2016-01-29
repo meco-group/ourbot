@@ -9,7 +9,7 @@ orocos/.*
 orocos/setup.*
 *.log
 *.ior
-*.nc
+orocos/emperor/reports.nc
 *.txt
 *~
 *.tb_history

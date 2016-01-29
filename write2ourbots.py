@@ -40,6 +40,7 @@ hosts = ['192.168.10.248']
 ignore = ['TestCorba']
 build_list = []
 
+
 def create_component(ssh, component):
     print component
     cmd = 'cd ' + remote_root + ' && rosrun ocl orocreate-pkg ' + component
@@ -74,6 +75,7 @@ def change_cmakelist(ssh, component):
     f_out.writelines(c_out)
     f_out.close()
     ftp.close()
+
 
 def send_file(ftp, loc_file, rem_file):
     ftp.put(loc_file, rem_file)
