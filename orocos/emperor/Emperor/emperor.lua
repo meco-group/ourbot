@@ -9,9 +9,8 @@ local fqn_out, events_in
 local start_time
 state = ''
 main_state = ''
--- local menu_options = {{'VelocityControl','e_velocitycmdextern'},{'PathFollowing','e_updpathfollowing'}}
 local menu_options         = {'VelocityControl','PathFollowing'}
-local main_states          = {'velocitycmdextern', 'updpathfollowing'}
+local main_states          = {'velocitycmd', 'updpathfollowing'}
 local sub_states           = {'idle', 'init', 'run', 'stop'}
 local menu_option_ind = 1
 

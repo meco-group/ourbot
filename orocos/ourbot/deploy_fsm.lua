@@ -106,7 +106,6 @@ local component_config_files  = {
 
 --Accessible components over CORBA
 local server_components = {coordinator}
-
 for comp,ports in pairs(ports_to_report) do
   table.insert(server_components,comp)
 end
@@ -275,7 +274,6 @@ return rfsm.state {
       entry = function(fsm)
         dp:setActivity(coordinator,1./control_sample_rate,10,rtt.globals.ORO_SCHED_RT)
         dp:setActivity(pathgenerator,1./pathupd_sample_rate,10,rtt.globals.ORO_SCHED_RT)
-        -- dp:setActivity(velocitycmd,1./velcmd_sample_rate,10,rtt.globals.ORO_SCHED_RT)
         dp:setActivity(reporter,0,4,rtt.globals.ORO_SCHED_RT)
         dp:setActivity(io,1./io_sample_rate,10,rtt.globals.ORO_SCHED_RT)
           --add here extra activities
