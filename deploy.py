@@ -27,9 +27,9 @@ current_dir = os.path.dirname(os.path.realpath(__file__))
 local_root = os.path.join(current_dir, 'orocos/emperor')
 username = 'odroid'
 password = 'odroid'
-hosts = ['192.168.10.248']
+hosts = ['192.168.11.120']
 server = hosts[0]
-hostnames = {hosts[0]: 'kurt'}
+hostnames = {hosts[0]: 'dave'}
 
 if __name__ == "__main__":
     usage = ("Usage: %prog [options]")
@@ -79,7 +79,8 @@ if __name__ == "__main__":
         bash -c '
         cd %s
         rm reports.nc
-        sleep 10
+        ulimit -r 10
+        sleep 4
         deployer-corba-gnulinux run.ops
         '
         ''' % (local_root)

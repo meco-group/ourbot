@@ -18,3 +18,4 @@ orocos/emperor/reports.nc
 TestCorba/
 identify_velcontrol/
 .test/
+network.txt

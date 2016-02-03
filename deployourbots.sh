@@ -9,8 +9,8 @@
 
 OROCOSDIR=/home/odroid/orocos
 USERNAME=odroid
-HOSTS="192.168.10.248"
-SERVER="192.168.10.248"	#The host that sets up the CORBA Name Service
+HOSTS="192.168.11.120"
+SERVER="192.168.11.120"	#The host that sets up the CORBA Name Service
 PASSWORD="odroid"
 
 for HOSTNAME in ${HOSTS} ; do

@@ -24,7 +24,7 @@ local components_to_load = {
   [controller]      = controller_type,
   [pathgenerator]   = pathgenerator_type,
   [reference]       = reference_type,
-  [velocitycmd]     = velocitycmd_type,
+  -- [velocitycmd]     = velocitycmd_type,
   [coordinator]     = 'OCL::LuaTLSFComponent',
   [reporter]        = 'OCL::NetcdfReporting',
   [io]              = 'Container',
@@ -222,7 +222,7 @@ return rfsm.state {
         if (not dp:connectPorts(reference,controller))      then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:connectPorts(reference,pathgenerator))   then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:connectPorts(estimator,pathgenerator))   then rfsm.send_events(fsm,'e_failed') return end
-        if (not dp:connectPorts(velocitycmd,io))            then rfsm.send_events(fsm,'e_failed') return end
+        -- if (not dp:connectPorts(velocitycmd,io))            then rfsm.send_events(fsm,'e_failed') return end
           --add more connections here
 
         --Add every component as peer of coordinator
@@ -230,7 +230,7 @@ return rfsm.state {
         if (not dp:addPeer(coordinator,estimator))          then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:addPeer(coordinator,pathgenerator))      then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:addPeer(coordinator,reference))          then rfsm.send_events(fsm,'e_failed') return end
-        if (not dp:addPeer(coordinator,velocitycmd))        then rfsm.send_events(fsm,'e_failed') return end
+        -- if (not dp:addPeer(coordinator,velocitycmd))        then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:addPeer(coordinator,reporter))           then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:addPeer(coordinator,io))                 then rfsm.send_events(fsm,'e_failed') return end
           --add more peers here

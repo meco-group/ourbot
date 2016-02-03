@@ -6,7 +6,7 @@ return rfsm.state {
 
   rfsm.trans{src = 'idle', tgt = 'updpathfollowing', events={'e_updpathfollowing'}},
   rfsm.trans{src = 'idle', tgt = 'fixedpathfollowing', events={'e_fixedpathfollowing'}},
-  rfsm.trans{src = 'idle', tgt = 'velocitycmd', events={'e_velocitycmd'}}
+  rfsm.trans{src = 'idle', tgt = 'velocitycmd', events={'e_velocitycmd'}},
     --add more state transitions here
 
   --If an 'e_failed' event is raised, we drop out to the failure state
@@ -26,7 +26,7 @@ return rfsm.state {
 
   updpathfollowing  = rfsm.load("Emperor/updpathfollowing_fsm.lua"),
   fixedpathfollowing= rfsm.load("Emperor/fixedpathfollowing_fsm.lua"),
-  velocitycmdintern = rfsm.load("Emperor/velocitycmd_fsm.lua")
+  velocitycmd       = rfsm.load("Emperor/velocitycmd_fsm.lua")
     --add more state descriptions here
 
 }
