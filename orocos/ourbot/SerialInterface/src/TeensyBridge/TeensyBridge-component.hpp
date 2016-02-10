@@ -1,7 +1,7 @@
 #ifndef TEENSYBRIDGE_H
 #define TEENSYBRIDGE_H
 
-//#define TEENSYBRIDGE_TESTFLAG
+#define TEENSYBRIDGE_TESTFLAG
 //#define TEENSYBRIDGE_DEBUGFLAG
 
 #ifdef TEENSYBRIDGE_DEBUGFLAG
@@ -16,24 +16,34 @@
 #include <rtt/Component.hpp>
 #include <vector>
 #include "protocol_mavlink.h"
+#include "IMU.hpp"
 
-#define TEENSYBRIDGE_CONTROL_MODE_SIMPLE			0
+#define TEENSYBRIDGE_CONTROL_MODE_SIMPLE		0
 #define TEENSYBRIDGE_CONTROL_MODE_INDIVIDUAL	1
+
+#define TEENSYBRIDGE_IMU_LEFT_ID				0
+#define TEENSYBRIDGE_IMU_RIGHT_ID				1
+
+typedef std::vector<RTT::base::PortInterface*> Ports;
 
 class TeensyBridge : public USBInterface
 {
 	private:
+		// MAVLINK MESSAGE HANDLERS
 		ProtocolMavlink	_protocol;
 		mavlink_motor_state_t	_motor_states[4];
-		mavlink_debug_t				_debug;
+		mavlink_raw_imu_data_t	_raw_imu_data[2];
+		mavlink_debug_t			_debug;
 		mavlink_threadtime_t	_threadtime;
+		void writeRawDataToPorts();
 
+		// KINEMATIC HANDLERS
 		double _platform_length;
 		double _platform_width;
 		double _wheel_radius;
 		uint32_t _encoder_ticks_per_revolution;
 		double _current_sensor_gain;
-		int 	 _current_sensor_offset;
+		int _current_sensor_offset;
 
 		double _kinematic_conversion_position;
 		double _kinematic_conversion_orientation;
@@ -46,7 +56,7 @@ class TeensyBridge : public USBInterface
 		double _velocity_controller_I;
 		double _velocity_controller_D;
 
-		RTT::InputPort<std::vector<double> >	_cmd_velocity_port;
+		RTT::InputPort<std::vector<double> >  _cmd_velocity_port;
 		RTT::OutputPort<std::vector<double> > _cal_enc_pose_port;
 		RTT::OutputPort<std::vector<double> > _cal_velocity_port;
 		RTT::OutputPort<std::vector<double> > _raw_enc_ticks_port;
@@ -62,8 +72,13 @@ class TeensyBridge : public USBInterface
 
 		void recalculatePose();
 		void recalculateVelocity();
-		void writeRawDataToPorts();
-
+		
+		// IMU HANDLERS
+		IMU* _imus[2]; //array of imus
+		void updateIMU(uint8_t ID);
+		IMU* findIMU(uint8_t ID);
+		void addIMUPorts(TaskContext* comp, const std::string insertion, const int i);
+		
 	public:
 		TeensyBridge(std::string const& name);
 
@@ -91,6 +106,7 @@ class TeensyBridge : public USBInterface
 		void showMotorState(int ID);
 		void showDebug();
 		void showThreadTime();
+		void showIMUData(int ID);
 
 
 };
