@@ -4,16 +4,16 @@
 
 typedef struct __mavlink_raw_imu_data_t
 {
- uint16_t acc[3]; ///< accelerometer data (x,y,z)
- uint16_t gyro[3]; ///< gyroscope data (x,y,z)
- uint16_t mag[3]; ///< magnetometer data (x,y,z)
+ int16_t acc[3]; ///< accelerometer data (x,y,z)
+ int16_t gyro[3]; ///< gyroscope data (x,y,z)
+ int16_t mag[3]; ///< magnetometer data (x,y,z)
 } mavlink_raw_imu_data_t;
 
 #define MAVLINK_MSG_ID_RAW_IMU_DATA_LEN 18
 #define MAVLINK_MSG_ID_20_LEN 18
 
-#define MAVLINK_MSG_ID_RAW_IMU_DATA_CRC 114
-#define MAVLINK_MSG_ID_20_CRC 114
+#define MAVLINK_MSG_ID_RAW_IMU_DATA_CRC 44
+#define MAVLINK_MSG_ID_20_CRC 44
 
 #define MAVLINK_MSG_RAW_IMU_DATA_FIELD_ACC_LEN 3
 #define MAVLINK_MSG_RAW_IMU_DATA_FIELD_GYRO_LEN 3
@@ -22,9 +22,9 @@ typedef struct __mavlink_raw_imu_data_t
 #define MAVLINK_MESSAGE_INFO_RAW_IMU_DATA { \
 	"RAW_IMU_DATA", \
 	3, \
-	{  { "acc", NULL, MAVLINK_TYPE_UINT16_T, 3, 0, offsetof(mavlink_raw_imu_data_t, acc) }, \
-         { "gyro", NULL, MAVLINK_TYPE_UINT16_T, 3, 6, offsetof(mavlink_raw_imu_data_t, gyro) }, \
-         { "mag", NULL, MAVLINK_TYPE_UINT16_T, 3, 12, offsetof(mavlink_raw_imu_data_t, mag) }, \
+	{  { "acc", NULL, MAVLINK_TYPE_INT16_T, 3, 0, offsetof(mavlink_raw_imu_data_t, acc) }, \
+         { "gyro", NULL, MAVLINK_TYPE_INT16_T, 3, 6, offsetof(mavlink_raw_imu_data_t, gyro) }, \
+         { "mag", NULL, MAVLINK_TYPE_INT16_T, 3, 12, offsetof(mavlink_raw_imu_data_t, mag) }, \
          } \
 }
 
@@ -41,21 +41,21 @@ typedef struct __mavlink_raw_imu_data_t
  * @return length of the message in bytes (excluding serial stream start sign)
  */
 static inline uint16_t mavlink_msg_raw_imu_data_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
-						       const uint16_t *acc, const uint16_t *gyro, const uint16_t *mag)
+						       const int16_t *acc, const int16_t *gyro, const int16_t *mag)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
 	char buf[MAVLINK_MSG_ID_RAW_IMU_DATA_LEN];
 
-	_mav_put_uint16_t_array(buf, 0, acc, 3);
-	_mav_put_uint16_t_array(buf, 6, gyro, 3);
-	_mav_put_uint16_t_array(buf, 12, mag, 3);
+	_mav_put_int16_t_array(buf, 0, acc, 3);
+	_mav_put_int16_t_array(buf, 6, gyro, 3);
+	_mav_put_int16_t_array(buf, 12, mag, 3);
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_RAW_IMU_DATA_LEN);
 #else
 	mavlink_raw_imu_data_t packet;
 
-	mav_array_memcpy(packet.acc, acc, sizeof(uint16_t)*3);
-	mav_array_memcpy(packet.gyro, gyro, sizeof(uint16_t)*3);
-	mav_array_memcpy(packet.mag, mag, sizeof(uint16_t)*3);
+	mav_array_memcpy(packet.acc, acc, sizeof(int16_t)*3);
+	mav_array_memcpy(packet.gyro, gyro, sizeof(int16_t)*3);
+	mav_array_memcpy(packet.mag, mag, sizeof(int16_t)*3);
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_RAW_IMU_DATA_LEN);
 #endif
 
@@ -80,21 +80,21 @@ static inline uint16_t mavlink_msg_raw_imu_data_pack(uint8_t system_id, uint8_t 
  */
 static inline uint16_t mavlink_msg_raw_imu_data_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan,
 							   mavlink_message_t* msg,
-						           const uint16_t *acc,const uint16_t *gyro,const uint16_t *mag)
+						           const int16_t *acc,const int16_t *gyro,const int16_t *mag)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
 	char buf[MAVLINK_MSG_ID_RAW_IMU_DATA_LEN];
 
-	_mav_put_uint16_t_array(buf, 0, acc, 3);
-	_mav_put_uint16_t_array(buf, 6, gyro, 3);
-	_mav_put_uint16_t_array(buf, 12, mag, 3);
+	_mav_put_int16_t_array(buf, 0, acc, 3);
+	_mav_put_int16_t_array(buf, 6, gyro, 3);
+	_mav_put_int16_t_array(buf, 12, mag, 3);
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_RAW_IMU_DATA_LEN);
 #else
 	mavlink_raw_imu_data_t packet;
 
-	mav_array_memcpy(packet.acc, acc, sizeof(uint16_t)*3);
-	mav_array_memcpy(packet.gyro, gyro, sizeof(uint16_t)*3);
-	mav_array_memcpy(packet.mag, mag, sizeof(uint16_t)*3);
+	mav_array_memcpy(packet.acc, acc, sizeof(int16_t)*3);
+	mav_array_memcpy(packet.gyro, gyro, sizeof(int16_t)*3);
+	mav_array_memcpy(packet.mag, mag, sizeof(int16_t)*3);
         memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_RAW_IMU_DATA_LEN);
 #endif
 
@@ -143,14 +143,14 @@ static inline uint16_t mavlink_msg_raw_imu_data_encode_chan(uint8_t system_id, u
  */
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 
-static inline void mavlink_msg_raw_imu_data_send(mavlink_channel_t chan, const uint16_t *acc, const uint16_t *gyro, const uint16_t *mag)
+static inline void mavlink_msg_raw_imu_data_send(mavlink_channel_t chan, const int16_t *acc, const int16_t *gyro, const int16_t *mag)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
 	char buf[MAVLINK_MSG_ID_RAW_IMU_DATA_LEN];
 
-	_mav_put_uint16_t_array(buf, 0, acc, 3);
-	_mav_put_uint16_t_array(buf, 6, gyro, 3);
-	_mav_put_uint16_t_array(buf, 12, mag, 3);
+	_mav_put_int16_t_array(buf, 0, acc, 3);
+	_mav_put_int16_t_array(buf, 6, gyro, 3);
+	_mav_put_int16_t_array(buf, 12, mag, 3);
 #if MAVLINK_CRC_EXTRA
     _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_RAW_IMU_DATA, buf, MAVLINK_MSG_ID_RAW_IMU_DATA_LEN, MAVLINK_MSG_ID_RAW_IMU_DATA_CRC);
 #else
@@ -159,9 +159,9 @@ static inline void mavlink_msg_raw_imu_data_send(mavlink_channel_t chan, const u
 #else
 	mavlink_raw_imu_data_t packet;
 
-	mav_array_memcpy(packet.acc, acc, sizeof(uint16_t)*3);
-	mav_array_memcpy(packet.gyro, gyro, sizeof(uint16_t)*3);
-	mav_array_memcpy(packet.mag, mag, sizeof(uint16_t)*3);
+	mav_array_memcpy(packet.acc, acc, sizeof(int16_t)*3);
+	mav_array_memcpy(packet.gyro, gyro, sizeof(int16_t)*3);
+	mav_array_memcpy(packet.mag, mag, sizeof(int16_t)*3);
 #if MAVLINK_CRC_EXTRA
     _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_RAW_IMU_DATA, (const char *)&packet, MAVLINK_MSG_ID_RAW_IMU_DATA_LEN, MAVLINK_MSG_ID_RAW_IMU_DATA_CRC);
 #else
@@ -178,14 +178,14 @@ static inline void mavlink_msg_raw_imu_data_send(mavlink_channel_t chan, const u
   is usually the receive buffer for the channel, and allows a reply to an
   incoming message with minimum stack space usage.
  */
-static inline void mavlink_msg_raw_imu_data_send_buf(mavlink_message_t *msgbuf, mavlink_channel_t chan,  const uint16_t *acc, const uint16_t *gyro, const uint16_t *mag)
+static inline void mavlink_msg_raw_imu_data_send_buf(mavlink_message_t *msgbuf, mavlink_channel_t chan,  const int16_t *acc, const int16_t *gyro, const int16_t *mag)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
 	char *buf = (char *)msgbuf;
 
-	_mav_put_uint16_t_array(buf, 0, acc, 3);
-	_mav_put_uint16_t_array(buf, 6, gyro, 3);
-	_mav_put_uint16_t_array(buf, 12, mag, 3);
+	_mav_put_int16_t_array(buf, 0, acc, 3);
+	_mav_put_int16_t_array(buf, 6, gyro, 3);
+	_mav_put_int16_t_array(buf, 12, mag, 3);
 #if MAVLINK_CRC_EXTRA
     _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_RAW_IMU_DATA, buf, MAVLINK_MSG_ID_RAW_IMU_DATA_LEN, MAVLINK_MSG_ID_RAW_IMU_DATA_CRC);
 #else
@@ -194,9 +194,9 @@ static inline void mavlink_msg_raw_imu_data_send_buf(mavlink_message_t *msgbuf, 
 #else
 	mavlink_raw_imu_data_t *packet = (mavlink_raw_imu_data_t *)msgbuf;
 
-	mav_array_memcpy(packet->acc, acc, sizeof(uint16_t)*3);
-	mav_array_memcpy(packet->gyro, gyro, sizeof(uint16_t)*3);
-	mav_array_memcpy(packet->mag, mag, sizeof(uint16_t)*3);
+	mav_array_memcpy(packet->acc, acc, sizeof(int16_t)*3);
+	mav_array_memcpy(packet->gyro, gyro, sizeof(int16_t)*3);
+	mav_array_memcpy(packet->mag, mag, sizeof(int16_t)*3);
 #if MAVLINK_CRC_EXTRA
     _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_RAW_IMU_DATA, (const char *)packet, MAVLINK_MSG_ID_RAW_IMU_DATA_LEN, MAVLINK_MSG_ID_RAW_IMU_DATA_CRC);
 #else
@@ -216,9 +216,9 @@ static inline void mavlink_msg_raw_imu_data_send_buf(mavlink_message_t *msgbuf, 
  *
  * @return accelerometer data (x,y,z)
  */
-static inline uint16_t mavlink_msg_raw_imu_data_get_acc(const mavlink_message_t* msg, uint16_t *acc)
+static inline uint16_t mavlink_msg_raw_imu_data_get_acc(const mavlink_message_t* msg, int16_t *acc)
 {
-	return _MAV_RETURN_uint16_t_array(msg, acc, 3,  0);
+	return _MAV_RETURN_int16_t_array(msg, acc, 3,  0);
 }
 
 /**
@@ -226,9 +226,9 @@ static inline uint16_t mavlink_msg_raw_imu_data_get_acc(const mavlink_message_t*
  *
  * @return gyroscope data (x,y,z)
  */
-static inline uint16_t mavlink_msg_raw_imu_data_get_gyro(const mavlink_message_t* msg, uint16_t *gyro)
+static inline uint16_t mavlink_msg_raw_imu_data_get_gyro(const mavlink_message_t* msg, int16_t *gyro)
 {
-	return _MAV_RETURN_uint16_t_array(msg, gyro, 3,  6);
+	return _MAV_RETURN_int16_t_array(msg, gyro, 3,  6);
 }
 
 /**
@@ -236,9 +236,9 @@ static inline uint16_t mavlink_msg_raw_imu_data_get_gyro(const mavlink_message_t
  *
  * @return magnetometer data (x,y,z)
  */
-static inline uint16_t mavlink_msg_raw_imu_data_get_mag(const mavlink_message_t* msg, uint16_t *mag)
+static inline uint16_t mavlink_msg_raw_imu_data_get_mag(const mavlink_message_t* msg, int16_t *mag)
 {
-	return _MAV_RETURN_uint16_t_array(msg, mag, 3,  12);
+	return _MAV_RETURN_int16_t_array(msg, mag, 3,  12);
 }
 
 /**

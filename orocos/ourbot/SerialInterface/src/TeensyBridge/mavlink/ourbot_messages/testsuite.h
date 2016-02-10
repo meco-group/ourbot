@@ -353,9 +353,9 @@ static void mavlink_test_raw_imu_data(uint8_t system_id, uint8_t component_id, m
 	mavlink_raw_imu_data_t packet1, packet2;
         memset(&packet1, 0, sizeof(packet1));
         
-        	mav_array_memcpy(packet1.acc, packet_in.acc, sizeof(uint16_t)*3);
-        	mav_array_memcpy(packet1.gyro, packet_in.gyro, sizeof(uint16_t)*3);
-        	mav_array_memcpy(packet1.mag, packet_in.mag, sizeof(uint16_t)*3);
+        	mav_array_memcpy(packet1.acc, packet_in.acc, sizeof(int16_t)*3);
+        	mav_array_memcpy(packet1.gyro, packet_in.gyro, sizeof(int16_t)*3);
+        	mav_array_memcpy(packet1.mag, packet_in.mag, sizeof(int16_t)*3);
         
 
         memset(&packet2, 0, sizeof(packet2));
