@@ -7,15 +7,11 @@ local estimator     = 'estimator'..index
 local controller    = 'controller'..index
 local pathgenerator = 'pathgenerator'..index
 local reference     = 'reference'..index
-local velocitycmd   = 'velocitycmd'..index
 local coordinator   = 'coordinator'..index
 local reporter      = 'reporter'..index
 local io            = 'io'..index
 local teensy        = 'teensy'..index
 local lidar         = 'lidar'..index
-local imul          = 'imul'..index
-local imur          = 'imur'..index
-local spimaster     = 'spimaster'..index
   --add here extra components
 
 --Components to load
@@ -24,27 +20,17 @@ local components_to_load = {
   [controller]      = controller_type,
   [pathgenerator]   = pathgenerator_type,
   [reference]       = reference_type,
-  -- [velocitycmd]     = velocitycmd_type,
   [coordinator]     = 'OCL::LuaTLSFComponent',
   [reporter]        = 'OCL::NetcdfReporting',
   [io]              = 'Container',
   [teensy]          = 'TeensyBridge',
   [lidar]           = 'RPLidar'
-  -- [spimaster]       = 'SPIMaster',
-  -- [imul]            = 'IMU',
-  -- [imur]            = 'IMU'
    -- add here componentname = 'componenttype'
 }
 
 --Containers to fill
 local containers_to_fill = {
-  -- [io]  = {teensy, lidar, spimaster, imul, imur}
   [io]  = {teensy, lidar}
-}
-
--- SPI components
-local spi_components = {
-  -- [spimaster] = {imul, imur}
 }
 
 --Ports to report
@@ -52,28 +38,25 @@ local ports_to_report = {
   -- [controller]      = {'cmd_velocity_port'},
   -- [estimator]       = {'est_pose_port', 'est_velocity_port', 'est_acceleration_port', 'est_global_offset_port'},
   -- [reference]       = {'ref_pose_port', 'ref_ffw_port'},
-  -- [velocitycmd]     = {'cmd_velocity_port'},
   -- [coordinator]     = {'controlloop_duration', 'controlloop_jitter'},
   [io]              = {--'cal_lidar_node_port',
-                      -- 'imul_cal_imu_transacc_port',
-                      -- 'imul_cal_imu_orientation_3d_port',
-                      -- 'imul_cal_imu_orientation_port',
-                      -- 'imul_cal_imu_dorientation_3d_port',
-                      -- 'imul_cal_imu_dorientation_port',
-                      -- 'imul_cal_imu_temperature_port',
-                      -- 'imur_cal_imu_transacc_port',
-                      -- 'imur_cal_imu_orientation_3d_port',
-                      -- 'imur_cal_imu_orientation_port',
-                      -- 'imur_cal_imu_dorientation_3d_port',
-                      -- 'imur_cal_imu_dorientation_port',
-                      -- 'imur_cal_imu_temperature_port',
+                      'cal_imul_transacc_port',
+                      'cal_imul_orientation_3d_port',
+                      'cal_imul_orientation_port',
+                      'cal_imul_dorientation_3d_port',
+                      'cal_imul_dorientation_port',
+                      'cal_imur_transacc_port',
+                      'cal_imur_orientation_3d_port',
+                      'cal_imur_orientation_port',
+                      'cal_imur_dorientation_3d_port',
+                      'cal_imur_dorientation_port',
                       -- 'cal_lidar_x_port',
                       -- 'cal_lidar_y_port',
                       -- 'cal_enc_pose_port',
                       -- 'cal_lidar_global_node_port',
                       -- 'cal_motor_current_port',
                       -- 'cal_motor_voltage_port',
-                      'cal_velocity_port'
+                      -- 'cal_velocity_port'
                       }
   --add here componentname = 'portnames'
 }
@@ -84,11 +67,9 @@ local packages_to_import = {
   [controller]      = 'ControllerInterface',
   [pathgenerator]   = 'PathGeneratorInterface',
   [reference]       = 'Reference',
-  [velocitycmd]     = 'VelocityCommandInterface',
   [io]              = 'Container',
   [teensy]          = 'SerialInterface',
-  [lidar]           = 'SerialInterface',
-  [spimaster]       = 'SPIMaster'
+  [lidar]           = 'SerialInterface'
   --add here componentname = 'parentcomponenttype'
 }
 
@@ -98,9 +79,6 @@ local reporter_config_file    = 'Configuration/reporter-config.cpf'
 local component_config_files  = {
   [teensy]          = 'Configuration/teensy-config.cpf',
   [lidar]           = 'Configuration/lidar-config.cpf',
-  [spimaster]       = 'Configuration/spimaster-config.cpf',
-  [imul]            = 'Configuration/imul-config.cpf',
-  [imur]            = 'Configuration/imur-config.cpf'
   --add here componentname = 'Configuration/component-config.cpf'
 }
 
@@ -204,13 +182,6 @@ return rfsm.state {
 
     connect_components = rfsm.state {
       entry = function(fsm)
-        --Connect SPI devices to SPI master
-        for master,devices in pairs(spi_components) do
-          for i,dev in pairs(devices) do
-            if (not dp:connectPorts(master,dev)) then rfsm.send_events(fsm,'e_failed') return end
-          end
-        end
-
         --Connect teensy to lidar
         if components_to_load[teensy] and components_to_load[lidar] then
           if (not dp:connectPorts(teensy,lidar))            then rfsm.send_events(fsm,'e_failed') return end
@@ -222,7 +193,6 @@ return rfsm.state {
         if (not dp:connectPorts(reference,controller))      then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:connectPorts(reference,pathgenerator))   then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:connectPorts(estimator,pathgenerator))   then rfsm.send_events(fsm,'e_failed') return end
-        -- if (not dp:connectPorts(velocitycmd,io))            then rfsm.send_events(fsm,'e_failed') return end
           --add more connections here
 
         --Add every component as peer of coordinator
@@ -230,7 +200,6 @@ return rfsm.state {
         if (not dp:addPeer(coordinator,estimator))          then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:addPeer(coordinator,pathgenerator))      then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:addPeer(coordinator,reference))          then rfsm.send_events(fsm,'e_failed') return end
-        -- if (not dp:addPeer(coordinator,velocitycmd))        then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:addPeer(coordinator,reporter))           then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:addPeer(coordinator,io))                 then rfsm.send_events(fsm,'e_failed') return end
           --add more peers here

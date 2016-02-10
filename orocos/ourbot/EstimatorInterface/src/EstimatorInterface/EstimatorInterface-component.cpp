@@ -4,9 +4,9 @@
 
 EstimatorInterface::EstimatorInterface(std::string const& name) : TaskContext(name, PreOperational),
     _cal_imul_transacc(3), _cal_imul_orientation_3d(3), _cal_imul_orientation(0.),
-    _cal_imul_dorientation_3d(3), _cal_imul_dorientation(0.), _cal_imul_temperature(0.),
+    _cal_imul_dorientation_3d(3), _cal_imul_dorientation(0.),
     _cal_imur_transacc(3), _cal_imur_orientation_3d(3), _cal_imur_orientation(0.),
-    _cal_imur_dorientation_3d(3), _cal_imur_dorientation(0.), _cal_imur_temperature(0.),
+    _cal_imur_dorientation_3d(3), _cal_imur_dorientation(0.),
     _cal_enc_pose(3), _cal_motor_current(4), _cal_motor_voltage(4), _cal_velocity(3),
     _est_pose(3), _est_velocity(3), _est_acceleration(3), _est_global_offset(3){
 
@@ -19,19 +19,17 @@ EstimatorInterface::EstimatorInterface(std::string const& name) : TaskContext(na
   ports()->addPort("cal_ir_x_port", _cal_ir_x_port).doc("ir: Observed x positions wrt local frame");
   ports()->addPort("cal_ir_y_port", _cal_ir_y_port).doc("ir: Observed y positions wrt local frame");
   // imu left
-  ports()->addPort("imul_cal_imu_transacc_port", _cal_imul_transacc_port).doc("imul: Translational accelerations");
-  ports()->addPort("imul_cal_imu_orientation_3d_port", _cal_imul_orientation_3d_port).doc("imul: Roll Pitch Yaw");
-  ports()->addPort("imul_cal_imu_orientation_port", _cal_imul_orientation_port).doc("imul: Orientation around z-axis (Yaw)");
-  ports()->addPort("imul_cal_imu_dorientation_3d_port", _cal_imul_dorientation_3d_port).doc("imul: Derivative of Roll Pitch Yaw");
-  ports()->addPort("imul_cal_imu_dorientation_port", _cal_imul_dorientation_port).doc("imul: Derivative of orientation aroun z-axis (Yaw)");
-  ports()->addPort("imul_cal_imu_temperature_port", _cal_imul_temperature_port).doc("imul: Temperature");
+  ports()->addPort("cal_imul_transacc_port", _cal_imul_transacc_port).doc("imul: Translational accelerations");
+  ports()->addPort("cal_imul_orientation_3d_port", _cal_imul_orientation_3d_port).doc("imul: Roll Pitch Yaw");
+  ports()->addPort("cal_imul_orientation_port", _cal_imul_orientation_port).doc("imul: Orientation around z-axis (Yaw)");
+  ports()->addPort("cal_imul_dorientation_3d_port", _cal_imul_dorientation_3d_port).doc("imul: Derivative of Roll Pitch Yaw");
+  ports()->addPort("cal_imul_dorientation_port", _cal_imul_dorientation_port).doc("imul: Derivative of orientation aroun z-axis (Yaw)");
   // imu right
-  ports()->addPort("imur_cal_imu_transacc_port", _cal_imur_transacc_port).doc("imur: Translational accelerations");
-  ports()->addPort("imur_cal_imu_orientation_3d_port", _cal_imur_orientation_3d_port).doc("imur: Roll Pitch Yaw");
-  ports()->addPort("imur_cal_imu_orientation_port", _cal_imur_orientation_port).doc("imur: Orientation around z-axis (Yaw)");
-  ports()->addPort("imur_cal_imu_dorientation_3d_port", _cal_imur_dorientation_3d_port).doc("imur: Derivative of Roll Pitch Yaw");
-  ports()->addPort("imur_cal_imu_dorientation_port", _cal_imur_dorientation_port).doc("imur: Derivative of orientation aroun z-axis (Yaw)");
-  ports()->addPort("imur_cal_imu_temperature_port", _cal_imur_temperature_port).doc("imur: Temperature");
+  ports()->addPort("cal_imur_transacc_port", _cal_imur_transacc_port).doc("imur: Translational accelerations");
+  ports()->addPort("cal_imur_orientation_3d_port", _cal_imur_orientation_3d_port).doc("imur: Roll Pitch Yaw");
+  ports()->addPort("cal_imur_orientation_port", _cal_imur_orientation_port).doc("imur: Orientation around z-axis (Yaw)");
+  ports()->addPort("cal_imur_dorientation_3d_port", _cal_imur_dorientation_3d_port).doc("imur: Derivative of Roll Pitch Yaw");
+  ports()->addPort("cal_imur_dorientation_port", _cal_imur_dorientation_port).doc("imur: Derivative of orientation aroun z-axis (Yaw)");
   // teensy
   ports()->addPort("cal_enc_pose_port", _cal_enc_pose_port).doc("teensy: Pose derived from encoders");
   ports()->addPort("cal_motor_current_port", _cal_motor_current_port).doc("teensy: Current of 4 motors");
@@ -123,13 +121,11 @@ void EstimatorInterface::updateHook(){
   _cal_imul_orientation_port.read(_cal_imul_orientation);
   _cal_imul_dorientation_3d_port.read(_cal_imul_dorientation_3d);
   _cal_imul_dorientation_port.read(_cal_imul_dorientation);
-  _cal_imul_temperature_port.read(_cal_imul_temperature);
   _cal_imur_transacc_port.read(_cal_imur_transacc);
   _cal_imur_orientation_3d_port.read(_cal_imur_orientation_3d);
   _cal_imur_orientation_port.read(_cal_imur_orientation);
   _cal_imur_dorientation_3d_port.read(_cal_imur_dorientation_3d);
   _cal_imur_dorientation_port.read(_cal_imur_dorientation);
-  _cal_imur_temperature_port.read(_cal_imur_temperature);
   _cal_enc_pose_port.read(_cal_enc_pose);
   _cal_motor_current_port.read(_cal_motor_current);
   _cal_motor_voltage_port.read(_cal_motor_voltage);
@@ -173,14 +169,12 @@ double EstimatorInterface::getImuLOrientation(){ return _cal_imul_orientation; }
 std::vector<double> EstimatorInterface::getImuL3dOrientation(){ return _cal_imul_orientation_3d; }
 double EstimatorInterface::getImuLDOrientation(){ return _cal_imul_dorientation; }
 std::vector<double> EstimatorInterface::getImuL3dDOrientation(){ return _cal_imul_dorientation_3d; }
-double EstimatorInterface::getImuLTemperature(){ return _cal_imul_temperature; }
 
 std::vector<double> EstimatorInterface::getImuRTransAcc(){ return _cal_imur_transacc; }
 double EstimatorInterface::getImuROrientation(){ return _cal_imur_orientation; }
 std::vector<double> EstimatorInterface::getImuR3dOrientation(){ return _cal_imur_orientation_3d; }
 double EstimatorInterface::getImuRDOrientation(){ return _cal_imur_dorientation; }
 std::vector<double> EstimatorInterface::getImuR3dDOrientation(){ return _cal_imur_dorientation_3d; }
-double EstimatorInterface::getImuRTemperature(){ return _cal_imur_temperature; }
 
 std::vector<double> EstimatorInterface::getEncPose(){ return _cal_enc_pose; }
 std::vector<double> EstimatorInterface::getMotorCurrent(){ return _cal_motor_current; }

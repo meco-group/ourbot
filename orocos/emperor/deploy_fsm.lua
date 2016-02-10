@@ -23,25 +23,23 @@ local remote_ports_to_report = {
   -- reference         = {'ref_pose_port', 'ref_ffw_port'},
   -- coordinator       = {'controlloop_duration', 'controlloop_jitter'},
   io                = {--'cal_lidar_node_port',
-                      -- 'imul_cal_imu_transacc_port',
-                      -- 'imul_cal_imu_orientation_3d_port',
-                      -- 'imul_cal_imu_orientation_port',
-                      -- 'imul_cal_imu_dorientation_3d_port',
-                      -- 'imul_cal_imu_dorientation_port',
-                      -- 'imul_cal_imu_temperature_port',
-                      -- 'imur_cal_imu_transacc_port',
-                      -- 'imur_cal_imu_orientation_3d_port',
-                      -- 'imur_cal_imu_orientation_port',
-                      -- 'imur_cal_imu_dorientation_3d_port',
-                      -- 'imur_cal_imu_dorientation_port',
-                      -- 'imur_cal_imu_temperature_port',
+                      'cal_imul_transacc_port',
+                      'cal_imul_orientation_3d_port',
+                      'cal_imul_orientation_port',
+                      'cal_imul_dorientation_3d_port',
+                      'cal_imul_dorientation_port',
+                      'cal_imur_transacc_port',
+                      'cal_imur_orientation_3d_port',
+                      'cal_imur_orientation_port',
+                      'cal_imur_dorientation_3d_port',
+                      'cal_imur_dorientation_port',
                       -- 'cal_lidar_x_port',
                       -- 'cal_lidar_y_port',
                       -- 'cal_enc_pose_port'
                       -- 'cal_lidar_global_node_port',
                       -- 'cal_motor_current_port',
                       -- 'cal_motor_voltage_port',
-                      'cal_velocity_port'
+                      -- 'cal_velocity_port'
                       }
   --add here componentname = 'portnames'
 }

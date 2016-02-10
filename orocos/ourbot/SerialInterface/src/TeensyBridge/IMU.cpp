@@ -1,7 +1,7 @@
 #include "IMU.hpp"
 #include <iostream>
 
-IMU::IMU(std::string const& name): 
+IMU::IMU(std::string const& name):
 	TaskContext(name)
 {
 	//Add ports
@@ -77,6 +77,7 @@ std::vector<double> IMU::computeRPY(){
 	//Roll pitch yaw calculation:
 	rpy[1] = asin(-acc[0]); //pitch
 	rpy[0] = asin( acc[1]/cos(rpy[1])); //roll
+
 	//Tilt compensation for heading/yaw calculation:
 	double magx =  mag[0]*cos(rpy[1]) + mag[2]*sin(rpy[1]);
 	double magy =  mag[0]*sin(rpy[0])*sin(rpy[1]) + mag[1]*cos(rpy[0]) - mag[2]*sin(rpy[0])*cos(rpy[1]);
