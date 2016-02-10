@@ -10,7 +10,7 @@
 # Creates a component library libSerialInterface-<target>.so
 # and installs in the directory lib/orocos/SerialInterface/
 #
-orocos_component(SerialInterface SerialInterface/SerialInterface-component.hpp SerialInterface/SerialInterface-component.cpp USBInterface/USBInterface-component.hpp USBInterface/USBInterface-component.cpp TeensyBridge/TeensyBridge-component.hpp TeensyBridge/TeensyBridge-component.cpp TeensyBridge/protocol_interface.h TeensyBridge/protocol_mavlink.h TeensyBridge/protocol_mavlink.cpp TeensyBridge/mavlink/ourbot_messages/mavlink.h RPLidar/RPLidar-component.hpp RPLidar/RPLidar-component.cpp RPLidar/rplidar_protocol.h RPLidar/rplidar_cmd.h) # ...you may add multiple source files
+orocos_component(SerialInterface SerialInterface/SerialInterface-component.hpp SerialInterface/SerialInterface-component.cpp USBInterface/USBInterface-component.hpp USBInterface/USBInterface-component.cpp TeensyBridge/TeensyBridge-component.hpp TeensyBridge/TeensyBridge-component.cpp TeensyBridge/protocol_interface.h TeensyBridge/protocol_mavlink.h TeensyBridge/protocol_mavlink.cpp TeensyBridge/mavlink/ourbot_messages/mavlink.h TeensyBridge/IMU.hpp TeensyBridge/IMU.cpp TeensyBridge/sensor3d.hpp TeensyBridge/sensor3d.cpp RPLidar/RPLidar-component.hpp RPLidar/RPLidar-component.cpp RPLidar/rplidar_protocol.h RPLidar/rplidar_cmd.h) # ...you may add multiple source files
 #
 # You may add multiple orocos_component statements.
 
@@ -19,7 +19,7 @@ orocos_component(SerialInterface SerialInterface/SerialInterface-component.hpp S
 #
 # Installs in the include/orocos/SerialInterface/ directory
 #
-orocos_install_headers(SerialInterface/SerialInterface-component.hpp USBInterface/USBInterface-component.hpp TeensyBridge/TeensyBridge-component.hpp TeensyBridge/protocol_interface.h TeensyBridge/protocol_mavlink.h TeensyBridge/mavlink/ourbot_messages/mavlink.h RPLidar/RPLidar-component.hpp RPLidar/rplidar_protocol.h RPLidar/rplidar_cmd.h) # ...you may add multiple header files
+orocos_install_headers(SerialInterface/SerialInterface-component.hpp USBInterface/USBInterface-component.hpp TeensyBridge/TeensyBridge-component.hpp TeensyBridge/protocol_interface.h TeensyBridge/protocol_mavlink.h TeensyBridge/mavlink/ourbot_messages/mavlink.h TeensyBridge/IMU.hpp TeensyBridge/sensor3d.hpp RPLidar/RPLidar-component.hpp RPLidar/rplidar_protocol.h RPLidar/rplidar_cmd.h) # ...you may add multiple header files
 #
 # You may add multiple orocos_install_headers statements.
 
