@@ -18,6 +18,8 @@
 #endif
 
 class IMU : public RTT::TaskContext{
+	friend class TeensyBridge;
+
   private:
 	uint8_t _ID;
 	
@@ -32,28 +34,16 @@ class IMU : public RTT::TaskContext{
   	RTT::OutputPort<std::vector<double> > _cal_imu_orientation_3d_port;  //orientation (3d) port
  	RTT::OutputPort<double>               _cal_imu_dorientation_port;    //angular velocity around z-axis port
   	RTT::OutputPort<double>               _cal_imu_orientation_port;     //orientation in x-y plane port
-
-  	//Define properties:
-  	//for calibration
-		/*std::vector<double> _acc_offset; //user-defined offset of measurements
-		std::vector<double> _gyr_offset;
-		std::vector<double> _mag_offset;
-		double _tmp_offset;
-		std::vector<double> _acc_scale;  //user-defined scaling of measurements
-		std::vector<double> _gyr_scale;
-		std::vector<double> _mag_scale;
-		double _tmp_scale;*/
-
+	
+  	Sensor3D 	_acc; //accelerometer
+  	Sensor3D 	_mag; //magnetometer
+  	Sensor3D 	_gyr; //gyroscope
+  	Sensor3D 	_tmp; //temperature sensor
 
   	std::vector<double> computeRPY(); //convert magnetic field measurements to roll pitch yaw angles
 		
   public:
     IMU(std::string const& name); //Constructor
-
-  	Sensor3D 	_acc; //accelerometer
-  	Sensor3D 	_mag; //magnetometer
-  	Sensor3D 	_gyr; //gyroscope
-  	Sensor3D 	_tmp; //temperature sensor
   
   	void updateMeasurements(std::vector<double> acc, std::vector<double> gyr, std::vector<double> mag);
   	uint8_t getID();

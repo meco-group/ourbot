@@ -17,14 +17,16 @@
 
 class Sensor3D
 {
+	friend class IMU;
+	friend class TeensyBridge;
+
 	private:
 		std::vector<double> _calib;		//calibrated output data
 		std::vector<double> _raw;		//(raw) sensor data
-
-	public:
 		std::vector<double> _offset;	//user-defined offset
 		std::vector<double> _scale;		//user-defined scaling factor
-		
+
+	public:
     	Sensor3D();
     	
 		std::vector<double> calibrate();
