@@ -52,6 +52,9 @@ TeensyBridge::TeensyBridge(std::string const& name) :
 	addOperation("showIMUData", &TeensyBridge::showIMUData, this).doc("Displays the ourbot onboard thread times.").arg("ID","ID of the sensor");
 	
 	// SETUP IMU
+	addIMUPorts(_imus[0], std::string("l"), 7);
+	addIMUPorts(_imus[1], std::string("r"), 7);
+	
 	addProperty("imul_acc_offset", _imus[0]->_acc._offset).doc("User defined offset of accelerometer");
 	addProperty("imul_gyr_offset", _imus[0]->_gyr._offset).doc("User defined offset of gyroscope");
 	addProperty("imul_mag_offset", _imus[0]->_mag._offset).doc("User defined offset of magnetometer");
@@ -193,13 +196,14 @@ bool TeensyBridge::configureHook()
 	_imus[0]->configure();
 	_imus[1]->configure();
 	
-	addIMUPorts(_imus[0], std::string("l"), 7);
-	addIMUPorts(_imus[1], std::string("r"), 7);
-
 #ifndef TEENSYBRIDGE_TESTFLAG
   return true;
 #else
 	_usb_port_name = "/dev/ttyACM0";
+	
+	_imus[0]->_acc._offset[0] = 1250.0;
+	_imus[0]->_acc._scale = std::vector<double>(3,0.000613125);
+	
 	return setPeriod(0.005);
 #endif //TEENSYBRIDGE_TESTFLAG
 }
