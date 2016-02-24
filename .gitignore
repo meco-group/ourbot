@@ -15,7 +15,12 @@ orocos/emperor/reports.nc
 *.tb_history
 *.rosinstall
 *.rosinstall.bak
+orocos/*/TestCorba/
+orocos/ourbot/orocos/naming_distributed_agents.txt
+orocos/overview.txt
+orocos/emperor/reports.nc
 TestCorba/
 identify_velcontrol/
 .test/
 network.txt
+
