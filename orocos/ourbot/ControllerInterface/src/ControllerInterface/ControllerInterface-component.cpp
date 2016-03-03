@@ -8,7 +8,7 @@ ControllerInterface::ControllerInterface(std::string const& name) : TaskContext(
 
   ports()->addPort("est_pose_port", _est_pose_port).doc("Estimated pose");
   ports()->addPort("ref_pose_port", _ref_pose_port).doc("Pose reference sample");
-  ports()->addPort("ref_ffw_port", _ref_ffw_port).doc("Feedforward reference sample");
+  ports()->addPort("ref_velocity_port", _ref_velocity_port).doc("Velocity reference sample");
 
   ports()->addPort("cmd_velocity_port",_cmd_velocity_port).doc("Velocity command for actuator");
 
@@ -40,8 +40,8 @@ bool ControllerInterface::startHook(){
     log(Error) << "ref_pose_port not connected !" <<endlog();
     check = false;
   }
-  if (!_ref_ffw_port.connected()){
-    log(Warning) << "ref_ffw_port not connected !" <<endlog();
+  if (!_ref_velocity_port.connected()){
+    log(Warning) << "ref_velocity_port not connected !" <<endlog();
   }
   if (!initialize()){
     log(Error) << "Error occured in initialize() !" <<endlog();
@@ -64,8 +64,8 @@ void ControllerInterface::updateHook(){
 
   // Read reference
   if (_ref_pose_port.read(_ref_pose) == RTT::NoData) {log(Error) << "No data on _ref_pose_port !" <<endlog(); error();}
-  if (_ref_ffw_port.connected()){
-    if (_ref_ffw_port.read(_ref_ffw) == RTT::NoData) {log(Error) << "No data on _ref_ffw_port !" <<endlog(); error();}
+  if (_ref_velocity_port.connected()){
+    if (_ref_velocity_port.read(_ref_ffw) == RTT::NoData) {log(Error) << "No data on _ref_velocity_port !" <<endlog(); error();}
   }
 
   // Apply control law

@@ -10,7 +10,7 @@ using namespace RTT;
 class ControllerInterface : public RTT::TaskContext{
   private:
     InputPort<std::vector<double> > _ref_pose_port;
-    InputPort<std::vector<double> > _ref_ffw_port;
+    InputPort<std::vector<double> > _ref_velocity_port;
     InputPort<std::vector<double> > _est_pose_port;
 
     OutputPort<std::vector<double> > _cmd_velocity_port;
