@@ -13,13 +13,13 @@ using namespace std;
 bool loadRTTPlugin( RTT::TaskContext* t )
 {
     if ( t == 0 )
-        cout << "Plugin of PathGeneratorInterface loaded in process."<< endl;
+        cout << "Plugin of MotionPlanning loaded in process."<< endl;
     else
-        cout << "Plugin of PathGeneratorInterface loaded in component: "<< t->getName() << endl;
+        cout << "Plugin of MotionPlanning loaded in component: "<< t->getName() << endl;
     return true;
 }
 
 std::string getRTTPluginName()
 {
-    return "PathGeneratorInterface-example-plugin";
+    return "MotionPlanning-example-plugin";
 }
