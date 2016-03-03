@@ -1,19 +1,20 @@
 local tc = rtt.getTC()
 
+local motionplanning = tc:getPeer('motionplanning'..tostring(index))
 local controller    = tc:getPeer('controller'..tostring(index))
 local estimator     = tc:getPeer('estimator'..tostring(index))
 local reference     = tc:getPeer('reference'..tostring(index))
 local reporter      = tc:getPeer('reporter'..tostring(index))
--- dummy/add here sensor+actuator components
 local io            = tc:getPeer('io'..tostring(index))
 
-local estimatorUpdate           = estimator:getOperation("update")
-local referenceUpdate           = reference:getOperation("update")
-local controllerUpdate          = controller:getOperation("update")
-local estimatorInRunTimeError   = estimator:getOperation("inRunTimeError")
-local controllerInRunTimeError  = controller:getOperation("inRunTimeError")
-local referenceInRunTimeError   = reference:getOperation("inRunTimeError")
-local snapshot                  = reporter:getOperation("snapshot")
+local estimatorUpdate              = estimator:getOperation("update")
+local referenceUpdate              = reference:getOperation("update")
+local controllerUpdate             = controller:getOperation("update")
+local estimatorInRunTimeError      = estimator:getOperation("inRunTimeError")
+local controllerInRunTimeError     = controller:getOperation("inRunTimeError")
+local referenceInRunTimeError      = reference:getOperation("inRunTimeError")
+local motionplanningInRunTimeError = motionplanning:getOperation("inRunTimeError")
+local snapshot                     = reporter:getOperation("snapshot")
 
 -- variables for the timing diagnostics
 local jitter    = 0
@@ -23,12 +24,12 @@ return rfsm.state {
   rfsm.trans{src = 'initial', tgt = 'idle'},
   rfsm.trans{src = 'idle',    tgt = 'init',   events = {'e_init'}},
   rfsm.trans{src = 'init',    tgt = 'run',    events = {'e_run'}},
-  rfsm.trans{src = 'run',     tgt = 'stop',   events = {'e_stop'}},
+  rfsm.trans{src = 'run',     tgt = 'stop',   events = {'e_stop', 'e_failed'}},
   rfsm.trans{src = 'stop',    tgt = 'run',    events = {'e_restart'}},  --No reinitiliaziation
   rfsm.trans{src = 'stop',    tgt = 'reset',  events = {'e_reset'}},    --With reinitialization
   rfsm.trans{src = 'reset',   tgt = 'idle',   events = {'e_done'}},
 
-  idle = rfsm.state{entry=function() print("Waiting on Init...") end},
+  idle = rfsm.state{entry=function() print("Waiting on Initialize...") end},
 
   init = rfsm.state{
     entry = function(fsm)
@@ -43,6 +44,11 @@ return rfsm.state {
 
   run = rfsm.state{
     entry = function(fsm)
+      if not motionplanning:start() then
+        rtt.logl("Error","Could not start motionplanning component")
+        rfsm.send_events(fsm,'e_failed')
+        return
+      end
       if not reporter:start() then
         rtt.logl("Error","Could not start reporter component")
         rfsm.send_events(fsm,'e_failed')
@@ -79,6 +85,11 @@ return rfsm.state {
           rfsm.send_events(fsm,'e_failed')
           return
         end
+        if motionplanningInRunTimeError() then
+          rtt.logl("Error","RunTimeError in motionplanning")
+          rfsm.send_events(fsm,'e_failed')
+          return
+        end
 
         -- check timings of previous iteration
         -- ditch the first two calculations due to the initially wrongly calculated prev_start_time
@@ -108,6 +119,7 @@ return rfsm.state {
 
   stop = rfsm.state{
     entry = function(fsm)
+      motionplanning:stop()
       estimator:stop()
       reference:stop()
       controller:stop()

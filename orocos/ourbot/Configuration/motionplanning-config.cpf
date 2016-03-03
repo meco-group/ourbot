@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "cpf.dtd">
+<properties>
+  <simple name="horizon_time" type="double">
+    <description>Horizon to compute motion trajectory</description>
+    <value>10.</value>
+  </simple>
+</properties>
