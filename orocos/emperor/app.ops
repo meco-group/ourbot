@@ -2,8 +2,8 @@ export void VelocityControl(){
   emperor_send_event_port.write("e_velocitycmdextern")
 }
 
-export void PathFollowing(){
-  emperor_send_event_port.write("e_updpathfollowing")
+export void MotionPlanning(){
+  emperor_send_event_port.write("e_motionplanning")
 }
 
 export void Idle(){

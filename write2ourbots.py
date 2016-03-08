@@ -36,7 +36,7 @@ local_root = os.path.join(current_dir,'orocos/ourbot')
 remote_root = '/home/odroid/orocos'
 username = 'odroid'
 password = 'odroid'
-hosts = ['192.168.11.120']
+hosts = ['192.168.11.121']
 ignore = ['TestCorba']
 build_list = []
 
@@ -78,6 +78,7 @@ def change_cmakelist(ssh, component):
 
 
 def send_file(ftp, loc_file, rem_file):
+    print 'sending ' + loc_file
     ftp.put(loc_file, rem_file)
 
 if __name__ == "__main__":

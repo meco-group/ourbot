@@ -1,0 +1,143 @@
+cd coordinator1 
+MotionPlanning 
+Init 
+Run
+Break
+Restart
+Break
+cd coordinator1 
+MotionPlanning 
+Init 
+Run
+Break
+cd coordinator1 
+MotionPlanning 
+Init 
+Run
+Break
+cd coordinator1 
+MotionPlanning 
+Init 
+Run
+Break
+cd coordinator1 
+MotionPlanning 
+Init 
+Run
+Break
+exit
+cd coordinator1 
+MotionPlanning 
+Init 
+Run
+Break
+cd our
+cd coordinator1 
+MotionPlanning 
+Init 
+Run
+Break
+ls
+cd coordinator1 
+MotionPlanning 
+Init 
+Run
+Break
+Restart
+Break
+cd coordinator1 
+MotionPlanning 
+Init 
+Run
+Break
+Restart
+SBreak
+Break
+cd coordinator1 
+MotionPlanning 
+Init 
+Run
+Break
+Restart
+Break
+cd coordinator1 
+MotionPlanning 
+Init 
+Run
+Break
+Restart
+Break
+cd coordinator1 
+MotionPlanning 
+Init 
+Run
+Break
+Restart
+Break
+Restart
+RBreak
+Break
+Restart
+Stop
+Break
+cd coordinator1 
+MotionPlanning 
+Init 
+Run
+set
+Break
+cd coordinator1 
+MotionPlanning 
+Init 
+Run
+setTargetPose(2,2,0)
+cd motionplanning1 
+setTargetPose(2,2,0)
+setTargetPose(0,2,0)
+Break
+cd ..
+Break
+Restart
+setTargetPose(10,10,0)
+cd motionplanning1 
+setTargetPose(10,10,0)
+cd MotionPlanning/
+cd coordinator1 
+MotionPlanning 
+Init 
+Run
+cd motionplanning1 cd motionplanning1 
+cd motionplanning1 
+setTargetPose(4,4,0)
+setTargetPose(2,0,0)
+Break
+cd ..
+Break
+cd MotionPlanning/
+cd coordinator1 
+MotionPlanning 
+Init 
+Run
+Break
+cd coordinator1 
+MotionPlanning 
+Init 
+Run
+Break
+cd motionplanning1 
+cd ..
+Restart
+cd motionplanning1cd motionplanning1 
+setTargetPose(2,2,0)
+cd motionplanning1
+setTargetPose(2,2,0)
+cd
+Break
+cd ..
+Break
+Reset
+cd coordinator1 
+MotionPlanning 
+Init 
+Run
+Break

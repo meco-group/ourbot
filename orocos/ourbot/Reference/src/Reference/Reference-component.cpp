@@ -78,8 +78,16 @@ void Reference::updateHook(){
 
   // Get next sample
   for (int i=0; i<3; i++){
-    _ref_pose_sample.at(i) = _cur_ref_pose_trajectory[i].at(_index);
-    _ref_velocity_sample.at(i) = _cur_ref_velocity_trajectory[i].at(_index);
+    if(fabs(_cur_ref_pose_trajectory[i].at(_index)) > 1.e-3){
+      _ref_pose_sample.at(i) = _cur_ref_pose_trajectory[i].at(_index);
+    } else{
+      _ref_pose_sample.at(i) = 0.0;
+    }
+    if(fabs(_cur_ref_velocity_trajectory[i].at(_index)) > 1.e-3){
+      _ref_velocity_sample.at(i) = _cur_ref_velocity_trajectory[i].at(_index);
+    } else{
+      _ref_velocity_sample.at(i) = 0.0;
+    }
   }
   _ref_pose_port.write(_ref_pose_sample);
   _ref_velocity_port.write(_ref_velocity_sample);

@@ -15,7 +15,7 @@
   </simple>
   <simple name="controller" type="string">
     <description>Controller component to use</description>
-    <value>ExampleController</value>
+    <value>FfwController</value>
   </simple>
   <simple name="velocitycmd" type="string">
     <description>VelocityCommand component to use (only for intern velocitycmd)</description>
@@ -40,18 +40,14 @@
   </struct>
   <simple name="control_sample_rate" type="double">
     <description>Frequency to update controller</description>
-    <value>200.</value>
+    <value>100.</value>
   </simple>
   <simple name="pathupd_sample_rate" type="double">
     <description>Frequency to update motion planning</description>
-    <value>20.</value>
-  </simple>
-  <simple name="velcmd_sample_rate" type="double">
-    <description>Frequency to update velocity commander</description>
-    <value>200.</value>
+    <value>2.</value>
   </simple>
   <simple name="io_sample_rate" type="double">
-    <description>Frequency to update velocity commander</description>
+    <description>Frequency to update io</description>
     <value>200.</value>
   </simple>
 

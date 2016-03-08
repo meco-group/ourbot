@@ -27,7 +27,7 @@ current_dir = os.path.dirname(os.path.realpath(__file__))
 local_root = os.path.join(current_dir, 'orocos/emperor')
 username = 'odroid'
 password = 'odroid'
-hosts = ['192.168.11.120']
+hosts = ['192.168.11.121']
 server = hosts[0]
 hostnames = {hosts[0]: 'dave'}
 

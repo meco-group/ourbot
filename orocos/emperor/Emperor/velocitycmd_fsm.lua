@@ -14,15 +14,21 @@ return rfsm.state {
   rfsm.trans{src = 'reset',   tgt = 'idle'},
 
   idle  = rfsm.state{ entry = function() main_state = 'velocitycmd' sub_state='idle' print("Waiting on Init (Button A)...") end },
-  init  = rfsm.state{ entry = function() sub_state='init' print("Waiting on Run (Button A)...") end},
-  run   = rfsm.state{
+  init  = rfsm.state{
     entry = function()
-      sub_state='run'
+      sub_state='init'
+      print("Waiting on Run (Button A)...")
       if (not reporter:start()) then
         rtt.log("Error","Could not start reporter component")
         rfsm.send_events(fsm,'e_failed')
         return
       end
+    end
+  },
+
+  run   = rfsm.state{
+    entry = function()
+      sub_state='run'
       print("System started. Abort by using Break (Button B).")
     end,
 
@@ -37,11 +43,14 @@ return rfsm.state {
   stop = rfsm.state{
     entry = function(fsm)
       sub_state='stop'
-      reporter:stop()
       print("System stopped. Waiting on Restart (Button A) or Reset (Button B)...")
     end,
   },
 
-  reset = rfsm.state{ },
+  reset = rfsm.state{
+    entry = function()
+      reporter:stop()
+    end,
+  },
 
 }

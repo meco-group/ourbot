@@ -14,7 +14,6 @@ class MotionPlanningInterface : public RTT::TaskContext{
   private:
     InputPort<std::vector<double> > _est_pose_port;
     InputPort<std::vector<double> > _target_pose_port;
-    InputPort<std::vector<double> > _target_velocity_port;
     OutputPort<std::vector<double> > _ref_pose_trajectory_port[3];
     OutputPort<std::vector<double> > _ref_velocity_trajectory_port[3];
 
@@ -26,6 +25,7 @@ class MotionPlanningInterface : public RTT::TaskContext{
   protected:
     virtual bool trajectoryUpdate() = 0;
     virtual bool initialize() = 0;
+    virtual bool config() = 0;
 
     int _trajectory_length;
     double _control_sample_rate;
@@ -35,16 +35,14 @@ class MotionPlanningInterface : public RTT::TaskContext{
     double _update_time;
     std::vector<double> _est_pose;
     std::vector<double> _target_pose;
-    std::vector<double> _target_velocity;
-    std::vector<mp::obstacle_t> _obstacles;
+    std::vector<omg::obstacle_t> _obstacles;
 
     std::vector<std::vector<double> > _ref_pose_trajectory;
     std::vector<std::vector<double> > _ref_velocity_trajectory;
 
   public:
     MotionPlanningInterface(std::string const& name);
-    void setTargetPose(std::vector<double> const&);
-    void setTargetVelocity(std::vector<double> const&);
+    void setTargetPose(double, double, double);
     virtual bool configureHook();
     virtual bool startHook();
     virtual void updateHook();
