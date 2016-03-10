@@ -23,15 +23,15 @@ local components_to_load = {
   [coordinator]     = 'OCL::LuaTLSFComponent',
   [reporter]        = 'OCL::NetcdfReporting',
   [io]              = 'Container',
-  -- [teensy]          = 'TeensyBridge',
-  -- [lidar]           = 'RPLidar'
+  [teensy]          = 'TeensyBridge',
+  [lidar]           = 'RPLidar'
    -- add here componentname = 'componenttype'
 }
 
 --Containers to fill
 local containers_to_fill = {
-  -- [io]  = {teensy, lidar}
-  [io]  = {}
+  [io]  = {teensy, lidar}
+  -- [io]  = {}
 }
 
 --Ports to report
