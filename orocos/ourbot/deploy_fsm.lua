@@ -5,7 +5,7 @@ require 'rfsmpp'
 --Define component names here
 local estimator     = 'estimator'..index
 local controller    = 'controller'..index
-local pathgenerator = 'pathgenerator'..index
+local motionplanning= 'motionplanning'..index
 local reference     = 'reference'..index
 local coordinator   = 'coordinator'..index
 local reporter      = 'reporter'..index
@@ -18,38 +18,39 @@ local lidar         = 'lidar'..index
 local components_to_load = {
   [estimator]       = estimator_type,
   [controller]      = controller_type,
-  [pathgenerator]   = pathgenerator_type,
+  [motionplanning]  = motionplanning_type,
   [reference]       = reference_type,
   [coordinator]     = 'OCL::LuaTLSFComponent',
   [reporter]        = 'OCL::NetcdfReporting',
   [io]              = 'Container',
-  [teensy]          = 'TeensyBridge',
-  [lidar]           = 'RPLidar'
+  -- [teensy]          = 'TeensyBridge',
+  -- [lidar]           = 'RPLidar'
    -- add here componentname = 'componenttype'
 }
 
 --Containers to fill
 local containers_to_fill = {
-  [io]  = {teensy, lidar}
+  -- [io]  = {teensy, lidar}
+  [io]  = {}
 }
 
 --Ports to report
 local ports_to_report = {
-  -- [controller]      = {'cmd_velocity_port'},
+  [controller]      = {'cmd_velocity_port'},
   -- [estimator]       = {'est_pose_port', 'est_velocity_port', 'est_acceleration_port', 'est_global_offset_port'},
   -- [reference]       = {'ref_pose_port', 'ref_ffw_port'},
   -- [coordinator]     = {'controlloop_duration', 'controlloop_jitter'},
-  [io]              = {--'cal_lidar_node_port',
-                      'cal_imul_transacc_port',
-                      'cal_imul_orientation_3d_port',
-                      'cal_imul_orientation_port',
-                      'cal_imul_dorientation_3d_port',
-                      'cal_imul_dorientation_port',
-                      'cal_imur_transacc_port',
-                      'cal_imur_orientation_3d_port',
-                      'cal_imur_orientation_port',
-                      'cal_imur_dorientation_3d_port',
-                      'cal_imur_dorientation_port',
+  -- [io]              = {--'cal_lidar_node_port',
+                      -- 'cal_imul_transacc_port',
+                      -- 'cal_imul_orientation_3d_port',
+                      -- 'cal_imul_orientation_port',
+                      -- 'cal_imul_dorientation_3d_port',
+                      -- 'cal_imul_dorientation_port',
+                      -- 'cal_imur_transacc_port',
+                      -- 'cal_imur_orientation_3d_port',
+                      -- 'cal_imur_orientation_port',
+                      -- 'cal_imur_dorientation_3d_port',
+                      -- 'cal_imur_dorientation_port',
                       -- 'cal_lidar_x_port',
                       -- 'cal_lidar_y_port',
                       -- 'cal_enc_pose_port',
@@ -57,7 +58,7 @@ local ports_to_report = {
                       -- 'cal_motor_current_port',
                       -- 'cal_motor_voltage_port',
                       -- 'cal_velocity_port'
-                      }
+                      -- }
   --add here componentname = 'portnames'
 }
 
@@ -65,7 +66,7 @@ local ports_to_report = {
 local packages_to_import = {
   [estimator]       = 'EstimatorInterface',
   [controller]      = 'ControllerInterface',
-  [pathgenerator]   = 'PathGeneratorInterface',
+  [motionplanning]  = 'MotionPlanning',
   [reference]       = 'Reference',
   [io]              = 'Container',
   [teensy]          = 'SerialInterface',
@@ -79,20 +80,22 @@ local reporter_config_file    = 'Configuration/reporter-config.cpf'
 local component_config_files  = {
   [teensy]          = 'Configuration/teensy-config.cpf',
   [lidar]           = 'Configuration/lidar-config.cpf',
+  [motionplanning]  = 'Configuration/motionplanning-config.cpf'
   --add here componentname = 'Configuration/component-config.cpf'
 }
 
 --Accessible components over CORBA
-local server_components = {coordinator}
+local server_components = {coordinator, io}
 for comp,ports in pairs(ports_to_report) do
   table.insert(server_components,comp)
 end
 if distributed then
   table.insert(server_components,estimator)
   table.insert(server_components,controller)
-  table.insert(server_components,pathgenerator)
+  table.insert(server_components,motionplanning)
 end
 
+-- local server_components = {}
 local components = {}
 local dp = rtt.getTC():getPeer('Deployer')
 
@@ -191,14 +194,14 @@ return rfsm.state {
         if (not dp:connectPorts(estimator,io))              then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:connectPorts(estimator,controller))      then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:connectPorts(reference,controller))      then rfsm.send_events(fsm,'e_failed') return end
-        if (not dp:connectPorts(reference,pathgenerator))   then rfsm.send_events(fsm,'e_failed') return end
-        if (not dp:connectPorts(estimator,pathgenerator))   then rfsm.send_events(fsm,'e_failed') return end
+        if (not dp:connectPorts(reference,motionplanning))   then rfsm.send_events(fsm,'e_failed') return end
+        if (not dp:connectPorts(estimator,motionplanning))   then rfsm.send_events(fsm,'e_failed') return end
           --add more connections here
 
         --Add every component as peer of coordinator
         if (not dp:addPeer(coordinator,controller))         then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:addPeer(coordinator,estimator))          then rfsm.send_events(fsm,'e_failed') return end
-        if (not dp:addPeer(coordinator,pathgenerator))      then rfsm.send_events(fsm,'e_failed') return end
+        if (not dp:addPeer(coordinator,motionplanning))      then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:addPeer(coordinator,reference))          then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:addPeer(coordinator,reporter))           then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:addPeer(coordinator,io))                 then rfsm.send_events(fsm,'e_failed') return end
@@ -226,12 +229,12 @@ return rfsm.state {
             writeSample = distrcomponents['controller'..tostring(neighbours[i])]:getOperation("writeSample")
             writeSample()
             --Pathgenerator
-            if (not dp:loadComponent('pathgenerator'..tostring(neighbours[i]),'CORBA')) then rfsm.send_events(fsm,'e_failed') return end
-            if (not dp:connect('pathgenerator'..tostring(index)..'.ref_in'..dir_tbl[nghb_cnt]..'_path_x_port', 'controller'..tostring(neighbours[i])..'.ref_pose_path_x_port', cp)) then rfsm.send_events(fsm,'e_failed') return end
-            if (not dp:connect('pathgenerator'..tostring(index)..'.ref_in'..dir_tbl[nghb_cnt]..'_path_y_port', 'controller'..tostring(neighbours[i])..'.ref_pose_path_y_port', cp)) then rfsm.send_events(fsm,'e_failed') return end
-            if (not dp:connect('pathgenerator'..tostring(index)..'.ref_in'..dir_tbl[nghb_cnt]..'_path_t_port', 'controller'..tostring(neighbours[i])..'.ref_pose_path_t_port', cp)) then rfsm.send_events(fsm,'e_failed') return end
-            distrcomponents['pathgenerator'..tostring(neighbours[i])] = dp:getPeer('pathgenerator'..tostring(neighbours[i]))
-            writeSample = distrcomponents['pathgenerator'..tostring(neighbours[i])]:getOperation("writeSample")
+            if (not dp:loadComponent('motionplanning'..tostring(neighbours[i]),'CORBA')) then rfsm.send_events(fsm,'e_failed') return end
+            if (not dp:connect('motionplanning'..tostring(index)..'.ref_in'..dir_tbl[nghb_cnt]..'_path_x_port', 'controller'..tostring(neighbours[i])..'.ref_pose_path_x_port', cp)) then rfsm.send_events(fsm,'e_failed') return end
+            if (not dp:connect('motionplanning'..tostring(index)..'.ref_in'..dir_tbl[nghb_cnt]..'_path_y_port', 'controller'..tostring(neighbours[i])..'.ref_pose_path_y_port', cp)) then rfsm.send_events(fsm,'e_failed') return end
+            if (not dp:connect('motionplanning'..tostring(index)..'.ref_in'..dir_tbl[nghb_cnt]..'_path_t_port', 'controller'..tostring(neighbours[i])..'.ref_pose_path_t_port', cp)) then rfsm.send_events(fsm,'e_failed') return end
+            distrcomponents['motionplanning'..tostring(neighbours[i])] = dp:getPeer('motionplanning'..tostring(neighbours[i]))
+            writeSample = distrcomponents['motionplanning'..tostring(neighbours[i])]:getOperation("writeSample")
             writeSample()
             nghb_cnt = nghb_cnt + 1
           end
@@ -241,8 +244,8 @@ return rfsm.state {
 
     set_activities = rfsm.state {
       entry = function(fsm)
+        dp:setActivity(motionplanning,0,10,rtt.globals.ORO_SCHED_RT)
         dp:setActivity(coordinator,1./control_sample_rate,10,rtt.globals.ORO_SCHED_RT)
-        dp:setActivity(pathgenerator,1./pathupd_sample_rate,10,rtt.globals.ORO_SCHED_RT)
         dp:setActivity(reporter,0,4,rtt.globals.ORO_SCHED_RT)
         dp:setActivity(io,1./io_sample_rate,10,rtt.globals.ORO_SCHED_RT)
           --add here extra activities

@@ -8,7 +8,7 @@ MotionPlanning::MotionPlanning(std::string const& name) : MotionPlanningInterfac
 }
 
 bool MotionPlanning::config(){
-  _p2p = new omg::MotionPlanning(_update_time, _sample_time, _horizon_time);
+  _p2p = new omg::MotionPlanning(_update_time, _sample_time, _horizon_time, _trajectory_length);
   _p2p->setIdealUpdate(true);// because we do not have an update from our state yet
   _obstacles.resize(_p2p->n_obs);
   _ref_pose.resize(_trajectory_length);
@@ -44,16 +44,13 @@ bool MotionPlanning::initialize(){
 
 bool MotionPlanning::trajectoryUpdate(){
   // update motion planning algorithm
-  TimeService::ticks timestamp = TimeService::Instance()->getTicks();
-  bool check = _p2p->update(_state0, _stateT, _ref_pose, _ref_velocity, _obstacles);
+  bool check = _p2p->update(_state0, _stateT, _ref_pose, _ref_velocity, _obstacles, _predict_shift);
   for (int k=0; k<_trajectory_length; k++){
     for (int j=0; j<2; j++){
       _ref_velocity_trajectory[j][k] = _ref_velocity[k][j];
       _ref_pose_trajectory[j][k] = _ref_pose[k][j];
     }
   }
-  Seconds time_elapsed = TimeService::Instance()->secondsSince(timestamp);
-  cout << "update took " << time_elapsed << "s" << endl;
   if (!check){
     _cnt++;
   }

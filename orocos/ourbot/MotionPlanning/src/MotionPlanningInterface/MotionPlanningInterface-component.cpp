@@ -1,11 +1,16 @@
+#define DEGUB
+
 #include "MotionPlanningInterface-component.hpp"
 #include <rtt/Component.hpp>
 #include <iostream>
 
+
 MotionPlanningInterface::MotionPlanningInterface(std::string const& name) : TaskContext(name, PreOperational),
-    _est_pose(3), _target_pose(3), _ref_pose_trajectory(3), _ref_velocity_trajectory(3){
+    _predict_shift(0), _est_pose(3), _target_pose(3), _ref_pose_trajectory(3), _ref_velocity_trajectory(3){
   ports()->addPort("est_pose_port", _est_pose_port).doc("Estimated pose");
   ports()->addPort("target_pose_port", _target_pose_port).doc("Target pose");
+
+  ports()->addEventPort("predict_shift_port", _predict_shift_port).doc("Trigger for motion planning");
 
   ports()->addPort("ref_pose_trajectory_x_port", _ref_pose_trajectory_port[0]).doc("x reference trajectory");
   ports()->addPort("ref_pose_trajectory_y_port", _ref_pose_trajectory_port[1]).doc("y reference trajectory");
@@ -33,7 +38,8 @@ bool MotionPlanningInterface::configureHook(){
   _update_time = 1./_pathupd_sample_rate;
   _sample_time = 1./_control_sample_rate;
   // Compute path length
-  _trajectory_length = static_cast<int>(_control_sample_rate/_pathupd_sample_rate);
+  _update_length = int(_control_sample_rate/_pathupd_sample_rate);
+  _trajectory_length = 3*_update_length;
   // Reserve required memory and initialize with zeros
   for(int i=0;i<3;i++){
     _ref_pose_trajectory[i].resize(_trajectory_length);
@@ -63,25 +69,27 @@ bool MotionPlanningInterface::startHook(){
     log(Error) << "Error occured in initialize() !" <<endlog();
     return false;
   }
-  _period = getPeriod();
-  _timestamp = TimeService::Instance()->getTicks();
-  _init = 0;
   return true;
 }
 
 void MotionPlanningInterface::updateHook(){
-  TimeService::ticks prev_timestamp = _timestamp;
+  #ifdef DEBUG
+  std::cout << "started mp update" << std::endl;
+  #endif
+
+  _predict_shift_port.read(_predict_shift);
   _timestamp = TimeService::Instance()->getTicks();
   // read data from estimator
   if (_est_pose_port.connected()){
     _est_pose_port.read(_est_pose);
   }
   if (_target_pose_port.connected()){
-    _target_pose_port.read(_target_pose);
+  _target_pose_port.read(_target_pose);
   }
   // update trajectory
   if(!trajectoryUpdate()){
     log(Error) << "Error occured in trajectoryUpdate() !" <<endlog();
+    error();
   }
   // write trajectory
   for (int i=0; i<3; i++){
@@ -89,19 +97,13 @@ void MotionPlanningInterface::updateHook(){
     _ref_velocity_trajectory_port[i].write(_ref_velocity_trajectory[i]);
   }
   // check timing
-  if (_init>2){
-    Seconds prev_time_elapsed = TimeService::Instance()->secondsSince( prev_timestamp );
-    Seconds time_elapsed = TimeService::Instance()->secondsSince( _timestamp );
-    if (time_elapsed > _period*0.9){
-      log(Warning) << "MotionPlanning: Duration of calculation exceeded 90% of sample period" <<endlog();
-    }
-    if ((time_elapsed-prev_time_elapsed-_period) > 0.1*_period){
-      log(Warning) << "MotionPlanning: Jitter exceeded 10% of sample period'" <<endlog();
-    }
+  Seconds time_elapsed = TimeService::Instance()->secondsSince(_timestamp);
+  if (time_elapsed > _update_time*0.9){
+    log(Warning) << "MotionPlanning: Duration of calculation exceeded 90% of update_time" <<endlog();
   }
-  else{
-    _init++;
-  }
+  #ifdef DEBUG
+  std::cout << "ended mp update in "<<time_elapsed<< " s" << std::endl;
+  #endif
 }
 
 ORO_CREATE_COMPONENT_LIBRARY()

@@ -68,7 +68,7 @@ function configureHook()
    app_file          = 'app.ops'
 
    -- Initialize the deployment state machine, drop out if it fails
-   fsm = rfsm.init(rfsm.load('deploy_fsm2.lua'))
+   fsm = rfsm.init(rfsm.load('deploy_fsm.lua'))
    if not fsm then
       rtt.logl("Error","Could not initialize deployement state machine")
       return false

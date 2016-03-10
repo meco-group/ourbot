@@ -60,14 +60,21 @@ bool ControllerInterface::startHook(){
 
 void ControllerInterface::updateHook(){
   // Read estimated state from estimator
-  if (_est_pose_port.read(_est_pose) == RTT::NoData) {log(Error) << "No data on _est_pose_port !" <<endlog(); error();}
-
-  // Read reference
-  if (_ref_pose_port.read(_ref_pose) == RTT::NoData) {log(Error) << "No data on _ref_pose_port !" <<endlog(); error();}
-  if (_ref_velocity_port.connected()){
-    if (_ref_velocity_port.read(_ref_ffw) == RTT::NoData) {log(Error) << "No data on _ref_velocity_port !" <<endlog(); error();}
+  if (_est_pose_port.read(_est_pose) == RTT::NoData) {
+    log(Warning) << "No data on _est_pose_port ! No control action." <<endlog();
+    return;
   }
-
+  // Read reference
+  if (_ref_pose_port.read(_ref_pose) == RTT::NoData) {
+    log(Warning) << "No data on _ref_pose_port ! No control action." <<endlog();
+    return;
+  }
+  if (_ref_velocity_port.connected()){
+    if (_ref_velocity_port.read(_ref_ffw) == RTT::NoData) {
+      log(Warning) << "No data on _ref_velocity_port ! No control action." <<endlog();
+      return;
+    }
+  }
   // Apply control law
   controlUpdate();
 

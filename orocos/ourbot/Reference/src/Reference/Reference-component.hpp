@@ -13,6 +13,7 @@ class Reference : public RTT::TaskContext{
     InputPort<std::vector<double> > _ref_velocity_trajectory_port[3];
     OutputPort<std::vector<double> > _ref_pose_port;
     OutputPort<std::vector<double> > _ref_velocity_port;
+    OutputPort<int> _predict_shift_port;
 
     // Define 2 containers of memory to store 2 trajectories
     std::vector<double> _ref_pose_trajectory_1[3];
@@ -38,12 +39,16 @@ class Reference : public RTT::TaskContext{
     bool _got_ref_pose_trajectory[3];
     bool _got_ref_velocity_trajectory[3];
 
+    bool _just_started;
+
     double _control_sample_rate;
     double _pathupd_sample_rate;
 
   protected:
-    int _index;
+    int _index1;
+    int _index2;
     int _trajectory_length;
+    int _update_length;
     bool _new_data;
     void readPorts();
 
