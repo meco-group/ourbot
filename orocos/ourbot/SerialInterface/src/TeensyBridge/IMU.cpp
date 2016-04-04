@@ -100,7 +100,7 @@ std::vector<double> IMU::computeRPY(){
 	// 	rpy[2] = 3*pi/2.0;
 	// }
 	//Option 2: this puts the heading in the range [-pi...pi]
-	rpy[2] = atan2(magy,magx);
+	rpy[2] = -atan2(magy,magx);
 	if (rpy[2]<0) { //shift to [0...2*pi]
 		rpy[2] += 2*M_PI;
 	}

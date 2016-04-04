@@ -1,4 +1,0 @@
-import("rtt_ros")
-ros.import("Reference")
-loadComponent("reference","Reference")
-

@@ -36,21 +36,21 @@ local containers_to_fill = {
 
 --Ports to report
 local ports_to_report = {
-  [controller]      = {'cmd_velocity_port'},
+  -- [controller]      = {'cmd_velocity_port'},
   -- [estimator]       = {'est_pose_port', 'est_velocity_port', 'est_acceleration_port', 'est_global_offset_port'},
   -- [reference]       = {'ref_pose_port', 'ref_ffw_port'},
   -- [coordinator]     = {'controlloop_duration', 'controlloop_jitter'},
-  -- [io]              = {--'cal_lidar_node_port',
-                      -- 'cal_imul_transacc_port',
-                      -- 'cal_imul_orientation_3d_port',
-                      -- 'cal_imul_orientation_port',
-                      -- 'cal_imul_dorientation_3d_port',
-                      -- 'cal_imul_dorientation_port',
-                      -- 'cal_imur_transacc_port',
-                      -- 'cal_imur_orientation_3d_port',
-                      -- 'cal_imur_orientation_port',
-                      -- 'cal_imur_dorientation_3d_port',
-                      -- 'cal_imur_dorientation_port',
+  [io]              = {--'cal_lidar_node_port',
+                      'cal_imul_transacc_port',
+                      'cal_imul_orientation_3d_port',
+                      'cal_imul_orientation_port',
+                      'cal_imul_dorientation_3d_port',
+                      'cal_imul_dorientation_port',
+                      'cal_imur_transacc_port',
+                      'cal_imur_orientation_3d_port',
+                      'cal_imur_orientation_port',
+                      'cal_imur_dorientation_3d_port',
+                      'cal_imur_dorientation_port'
                       -- 'cal_lidar_x_port',
                       -- 'cal_lidar_y_port',
                       -- 'cal_enc_pose_port',
@@ -58,7 +58,7 @@ local ports_to_report = {
                       -- 'cal_motor_current_port',
                       -- 'cal_motor_voltage_port',
                       -- 'cal_velocity_port'
-                      -- }
+                      }
   --add here componentname = 'portnames'
 }
 

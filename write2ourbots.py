@@ -36,7 +36,7 @@ local_root = os.path.join(current_dir,'orocos/ourbot')
 remote_root = '/home/odroid/orocos'
 username = 'odroid'
 password = 'odroid'
-hosts = ['192.168.11.121']
+hosts = ['192.168.11.120']
 ignore = ['TestCorba']
 build_list = []
 
