@@ -1,5 +1,5 @@
 info/*
-indentify_velcontrol/*
+identify_velcontrol/*
 .test/
 orocos/*/*/bin/
 orocos/*/*/build/
