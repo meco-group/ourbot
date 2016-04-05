@@ -3,10 +3,11 @@
 
 #include "../MotionPlanningInterface/MotionPlanningInterface-component.hpp"
 #include <vector>
+#include "Holonomic.hpp"
 
 class MotionPlanning : public MotionPlanningInterface{
   private:
-   omg::MotionPlanning* _p2p;
+   omg::Point2Point* _p2p;
    int _cnt = 0;
    const int _cnt_max = 5;
    std::vector<double> _state0;

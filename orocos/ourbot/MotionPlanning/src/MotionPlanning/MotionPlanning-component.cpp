@@ -8,8 +8,9 @@ MotionPlanning::MotionPlanning(std::string const& name) : MotionPlanningInterfac
 }
 
 bool MotionPlanning::config(){
-  _p2p = new omg::MotionPlanning(_update_time, _sample_time, _horizon_time, _trajectory_length);
-  _p2p->setIdealUpdate(true);// because we do not have an update from our state yet
+  omg::Holonomic* vehicle = new omg::Holonomic();
+  vehicle->setIdealPrediction(true);// because we do not have an update from our state yet
+  _p2p = new omg::Point2Point(vehicle, _update_time, _sample_time, _horizon_time, _trajectory_length);
   _obstacles.resize(_p2p->n_obs);
   _ref_pose.resize(_trajectory_length);
   _ref_velocity.resize(_trajectory_length);

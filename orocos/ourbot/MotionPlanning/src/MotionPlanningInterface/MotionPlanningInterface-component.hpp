@@ -5,7 +5,7 @@
 #include <rtt/Port.hpp>
 #include <rtt/os/TimeService.hpp>
 #include <rtt/Time.hpp>
-#include "MotionPlanning.hpp"
+#include "Point2Point.hpp"
 
 using namespace RTT;
 using namespace RTT::os;
