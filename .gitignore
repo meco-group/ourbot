@@ -1,5 +1,6 @@
 info/*
-indentify_velcontro/*
+indentify_velcontrol/*
+.test/
 orocos/*/*/bin/
 orocos/*/*/build/
 orocos/*/*/include/
