@@ -12,7 +12,7 @@ TeensyBridge::TeensyBridge(std::string const& name) :
 	_control_mode(TEENSYBRIDGE_CONTROL_MODE_SIMPLE), _velocity_controller_P(0.0f), _velocity_controller_I(0.0f), _velocity_controller_D(0.0f),
 	_imus{new IMU(std::string("left_imu")), new IMU(std::string("right_imu"))}
 {
-	// SETUP KINEMATICS	
+	// SETUP KINEMATICS
 	this->addProperty("platform_length",_platform_length).doc("Property containing the platform length in [m].");
 	this->addProperty("platform_width",_platform_width).doc("Property containing the platform width in [m].");
 	this->addProperty("wheel_radius",_wheel_radius).doc("Property containing the wheel radius in [m].");
@@ -50,18 +50,18 @@ TeensyBridge::TeensyBridge(std::string const& name) :
 	addOperation("showDebug", &TeensyBridge::showDebug, this).doc("Displays the ourbot debug variables.");
 	addOperation("showThreadTime", &TeensyBridge::showThreadTime, this).doc("Displays the ourbot onboard thread times.");
 	addOperation("showIMUData", &TeensyBridge::showIMUData, this).doc("Displays the ourbot onboard thread times.").arg("ID","ID of the sensor");
-	
+
 	// SETUP IMU
 	addIMUPorts(_imus[0], std::string("l"), 7);
 	addIMUPorts(_imus[1], std::string("r"), 7);
-	
+
 	addProperty("imul_acc_offset", _imus[0]->_acc._offset).doc("User defined offset of accelerometer");
 	addProperty("imul_gyr_offset", _imus[0]->_gyr._offset).doc("User defined offset of gyroscope");
 	addProperty("imul_mag_offset", _imus[0]->_mag._offset).doc("User defined offset of magnetometer");
 	addProperty("imur_acc_offset", _imus[1]->_acc._offset).doc("User defined offset of accelerometer");
 	addProperty("imur_gyr_offset", _imus[1]->_gyr._offset).doc("User defined offset of gyroscope");
 	addProperty("imur_mag_offset", _imus[1]->_mag._offset).doc("User defined offset of magnetometer");
-	
+
 	addProperty("imul_acc_scale", _imus[0]->_acc._scale).doc("User defined scale of accelerometer");
 	addProperty("imul_gyr_scale", _imus[0]->_gyr._scale).doc("User defined scale of gyroscope");
 	addProperty("imul_mag_scale", _imus[0]->_mag._scale).doc("User defined scale of magnetometer");
@@ -84,11 +84,11 @@ bool TeensyBridge::action(mavlink_message_t msg)
 			writeRawDataToPorts();
 			TEENSYBRIDGE_DEBUG_PRINT("Motor State message received.")
 			break;}
-			
+
 		case MAVLINK_MSG_ID_RAW_IMU_DATA:{
 			mavlink_raw_imu_data_t raw_imu_data;
 			mavlink_msg_raw_imu_data_decode(&msg, _raw_imu_data + msg.compid); // decode raw imu data
-			
+
 			updateIMU(msg.compid);
 			TEENSYBRIDGE_DEBUG_PRINT("IMU raw data message received.")
 			break;}
@@ -123,7 +123,7 @@ void TeensyBridge::recalculatePose()
 {
 	// UPDATE 14/07/2015: Make reference frame conform youbot frame
 	_pose[0] = (_motor_states[0].position + _motor_states[1].position)*_kinematic_conversion_position;
-	_pose[1] = (-_motor_states[0].position + _motor_states[2].position)*_kinematic_conversion_position;
+	_pose[1] =  (-_motor_states[0].position + _motor_states[2].position)*_kinematic_conversion_position;
 	// UPDATE 5/11/2015: Average over all wheels so that the rotation is more accurate
 	//_pose[2] = (_motor_states[1].position - _motor_states[2].position)*_kinematic_conversion_orientation;
   _pose[2] = 0.5*((_motor_states[1].position - _motor_states[2].position) + (_motor_states[3].position - _motor_states[0].position))*_kinematic_conversion_orientation;
@@ -195,15 +195,15 @@ bool TeensyBridge::configureHook()
 	//setup imus
 	_imus[0]->configure();
 	_imus[1]->configure();
-	
+
 #ifndef TEENSYBRIDGE_TESTFLAG
   return true;
 #else
 	_usb_port_name = "/dev/ttyACM0";
-	
+
 	_imus[0]->_acc._offset[0] = 1250.0;
 	_imus[0]->_acc._scale = std::vector<double>(3,0.000613125);
-	
+
 	return setPeriod(0.005);
 #endif //TEENSYBRIDGE_TESTFLAG
 }
@@ -215,7 +215,7 @@ bool TeensyBridge::startHook()
 	}else{
 		return false;
 	}
-	
+
 	_imus[0]->start();
 	_imus[1]->start();
 	return true;
@@ -367,13 +367,13 @@ void TeensyBridge::updateIMU(uint8_t ID)
 	std::vector<double> acc = std::vector<double>(3,0.0);
 	std::vector<double> gyr = std::vector<double>(3,0.0);
 	std::vector<double> mag = std::vector<double>(3,0.0);
-	
+
 	for(uint8_t k=0;k<3;k++){
 		 acc[k] = _raw_imu_data[ID].acc[k];
 		 gyr[k] = _raw_imu_data[ID].gyro[k];
 		 mag[k] = _raw_imu_data[ID].mag[k];
 	}
-	
+
 	_imus[ID]->updateMeasurements(acc, gyr, mag);
 }
 

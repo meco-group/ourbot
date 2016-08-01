@@ -79,9 +79,13 @@ std::vector<double> IMU::computeRPY(){
 	rpy[0] = asin( acc[1]/cos(rpy[1])); //roll
 
 	//Tilt compensation for heading/yaw calculation:
-	double magx =  mag[0]*cos(rpy[1]) + mag[2]*sin(rpy[1]);
-	double magy =  mag[0]*sin(rpy[0])*sin(rpy[1]) + mag[1]*cos(rpy[0]) - mag[2]*sin(rpy[0])*cos(rpy[1]);
+	//Update: 18/4/16 - rpy compensation
+	//double magx =  mag[0]*cos(rpy[1]) + mag[2]*sin(rpy[1]);
+	//double magy =  mag[0]*sin(rpy[0])*sin(rpy[1]) + mag[1]*cos(rpy[0]) - mag[2]*sin(rpy[0])*cos(rpy[1]);
 	// double magz = -mag[0]*cos(rpy[0])*sin(rpy[1]) + mag[1]*sin(rpy[0]) + mag[2]*cos(rpy[0])*cos(rpy[1]); //not used
+
+	double magx =  mag[0];
+	double magy =  mag[1];
 
 	//Option 1: this puts the heading in the range [0...2*pi]
 	// if (magx > 0 and magy >= 0){
