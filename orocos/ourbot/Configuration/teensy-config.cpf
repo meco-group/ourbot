@@ -3,7 +3,7 @@
 <properties>
 	<simple name="encoder_ticks_per_revolution" type="long">
     <description>Number of encoder ticks per full revolution. Gear ratio should also be accounted for!</description>
-    <value>38400</value>
+    <value>35840</value>
   </simple>
   <simple name="usb_port_name" type="string">
     <description>Port name for the USB device. Full path required.</description>
@@ -23,7 +23,7 @@
     <value>0.0</value>
   </simple>
 
-	<!-- Left IMU configuration --> 
+	<!-- Left IMU configuration -->
 	<struct name="imul_acc_offset" type="array">
     <description>Offset of the left accelerometer</description>
     <simple name="Element0" type="double">
@@ -98,7 +98,7 @@
     </simple>
   </struct>
 
-	<!-- Right IMU configuration --> 
+	<!-- Right IMU configuration -->
 	<struct name="imur_acc_offset" type="array">
     <description>Offset of the right accelerometer</description>
     <simple name="Element0" type="double">

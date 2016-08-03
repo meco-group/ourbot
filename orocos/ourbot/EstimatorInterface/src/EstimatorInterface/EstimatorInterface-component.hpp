@@ -30,6 +30,7 @@ class EstimatorInterface : public RTT::TaskContext{
     InputPort<std::vector<double> > _cal_motor_current_port;
     InputPort<std::vector<double> > _cal_motor_voltage_port;
     InputPort<std::vector<double> > _cal_velocity_port;
+    InputPort<std::vector<double> > _cmd_velocity_port;
 
     OutputPort<std::vector<double> > _est_pose_port;
     OutputPort<std::vector<double> > _est_velocity_port;
@@ -58,6 +59,7 @@ class EstimatorInterface : public RTT::TaskContext{
     std::vector<double> _cal_motor_current;
     std::vector<double> _cal_motor_voltage;
     std::vector<double> _cal_velocity;
+    std::vector<double> _cmd_velocity;
 
     std::vector<double> _est_pose;
     std::vector<double> _est_velocity;
@@ -95,6 +97,7 @@ class EstimatorInterface : public RTT::TaskContext{
     std::vector<double> getMotorCurrent();
     std::vector<double> getMotorVoltage();
     std::vector<double> getCalVelocity();
+    std::vector<double> getCmdVelocity();
 
     void setEstPose(std::vector<double> const&);
     void setEstVelocity(std::vector<double> const&);

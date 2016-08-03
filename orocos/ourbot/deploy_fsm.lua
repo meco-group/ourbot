@@ -12,6 +12,7 @@ local reporter      = 'reporter'..index
 local io            = 'io'..index
 local teensy        = 'teensy'..index
 local lidar         = 'lidar'..index
+local scanmatcher   = 'scanmatcher'..index
   --add here extra components
 
 --Components to load
@@ -24,7 +25,8 @@ local components_to_load = {
   [reporter]        = 'OCL::NetcdfReporting',
   [io]              = 'Container',
   [teensy]          = 'TeensyBridge',
-  [lidar]           = 'RPLidar'
+  [lidar]           = 'RPLidar',
+  [scanmatcher]     = 'Scanmatcher'
    -- add here componentname = 'componenttype'
 }
 
@@ -37,30 +39,30 @@ local containers_to_fill = {
 --Ports to report
 local ports_to_report = {
   -- [controller]      = {'cmd_velocity_port'},
-  -- [estimator]       = {'est_pose_port', 'est_velocity_port', 'est_acceleration_port', 'est_global_offset_port'},
+  [estimator]       = {'est_pose_port'}
   -- [reference]       = {'ref_pose_port', 'ref_ffw_port'},
   -- [coordinator]     = {'controlloop_duration', 'controlloop_jitter'},
-  [io]              = {--'cal_lidar_node_port',
-                      -- 'cal_imul_transacc_port',
-                      -- 'cal_imul_orientation_3d_port',
-                      -- 'cal_imul_orientation_port',
-                      -- 'cal_imul_dorientation_3d_port',
-                      -- 'cal_imul_dorientation_port',
-                      -- 'cal_imur_transacc_port',
-                      -- 'cal_imur_orientation_3d_port',
-                      -- 'cal_imur_orientation_port',
-                      -- 'cal_imur_dorientation_3d_port',
-                      -- 'cal_imur_dorientation_port'
-                      -- 'cal_lidar_x_port',
-                      -- 'cal_lidar_y_port',
-                      'cal_enc_pose_port'
-                      -- 'raw_imul_mag_port',
-                      -- 'raw_imur_mag_port',
-                      -- 'cal_lidar_global_node_port',
-                      -- 'cal_motor_current_port',
-                      -- 'cal_motor_voltage_port',
-                      -- 'cal_velocity_port'
-                      }
+  -- -- [io]              = {--'cal_lidar_node_port',
+  --                     -- 'cal_imul_transacc_port',
+  --                     -- 'cal_imul_orientation_3d_port',
+  --                     -- 'cal_imul_orientation_port',
+  --                     -- 'cal_imul_dorientation_3d_port',
+  --                     -- 'cal_imul_dorientation_port',
+  --                     -- 'cal_imur_transacc_port',
+  --                     -- 'cal_imur_orientation_3d_port',
+  --                     -- 'cal_imur_orientation_port',
+  --                     -- 'cal_imur_dorientation_3d_port',
+  --                     -- 'cal_imur_dorientation_port'
+  --                     -- 'cal_lidar_x_port',
+  --                     -- 'cal_lidar_y_port',
+  --                     -- 'cal_enc_pose_port'
+  --                     -- 'raw_imul_mag_port',
+  --                     -- 'raw_imur_mag_port',
+  --                     -- 'cal_lidar_global_node_port',
+  --                     -- 'cal_motor_current_port',
+  --                     -- 'cal_motor_voltage_port',
+  --                     -- 'cal_velocity_port'
+  --                     }
   --add here componentname = 'portnames'
 }
 
@@ -72,7 +74,8 @@ local packages_to_import = {
   [reference]       = 'Reference',
   [io]              = 'Container',
   [teensy]          = 'SerialInterface',
-  [lidar]           = 'SerialInterface'
+  [lidar]           = 'SerialInterface',
+  [scanmatcher]     = 'Scanmatcher'
   --add here componentname = 'parentcomponenttype'
 }
 
@@ -82,7 +85,8 @@ local reporter_config_file    = 'Configuration/reporter-config.cpf'
 local component_config_files  = {
   [teensy]          = 'Configuration/teensy-config.cpf',
   [lidar]           = 'Configuration/lidar-config.cpf',
-  [motionplanning]  = 'Configuration/motionplanning-config.cpf'
+  [motionplanning]  = 'Configuration/motionplanning-config.cpf',
+  [scanmatcher]     = 'Configuration/scanmatcher-config.cpf'
   --add here componentname = 'Configuration/component-config.cpf'
 }
 
@@ -194,19 +198,22 @@ return rfsm.state {
 
         --Connect all components
         if (not dp:connectPorts(estimator,io))              then rfsm.send_events(fsm,'e_failed') return end
+        if (not dp:connectPorts(estimator,scanmatcher))     then rfsm.send_events(fsm,'e_failed') return end
+        if (not dp:connectPorts(scanmatcher,io))            then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:connectPorts(estimator,controller))      then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:connectPorts(reference,controller))      then rfsm.send_events(fsm,'e_failed') return end
-        if (not dp:connectPorts(reference,motionplanning))   then rfsm.send_events(fsm,'e_failed') return end
-        if (not dp:connectPorts(estimator,motionplanning))   then rfsm.send_events(fsm,'e_failed') return end
+        if (not dp:connectPorts(reference,motionplanning))  then rfsm.send_events(fsm,'e_failed') return end
+        if (not dp:connectPorts(estimator,motionplanning))  then rfsm.send_events(fsm,'e_failed') return end
           --add more connections here
 
         --Add every component as peer of coordinator
         if (not dp:addPeer(coordinator,controller))         then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:addPeer(coordinator,estimator))          then rfsm.send_events(fsm,'e_failed') return end
-        if (not dp:addPeer(coordinator,motionplanning))      then rfsm.send_events(fsm,'e_failed') return end
+        if (not dp:addPeer(coordinator,motionplanning))     then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:addPeer(coordinator,reference))          then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:addPeer(coordinator,reporter))           then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:addPeer(coordinator,io))                 then rfsm.send_events(fsm,'e_failed') return end
+        if (not dp:addPeer(coordinator,scanmatcher))        then rfsm.send_events(fsm,'e_failed') return end
           --add more peers here
       end,
     },
@@ -250,6 +257,7 @@ return rfsm.state {
         dp:setActivity(coordinator,1./control_sample_rate,10,rtt.globals.ORO_SCHED_RT)
         dp:setActivity(reporter,0,4,rtt.globals.ORO_SCHED_RT)
         dp:setActivity(io,1./io_sample_rate,10,rtt.globals.ORO_SCHED_RT)
+        dp:setActivity(scanmatcher,0,8,rtt.globals.ORO_SCHED_RT)
           --add here extra activities
 
         --The estimator, controller and reference component are triggered by the coordinator and executed in the same thread.

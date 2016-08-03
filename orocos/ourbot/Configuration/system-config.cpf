@@ -7,7 +7,7 @@
   </simple>
   <simple name="estimator" type="string">
     <description>Estimator component to use</description>
-    <value>SimpleEstimator</value>
+    <value>KalmanSM</value>
   </simple>
   <simple name="motionplanning" type="string">
     <description>MotionPlanning component to use</description>
@@ -53,7 +53,7 @@
 
   <simple name="lidar_data_length" type="long">
     <description>Length of lidar data</description>
-    <value>128</value>
+    <value>400</value>
   </simple>
   <simple name="ir_data_length" type="long">
     <description>Length of ir data (= number of ir's)</description>
@@ -77,7 +77,6 @@
     <value>0.05</value>
   </simple>
 
-
   <struct name="kin_limitations" type="array">
     <description>Kinematic limitations (vmax, vmin, amax, amin)</description>
     <simple name="vmax" type="double">
@@ -93,4 +92,9 @@
       <value>-1.</value>
     </simple>
   </struct>
+
+<simple name="accelero_mounting_distance" type="double">
+  <description>Distance between the accelerometer and the center of the robot</description>
+  <value>0.10738</value>
+</simple>
 </properties>
