@@ -1,7 +1,4 @@
 #include "KalmanSM-component.hpp"
-// #include <rtt/Component.hpp>
-// #include <iostream>
-// #include <math.h>
 #include <rtt/Component.hpp>
 #include <iostream>
 #include <fstream>
@@ -26,13 +23,12 @@ _S_inv(10,10), _S_inv_hf(7,7), _R(10,10), _R_hf(7,7), _K(16,10), _K_hf(16,7),
 _I(16,16), _H_lf(3,3), _R_lf(3,3)
 {
   _accelero_mounting_distance = 0.10738;
-  _dt = 1.0/getControlSampleRate();
   // Input ports
   ports()->addPort("cor_lidar_angle_port",_cor_lidar_angle_port).doc("Input port for corrected lidar node positions. Holds a vector of rplidar_node_buffer_size angles [m]");
   ports()->addPort("scanmatch_pose_port", _scanmatch_pose_port).doc("Estimated position-change of scanmatcher [x,y,orientation]");
   ports()->addPort("scanmatch_covariance_port", _scanmatch_covariance_port).doc("covariance scanmatcher [x,y,orientation]");
   // Output ports (to trigger SM)
-  ports()->addPort( "trigger_scanmatcher",_trigger_scanmatcher_port).doc("Output port which triggers scanmatcher");
+  ports()->addPort( "trigger_scanmatcher_port",_trigger_scanmatcher_port).doc("Output port which triggers scanmatcher");
   // Properties
   addProperty("accelero_mounting_distance", _accelero_mounting_distance).doc("Distance between the accelerometer and the center of the robot");
   // Set data vector, matrices, ... with initial values
@@ -41,6 +37,7 @@ _I(16,16), _H_lf(3,3), _R_lf(3,3)
 }
 
 bool KalmanSM::initialize(){
+  _dt = 1.0/getControlSampleRate();
   return true;
 }
 
@@ -108,12 +105,15 @@ void KalmanSM::gatherMeasurements(){
 
     // save calibrated measurments to sensorbuffer
     _sensorbuffer.push_back(_sensorinformation);
+    std::cout << "sensorbuffer size: " << _sensorbuffer.size() << std::endl;
   }
 }
 
 void KalmanSM::detectScanMatchInfo(){
   if(_scanmatch_pose_port.read(_scan_pose_rel) == RTT::NewData){
+    std::cout<<"got scan"<<std::endl;
     _sensorbuffer2 = _sensorbuffer;
+    std::cout << "sensorbuffer2 size: " << _sensorbuffer2.size() << std::endl;
     _state_prev = _state_at_scanstart;
     _P = _P_at_scanstart;
     _got_scan = true;
@@ -126,9 +126,10 @@ void KalmanSM::detectScanMatchInfo(){
 
 void KalmanSM::updateKalman(){
   // for all elements in the sensorbuffer: only 1 if no scan info received
-  std::cout<<"sensorbuffer size: " << _sensorbuffer2.size() << std::endl;
+  std::cout<<"sensorbuffer2 size again: " << _sensorbuffer2.size() << std::endl;
+  // when got scan: sensorbuffer2 size = 0 ???
   double dx_rel, dy_rel, dtheta_rel, theta;
-  for(unsigned int i = 0; i<_sensorbuffer2.size(); i++){
+  for(unsigned int i = 0; i<_sensorbuffer2.size(); i++) {
     _sensorinformation = _sensorbuffer2[i];
     // prediction step: evaluate model equation
     // dx_rel = _state_prev(0)*_dt + _state_prev(3)*(_dt*_dt/2.);
@@ -209,6 +210,7 @@ void KalmanSM::updateKalman(){
     _H_T_hf = _H_hf.transpose();
 
     if(_got_scan){
+      std::cout << "Received scanmatch data ... " << std::endl;
       replaceVectorBlock(&_y_hf, &_y, 0, 6);
       // extra measurement equations
       // theta = (_state(15) + _prev_scan_pose_abs[2])/2.;
@@ -250,7 +252,8 @@ void KalmanSM::updateKalman(){
 
       _got_scan = false;
 
-    } else{
+    }
+    else{
       _S_hf = _H_hf*_P*_H_T_hf + _R_hf;//7x7
       _S_inv_hf = _S_hf.inverse();//7x7
       _K_hf = _P*_H_T_hf*_S_inv_hf;//16x16 * 16x7 * 7x7 = 16x7
@@ -263,20 +266,8 @@ void KalmanSM::updateKalman(){
     _est_pose[0] = _state(10);
     _est_pose[1] = _state(11);
     _est_pose[2] = _state(12);
-
-    // _mangle = (_X(15) + _state_prev(15))/2;
-    // _cor_odo_x = (_X(13) - _state_prev(13))*cos(_mangle) + (_X(14) - _state_prev(14))*sin(_mangle);
-    // _cor_odo_y = (_X(14) - _state_prev(14))*cos(_mangle) - (_X(13) - _state_prev(13))*sin(_mangle);
-
-    // _est_position_robot[0] = _est_position_robot[0] + _cor_odo_x*cos(_mangle) - _cor_odo_y*sin(_mangle);
-    // _est_position_robot[1] = _est_position_robot[1] + _cor_odo_x*sin(_mangle) + _cor_odo_y*cos(_mangle);
-    // _est_position_robot[2] = _est_position_robot[2] + (_X(15) - _state_prev(15));
   }
-
-  // _kalman_position_port.write(est_position_robot);
-
   _sensorbuffer2.clear();
-
 }
 
 double KalmanSM::filter(double value, std::vector<double> *a, std::vector<double> *b, std::vector<double> *buff_x, std::vector<double> *buff_y){

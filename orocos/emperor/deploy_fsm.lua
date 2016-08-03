@@ -63,15 +63,22 @@ local component_config_files  = {
 --Remote components to load
 local remote_components_to_load = {}
 coordinator_reported = false
+io_reported = false
 for i=0,peers.size-1 do
   for comp,ports in pairs(remote_ports_to_report) do
     if comp == 'coordinator' then
       coordinator_reported = true
     end
+    if comp == 'io' then
+      io_reported = true
+    end
     table.insert(remote_components_to_load,comp..peers[i])
   end
   if not coordinator_reported then
     table.insert(remote_components_to_load,'coordinator'..peers[i])
+  end
+  if not io_reported then
+    table.insert(remote_components_to_load,'io'..peers[i])
   end
 end
 

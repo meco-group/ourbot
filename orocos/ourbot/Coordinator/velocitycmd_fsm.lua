@@ -111,6 +111,7 @@ return rfsm.state {
 
   stop = rfsm.state{
     entry = function(fsm)
+      scanmatcher:stop()
       estimator:stop()
       reporter:stop()
       print("System stopped. Waiting on Restart or Reset...")
