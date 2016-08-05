@@ -4,8 +4,8 @@
 //#define RPLIDAR_TESTFLAG
 //#define RPLIDAR_DEBUGFLAG
 
-#define RPLIDAR_BUFFER_SIZE					1024
-#define RPLIDAR_NODE_BUFFER_SIZE	    128
+#define RPLIDAR_BUFFER_SIZE				1024
+#define RPLIDAR_NODE_BUFFER_SIZE	    400
 
 #ifdef RPLIDAR_DEBUGFLAG
 	#define RPLIDAR_DEBUG_PRINT(x)	std::cout << x << std::endl;
@@ -74,7 +74,8 @@ class RPLidar : public USBInterface
 		RTT::OutputPort<std::vector<double> > _cal_lidar_encoder_stamp_x_port;
 		RTT::OutputPort<std::vector<double> > _cal_lidar_encoder_stamp_y_port;
 		RTT::OutputPort<std::vector<double> > _cal_lidar_encoder_stamp_angle_port;
-		
+		RTT::OutputPort<std::vector<double> > _cor_lidar_distance_port;
+		RTT::OutputPort<std::vector<double> > _cor_lidar_angle_port;
 		RTT::OutputPort<std::vector<double> > _cal_lidar_local_node_port;
 		RTT::OutputPort<std::vector<double> > _cal_lidar_global_node_port;
 
@@ -102,7 +103,7 @@ class RPLidar : public USBInterface
 		void showDeviceHealth();
 		void showMeasurement(const rplidar_response_measurement_node_t &node);
 		void addNodeToMeasurements(const rplidar_response_measurement_node_t &node);
-
+		void correctInformation();
 };
 
 #endif //RPLIDAR_H

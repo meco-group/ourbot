@@ -57,6 +57,7 @@ class TeensyBridge : public USBInterface
 		double _velocity_controller_D;
 
 		RTT::InputPort<std::vector<double> >  _cmd_velocity_port;
+		RTT::OutputPort<std::vector<double> > _cmd_velocity_passthrough_port;
 		RTT::OutputPort<std::vector<double> > _cal_enc_pose_port;
 		RTT::OutputPort<std::vector<double> > _cal_velocity_port;
 		RTT::OutputPort<std::vector<double> > _raw_enc_ticks_port;
@@ -72,18 +73,19 @@ class TeensyBridge : public USBInterface
 
 		void recalculatePose();
 		void recalculateVelocity();
-		
+
 		// IMU HANDLERS
 		IMU* _imus[2]; //array of imus
 		void updateIMU(uint8_t ID);
 		IMU* findIMU(uint8_t ID);
 		void addIMUPorts(TaskContext* comp, const std::string insertion, const int i);
-		
+
 	public:
 		TeensyBridge(std::string const& name);
 
 		bool configureHook();
 		bool startHook();
+		void stopHook();
 		void updateHook();
 
 		uint32_t getPacketsDropped();

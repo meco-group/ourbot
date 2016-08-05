@@ -35,7 +35,7 @@ EstimatorInterface::EstimatorInterface(std::string const& name) : TaskContext(na
   ports()->addPort("cal_motor_current_port", _cal_motor_current_port).doc("teensy: Current of 4 motors");
   ports()->addPort("cal_motor_voltage_port", _cal_motor_voltage_port).doc("teensy: Voltage of 4 motors");
   ports()->addPort("cal_velocity_port", _cal_velocity_port).doc("teensy: Velocity input of system");
-  ports()->addPort("cmd_velocity_port", _cmd_velocity_port).doc("teensy: Velocity input of system");
+  ports()->addPort("cmd_velocity_passthrough_port", _cmd_velocity_passthrough_port).doc("teensy: Velocity input of system");
 
   // outputs
   ports()->addPort("est_pose_port", _est_pose_port).doc("Estimated pose wrt to initial frame");
@@ -131,7 +131,7 @@ void EstimatorInterface::updateHook(){
   _cal_motor_current_port.read(_cal_motor_current);
   _cal_motor_voltage_port.read(_cal_motor_voltage);
   _cal_velocity_port.read(_cal_velocity);
-  _cmd_velocity_port.read(_cmd_velocity);
+  _cmd_velocity_passthrough_port.read(_cmd_velocity);
 
   // Apply estimation update
   estimateUpdate();

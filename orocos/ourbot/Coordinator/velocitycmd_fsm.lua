@@ -58,6 +58,9 @@ return rfsm.state {
 
     doo = function(fsm)
       period     = tc:getPeriod()
+      report_rate = 10
+      snapshot_cnt = 0
+      max_cnt = 1/(report_rate*period)
       start_time = get_sec()
       prev_start_time = start_time
       end_time   = start_time
@@ -70,7 +73,12 @@ return rfsm.state {
         estimatorUpdate()
 
         -- take snapshot for logger
-        snapshot:send()
+        if snapshot_cnt > max_cnt then
+          snapshot:send()
+          snapshot_cnt = 0
+        else
+          snapshot_cnt = snapshot_cnt + 1
+        end
 
         if estimatorInRunTimeError() then
           rtt.logl("Error","RunTimeError in estimator component")

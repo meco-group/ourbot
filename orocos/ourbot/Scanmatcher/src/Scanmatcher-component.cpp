@@ -24,6 +24,8 @@ _enc_pose(3), _estimated_position_change(3), _covariance(9), _rows(3), _columns(
   ports()->addPort( "cor_lidar_angle_port",_cor_lidar_angle_port).doc("Input port for corrected lidar node positions. Holds a vector of 100 angles [rad]");
   ports()->addPort("cal_enc_pose_port",_cal_enc_pose_port).doc("Input port for calibrated encoder values. (x,y,orientation) in [m , m ,rad]");
   ports()->addEventPort("trigger_scanmatcher_port", _trigger_scanmatcher_port).doc("Input port which triggers scanmatcher");
+  //@@@Michiel: add extra output port with pose at start scan
+  // ports()->addPort("scanstart_pose_port", _scanstart_pose_port).doc("Pose at start of a scan");
 
   // OutputPorts
  	ports()->addPort( "scanmatch_pose_port", _scanmatch_pose_port).doc("Estimated position-change of scanmatcher in encoder-form [x,y,orientation]");
@@ -114,7 +116,6 @@ bool Scanmatcher::startHook(){
 }
 
 void Scanmatcher::updateHook(){
-  std::cout << "Scanmatcher triggered ... " << std::endl;
   int rays = _lidar_data_length - _sensenumber;
 	sm_result result;
 

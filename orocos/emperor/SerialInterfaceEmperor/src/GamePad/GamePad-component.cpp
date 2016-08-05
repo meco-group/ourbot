@@ -30,6 +30,7 @@ GamePad::GamePad(std::string const& name):USBInterface(name), _gamepad_laxis(2),
   addProperty("max_omega", _max_omega);
   addProperty("velcmd_sample_rate", _velcmd_sample_rate).doc("Frequency to update velocity commander");
   addProperty("filter_bandwidth", _filter_bandwidth).doc("Bandwidth of low pass filter (Hz)");
+  addProperty("enable_LPF", _enable_LPF).doc("Enable low pass filter");
 
   _gamepad_A = false;
   _gamepad_B = false;
@@ -220,7 +221,9 @@ void GamePad::VelocityCommand(){
     _cmd_velocity[1] = -treshold(_gamepad_raxis[0])*_max_velocity;
   }
   _cmd_velocity[2] = -treshold(_gamepad_laxis[0])*_max_omega;
-  _cmd_velocity = lowPassFilter(_cmd_velocity);
+  if (_enable_LPF){
+    _cmd_velocity = lowPassFilter(_cmd_velocity);
+  }
 }
 
 double GamePad::treshold(double data){

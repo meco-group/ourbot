@@ -253,11 +253,11 @@ return rfsm.state {
 
     set_activities = rfsm.state {
       entry = function(fsm)
-        dp:setActivity(motionplanning,0,10,rtt.globals.ORO_SCHED_RT)
-        dp:setActivity(coordinator,1./control_sample_rate,10,rtt.globals.ORO_SCHED_RT)
+        -- dp:setActivity(motionplanning,0,10,rtt.globals.ORO_SCHED_RT)
+        dp:setActivity(coordinator,1./control_sample_rate,8,rtt.globals.ORO_SCHED_RT)
         dp:setActivity(reporter,0,4,rtt.globals.ORO_SCHED_RT)
         dp:setActivity(io,1./io_sample_rate,10,rtt.globals.ORO_SCHED_RT)
-        dp:setActivity(scanmatcher,0,8,rtt.globals.ORO_SCHED_RT)
+        dp:setActivity(scanmatcher,0,5,rtt.globals.ORO_SCHED_RT)
           --add here extra activities
 
         --The estimator, controller and reference component are triggered by the coordinator and executed in the same thread.

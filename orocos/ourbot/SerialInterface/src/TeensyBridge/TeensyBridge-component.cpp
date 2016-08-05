@@ -23,6 +23,7 @@ TeensyBridge::TeensyBridge(std::string const& name) :
 	this->addProperty("velocity_controller_D",_velocity_controller_D).doc("Derivative gain for the velocity controller.");
 
 	this->ports()->addPort( "cmd_velocity_port", _cmd_velocity_port ).doc("Input port for low level velocity controller. Vector contains [vx,vy,w]");
+	this->ports()->addPort( "cmd_velocity_passthrough_port", _cmd_velocity_passthrough_port ).doc("Passthrough for cmd velocity port.");
 	this->ports()->addPort( "cal_enc_pose_port", _cal_enc_pose_port ).doc( "Output port for calibrated encoder values. Outputs the pose (x,y,orientation) in [m,m,rad]" );
 	this->ports()->addPort( "cal_velocity_port", _cal_velocity_port ).doc( "Output port for calibrated encoder velocity values. Outputs the velocity (Dx,Dy,Dorientation) in [m/s,m/s,rad/s]" );
 	this->ports()->addPort( "raw_enc_ticks_port", _raw_enc_ticks_port ).doc( "Output port for raw encoder values. Outputs the raw encoder values (FL,FR,RL,RR) in [ticks]" );
@@ -173,22 +174,23 @@ void TeensyBridge::writeRawDataToPorts()
 bool TeensyBridge::configureHook()
 {
 	// Show example data sample to ports to make data flow real-time
-  std::vector<double> example(3, 0.0);
-  // set 3D ports
-  _cal_enc_pose_port.setDataSample(example);
-  // set 4D ports
-  example.resize(4);
-  _raw_enc_ticks_port.setDataSample(example);
-  _raw_enc_speed_port.setDataSample(example);
-  _raw_enc_cmd_speed_port.setDataSample(example);
-  _cal_motor_voltage_port.setDataSample(example);
-  _cal_motor_current_port.setDataSample(example);
-  // set 6D ports
-  example.resize(6);
-  _debug_port.setDataSample(example);
+  	std::vector<double> example(3, 0.0);
+  	// set 3D ports
+  	_cal_enc_pose_port.setDataSample(example);
+  	_cmd_velocity_passthrough_port.setDataSample(example);
+  	// set 4D ports
+  	example.resize(4);
+  	_raw_enc_ticks_port.setDataSample(example);
+  	_raw_enc_speed_port.setDataSample(example);
+  	_raw_enc_cmd_speed_port.setDataSample(example);
+  	_cal_motor_voltage_port.setDataSample(example);
+  	_cal_motor_current_port.setDataSample(example);
+  	// set 6D ports
+  	example.resize(6);
+  	_debug_port.setDataSample(example);
 
-  //calculate kinematic conversion
-  _kinematic_conversion_position = _wheel_radius*M_PI/_encoder_ticks_per_revolution; //2*R*pi/enc_res
+	//calculate kinematic conversion
+  	_kinematic_conversion_position = _wheel_radius*M_PI/_encoder_ticks_per_revolution; //2*R*pi/enc_res
 	_kinematic_conversion_orientation = _wheel_radius*M_PI/_encoder_ticks_per_revolution/(_platform_length/2.0 + _platform_width/2.0);
 	_kinematic_conversion_wheel = _encoder_ticks_per_revolution/(2.0*M_PI*_wheel_radius);
 
@@ -212,13 +214,18 @@ bool TeensyBridge::startHook()
 {
 	if(USBInterface::startHook()){
 		setVelocityController(_velocity_controller_P, _velocity_controller_I, _velocity_controller_D);
+		_imus[0]->start();
+		_imus[1]->start();
 	}else{
 		return false;
 	}
-
-	_imus[0]->start();
-	_imus[1]->start();
 	return true;
+}
+
+void TeensyBridge::stopHook()
+{
+	setVelocity(0., 0., 0.);
+	USBInterface::stopHook();
 }
 
 void TeensyBridge::updateHook()
@@ -236,6 +243,7 @@ void TeensyBridge::updateHook()
 	// Possible return values are: NoData, OldData and NewData.
 	if(_cmd_velocity_port.read(cmd_velocity) == RTT::NewData){
 		setVelocity(cmd_velocity[0], cmd_velocity[1], cmd_velocity[2]);
+		_cmd_velocity_passthrough_port.write(cmd_velocity);
 	}
 }
 

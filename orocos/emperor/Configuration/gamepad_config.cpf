@@ -17,4 +17,8 @@
     <description>Bandwidth of low pass filter (Hz)</description>
     <value>0.7</value>
   </simple>
+  <simple name="enable_LPF" type="boolean">
+    <description>Enable low pass filter</description>
+    <value>1</value>
+  </simple>
 </properties>

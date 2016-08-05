@@ -14,6 +14,8 @@ class KalmanSM : public EstimatorInterface{
 
         // Output ports
         OutputPort<bool> _trigger_scanmatcher_port;
+        //@@@Michiel: add extra output port with pose at start scan
+        //OutputPort<std::vector<double> > _scanstart_pose_port;
 
         // Measurements
         std::vector<double> _enc_pose;

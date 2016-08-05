@@ -28,7 +28,9 @@ _I(16,16), _H_lf(3,3), _R_lf(3,3)
   ports()->addPort("scanmatch_pose_port", _scanmatch_pose_port).doc("Estimated position-change of scanmatcher [x,y,orientation]");
   ports()->addPort("scanmatch_covariance_port", _scanmatch_covariance_port).doc("covariance scanmatcher [x,y,orientation]");
   // Output ports (to trigger SM)
-  ports()->addPort( "trigger_scanmatcher_port",_trigger_scanmatcher_port).doc("Output port which triggers scanmatcher");
+  ports()->addPort("trigger_scanmatcher_port",_trigger_scanmatcher_port).doc("Output port which triggers scanmatcher");
+  //@@@Michiel: add extra output port with pose at start scan
+  // ports()->addPort("scanstart_pose_port", _scanstart_pose_port).doc("Pose at start of a scan");
   // Properties
   addProperty("accelero_mounting_distance", _accelero_mounting_distance).doc("Distance between the accelerometer and the center of the robot");
   // Set data vector, matrices, ... with initial values
@@ -56,10 +58,12 @@ void KalmanSM::gatherMeasurements(){
   _left_acc = getImuLTransAcc();
   _right_acc = getImuRTransAcc();
 
-  // when scanmatcher triggered: save current state, covariance and abs pose
+  // when new lidar data: trigger scanmatcher and save current state, covariance and abs pose
   if(_cor_lidar_angle_port.read(_corresponding_lidar_angles) == RTT::NewData){
     _trigger_scanmatcher_port.write(true);
     _state_at_scanstart = _state_prev;
+    // @@@Michiel
+    // _scanstart_pose_port.write(_state_prev);
     _P_at_scanstart = _P;
     // clear buffer: this buffer will save all information until scanmatcher writes a new update (i.e. is finished)
     _sensorbuffer.clear();
@@ -105,37 +109,32 @@ void KalmanSM::gatherMeasurements(){
 
     // save calibrated measurments to sensorbuffer
     _sensorbuffer.push_back(_sensorinformation);
-    std::cout << "sensorbuffer size: " << _sensorbuffer.size() << std::endl;
   }
 }
 
 void KalmanSM::detectScanMatchInfo(){
   if(_scanmatch_pose_port.read(_scan_pose_rel) == RTT::NewData){
-    std::cout<<"got scan"<<std::endl;
     _sensorbuffer2 = _sensorbuffer;
-    std::cout << "sensorbuffer2 size: " << _sensorbuffer2.size() << std::endl;
     _state_prev = _state_at_scanstart;
     _P = _P_at_scanstart;
     _got_scan = true;
   }
   else{
-    _sensorbuffer2.push_back(_sensorinformation);
+    if(_sensorbuffer.size() >= 1){
+      _sensorbuffer2.push_back(_sensorbuffer[_sensorbuffer.size()-1]);
+    }
+    else {
+      _sensorbuffer2 = _sensorbuffer;
+    }
     _got_scan = false;
   }
 }
 
 void KalmanSM::updateKalman(){
-  // for all elements in the sensorbuffer: only 1 if no scan info received
-  std::cout<<"sensorbuffer2 size again: " << _sensorbuffer2.size() << std::endl;
-  // when got scan: sensorbuffer2 size = 0 ???
   double dx_rel, dy_rel, dtheta_rel, theta;
   for(unsigned int i = 0; i<_sensorbuffer2.size(); i++) {
     _sensorinformation = _sensorbuffer2[i];
     // prediction step: evaluate model equation
-    // dx_rel = _state_prev(0)*_dt + _state_prev(3)*(_dt*_dt/2.);
-    // dy_rel = _state_prev(1)*_dt + _state_prev(4)*(_dt*_dt/2.);
-    // dtheta_rel = _state_prev(2)*_dt + _state_prev(5)*(_dt*_dt/2.);
-    // theta = _state_prev(12) + (dthetaenc/2.);
     dx_rel = _sensorinformation[0]*_dt;
     dy_rel = _sensorinformation[1]*_dt;
     dtheta_rel = _sensorinformation[2]*_dt;
@@ -170,10 +169,6 @@ void KalmanSM::updateKalman(){
           0,  0,  0,        0,  0,  0,    0,  1,  0,  0,    0,  0,  0,    0,  0,  0,
           0,  0,  0,        0,  0,  0,    0,  0,  1,  0,    0,  0,  0,    0,  0,  0,
           0,  0,  0,        0,  0,  0,    0,  0,  0,  1,    0,  0,  0,    0,  0,  0,
-
-          // cos(mov)*_dt, -sin(mov)*_dt, (-dxenc*sin(mov) - dyenc*cos(mov))*(_dt/2),    cos(mov)*((_dt*_dt)/2),  -sin(mov)*((_dt*_dt)/2),   (-dxenc*sin(mov) - dyenc*cos(mov))*((_dt*_dt)/4),   0,  0,  0,  0,    1, 0, dxenc*(-sin(mov))-dyenc*(cos(mov)), 0, 0, 0,
-          // sin(mov)*_dt, cos(mov)*_dt,  (dxenc*cos(mov) - dyenc*sin(mov))*(_dt/2),   sin(mov)*((_dt*_dt)/2),  cos(mov)*((_dt*_dt)/2),    (dxenc*cos(mov) - dyenc*sin(mov))*((_dt*_dt)/4),    0,  0,  0,  0,    0, 1, dxenc*cos(mov)-dyenc*sin(mov),    0, 0, 0,
-          // 0,            0,                  _dt,             0,          0,            (_dt*_dt)/2,                      0,  0,  0,  0,    0, 0, 1,                  0, 0, 0,
 
           0,  0,  0,        0,  0,  0,    0,  0,  0,  0,    1,  0, -dx_rel*sin(theta)-dy_rel*cos(theta),    0, 0, 0,
           0,  0,  0,        0,  0,  0,    0,  0,  0,  0,    0,  1,  dx_rel*cos(theta)-dy_rel*sin(theta),    0, 0, 0,
@@ -210,15 +205,19 @@ void KalmanSM::updateKalman(){
     _H_T_hf = _H_hf.transpose();
 
     if(_got_scan){
-      std::cout << "Received scanmatch data ... " << std::endl;
+      // std::cout << "Received scanmatch data ... " << std::endl;
       replaceVectorBlock(&_y_hf, &_y, 0, 6);
       // extra measurement equations
-      // theta = (_state(15) + _prev_scan_pose_abs[2])/2.;
       theta = _prev_scan_pose_abs[2];
 
       _y(7) = _scan_pose_rel[0] - ( (_state(10)-_prev_scan_pose_abs[0])*cos(theta) + (_state(11)-_prev_scan_pose_abs[1])*sin(theta));
       _y(8) = _scan_pose_rel[1] - (-(_state(10)-_prev_scan_pose_abs[0])*sin(theta) + (_state(11)-_prev_scan_pose_abs[1])*cos(theta));
       _y(9) = _scan_pose_rel[2] - (_state(12)-_prev_scan_pose_abs[2]);
+
+      // @@@Michiel
+      // _y(7) = _scan_pose_rel[0];
+      // _y(8) = _scan_pose_rel[1];
+      // _y(9) = _scan_pose_rel[2];
 
       _scanmatch_covariance_port.read(_cov_scanmatch);
 
@@ -229,12 +228,15 @@ void KalmanSM::updateKalman(){
       _R.block<3,3>(7,7) = _R_lf;
 
       // subblock of jacobian regarding extra measurement equations
-      // _H_lf <<   cos(theta), sin(theta), (-(_state(10)-_prev_scan_pose_abs[0])*sin(theta) + (_state(11)-_prev_scan_pose_abs[1])*cos(theta)),
-      //           -sin(theta), cos(theta), (-(_state(10)-_prev_scan_pose_abs[0])*cos(theta) - (_state(11)-_prev_scan_pose_abs[1])*sin(theta)),
-      //            0.,      0.,      1.;
       _H_lf <<   cos(theta), sin(theta), 0,
                 -sin(theta), cos(theta), 0,
                  0.,      0.,      1.;
+
+      // @@@Michiel
+      // _H_lf << 1., 0., 0.,
+      //          0., 1., 0.,
+      //          0., 0., 1.;
+
       _H.block<3,3>(7,10) = _H_lf;
       _H.block<7,16>(0,0) = _H_hf;
 
