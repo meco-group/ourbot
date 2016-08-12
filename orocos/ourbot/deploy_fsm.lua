@@ -196,12 +196,17 @@ return rfsm.state {
           if (not dp:connectPorts(teensy,lidar))            then rfsm.send_events(fsm,'e_failed') return end
         end
 
+        --Connect scanmatcher
+        if components_to_load[scanmatcher] then
+          if (not dp:connectPorts(estimator,scanmatcher))     then rfsm.send_events(fsm,'e_failed') return end
+          if (not dp:connectPorts(scanmatcher,io))            then rfsm.send_events(fsm,'e_failed') return end
+        end
+
         --Connect all components
         if (not dp:connectPorts(estimator,io))              then rfsm.send_events(fsm,'e_failed') return end
-        if (not dp:connectPorts(estimator,scanmatcher))     then rfsm.send_events(fsm,'e_failed') return end
-        if (not dp:connectPorts(scanmatcher,io))            then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:connectPorts(estimator,controller))      then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:connectPorts(reference,controller))      then rfsm.send_events(fsm,'e_failed') return end
+        if (not dp:connectPorts(io,controller))             then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:connectPorts(reference,motionplanning))  then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:connectPorts(estimator,motionplanning))  then rfsm.send_events(fsm,'e_failed') return end
           --add more connections here
@@ -213,7 +218,9 @@ return rfsm.state {
         if (not dp:addPeer(coordinator,reference))          then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:addPeer(coordinator,reporter))           then rfsm.send_events(fsm,'e_failed') return end
         if (not dp:addPeer(coordinator,io))                 then rfsm.send_events(fsm,'e_failed') return end
-        if (not dp:addPeer(coordinator,scanmatcher))        then rfsm.send_events(fsm,'e_failed') return end
+        if components_to_load[scanmatcher] then
+          if (not dp:addPeer(coordinator,scanmatcher))        then rfsm.send_events(fsm,'e_failed') return end
+        end
           --add more peers here
       end,
     },
@@ -257,7 +264,9 @@ return rfsm.state {
         dp:setActivity(coordinator,1./control_sample_rate,8,rtt.globals.ORO_SCHED_RT)
         dp:setActivity(reporter,0,4,rtt.globals.ORO_SCHED_RT)
         dp:setActivity(io,1./io_sample_rate,10,rtt.globals.ORO_SCHED_RT)
-        dp:setActivity(scanmatcher,0,5,rtt.globals.ORO_SCHED_RT)
+        if components_to_load[scanmatcher] then
+          dp:setActivity(scanmatcher,0,5,rtt.globals.ORO_SCHED_RT)
+        end
           --add here extra activities
 
         --The estimator, controller and reference component are triggered by the coordinator and executed in the same thread.
@@ -280,6 +289,7 @@ return rfsm.state {
         --Copy the values of the application properties into the coordinator component
         components[coordinator]:getProperty('index'):set(index)
         components[coordinator]:getProperty('print_level'):set(print_level)
+        components[coordinator]:getProperty('reporter_sample_rate'):set(reporter_sample_rate)
         --Configure the coordinator
         if not components[coordinator]:configure() then rfsm.send_events(fsm,'e_failed') return end
         --Connect the deployer to coordinator (for receiving each others failure events)
