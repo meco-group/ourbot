@@ -64,6 +64,8 @@ class GamePad : public USBInterface
     double _gamepad_lt;
     double _gamepad_rt;
 
+    bool _enable_velcmd;
+
     gamepad_event_t _event;
     void writePorts();
     void decodeButtons();
@@ -86,6 +88,8 @@ class GamePad : public USBInterface
   public:
     GamePad(std::string const& name);
     void setVelocity(double, double, double);
+    void enableVelocityCmd();
+    void disableVelocityCmd();
     bool configureHook();
     bool startHook();
     void updateHook();

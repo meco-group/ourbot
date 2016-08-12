@@ -1,8 +1,10 @@
 local tc        = rtt.getTC()
 
-local gamepad     = tc:getPeer('gamepad')
-local reporter    = tc:getPeer('reporter')
-local snapshot    = reporter:getOperation("snapshot")
+local gamepad       = tc:getPeer('gamepad')
+local reporter      = tc:getPeer('reporter')
+local snapshot      = reporter:getOperation("snapshot")
+local enablevelcmd  = gamepad:getOperation("enableVelocityCmd")
+local disablevelcmd = gamepad:getOperation("disableVelocityCmd")
 
 return rfsm.state {
   rfsm.trans{src = 'initial', tgt = 'idle'},
@@ -29,6 +31,7 @@ return rfsm.state {
   run   = rfsm.state{
     entry = function()
       sub_state='run'
+      enablevelcmd()
       print("System started. Abort by using Break (Button B).")
     end,
 
@@ -42,6 +45,7 @@ return rfsm.state {
 
   stop = rfsm.state{
     entry = function(fsm)
+      disablevelcmd()
       sub_state='stop'
       print("System stopped. Waiting on Restart (Button A) or Reset (Button B)...")
     end,
