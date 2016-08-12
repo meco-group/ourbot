@@ -59,6 +59,7 @@ if __name__ == "__main__":
                 echo %s | sudo -S rm /var/lib/omniorb/*
                 sudo omniNames -start &
                 cd %s
+                rm reports.nc
                 deployer-corba-gnulinux run.ops
                 "'
                 ''' % (password, username, host,
@@ -70,6 +71,7 @@ if __name__ == "__main__":
                 sshpass -p %s ssh %s@%s "
                 ulimit -r 10
                 cd %s
+                rm reports.nc
                 deployer-corba-gnulinux run.ops
                 "'
                 ''' % (password, username, host, remote_root)
