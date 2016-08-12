@@ -18,9 +18,10 @@ class Scanmatcher : public RTT::TaskContext{
     RTT::InputPort<bool> _trigger_scanmatcher_port;
     RTT::InputPort<bool> _scanstart_pose_port;
     // Outputs
-  	RTT::OutputPort<std::vector<double> > _scanmatch_pose_port;
+    RTT::OutputPort<std::vector<double> > _scanmatch_pose_port;
+  	RTT::OutputPort<std::vector<double> > _scanmatch_covariance_port;
     //@@@Michiel: add extra output port with pose at start scan
-  	// RTT::OutputPort<std::vector<double> > _scanmatch_covariance_port;
+    // RTT::OutputPort<std::vector<double> > _scanstart_pose_port;
 
     int _sensenumber;
     int _lidar_data_length;
