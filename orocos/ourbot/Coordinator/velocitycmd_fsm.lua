@@ -57,10 +57,9 @@ return rfsm.state {
     end,
 
     doo = function(fsm)
-      period     = tc:getPeriod()
-      report_rate = 10
       snapshot_cnt = 0
-      max_cnt = 1/(report_rate*period)
+      period = tc:getPeriod()
+      max_cnt = 1/(reporter_sample_rate*period)
       start_time = get_sec()
       prev_start_time = start_time
       end_time   = start_time
