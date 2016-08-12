@@ -23,14 +23,14 @@ bool MotionPlanning::config(){
 
 bool MotionPlanning::initialize(){
   _p2p->reset();
-  _obstacles[0].position[0] = 0.5;
-  _obstacles[0].position[1] = 2.0;
+  _obstacles[0].position[0] = -0.6;
+  _obstacles[0].position[1] = 1.0;
   _obstacles[0].velocity[0] = 0.0;
   _obstacles[0].velocity[1] = 0.0;
   _obstacles[0].acceleration[0] = 0.0;
   _obstacles[0].acceleration[1] = 0.0;
-  _obstacles[1].position[0] = 4.2;
-  _obstacles[1].position[1] = 2.0;
+  _obstacles[1].position[0] = 3.2;
+  _obstacles[1].position[1] = 1.0;
   _obstacles[1].velocity[0] = 0.0;
   _obstacles[1].velocity[1] = 0.0;
   _obstacles[1].acceleration[0] = 0.0;
@@ -38,8 +38,8 @@ bool MotionPlanning::initialize(){
 
   _state0[0] = 0.;
   _state0[1] = 0.;
-  _stateT[0] = 4.;
-  _stateT[1] = 4.;
+  _stateT[0] = 3.5;
+  _stateT[1] = 3.5;
   return true;
 }
 
