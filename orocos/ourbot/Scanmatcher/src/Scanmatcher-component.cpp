@@ -25,7 +25,7 @@ _enc_pose(3), _estimated_position_change(3), _covariance(9), _rows(3), _columns(
   ports()->addPort("cal_enc_pose_port",_cal_enc_pose_port).doc("Input port for calibrated encoder values. (x,y,orientation) in [m , m ,rad]");
   ports()->addEventPort("trigger_scanmatcher_port", _trigger_scanmatcher_port).doc("Input port which triggers scanmatcher");
   //@@@Michiel: add extra output port with pose at start scan
-  // ports()->addPort("scanstart_pose_port", _scanstart_pose_port).doc("Pose at start of a scan");
+  ports()->addPort("scanstart_pose_port", _scanstart_pose_port).doc("Pose at start of a scan");
 
   // OutputPorts
  	ports()->addPort( "scanmatch_pose_port", _scanmatch_pose_port).doc("Estimated position-change of scanmatcher in encoder-form [x,y,orientation]");
@@ -49,7 +49,8 @@ _enc_pose(3), _estimated_position_change(3), _covariance(9), _rows(3), _columns(
   addProperty("use_odometry_guess",_use_odometry_guess).doc("1 to make guess with odometry information, 0 pure scanmatch");
   addProperty("scans",_scans).doc("Number of reference scans to keep as reference to match new scan");
   addProperty("do_compute_covariance",_do_compute_covariance).doc("Calculate covariance matrix Scan matcher");
-  addProperty("lidar_data_length", _lidar_data_length).doc("Length of the lidar data.");
+  addProperty("lidar_data_length", _lidar_data_length).doc("Length of the lidar data");
+  addProperty("precision", _precision).doc("Precision used to compute artificial lidar");
 
   std::cout << "Scanmatcher constructed !" <<std::endl;
 }
@@ -61,6 +62,8 @@ bool Scanmatcher::configureHook(){
   _prev_lidar_angles.resize((_lidar_data_length - _sensenumber)*_scans);
 	_lidar_distances.resize(_lidar_data_length- _sensenumber);
 	_lidar_angles.resize(_lidar_data_length- _sensenumber);
+
+  _start_pose.resize(3);
 
 	std::fill(_prev_lidar_angles.begin(), _prev_lidar_angles.end(), 0);
 	std::fill(_prev_lidar_distances.begin(), _prev_lidar_distances.end(), 0);
@@ -106,6 +109,13 @@ bool Scanmatcher::configureHook(){
   _lastY = 0;
   _lastTheta = 0;
 
+
+
+
+  // TODO laten werken
+  //_environment_circles = std::vector<std::vector<double> _circle(3);> _cirlces;
+  //_environment_polygons = std::vector<std::vector<std::vector<double> _point(2);> _polygon;> _polygons;
+
   std::cout << "Scanmatcher configured !" <<std::endl;
   return true;
 }
@@ -116,6 +126,14 @@ bool Scanmatcher::startHook(){
 }
 
 void Scanmatcher::updateHook(){
+
+  std::cout << "Scanmatcher updateHook !" <<std::endl;
+  
+  artificialLidar();
+
+  std::cout << "Scanmatcher artificialLidar passed !" <<std::endl;
+  
+  /*
   int rays = _lidar_data_length - _sensenumber;
 	sm_result result;
 
@@ -141,6 +159,9 @@ void Scanmatcher::updateHook(){
   // Reading data from ports
   _cor_lidar_distance_port.read(_available_lidar_distances);
   _cor_lidar_angle_port.read(_available_lidar_angles);
+
+  //TODO
+  _scanstart_pose_port.read(_start_pose);
 
   // Copying all laser beams that are not used by Slam to use them for positioning with the scanmatcher
   int index = 0;
@@ -265,6 +286,7 @@ void Scanmatcher::updateHook(){
   else {
     fprintf(stderr, "Scanmatcher got all zeros!");
   }
+  */
 }
 
 void Scanmatcher::stopHook() {
@@ -371,6 +393,190 @@ void Scanmatcher::correctInformation(std::vector<double> laser_scan_distance, st
     _prev_lidar_distances[i-(_lidar_data_length - _sensenumber)]  = sqrt(x_new*x_new + y_new*y_new);
 
   }
+}
+
+void Scanmatcher::artificialLidar(){
+  // @@@TODO wel of geen rekening houden met beperkingen LIDAR?
+  // eventueel cte aatal metingen -> angles wordt const vector.
+  // welke hoek is theta
+  std::vector<double> _laser_distances(_lidar_data_length,_max_sense_range);
+  std::vector<double> _laser_angles;
+
+  _laser_angles.reserve(_lidar_data_length);
+  double angle;
+  double intersect_distance;
+  
+  std::vector<double> circle_1(3); circle_1[0] = 2.; circle_1[1] = 2.; circle_1[2] = 2.;
+  std::vector<double> circle_2(3); circle_2[0] = -2.; circle_2[1] = 2.; circle_2[2] = 2.;
+  _environment_circles.push_back(circle_1);
+  _environment_circles.push_back(circle_2);
+
+  std::vector<double> point_1(2); point_1[0] = 2.; point_1[1] = 2.;
+  std::vector<double> point_2(2); point_2[0] = -2.; point_2[1] = 2.;
+  std::vector<double> point_3(2); point_3[0] = -2.; point_3[1] = -2.;
+  std::vector<double> point_4(2); point_4[0] = 2.; point_4[1] = -2.;
+  std::vector<std::vector<double> > polygon_1;
+  polygon_1.push_back(point_1);
+  polygon_1.push_back(point_2);
+  polygon_1.push_back(point_3);
+  polygon_1.push_back(point_4);
+  polygon_1.push_back(point_1);
+  _environment_polygons.push_back(polygon_1);
+
+
+
+  for(int i = 0; i < _lidar_data_length; i++){
+    angle = 2*M_PI*i/_lidar_data_length + _start_pose[2];
+    _laser_angles[i] = angle;
+  
+    for (unsigned int c = 0; c < _environment_circles.size(); c++){
+
+      intersect_distance = getIntersectDistanceCircle(_environment_circles[c][0],
+    		_environment_circles[c][1], _environment_circles[c][2], angle);
+
+    	if (intersect_distance < _laser_distances[i]){
+    		_laser_distances[i] = intersect_distance;
+    	}
+    }
+
+    for (unsigned int p = 0; p < _environment_polygons.size(); p++){
+      for (unsigned int w = 0; w < _environment_polygons[p].size()-1; w++){
+
+        intersect_distance = getIntersectDistancePolygon( _environment_polygons[p][w][0],  
+        	_environment_polygons[p][w][1], _environment_polygons[p][w + 1][0], 
+        	_environment_polygons[p][w + 1][1], angle);
+
+        if (intersect_distance < _laser_distances[i]){
+          _laser_distances[i] = intersect_distance;
+        }
+      }
+    }
+
+    //std::cout << "scan :" << i << "; angle :" << angle*180/3.141592 << "; distance :" << _laser_distances[i] <<std::endl;
+  }
+};
+
+//TODO eventueel klasse circle en polygon maken
+
+double Scanmatcher::getIntersectDistancePolygon(double const& x_a, double const& y_a, 
+										 double const& x_b, double const& y_b, double const& angle){
+	double determinant;
+	double tang;
+	double x_estimate;
+	double y_estimate;
+	double x_intersect;
+	double y_intersect;
+	bool intersection_found;
+
+	x_estimate = _start_pose[0];
+	y_estimate = _start_pose[1];
+
+	tang = tan ( angle );
+	determinant = (x_a - x_b) * tang - (y_a - y_b);
+
+	if (std::abs(determinant) < _precision){
+		intersection_found = false;
+	} else{
+		
+    x_intersect = ( ( y_b - y_estimate + tang * x_estimate ) * ( x_a - x_b ) - 
+					   ( y_a - y_b ) * x_b ) / determinant;
+		y_intersect = y_estimate + tang * ( x_intersect - x_estimate );
+
+    // intersection in boundaries
+		if ( inRange(x_a, x_b, x_intersect) && inRange (y_a, y_b, y_intersect)){
+      intersection_found = correctIntersection(x_estimate, y_estimate, x_intersect, y_intersect, angle);
+		} else {
+			intersection_found = false;
+    }
+	}
+
+	if ( intersection_found ) {
+		return sqrt ( (x_intersect - x_estimate) * (x_intersect - x_estimate) +
+					  (y_intersect - y_estimate) * (y_intersect - y_estimate) );
+	} else {
+		return _max_sense_range;
+	}
+
+}
+
+double Scanmatcher::getIntersectDistanceCircle(double const& x_centre, double const& y_centre, 
+	double const& radius, double const& angle){
+
+	double x_estimate;
+	double y_estimate;
+	double x_intersect;
+  double y_intersect;
+  double discriminant;
+  double distance;
+  double A;
+  double B;
+  double C;
+  double tangens;
+  double intersect_distance;
+
+  x_estimate = _start_pose[0];
+  y_estimate = _start_pose[1];
+  tangens = tan(angle);
+  intersect_distance = _max_sense_range;
+
+  A = tangens*tangens + 1.;
+  B = -2.*(tangens*(tangens*x_estimate +y_estimate + y_centre) + x_centre);
+  C = (y_centre*y_centre + x_centre*x_centre - radius*radius + 
+          (tangens*x_estimate+y_estimate)*(-2*y_centre* + (-tangens*x_estimate - y_estimate)));
+
+  discriminant = B*B - 4*A*C;
+
+  if (greaterThan(0., discriminant)){
+    for (int i=0; i<2; i++){
+      x_intersect = (-B + pow(-1,i) * sqrt(discriminant))/(2.*A);
+      y_intersect = tangens*(x_intersect - x_estimate) - y_estimate;
+      if (correctIntersection(x_estimate, y_estimate, x_intersect, y_intersect, angle)){
+        distance = sqrt((x_intersect - x_estimate) * (x_intersect - x_estimate) +
+              (y_intersect - y_estimate) * (y_intersect - y_estimate));
+        if (distance < intersect_distance)
+          intersect_distance = distance;
+      } 
+    }
+  }
+  return intersect_distance;
+}
+
+bool Scanmatcher::inRange(double const& boundarie_1, double const& boundarie_2, 
+  double const& value){
+
+  return (((greaterThan(boundarie_1, value)) && (smallerThan(boundarie_2, value))) ||
+          ((smallerThan(boundarie_1, value)) && (greaterThan(boundarie_2, value))));
+}
+
+bool Scanmatcher::greaterThan(double const& boundarie, double const& value){
+  return (value > boundarie - _precision);
+}
+
+bool Scanmatcher::smallerThan(double const& boundarie, double const& value){
+  return (value < boundarie + _precision);
+}
+
+bool Scanmatcher::correctIntersection(double const& x, double const& y, 
+  double const& x_intersect, double const& y_intersect, double const& angle){
+
+  bool result;
+
+  if ((inRange(0., M_PI/2., angle)) && (greaterThan(x, x_intersect)) &&
+         (greaterThan(y, y_intersect)))
+    result = true;
+  else if ((inRange(M_PI/2., M_PI, angle)) && (smallerThan(x, x_intersect)) &&
+         (greaterThan(y, y_intersect)))
+    result = true;
+  else if ((inRange(M_PI, M_PI*1.5, angle)) && (smallerThan(x, x_intersect)) &&
+         (smallerThan(y, y_intersect)))
+    result = true;
+  else if ((inRange(M_PI*1.5, M_PI*2., angle)) && (greaterThan(x, x_intersect)) &&
+         (smallerThan(y, y_intersect)))
+    result = true;
+  else
+    result = false;
+
+  return result;  
 }
 
 
