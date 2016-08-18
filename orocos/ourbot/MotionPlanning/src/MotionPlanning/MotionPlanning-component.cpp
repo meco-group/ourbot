@@ -36,16 +36,20 @@ bool MotionPlanning::initialize(){
   _obstacles[1].acceleration[0] = 0.0;
   _obstacles[1].acceleration[1] = 0.0;
 
-  _state0[0] = 0.;
-  _state0[1] = 0.;
-  _stateT[0] = 3.5;
-  _stateT[1] = 3.5;
+  //debug data
+  _target_pose[0] = 3.5;
+  _target_pose[1] = 3.5;
+  _target_pose[2] = 0.;
   return true;
 }
 
 bool MotionPlanning::trajectoryUpdate(){
+  //debug data
+  _est_pose[0] = 0.;
+  _est_pose[1] = 0.;
+  _est_pose[2] = 0.;
   // update motion planning algorithm
-  bool check = _p2p->update(_state0, _stateT, _ref_pose, _ref_velocity, _obstacles, _predict_shift);
+  bool check = _p2p->update(_est_pose, _target_pose, _ref_pose, _ref_velocity, _obstacles, _predict_shift);
   for (int k=0; k<_trajectory_length; k++){
     for (int j=0; j<2; j++){
       _ref_velocity_trajectory[j][k] = _ref_velocity[k][j];

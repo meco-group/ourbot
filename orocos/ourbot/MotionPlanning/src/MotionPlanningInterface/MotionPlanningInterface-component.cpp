@@ -1,4 +1,4 @@
-#define DEGUB
+// #define DEBUG
 
 #include "MotionPlanningInterface-component.hpp"
 #include <rtt/Component.hpp>
@@ -6,7 +6,8 @@
 
 
 MotionPlanningInterface::MotionPlanningInterface(std::string const& name) : TaskContext(name, PreOperational),
-    _predict_shift(0), _est_pose(3), _target_pose(3), _ref_pose_trajectory(3), _ref_velocity_trajectory(3){
+    _predict_shift(0), _est_pose(3), _target_pose(3),
+    _ref_pose_trajectory(3), _ref_velocity_trajectory(3){
   ports()->addPort("est_pose_port", _est_pose_port).doc("Estimated pose");
   ports()->addPort("target_pose_port", _target_pose_port).doc("Target pose");
 
@@ -75,6 +76,7 @@ bool MotionPlanningInterface::startHook(){
 void MotionPlanningInterface::updateHook(){
   #ifdef DEBUG
   std::cout << "started mp update" << std::endl;
+  log(Info) << "started mp update" << endlog();
   #endif
 
   _predict_shift_port.read(_predict_shift);
@@ -103,6 +105,7 @@ void MotionPlanningInterface::updateHook(){
   }
   #ifdef DEBUG
   std::cout << "ended mp update in "<<time_elapsed<< " s" << std::endl;
+  log(Info) << "ended mp update in " << time_elapsed<< " s" << endlog();
   #endif
 }
 

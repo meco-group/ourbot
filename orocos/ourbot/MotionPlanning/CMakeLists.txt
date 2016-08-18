@@ -17,10 +17,10 @@ if (NOT OROCOS-RTT_FOUND)
 endif()
 
 # Load Toolbox lib
-link_directories(/home/ruben/ourbot/orocos/ourbot/MotionPlanning/src/Toolbox/bin/)
-link_directories( /home/ruben/Documents/Work/Repositories/casadi_binary/casadi/ )
-include_directories( /home/ruben/ourbot/orocos/ourbot/MotionPlanning/src/Toolbox/src/ )
-include_directories( /home/ruben/Documents/Work/Repositories/casadi_binary/include/ )
+link_directories(/home/ruben/Documents/Work/Repositories/casadi_binary/casadi/ )
+include_directories(/home/ruben/Documents/Work/Repositories/casadi_binary/include/ )
+link_directories(/home/ruben/ourbot/orocos/ourbot/MotionPlanning/src/DistributedMotionPlanning/Toolbox/bin/)
+include_directories(/home/ruben/ourbot/orocos/ourbot/MotionPlanning/src/DistributedMotionPlanning/Toolbox/src/)
 add_definitions(-std=c++11)
 # nothing should be changed in the Makefile!
 
