@@ -405,25 +405,6 @@ void Scanmatcher::artificialLidar(){
   _laser_angles.reserve(_lidar_data_length);
   double angle;
   double intersect_distance;
-  
-  std::vector<double> circle_1(3); circle_1[0] = 2.; circle_1[1] = 2.; circle_1[2] = 2.;
-  std::vector<double> circle_2(3); circle_2[0] = -2.; circle_2[1] = 2.; circle_2[2] = 2.;
-  _environment_circles.push_back(circle_1);
-  _environment_circles.push_back(circle_2);
-
-  std::vector<double> point_1(2); point_1[0] = 2.; point_1[1] = 2.;
-  std::vector<double> point_2(2); point_2[0] = -2.; point_2[1] = 2.;
-  std::vector<double> point_3(2); point_3[0] = -2.; point_3[1] = -2.;
-  std::vector<double> point_4(2); point_4[0] = 2.; point_4[1] = -2.;
-  std::vector<std::vector<double> > polygon_1;
-  polygon_1.push_back(point_1);
-  polygon_1.push_back(point_2);
-  polygon_1.push_back(point_3);
-  polygon_1.push_back(point_4);
-  polygon_1.push_back(point_1);
-  _environment_polygons.push_back(polygon_1);
-
-
 
   for(int i = 0; i < _lidar_data_length; i++){
     angle = 2*M_PI*i/_lidar_data_length + _start_pose[2];
@@ -431,8 +412,7 @@ void Scanmatcher::artificialLidar(){
   
     for (unsigned int c = 0; c < _environment_circles.size(); c++){
 
-      intersect_distance = getIntersectDistanceCircle(_environment_circles[c][0],
-    		_environment_circles[c][1], _environment_circles[c][2], angle);
+      intersect_distance = getIntersectDistanceCircle(_environment_circles[c], angle);
 
     	if (intersect_distance < _laser_distances[i]){
     		_laser_distances[i] = intersect_distance;
@@ -440,11 +420,13 @@ void Scanmatcher::artificialLidar(){
     }
 
     for (unsigned int p = 0; p < _environment_polygons.size(); p++){
-      for (unsigned int w = 0; w < _environment_polygons[p].size()-1; w++){
+      Polygon polygon = _environment_polygons[p];
+      int polygonSize = polygon.getSize();
+      for (int w = 0; w < polygonSize; w++){
 
-        intersect_distance = getIntersectDistancePolygon( _environment_polygons[p][w][0],  
-        	_environment_polygons[p][w][1], _environment_polygons[p][w + 1][0], 
-        	_environment_polygons[p][w + 1][1], angle);
+        intersect_distance = getIntersectDistanceLine( polygon.getXVertex(w),  
+        	polygon.getYVertex(w), polygon.getXVertex((w+1)%polygonSize), 
+          polygon.getYVertex((w+1)%polygonSize), angle);
 
         if (intersect_distance < _laser_distances[i]){
           _laser_distances[i] = intersect_distance;
@@ -452,13 +434,11 @@ void Scanmatcher::artificialLidar(){
       }
     }
 
-    //std::cout << "scan :" << i << "; angle :" << angle*180/3.141592 << "; distance :" << _laser_distances[i] <<std::endl;
+    std::cout << "scan :" << i << "; angle :" << angle*180/3.141592 << "; distance :" << _laser_distances[i] <<std::endl;
   }
 };
 
-//TODO eventueel klasse circle en polygon maken
-
-double Scanmatcher::getIntersectDistancePolygon(double const& x_a, double const& y_a, 
+double Scanmatcher::getIntersectDistanceLine(double const& x_a, double const& y_a, 
 										 double const& x_b, double const& y_b, double const& angle){
 	double determinant;
 	double tang;
@@ -499,13 +479,15 @@ double Scanmatcher::getIntersectDistancePolygon(double const& x_a, double const&
 
 }
 
-double Scanmatcher::getIntersectDistanceCircle(double const& x_centre, double const& y_centre, 
-	double const& radius, double const& angle){
+double Scanmatcher::getIntersectDistanceCircle(Circle circle, double const& angle){
 
 	double x_estimate;
 	double y_estimate;
 	double x_intersect;
   double y_intersect;
+  double x_centre;
+  double y_centre;
+  double radius;
   double discriminant;
   double distance;
   double A;
@@ -518,6 +500,9 @@ double Scanmatcher::getIntersectDistanceCircle(double const& x_centre, double co
   y_estimate = _start_pose[1];
   tangens = tan(angle);
   intersect_distance = _max_sense_range;
+  x_centre = circle.getX();
+  y_centre = circle.getY();
+  radius = circle.getRadius();
 
   A = tangens*tangens + 1.;
   B = -2.*(tangens*(tangens*x_estimate +y_estimate + y_centre) + x_centre);
@@ -580,14 +565,12 @@ bool Scanmatcher::correctIntersection(double const& x, double const& y,
 }
 
 void Scanmatcher::loadEnvironment(){
-  std::cout << "loading environment..." << std::endl;
+  //std::cout << "loading environment..." << std::endl;
   rapidxml::xml_document<> doc;
 
   // Read the xml file into a vector
-  std::cout << "reading file..." << std::endl;
   // TODO generate path automatically
   std::ifstream myfile("/home/michiel/ourbot/orocos/ourbot/Scanmatcher/src/environment.xml");
-  std::cout << "file read!" << std::endl;
   std::vector<char> buffer((std::istreambuf_iterator<char>(myfile)), std::istreambuf_iterator<char>());
   buffer.push_back('\0');
   // Parse the buffer using the xml file parsing library into doc
@@ -595,72 +578,40 @@ void Scanmatcher::loadEnvironment(){
   // Find our root node
   rapidxml::xml_node<> * root_node = doc.first_node("obstacles");
 
-  std::cout << "Iterating over obstacles..." << std::endl;
   // Iterate over Circles
   for (rapidxml::xml_node<> * circle_node = root_node->first_node("circle"); 
           circle_node; circle_node = circle_node->next_sibling("circle")){
+    //std::cout << "circle found:" << std::endl;
 
     double x_centre = atof(circle_node->first_node("x")->value());
     double y_centre = atof(circle_node->first_node("y")->value());
     double radius = atof(circle_node->first_node("radius")->value());
-
-    std::cout << "circle found:" << std::endl;
-    std::cout << "  x: " << x_centre << ", y: " << y_centre << ", r: "<< radius << std::endl;
+    
+    Circle circle = Circle(x_centre,y_centre,radius);
+    //std::cout << "  x: " << circle.getX() << ", y: " << circle.getY() << ", r: "<< circle.getRadius() << std::endl;
+    _environment_circles.push_back(circle);
   }
   // Iterate over Polygons
   for (rapidxml::xml_node<> * polygon_node = root_node->first_node("polygon"); 
           polygon_node; polygon_node = polygon_node->next_sibling("polygon")){
-    std::cout << "polygon found: " << std::endl;
+    //std::cout << "polygon found: " << std::endl;
+    Polygon polygon = Polygon();
     int i = 0;
     for (rapidxml::xml_node<> * vertex_node = polygon_node->first_node("vertex");
           vertex_node; vertex_node = vertex_node->next_sibling("vertex")){
-      i++;
+
       double x_vertex = atof(vertex_node->first_node("x")->value());
       double y_vertex = atof(vertex_node->first_node("y")->value());
-      std::cout << "  node" << i << ": x:" << x_vertex << ", y: " << y_vertex << std::endl;
-    }
 
+      polygon.addVertex(x_vertex, y_vertex);
+      //std::cout << "  node" << i << ": x:" << polygon.getXVertex(i) << ", y: " << polygon.getYVertex(i) << std::endl;
+      i++;
+    }
+    _environment_polygons.push_back(polygon);
   }
 
-  std::cout << "succesfully loaded environment!" << std::endl;
-  
-
-
-
-
-
-
-
-
-
-
-  //TODO
-  //using namespace rapidxml;
-
-  
-
-  //
-  //
-
-  //std::vector<char> buffer((std::istreambuf_iterator<char>(myfile)), std::istreambuf_iterator<char>( ));
-
-  //buffer.push_back('\0');
-
-  //std::cout << &buffer[0] << std::endl;
-
-  //doc.parse<0>(&buffer[0]);
-
-  //std::cout << "Name of my first node is: " << doc.first_node()->name() << "\n";
-
-  //rapidxml::xml_document<> doc;
-  //doc = open(environment.xml);
-  //xml_node<> * root_node = doc.allocate_node();
-  //std::ifstream environment ("environment.xml");
-    //vector<char> buffer((istreambuf_iterator<char>(theFile)), istreambuf_iterator<char>());
+  std::cout << "Environment loaded!" << std::endl;
 }
-
-
-
 
 /*
  * Using this macro, only one component may live

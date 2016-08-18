@@ -9,6 +9,8 @@
 #include <vector>
 #include <csm/csm_all.h>
 #include "rapidxml.hpp"
+#include "./Environment/Circle.hpp"
+#include "./Environment/Polygon.hpp"
 
 
 class Scanmatcher : public RTT::TaskContext{
@@ -56,9 +58,9 @@ class Scanmatcher : public RTT::TaskContext{
     std::vector<double> _lidar_distances;
     std::vector<double> _lidar_angles;
     std::vector<double> _covariance;
-
-    std::vector< std::vector<double> > _environment_circles;
-    std::vector< std::vector< std::vector<double> > > _environment_polygons;
+    
+    std::vector<Circle> _environment_circles;
+    std::vector<Polygon> _environment_polygons;
     std::vector<double> _start_pose;
 
     int _rows;
@@ -81,12 +83,13 @@ class Scanmatcher : public RTT::TaskContext{
     void quickSort(double angles[], double distances[] ,int low, int high);
     void correctInformation(std::vector<double> laser_scan_distance, std::vector<double> laser_scan_angle ,std::vector<double> delta_odo_scan);
     void artificialLidar();
-    double getIntersectDistancePolygon(double const& x_a, double const& y_a, double const& x_b, double const& y_b, double const& angle);
-    double getIntersectDistanceCircle(double const& x_centre, double const& y_centre, double const& radius, double const& angle);
+    double getIntersectDistanceLine(double const& x_a, double const& y_a, double const& x_b, double const& y_b, double const& angle);
+    double getIntersectDistanceCircle(Circle circle, double const& angle);
     bool inRange(double const& boundarie_1, double const& boundarie_2, double const& value);
     bool greaterThan(double const& boundarie, double const& value);
     bool smallerThan(double const& boundarie, double const& value);
     bool correctIntersection(double const& x, double const& y, double const& x_intersect, double const& y_intersect, double const& angle);
     void loadEnvironment();
 };
+
 #endif
