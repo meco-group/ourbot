@@ -10,7 +10,7 @@
 # Creates a component library libScanmatcher-<target>.so
 # and installs in the directory lib/orocos/Scanmatcher/
 #
-orocos_component(Scanmatcher Scanmatcher-component.hpp Scanmatcher-component.cpp) # ...you may add multiple source files
+orocos_component(Scanmatcher Scanmatcher-component.hpp Scanmatcher-component.cpp rapidxml.hpp) # ...you may add multiple source files
 #
 target_link_libraries(Scanmatcher ${CSM_LIBRARIES})
 
@@ -21,7 +21,7 @@ target_link_libraries(Scanmatcher ${CSM_LIBRARIES})
 #
 # Installs in the include/orocos/Scanmatcher/ directory
 #
-orocos_install_headers(Scanmatcher-component.hpp) # ...you may add multiple header files
+orocos_install_headers(Scanmatcher-component.hpp rapidxml.hpp) # ...you may add multiple header files
 #
 # You may add multiple orocos_install_headers statements.
 

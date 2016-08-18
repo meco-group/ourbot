@@ -109,8 +109,8 @@ bool Scanmatcher::configureHook(){
   _lastY = 0;
   _lastTheta = 0;
 
-
-
+  loadEnvironment();
+  
 
   // TODO laten werken
   //_environment_circles = std::vector<std::vector<double> _circle(3);> _cirlces;
@@ -128,7 +128,7 @@ bool Scanmatcher::startHook(){
 void Scanmatcher::updateHook(){
 
   std::cout << "Scanmatcher updateHook !" <<std::endl;
-  
+
   artificialLidar();
 
   std::cout << "Scanmatcher artificialLidar passed !" <<std::endl;
@@ -578,6 +578,87 @@ bool Scanmatcher::correctIntersection(double const& x, double const& y,
 
   return result;  
 }
+
+void Scanmatcher::loadEnvironment(){
+  std::cout << "loading environment..." << std::endl;
+  rapidxml::xml_document<> doc;
+
+  // Read the xml file into a vector
+  std::cout << "reading file..." << std::endl;
+  // TODO generate path automatically
+  std::ifstream myfile("/home/michiel/ourbot/orocos/ourbot/Scanmatcher/src/environment.xml");
+  std::cout << "file read!" << std::endl;
+  std::vector<char> buffer((std::istreambuf_iterator<char>(myfile)), std::istreambuf_iterator<char>());
+  buffer.push_back('\0');
+  // Parse the buffer using the xml file parsing library into doc
+  doc.parse<0>(&buffer[0]);
+  // Find our root node
+  rapidxml::xml_node<> * root_node = doc.first_node("obstacles");
+
+  std::cout << "Iterating over obstacles..." << std::endl;
+  // Iterate over Circles
+  for (rapidxml::xml_node<> * circle_node = root_node->first_node("circle"); 
+          circle_node; circle_node = circle_node->next_sibling("circle")){
+
+    double x_centre = atof(circle_node->first_node("x")->value());
+    double y_centre = atof(circle_node->first_node("y")->value());
+    double radius = atof(circle_node->first_node("radius")->value());
+
+    std::cout << "circle found:" << std::endl;
+    std::cout << "  x: " << x_centre << ", y: " << y_centre << ", r: "<< radius << std::endl;
+  }
+  // Iterate over Polygons
+  for (rapidxml::xml_node<> * polygon_node = root_node->first_node("polygon"); 
+          polygon_node; polygon_node = polygon_node->next_sibling("polygon")){
+    std::cout << "polygon found: " << std::endl;
+    int i = 0;
+    for (rapidxml::xml_node<> * vertex_node = polygon_node->first_node("vertex");
+          vertex_node; vertex_node = vertex_node->next_sibling("vertex")){
+      i++;
+      double x_vertex = atof(vertex_node->first_node("x")->value());
+      double y_vertex = atof(vertex_node->first_node("y")->value());
+      std::cout << "  node" << i << ": x:" << x_vertex << ", y: " << y_vertex << std::endl;
+    }
+
+  }
+
+  std::cout << "succesfully loaded environment!" << std::endl;
+  
+
+
+
+
+
+
+
+
+
+
+  //TODO
+  //using namespace rapidxml;
+
+  
+
+  //
+  //
+
+  //std::vector<char> buffer((std::istreambuf_iterator<char>(myfile)), std::istreambuf_iterator<char>( ));
+
+  //buffer.push_back('\0');
+
+  //std::cout << &buffer[0] << std::endl;
+
+  //doc.parse<0>(&buffer[0]);
+
+  //std::cout << "Name of my first node is: " << doc.first_node()->name() << "\n";
+
+  //rapidxml::xml_document<> doc;
+  //doc = open(environment.xml);
+  //xml_node<> * root_node = doc.allocate_node();
+  //std::ifstream environment ("environment.xml");
+    //vector<char> buffer((istreambuf_iterator<char>(theFile)), istreambuf_iterator<char>());
+}
+
 
 
 

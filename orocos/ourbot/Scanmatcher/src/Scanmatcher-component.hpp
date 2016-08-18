@@ -5,8 +5,11 @@
 #include <rtt/Port.hpp>
 #include <rtt/Component.hpp>
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <csm/csm_all.h>
+#include "rapidxml.hpp"
+
 
 class Scanmatcher : public RTT::TaskContext{
 
@@ -84,5 +87,6 @@ class Scanmatcher : public RTT::TaskContext{
     bool greaterThan(double const& boundarie, double const& value);
     bool smallerThan(double const& boundarie, double const& value);
     bool correctIntersection(double const& x, double const& y, double const& x_intersect, double const& y_intersect, double const& angle);
+    void loadEnvironment();
 };
 #endif
