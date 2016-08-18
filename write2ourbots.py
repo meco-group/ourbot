@@ -28,17 +28,26 @@
 
 # Ruben Van Parys - 2015
 
-import optparse, os, paramiko
+import optparse
+import os
+import sys
+import paramiko
+import collections as col
+import math
 
 # Default parameters
 current_dir = os.path.dirname(os.path.realpath(__file__))
-local_root = os.path.join(current_dir,'orocos/ourbot')
+local_root = os.path.join(current_dir, 'orocos/ourbot')
 remote_root = '/home/odroid/orocos'
 username = 'odroid'
 password = 'odroid'
-hosts = ['192.168.11.120']
-ignore = ['TestCorba']
+hosts = col.OrderedDict()
+# hosts['dave'] = '192.168.11.120'
+hosts['kurt'] = '192.168.11.121'
+hosts['krist'] = '192.168.11.122'
+ignore = ['TestCorba', 'VelocityCommandInterface', 'SPIMaster']
 build_list = []
+distributed = True
 
 
 def create_component(ssh, component):
@@ -78,8 +87,119 @@ def change_cmakelist(ssh, component):
 
 
 def send_file(ftp, loc_file, rem_file):
-    print 'sending ' + loc_file
-    ftp.put(loc_file, rem_file)
+    try:
+        ftp.put(loc_file, rem_file)
+    except:
+        raise ValueError('Could not send ' + loc_file + '!')
+
+
+def send_files(ftp, loc_files, rem_files):
+    n_blocks = 50
+    interval = int(math.ceil(len(loc_files)/n_blocks*1.))
+    string = '['
+    for k in range(len(loc_files)/interval):
+        string += ' '
+    string += ']'
+    cnt = 0
+    for lf, rf in zip(loc_files, rem_files):
+        string2 = string
+        send_file(ftp, lf, rf)
+        for k in range(cnt/interval):
+            string2 = string2[:k+1] + '=' + string2[k+2:]
+        sys.stdout.flush()
+        sys.stdout.write("\r"+string2)
+        cnt += 1
+    print ''
+
+
+def mp_adaptations(ftp):
+    local_files = []
+    remote_files = []
+    # adapt CMakeLists.txt
+    local_files.append(os.path.join(current_dir,
+                                    'orocos/ourbot/MotionPlanning/CMakeLists.txt'))
+    remote_files.append(os.path.join(remote_root,
+                                     'MotionPlanning/CMakeLists.txt'))
+    f1 = open(local_files[-1], 'r')
+    body = f1.read()
+    f1.close()
+    index = body.find(
+        'link_directories(/home/ruben/ourbot/orocos/ourbot/MotionPlanning/')
+    string1a = body[index:].split('\n')[0]
+    index = body.find(
+        'include_directories(/home/ruben/ourbot/orocos/ourbot/MotionPlanning/')
+    string1b = body[index:].split('\n')[0]
+    if distributed:
+        string2a = 'link_directories(/home/odroid/orocos/MotionPlanning/src/DistributedMotionPlanning/Toolbox/bin/)'
+        string2b = 'include_directories(/home/odroid/orocos/MotionPlanning/src/DistributedMotionPlanning/Toolbox/src/)'
+    else:
+        string2a = 'link_directories(/home/odroid/orocos/MotionPlanning/src/MotionPlanning/Toolbox/bin/)'
+        string2b = 'include_directories(/home/odroid/orocos/MotionPlanning/src/MotionPlanning/Toolbox/src/)'
+    body = body.replace(string1a, string2a)
+    body = body.replace(string1b, string2b)
+    f2 = open(local_files[-1]+'_', 'w')
+    f2.write(body)
+    f2.close()
+    # adapt other CMakeLists.txt
+    local_files.append(os.path.join(current_dir,
+        'orocos/ourbot/MotionPlanning/src/CMakeLists.txt'))
+    remote_files.append(os.path.join(remote_root,
+        'MotionPlanning/src/CMakeLists.txt'))
+    f1 = open(local_files[-1], 'r')
+    body = f1.read()
+    f1.close()
+    index = body.find('orocos_component(')
+    string1a = body[index:].split('\n')[0]
+    index = body.find('orocos_install_headers(')
+    string1b = body[index:].split('\n')[0]
+    if distributed:
+        string2a = ('orocos_component(MotionPlanning ' +
+                    'MotionPlanningInterface/MotionPlanningInterface-component.cpp ' +
+                    'MotionPlanningInterface/MotionPlanningInterface-component.hpp ' +
+                    'DistributedMotionPlanning/DistributedMotionPlanning-component.hpp ' +
+                    'DistributedMotionPlanning/DistributedMotionPlanning-component.cpp)')
+        string2b = ('orocos_install_headers(MotionPlanningInterface/MotionPlanningInterface-component.hpp ' +
+                    'DistributedMotionPlanning/DistributedMotionPlanning-component.hpp)')
+    else:
+        string2a = ('orocos_component(MotionPlanning ' +
+                    'MotionPlanningInterface/MotionPlanningInterface-component.cpp ' +
+                    'MotionPlanningInterface/MotionPlanningInterface-component.hpp ' +
+                    'MotionPlanning/MotionPlanning-component.hpp ' +
+                    'MotionPlanning/MotionPlanning-component.cpp)')
+        string2b = ('orocos_install_headers(MotionPlanningInterface/MotionPlanningInterface-component.hpp ' +
+                    'MotionPlanning/MotionPlanning-component.hpp)')
+    body = body.replace(string1a, string2a)
+    body = body.replace(string1b, string2b)
+    f2 = open(local_files[-1]+'_', 'w')
+    f2.write(body)
+    f2.close()
+    # adapt Makefiles
+    for mp_type in ['MotionPlanning', 'DistributedMotionPlanning']:
+        local_files.append(os.path.join(current_dir,
+                                        'orocos/ourbot/MotionPlanning/src/'+mp_type+'/Toolbox/Makefile'))
+        remote_files.append(os.path.join(remote_root,
+                                         'MotionPlanning/src/'+mp_type+'/Toolbox/Makefile'))
+        f1 = open(local_files[-1], 'r')
+        body = f1.read()
+        f1.close()
+        index = body.find('CASADILIB =')
+        string = body[index:].split('\n')[0]
+        body = body.replace(string, 'CASADILIB = /usr/local/lib/')
+        index = body.find('CASADIINC =')
+        string = body[index:].split('\n')[0]
+        body = body.replace(string, 'CASADIINC = /usr/local/include/casadi/')
+        index = body.find('CASADIOBJ =')
+        string = body[index:].split('\n')[0]
+        body = body.replace(
+            string, 'CASADIOBJ = ' + os.path.join(remote_root, 'MotionPlanning/src/'+mp_type+'/Toolbox/bin/'))
+        f2 = open(local_files[-1]+'_', 'w')
+        f2.write(body)
+        f2.close()
+    # send files
+    for lf, rf in zip(local_files, remote_files):
+        send_file(ftp, lf+'_', rf)
+        os.remove(lf+'_')
+
 
 if __name__ == "__main__":
     usage = ('''Usage: %prog [options] arg. There are 2 arguments:
@@ -105,11 +225,11 @@ if __name__ == "__main__":
         remote_root = args(1)
 
     local_files = [f for f in os.listdir(local_root)
-        if os.path.isfile(os.path.join(local_root, f)) ]
+                   if os.path.isfile(os.path.join(local_root, f))]
     local_dir = [d for d in os.listdir(local_root)
-        if os.path.isdir(os.path.join(local_root, d)) and d not in ignore ]
+                 if os.path.isdir(os.path.join(local_root, d)) and d not in ignore]
     components = [c for c in local_dir
-        if 'src' in os.listdir(os.path.join(local_root, c))]
+                  if 'src' in os.listdir(os.path.join(local_root, c))]
     comp_dir = [d for d in local_dir if d not in components]
 
     username = options.username
@@ -121,12 +241,12 @@ if __name__ == "__main__":
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-    for host in hosts:
-        print 'Host %s ...\n' % host
-        ssh.connect(host, username=username, password=password)
+    for host, address in hosts.items():
+        print 'Host %s' % host
+        ssh.connect(address, username=username, password=password)
         ftp = ssh.open_sftp()
         remote_dir = [d for d in ftp.listdir(remote_root) if 'd'
-            in str(ftp.lstat(os.path.join(remote_root, d))).split()[0]]
+                      in str(ftp.lstat(os.path.join(remote_root, d))).split()[0]]
 
         # Create unexisting components
         if options.createcomponents:
@@ -150,14 +270,15 @@ if __name__ == "__main__":
             ssh.exec_command('source ~/.bashrc')
 
         # Sending source files
-        print '\n'
-        print 'Sending source files'
+        print 'sending source files'
+        loc_files = []
+        rem_files = []
         for f in local_files:
             if f.endswith('.ops') or f.endswith('.lua'):
                 loc_file = os.path.join(local_root, f)
                 rem_file = os.path.join(remote_root, f)
-                send_file(ftp, loc_file, rem_file)
-
+                loc_files.append(loc_file)
+                rem_files.append(rem_file)
         for d in local_dir:
             loc_dir = os.path.join(local_root, d)
             rem_dir = os.path.join(remote_root, d)
@@ -165,10 +286,16 @@ if __name__ == "__main__":
                 loc_dir = os.path.join(loc_dir, 'src')
                 rem_dir = os.path.join(rem_dir, 'src')
             for dirpath, dirnames, filenames in os.walk(loc_dir):
-                for f in filenames:
-                    loc_file = os.path.join(dirpath, f)
-                    rem_file = loc_file.replace(local_root, remote_root)
-                    send_file(ftp, loc_file, rem_file)
+                if not (dirpath.endswith('bin') or dirpath.endswith('obj')):
+                    for f in filenames:
+                        loc_file = os.path.join(dirpath, f)
+                        rem_file = loc_file.replace(local_root, remote_root)
+                        loc_files.append(loc_file)
+                        rem_files.append(rem_file)
+        send_files(ftp, loc_files, rem_files)
+
+        # Adapt stuff for MotionPlanning component
+        mp_adaptations(ftp)
 
         # Build components
         if options.build:
@@ -190,3 +317,4 @@ if __name__ == "__main__":
                     print err
         ftp.close()
         ssh.close()
+    os.system('clear')
