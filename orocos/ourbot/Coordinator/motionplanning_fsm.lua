@@ -59,6 +59,7 @@ return rfsm.state {
         rfsm.send_events(fsm,'e_failed')
         return
       end
+      reference:start()
       print("System started. Abort by using Break.")
     end,
 
@@ -130,7 +131,7 @@ return rfsm.state {
       estimator:stop()
       reference:stop()
       controller:stop()
-      reporter:stop()
+      -- reporter:stop()
       print("System stopped. Waiting on Restart or Reset...")
     end,
   },

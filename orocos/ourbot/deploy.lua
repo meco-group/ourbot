@@ -12,8 +12,8 @@ _controller_type     = rtt.Property("string","controller","Controller component 
 _motionplanning_type = rtt.Property("string","motionplanning","MotionPlanning component to use")
 _velocitycmd_type    = rtt.Property("string","velocitycmd","VelocityCommand component to use (only for intern velocitycmd)")
 _index               = rtt.Property("int","index","Index number of agent")
-_neighbours          = rtt.Property("ints","neighbours","Index numbers of neighbouring agents")
-_distributed         = rtt.Property("bool","distributed","Distributed working?")
+_neighbors           = rtt.Property("ints","neighbors","Index numbers of neighbouring agents")
+_distributed_mp      = rtt.Property("bool","distributed_mp","Distributed motion planning?")
 _control_sample_rate = rtt.Property("double","control_sample_rate","Frequency to update the control loop")
 _pathupd_sample_rate = rtt.Property("double","pathupd_sample_rate","Frequency to update the path")
 _reporter_sample_rate= rtt.Property("double","reporter_sample_rate", "Frequency to take snapshots for the reporter")
@@ -25,8 +25,8 @@ tc:addProperty(_controller_type)
 tc:addProperty(_motionplanning_type)
 tc:addProperty(_velocitycmd_type)
 tc:addProperty(_index)
-tc:addProperty(_neighbours)
-tc:addProperty(_distributed)
+tc:addProperty(_neighbors)
+tc:addProperty(_distributed_mp)
 tc:addProperty(_control_sample_rate)
 tc:addProperty(_pathupd_sample_rate)
 tc:addProperty(_reporter_sample_rate)
@@ -49,19 +49,12 @@ function configureHook()
    motionplanning_type  = _motionplanning_type:get()
    velocitycmd_type     = _velocitycmd_type:get()
    index                = _index:get()
-   neighbours           = _neighbours:get()
-   distributed          = _distributed:get()
+   neighbors            = _neighbors:get()
+   distributed_mp       = _distributed_mp:get()
    control_sample_rate  = _control_sample_rate:get()
    pathupd_sample_rate  = _pathupd_sample_rate:get()
    io_sample_rate       = _io_sample_rate:get()
    reporter_sample_rate = _reporter_sample_rate:get()
-
-   --Define Reference type
-   if distributed==false then
-      reference_type = "Reference"
-   else
-      reference_type = "DistributedReference"
-   end
 
    --Create some variables referering to files
    coordinator_file  = 'Coordinator/coordinator.lua'
