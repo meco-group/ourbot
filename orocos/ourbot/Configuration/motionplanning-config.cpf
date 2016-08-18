@@ -5,4 +5,21 @@
     <description>Horizon to compute motion trajectory</description>
     <value>10.</value>
   </simple>
+<struct name="rel_pos_c" type="array">
+<description>Relative pose wrt fleet center</description>
+<simple name="Element0" type="double">
+  <value>0.</value>
+</simple>
+<simple name="Element1" type="double">
+  <value>0.</value>
+</simple>
+</struct>
+<simple name="init_iter" type="long">
+  <description>Number of initial ADMM iterations</description>
+  <value>5</value>
+</simple>
+<simple name="rho" type="double">
+  <description>Penalty factor for ADMM</description>
+  <value>2.</value>
+</simple>
 </properties>
