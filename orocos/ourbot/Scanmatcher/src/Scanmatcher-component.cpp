@@ -23,9 +23,9 @@ _enc_pose(3), _estimated_position_change(3), _covariance(9), _rows(3), _columns(
 	ports()->addPort( "cor_lidar_distance_port",_cor_lidar_distance_port).doc("Input port for corrected lidar node positions. Holds a vector of 100 distances [m]");
   ports()->addPort( "cor_lidar_angle_port",_cor_lidar_angle_port).doc("Input port for corrected lidar node positions. Holds a vector of 100 angles [rad]");
   ports()->addPort("cal_enc_pose_port",_cal_enc_pose_port).doc("Input port for calibrated encoder values. (x,y,orientation) in [m , m ,rad]");
-  ports()->addEventPort("trigger_scanmatcher_port", _trigger_scanmatcher_port).doc("Input port which triggers scanmatcher");
+  //ports()->addEventPort("trigger_scanmatcher_port", _trigger_scanmatcher_port).doc("Input port which triggers scanmatcher");
   //@@@Michiel: add extra output port with pose at start scan
-  ports()->addPort("scanstart_pose_port", _scanstart_pose_port).doc("Pose at start of a scan");
+  ports()->addEventPort("scanstart_pose_port", _scanstart_pose_port).doc("Pose at start of a scan");
 
   // OutputPorts
  	ports()->addPort( "scanmatch_pose_port", _scanmatch_pose_port).doc("Estimated position-change of scanmatcher in encoder-form [x,y,orientation]");
@@ -52,21 +52,31 @@ _enc_pose(3), _estimated_position_change(3), _covariance(9), _rows(3), _columns(
   addProperty("lidar_data_length", _lidar_data_length).doc("Length of the lidar data");
   addProperty("precision", _precision).doc("Precision used to compute artificial lidar");
 
+  loadEnvironment();
+
   std::cout << "Scanmatcher constructed !" <<std::endl;
 }
 
 bool Scanmatcher::configureHook(){
 	_available_lidar_distances.resize(_lidar_data_length);
 	_available_lidar_angles.resize(_lidar_data_length);
-  _prev_lidar_distances.resize((_lidar_data_length - _sensenumber)*_scans);
-  _prev_lidar_angles.resize((_lidar_data_length - _sensenumber)*_scans);
+  //_prev_lidar_distances.resize((_lidar_data_length - _sensenumber)*_scans);
+  //_prev_lidar_angles.resize((_lidar_data_length - _sensenumber)*_scans);
 	_lidar_distances.resize(_lidar_data_length- _sensenumber);
 	_lidar_angles.resize(_lidar_data_length- _sensenumber);
 
   _start_pose.resize(3);
 
-	std::fill(_prev_lidar_angles.begin(), _prev_lidar_angles.end(), 0);
-	std::fill(_prev_lidar_distances.begin(), _prev_lidar_distances.end(), 0);
+	//std::fill(_prev_lidar_angles.begin(), _prev_lidar_angles.end(), 0);
+	//std::fill(_prev_lidar_distances.begin(), _prev_lidar_distances.end(), 0);
+
+  //ici
+  _artificial_lidar_angles.resize(_lidar_data_length - _sensenumber);
+  _artificial_lidar_distances.resize(_lidar_data_length - _sensenumber);
+  for (int i = 0; i < _lidar_data_length - _sensenumber; i++){
+    _artificial_lidar_angles[i] = 2*M_PI*i/(_lidar_data_length -_sensenumber);
+  }
+  std::fill(_artificial_lidar_distances.begin(), _artificial_lidar_distances.end(), _max_sense_range);
 
   _scanmatch_pose_port.setDataSample(_estimated_position_change);
   std::vector<double> example(9, 0.0);
@@ -108,14 +118,7 @@ bool Scanmatcher::configureHook(){
   _lastX = 0;
   _lastY = 0;
   _lastTheta = 0;
-
-  loadEnvironment();
   
-
-  // TODO laten werken
-  //_environment_circles = std::vector<std::vector<double> _circle(3);> _cirlces;
-  //_environment_polygons = std::vector<std::vector<std::vector<double> _point(2);> _polygon;> _polygons;
-
   std::cout << "Scanmatcher configured !" <<std::endl;
   return true;
 }
@@ -128,12 +131,7 @@ bool Scanmatcher::startHook(){
 void Scanmatcher::updateHook(){
 
   std::cout << "Scanmatcher updateHook !" <<std::endl;
-
-  artificialLidar();
-
-  std::cout << "Scanmatcher artificialLidar passed !" <<std::endl;
   
-  /*
   int rays = _lidar_data_length - _sensenumber;
 	sm_result result;
 
@@ -209,24 +207,37 @@ void Scanmatcher::updateHook(){
         ls.laser_sens->valid[i] = 1;
       }
     }
+
+    //TODO waar data gebruiken?
+    artificialLidar();
+
+    std::cout << "artificial Lidar data created!" <<std::endl;
+
     // give ref distances and angles to sm-algorithm
   	double anglesref[rays*_scans];
     double distancesref[rays*_scans];
     for(int i= 0; i<rays*_scans; i++){
-        distancesref[i] = _prev_lidar_distances[i];
-        anglesref[i] = _prev_lidar_angles[i];
+        //distancesref[i] = _prev_lidar_distances[i];//ici
+        //anglesref[i] = _prev_lidar_angles[i];//ici
+        distancesref[i] = _artificial_lidar_distances[i];
+        anglesref[i] = _artificial_lidar_angles[i];
     }
-    quickSort(anglesref, distancesref, 0, _scans*rays-1);
+    /*quickSort(anglesref, distancesref, 0, _scans*rays-1);
     for(int i= 0; i< rays*_scans; i++){
      	ls.laser_ref->readings[i] = distancesref[i];
       ls.laser_ref->theta[i] = anglesref[i];
-      if(distancesref[i] > _max_sense_range){
+      if(distancesref[i] > _max_sense_range){//ici
         ls.laser_ref->valid[i] = 0;
       }
       else
       {
         ls.laser_ref->valid[i] = 1;
       }
+    }*/
+    for(int i=0; i< rays; i++){
+      ls.laser_ref->readings[i] = distancesref[i];
+      ls.laser_ref->theta[i] = anglesref[i];
+      ls.laser_ref->valid[i] = 1;
     }
 
     // information dependent settings
@@ -274,19 +285,19 @@ void Scanmatcher::updateHook(){
     _scanmatch_covariance_port.write(_covariance);
     _scanmatch_pose_port.write(_estimated_position_change);
 
-  	correctInformation(_prev_lidar_distances, _prev_lidar_angles, _estimated_position_change);
+  	//correctInformation(_prev_lidar_distances, _prev_lidar_angles, _estimated_position_change);
 
-  	for(int i=rays*(_scans-1); i< rays*_scans; i++){
+  	/*for(int i=rays*(_scans-1); i< rays*_scans; i++){
       _prev_lidar_distances[i] = _lidar_distances[i-rays*(_scans-1)];
       _prev_lidar_angles[i] = _lidar_angles[i-rays*(_scans-1)];
-    }
+    }*/
     ld_free(ls.laser_ref);
     ld_free(ls.laser_sens);
   }
   else {
     fprintf(stderr, "Scanmatcher got all zeros!");
   }
-  */
+  
 }
 
 void Scanmatcher::stopHook() {
@@ -382,6 +393,9 @@ void Scanmatcher::correctInformation(std::vector<double> laser_scan_distance, st
 
     // Ten laatste worden de x, y van de laserstraal nog omgezet naar een angle en een distance
 
+
+    //TODO: mag dit zeker weggelaten worden??
+    /*
     _prev_lidar_angles[i-(_lidar_data_length - _sensenumber)]  = atan2(y_new,x_new);
 
    	if (_prev_lidar_angles[i-(_lidar_data_length - _sensenumber)] > 2*M_PI)
@@ -391,7 +405,7 @@ void Scanmatcher::correctInformation(std::vector<double> laser_scan_distance, st
       	    _prev_lidar_angles[i-(_lidar_data_length - _sensenumber)] = _prev_lidar_angles[i-(_lidar_data_length - _sensenumber)] + 2*M_PI;
 
     _prev_lidar_distances[i-(_lidar_data_length - _sensenumber)]  = sqrt(x_new*x_new + y_new*y_new);
-
+    */
   }
 }
 
@@ -399,23 +413,25 @@ void Scanmatcher::artificialLidar(){
   // @@@TODO wel of geen rekening houden met beperkingen LIDAR?
   // eventueel cte aatal metingen -> angles wordt const vector.
   // welke hoek is theta
-  std::vector<double> _laser_distances(_lidar_data_length,_max_sense_range);
-  std::vector<double> _laser_angles;
 
-  _laser_angles.reserve(_lidar_data_length);
+  //ici
+  //std::vector<double> _laser_distances(_lidar_data_length,_max_sense_range);
+  //std::vector<double> _laser_angles;
+
+  //_laser_angles.reserve(_lidar_data_length);
   double angle;
   double intersect_distance;
 
   for(int i = 0; i < _lidar_data_length; i++){
     angle = 2*M_PI*i/_lidar_data_length + _start_pose[2];
-    _laser_angles[i] = angle;
+    //_laser_angles[i] = angle;
   
     for (unsigned int c = 0; c < _environment_circles.size(); c++){
 
       intersect_distance = getIntersectDistanceCircle(_environment_circles[c], angle);
 
-    	if (intersect_distance < _laser_distances[i]){
-    		_laser_distances[i] = intersect_distance;
+    	if (intersect_distance < _artificial_lidar_distances[i]){
+    		_artificial_lidar_distances[i] = intersect_distance;
     	}
     }
 
@@ -428,18 +444,18 @@ void Scanmatcher::artificialLidar(){
         	polygon.getYVertex(w), polygon.getXVertex((w+1)%polygonSize), 
           polygon.getYVertex((w+1)%polygonSize), angle);
 
-        if (intersect_distance < _laser_distances[i]){
-          _laser_distances[i] = intersect_distance;
+        if (intersect_distance < _artificial_lidar_distances[i]){
+          _artificial_lidar_distances[i] = intersect_distance;
         }
       }
     }
 
-    std::cout << "scan :" << i << "; angle :" << angle*180/3.141592 << "; distance :" << _laser_distances[i] <<std::endl;
+    std::cout << "scan :" << i << "; angle abs:" << angle*180/3.141592 << "; distance :" << _artificial_lidar_distances[i] << "; angle_rel: " << _artificial_lidar_angles[i] <<std::endl;
   }
 };
 
-double Scanmatcher::getIntersectDistanceLine(double const& x_a, double const& y_a, 
-										 double const& x_b, double const& y_b, double const& angle){
+double Scanmatcher::getIntersectDistanceLine(double x_a, double y_a, 
+										 double x_b, double y_b, double angle){
 	double determinant;
 	double tang;
 	double x_estimate;
@@ -479,7 +495,7 @@ double Scanmatcher::getIntersectDistanceLine(double const& x_a, double const& y_
 
 }
 
-double Scanmatcher::getIntersectDistanceCircle(Circle circle, double const& angle){
+double Scanmatcher::getIntersectDistanceCircle(Circle circle, double angle){
 
 	double x_estimate;
 	double y_estimate;
@@ -526,23 +542,23 @@ double Scanmatcher::getIntersectDistanceCircle(Circle circle, double const& angl
   return intersect_distance;
 }
 
-bool Scanmatcher::inRange(double const& boundarie_1, double const& boundarie_2, 
-  double const& value){
+bool Scanmatcher::inRange(double boundarie_1, double boundarie_2, 
+  double value){
 
   return (((greaterThan(boundarie_1, value)) && (smallerThan(boundarie_2, value))) ||
           ((smallerThan(boundarie_1, value)) && (greaterThan(boundarie_2, value))));
 }
 
-bool Scanmatcher::greaterThan(double const& boundarie, double const& value){
+bool Scanmatcher::greaterThan(double boundarie, double value){
   return (value > boundarie - _precision);
 }
 
-bool Scanmatcher::smallerThan(double const& boundarie, double const& value){
+bool Scanmatcher::smallerThan(double boundarie, double value){
   return (value < boundarie + _precision);
 }
 
-bool Scanmatcher::correctIntersection(double const& x, double const& y, 
-  double const& x_intersect, double const& y_intersect, double const& angle){
+bool Scanmatcher::correctIntersection(double x, double y, 
+  double x_intersect, double y_intersect, double angle){
 
   bool result;
 
