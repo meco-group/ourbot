@@ -19,8 +19,8 @@ local ports_to_report = {
 --Distributed ports to report
 local remote_ports_to_report = {
   -- controller        = {'cmd_velocity_port'},
-  estimator         = {'est_pose_port'}
-  -- reference         = {'ref_pose_port', 'ref_ffw_port'},
+  -- estimator         = {'est_pose_port'}
+  -- reference         = {'ref_pose_port', 'ref_velocity_port'}
   -- coordinator       = {'controlloop_duration', 'controlloop_jitter'},
   -- io                = {--'cal_lidar_node_port',
   --                     -- 'cal_imul_transacc_port',
@@ -162,7 +162,7 @@ return rfsm.state {
         -- write Data Sample for remote CORBA ports except io container and coordinator
         for i=0,peers.size-1 do
           for j,name in pairs(remote_components_to_load) do
-            if not (name == 'coordinator'..peers[i] or name == 'io'..peers[i]) then
+            if not (string.sub(name, 0, 11) == 'coordinator' or string.sub(name, 0, 2) == 'io') then
               writeSample = remote_components[name]:getOperation("writeSample")
               writeSample()
             end

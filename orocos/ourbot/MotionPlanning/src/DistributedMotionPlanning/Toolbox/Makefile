@@ -21,11 +21,11 @@
 #------------------------------------------------------------------------------
 # Change this
 #------------------------------------------------------------------------------
-CASADILIB = /usr/local/lib/
-CASADIINC = /usr/local/include/casadi/
-CASADIOBJ = /home/odroid/orocos/MotionPlanning/src/Toolbox/bin/
-SOURCEFILES = example.cpp Holonomic.cpp
-EXECUTABLE = Point2Point
+CASADILIB = /home/ruben/Documents/Work/Repositories/casadi_binary/casadi/
+CASADIINC = /home/ruben/Documents/Work/Repositories/casadi_binary/include/
+CASADIOBJ = /home/ourbot/orocos/ourbot/MotionPlanning/src/DistributedMotionPlanning/Toolbox/bin/
+SOURCEFILES = test.cpp Holonomic.cpp
+EXECUTABLE = FormationPoint2Point
 #------------------------------------------------------------------------------
 
 CXX = g++
@@ -35,9 +35,9 @@ LIBDIR = $(CASADILIB)
 CXXFLAGS = -I$(INCDIR) -DUSE_CXX11 -std=c++11 -fPIC -std=c++11 -DCASADIOBJ="\"$(CASADIOBJ)\""
 CFLAGS = -fPIC -shared -std=c99
 LDFLAGS = -L$(LIBDIR) -lcasadi -lstdc++ -lcasadi -Wl,-rpath $(LIBDIR)
-PROBSOURCES = nlp.c hess_lag.c grad_f.c jac_g.c
+PROBSOURCES = subst_fleet_center1.c subst_fleet_center0.c updx.c updz.c updl.c updres.c
 PROBOBJECTS = $(PROBSOURCES:.c=.so)
-SOURCES = $(SOURCEFILES) Point2Point.cpp Vehicle.cpp
+SOURCES = $(SOURCEFILES) FormationPoint2Point.cpp ADMMPoint2Point.cpp Point2Point.cpp Vehicle.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
 LIB = libomg.so
 SRCDIR = src

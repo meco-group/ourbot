@@ -9,7 +9,7 @@ orocos/*/*/Makefile
 orocos/*/*/manifest.xml
 orocos/ourbot/MotionPlanning/src/Toolbox/bin/
 orocos/ourbot/MotionPlanning/src/Toolbox/obj/
-orocos/*/reports.nc
+*.nc
 *.log
 *.ior
 *~

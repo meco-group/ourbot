@@ -2,7 +2,9 @@
 #include <iostream>
 #include <math.h>
 
-GamePad::GamePad(std::string const& name):USBInterface(name), _gamepad_laxis(2), _gamepad_raxis(2), _cmd_velocity(3), _filter_state(3, 0.0), _filter_bandwidth(2)
+GamePad::GamePad(std::string const& name):USBInterface(name),
+_gamepad_laxis(2), _gamepad_raxis(2), _cmd_velocity(3),
+_filter_state(3, 0.0), _filter_bandwidth(2), _enable_velcmd(false)
 {
   ports()->addPort("gamepad_laxis_port", _gamepad_laxis_port).doc("X and Y value for left axis");
   ports()->addPort("gamepad_raxis_port", _gamepad_raxis_port).doc("X and Y value for right axis");
@@ -26,6 +28,8 @@ GamePad::GamePad(std::string const& name):USBInterface(name), _gamepad_laxis(2),
   ports()->addPort("cmd_velocity_port", _cmd_velocity_port).doc("Velocity command for actuator");
 
   addOperation("setVelocity", &GamePad::setVelocity, this).doc("Set velocity cmd manually");
+  addOperation("enableVelocityCmd", &GamePad::enableVelocityCmd, this).doc("Enable writing of cmd_velocity_port");
+  addOperation("disableVelocityCmd", &GamePad::disableVelocityCmd, this).doc("Disable writing of cmd_velocity_port");
   addProperty("max_velocity", _max_velocity);
   addProperty("max_omega", _max_omega);
   addProperty("velcmd_sample_rate", _velcmd_sample_rate).doc("Frequency to update velocity commander");
@@ -123,7 +127,9 @@ void GamePad::writePorts()
   _gamepad_up_port.write(_gamepad_up);
   _gamepad_down_port.write(_gamepad_down);
   // velocity command
-  _cmd_velocity_port.write(_cmd_velocity);
+  if (_enable_velcmd){
+    _cmd_velocity_port.write(_cmd_velocity);
+  }
 }
 
 void GamePad::decodeButtons()
@@ -254,4 +260,11 @@ void GamePad::setVelocity(double vx, double vy, double w){
   _cmd_velocity[2] = w;
 }
 
+void GamePad::enableVelocityCmd(){
+  _enable_velcmd = true;
+}
+
+void GamePad::disableVelocityCmd(){
+  _enable_velcmd = false;
+}
 ORO_LIST_COMPONENT_TYPE(GamePad)

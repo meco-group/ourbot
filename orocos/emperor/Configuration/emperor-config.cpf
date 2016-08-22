@@ -8,6 +8,9 @@
   <struct name="peers" type="ints">
     <description>Index numbers of peer agents</description>
     <simple name="Element0" type="long">
+      <value>0</value>
+    </simple>
+    <simple name="Element1" type="long">
       <value>1</value>
     </simple>
   </struct>

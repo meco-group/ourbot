@@ -28,12 +28,21 @@ using namespace casadi;
 
 namespace omg{
 
-Point2Point::Point2Point(Vehicle* vehicle, double update_time, double sample_time, double horizon_time, int trajectory_length):
-parameters(N_PAR), variables(N_VAR), lbg(LBG_DEF), ubg(UBG_DEF), time(trajectory_length+1),
-state_trajectory(trajectory_length+1, vector<double>(vehicle->getNState())),
-input_trajectory(trajectory_length+1, vector<double>(vehicle->getNInput())) {
+Point2Point::Point2Point(Vehicle* vehicle,
+    double update_time, double sample_time, double horizon_time, int trajectory_length, bool initialize):
+parameters(N_PAR), variables(N_VAR), lbg(LBG_DEF), ubg(UBG_DEF) {
     if (trajectory_length > int(horizon_time/sample_time)){
-        cerr << "trajectory_length too large!" << endl;
+        cerr << "trajectory_length > (horizon_time/sample_time)!" << endl;
+    }
+    if (trajectory_length > int(update_time/sample_time)){
+        time.resize(trajectory_length+1);
+        state_trajectory.resize(trajectory_length+1, vector<double>(vehicle->getNState()));
+        input_trajectory.resize(trajectory_length+1, vector<double>(vehicle->getNInput()));
+    }
+    else {
+        time.resize(int(update_time/sample_time)+1);
+        state_trajectory.resize(int(update_time/sample_time)+1, vector<double>(vehicle->getNState()));
+        input_trajectory.resize(int(update_time/sample_time)+1, vector<double>(vehicle->getNInput()));
     }
     this->vehicle = vehicle;
     this->update_time = update_time;
@@ -43,7 +52,24 @@ input_trajectory(trajectory_length+1, vector<double>(vehicle->getNInput())) {
     for (int k=0; k<time.size(); k++){
         time[k] = k*sample_time;
     }
+    if (initialize){
+        this->initialize();
+    }
+}
+
+Point2Point::Point2Point(Vehicle* vehicle,
+    double update_time, double sample_time, double horizon_time):
+Point2Point(vehicle, update_time, sample_time, horizon_time, int(update_time/sample_time), true){
+}
+
+Point2Point::Point2Point(Vehicle* vehicle,
+    double update_time, double sample_time, double horizon_time, int trajectory_length):
+Point2Point(vehicle, update_time, sample_time, horizon_time, trajectory_length, true){
+}
+
+void Point2Point::initialize(){
     generateProblem();
+    generateSubstituteFunctions();
     args["p"] = parameters;
     args["x0"] = variables;
     args["lbg"] = lbg;
@@ -51,45 +77,36 @@ input_trajectory(trajectory_length+1, vector<double>(vehicle->getNInput())) {
     initSplines();
 }
 
-Point2Point::Point2Point(Vehicle* vehicle, double update_time, double sample_time, double horizon_time):Point2Point(vehicle, update_time, sample_time, horizon_time, int(update_time/sample_time)){
-}
-
 void Point2Point::generateProblem(){
-    // change pwd to CASADIOBJ
-    char cwd[1024];
-    getcwd(cwd, sizeof(cwd));
-    chdir(CASADIOBJ);
-    // load object files
-    ExternalFunction grad_f("grad_f");
-    ExternalFunction jac_g("jac_g");
-    ExternalFunction hess_lag("hess_lag");
-    ExternalFunction nlp("nlp");
-    // change back to original pwd
-    chdir(cwd);
+    string obj_path = CASADIOBJ;
     // set options
     Dict options;
-    options["grad_f"] = grad_f;
-    options["jac_g"] = jac_g;
-    options["jac_g"] = jac_g;
-    options["hess_lag"] = hess_lag;
-    options["print_level"] = 0;
+    options["ipopt.print_level"] = 0;
     options["print_time"] = 0;
-    options["tol"] = TOL;
-    options["linear_solver"] = LINEAR_SOLVER;
-    options["warm_start_init_point"] = "yes";
+    options["ipopt.tol"] = TOL;
+    options["ipopt.linear_solver"] = LINEAR_SOLVER;
+    options["ipopt.warm_start_init_point"] = "yes";
     // create nlp solver
-    NlpSolver problem("problem", "ipopt", nlp, options);
-    this->problem = problem;
+    this->problem = nlpsol("problem", "ipopt", obj_path+"/nlp.so", options);
+}
+
+void Point2Point::generateSubstituteFunctions(){
+	string obj_path = CASADIOBJ;
+	substitutes["fleet_center1"] = external("fleet_center1", obj_path+"/subst_fleet_center1.so");
+	substitutes["fleet_center0"] = external("fleet_center0", obj_path+"/subst_fleet_center0.so");
+
 }
 
 void Point2Point::initSplines(){
 	splines_tf["splines0"] = SPLINES0_TF;
-	splines_tf["b01"] = B01_TF;
-	splines_tf["b00"] = B00_TF;
-	splines_tf["a00"] = A00_TF;
-	splines_tf["a01"] = A01_TF;
-	splines_tf["g1"] = G1_TF;
 	splines_tf["g0"] = G0_TF;
+	splines_tf["g1"] = G1_TF;
+	splines_tf["a_vehicle0_00"] = A_VEHICLE0_00_TF;
+	splines_tf["b_vehicle0_00"] = B_VEHICLE0_00_TF;
+	splines_tf["a_vehicle0_01"] = A_VEHICLE0_01_TF;
+	splines_tf["b_vehicle0_01"] = B_VEHICLE0_01_TF;
+	splines_tf["xvar_fleet_center0"] = XVAR_FLEET_CENTER0_TF;
+	splines_tf["xvar_fleet_center1"] = XVAR_FLEET_CENTER1_TF;
 
 }
 
@@ -101,11 +118,18 @@ void Point2Point::reset(){
     }
 }
 
-bool Point2Point::update(vector<double>& condition0, vector<double>& conditionT, vector<vector<double>>& state_trajectory, vector<vector<double>>& input_trajectory, vector<obstacle_t>& obstacles){
+void Point2Point::resetTime(){
+    current_time = 0.0;
+}
+
+bool Point2Point::update(vector<double>& condition0, vector<double>& conditionT,
+    vector<vector<double>>& state_trajectory, vector<vector<double>>& input_trajectory, vector<obstacle_t>& obstacles){
     update(condition0, conditionT, state_trajectory, input_trajectory, obstacles, 0);
 }
 
-bool Point2Point::update(vector<double>& state0, vector<double>& conditionT, vector<vector<double>>& state_trajectory, vector<vector<double>>& input_trajectory, vector<obstacle_t>& obstacles, int predict_shift){
+bool Point2Point::update(vector<double>& condition0, vector<double>& conditionT,
+    vector<vector<double>>& state_trajectory, vector<vector<double>>& input_trajectory,
+    vector<obstacle_t>& obstacles, int predict_shift){
     #ifdef DEBUG
     double tmeas;
     clock_t begin;
@@ -136,9 +160,9 @@ bool Point2Point::update(vector<double>& state0, vector<double>& conditionT, vec
     begin = clock();
     #endif
     if (fabs(current_time)<=1.e-6){
-        vehicle->setInitialConditions(state0);
+        vehicle->setInitialConditions(condition0);
     } else{
-        vehicle->predict(state0, this->state_trajectory, this->input_trajectory, update_time, sample_time, predict_shift);
+        vehicle->predict(condition0, this->state_trajectory, this->input_trajectory, update_time, sample_time, predict_shift);
     }
     #ifdef DEBUG
     end = clock();
@@ -159,14 +183,14 @@ bool Point2Point::update(vector<double>& state0, vector<double>& conditionT, vec
     #ifdef DEBUG
     begin = clock();
     #endif
-    retrieveTrajectories();
+    extractData();
     #ifdef DEBUG
     end = clock();
     tmeas = double(end-begin)/CLOCKS_PER_SEC;
-    cout << "time in retrieveTrajectories: " << tmeas << "s" << endl;
+    cout << "time in extractData: " << tmeas << "s" << endl;
     #endif
-    // ref state and input for system are one sample shorter!!
-    for (int k=0; k<time.size()-1; k++){
+    // write output state and input trajectory
+    for (int k=0; k<trajectory_length; k++){
         for (int j=0; j<state_trajectory[0].size(); j++){
             state_trajectory[k][j] = this->state_trajectory[k][j];
         }
@@ -191,7 +215,7 @@ bool Point2Point::solve(vector<obstacle_t>& obstacles){
     args["lbg"] = lbg;
     args["ubg"] = ubg;
     sol = problem(args);
-    solver_output = string(problem.getStats().at("return_status"));
+    solver_output = string(problem.stats().at("return_status"));
     vector<double> var(sol.at("x"));
     for (int k=0; k<n_var; k++){
         variables[k] = var[k];
@@ -216,20 +240,25 @@ void Point2Point::initVariables(){
             init_var_veh_vec[k*len_basis+j] = init_var_veh[k][j];
         }
     }
-    var_dict["vehicle0"]["splines0"] = init_var_veh_vec;
+    var_dict[VEHICLELBL]["splines0"] = init_var_veh_vec;
     getVariableVector(variables, var_dict);
 }
 
 void Point2Point::setParameters(vector<obstacle_t>& obstacles){
     map<string, map<string, vector<double>>> par_dict;
+    fillParameterDict(obstacles, par_dict);
+    getParameterVector(parameters, par_dict);
+}
+
+void Point2Point::fillParameterDict(vector<obstacle_t>& obstacles, map<string, map<string, vector<double>>>& par_dict){
     map<string, vector<double>> par_dict_veh;
     vehicle->setParameters(par_dict_veh);
-    par_dict["vehicle0"] = par_dict_veh;
+    par_dict[VEHICLELBL] = par_dict_veh;
     if (!freeT){
-        par_dict["p2p0"]["t"] = {fmod(round(current_time*1000.)/1000., horizon_time/(vehicle->getKnotIntervals()))};
-        par_dict["p2p0"]["T"] = {horizon_time};
+        par_dict[P2PLBL]["t"] = {fmod(round(current_time*1000.)/1000., horizon_time/(vehicle->getKnotIntervals()))};
+        par_dict[P2PLBL]["T"] = {horizon_time};
     } else{
-        par_dict["p2p0"]["t"] = {0.0};
+        par_dict[P2PLBL]["t"] = {0.0};
     }
     for (int k=0; k<n_obs; k++){
         vector<double> x_obs(n_dim);
@@ -240,19 +269,20 @@ void Point2Point::setParameters(vector<obstacle_t>& obstacles){
             v_obs[i] = obstacles[k].velocity[i];
             a_obs[i] = obstacles[k].acceleration[i];
         }
-        par_dict["obstacle"+to_string(k)]["x"] = x_obs;
-        par_dict["obstacle"+to_string(k)]["v"] = v_obs;
-        par_dict["obstacle"+to_string(k)]["a"] = a_obs;
+        string obstacles [N_OBS] = OBSTACLELBLS;
+        par_dict[obstacles[k]]["x"] = x_obs;
+        par_dict[obstacles[k]]["v"] = v_obs;
+        par_dict[obstacles[k]]["a"] = a_obs;
     }
-    getParameterVector(parameters, par_dict);
 }
 
-void Point2Point::retrieveTrajectories(){
+void Point2Point::extractData(){
     map<string, map<string, vector<double>>> var_dict;
     getVariableDict(variables, var_dict);
-    vector<double> spline_coeffs_vec(var_dict["vehicle0"]["splines0"]);
+    vector<double> spline_coeffs_vec(var_dict[VEHICLELBL]["splines0"]);
+    vehicle->setKnotHorizon(horizon_time);
     if (freeT){
-        horizon_time = var_dict["p2p0"]["T"][0];
+        horizon_time = var_dict[P2PLBL]["T"][0];
     }
     vehicle->setKnotHorizon(horizon_time);
     int n_spl = vehicle->getNSplines();
@@ -263,6 +293,10 @@ void Point2Point::retrieveTrajectories(){
             spline_coeffs[k][j] = spline_coeffs_vec[k*len_basis+j];
         }
     }
+    retrieveTrajectories(spline_coeffs);
+}
+
+void Point2Point::retrieveTrajectories(vector<vector<double>>& spline_coeffs){
     vector<double> time(this->time);
     if (!freeT){
         for (int k=0; k<time.size(); k++){
@@ -273,36 +307,51 @@ void Point2Point::retrieveTrajectories(){
     vehicle->splines2Input(spline_coeffs, time, input_trajectory);
 }
 
-
 void Point2Point::getParameterVector(vector<double>& par_vect, map<string, map<string, vector<double>>>& par_dict){
 	for (int i=0; i<2; i++){
-		par_vect[0+i] = par_dict["vehicle0"]["input0"][i];
+		par_vect[0+i] = par_dict["vehicle0"]["rel_pos_c"][i];
 	}
 	for (int i=0; i<2; i++){
 		par_vect[2+i] = par_dict["vehicle0"]["state0"][i];
 	}
 	for (int i=0; i<2; i++){
-		par_vect[4+i] = par_dict["vehicle0"]["positionT"][i];
+		par_vect[4+i] = par_dict["vehicle0"]["input0"][i];
 	}
 	for (int i=0; i<2; i++){
-		par_vect[6+i] = par_dict["obstacle0"]["a"][i];
+		par_vect[6+i] = par_dict["vehicle0"]["positionT"][i];
+	}
+	par_vect[8] = par_dict["p2p0"]["T"][0];
+	par_vect[9] = par_dict["p2p0"]["t"][0];
+	for (int i=0; i<26; i++){
+		par_vect[10+i] = par_dict["admm0"]["z_i"][i];
+	}
+	for (int i=0; i<52; i++){
+		par_vect[36+i] = par_dict["admm0"]["z_ji"][i];
+	}
+	for (int i=0; i<26; i++){
+		par_vect[88+i] = par_dict["admm0"]["l_i"][i];
+	}
+	for (int i=0; i<52; i++){
+		par_vect[114+i] = par_dict["admm0"]["l_ji"][i];
+	}
+	par_vect[166] = par_dict["admm0"]["rho"][0];
+	for (int i=0; i<2; i++){
+		par_vect[167+i] = par_dict["obstacle2"]["x"][i];
 	}
 	for (int i=0; i<2; i++){
-		par_vect[8+i] = par_dict["obstacle0"]["x"][i];
+		par_vect[169+i] = par_dict["obstacle2"]["v"][i];
 	}
 	for (int i=0; i<2; i++){
-		par_vect[10+i] = par_dict["obstacle0"]["v"][i];
-	}
-	par_vect[12] = par_dict["p2p0"]["T"][0];
-	par_vect[13] = par_dict["p2p0"]["t"][0];
-	for (int i=0; i<2; i++){
-		par_vect[14+i] = par_dict["obstacle1"]["a"][i];
+		par_vect[171+i] = par_dict["obstacle2"]["a"][i];
 	}
 	for (int i=0; i<2; i++){
-		par_vect[16+i] = par_dict["obstacle1"]["x"][i];
+		par_vect[173+i] = par_dict["obstacle3"]["x"][i];
 	}
 	for (int i=0; i<2; i++){
-		par_vect[18+i] = par_dict["obstacle1"]["v"][i];
+		par_vect[175+i] = par_dict["obstacle3"]["v"][i];
+	}
+	for (int i=0; i<2; i++){
+		par_vect[177+i] = par_dict["obstacle3"]["a"][i];
 	}
 
 }
@@ -315,43 +364,45 @@ void Point2Point::getVariableVector(vector<double>& var_vect, map<string, map<st
 			}
 		}
 	}
-	if (var_dict.find("obstacle0") != var_dict.end()){
-	}
-	if (var_dict.find("environment0") != var_dict.end()){
-		if (var_dict["environment0"].find("b01") != var_dict["environment0"].end()){
-			for (int i=0; i<11; i++){
-				var_vect[26+i] = var_dict["environment0"]["b01"][i];
-			}
-		}
-		if (var_dict["environment0"].find("b00") != var_dict["environment0"].end()){
-			for (int i=0; i<11; i++){
-				var_vect[37+i] = var_dict["environment0"]["b00"][i];
-			}
-		}
-		if (var_dict["environment0"].find("a00") != var_dict["environment0"].end()){
-			for (int i=0; i<22; i++){
-				var_vect[48+i] = var_dict["environment0"]["a00"][i];
-			}
-		}
-		if (var_dict["environment0"].find("a01") != var_dict["environment0"].end()){
-			for (int i=0; i<22; i++){
-				var_vect[70+i] = var_dict["environment0"]["a01"][i];
-			}
-		}
-	}
 	if (var_dict.find("p2p0") != var_dict.end()){
-		if (var_dict["p2p0"].find("g1") != var_dict["p2p0"].end()){
-			for (int i=0; i<13; i++){
-				var_vect[92+i] = var_dict["p2p0"]["g1"][i];
-			}
-		}
 		if (var_dict["p2p0"].find("g0") != var_dict["p2p0"].end()){
 			for (int i=0; i<13; i++){
-				var_vect[105+i] = var_dict["p2p0"]["g0"][i];
+				var_vect[26+i] = var_dict["p2p0"]["g0"][i];
+			}
+		}
+		if (var_dict["p2p0"].find("g1") != var_dict["p2p0"].end()){
+			for (int i=0; i<13; i++){
+				var_vect[39+i] = var_dict["p2p0"]["g1"][i];
 			}
 		}
 	}
-	if (var_dict.find("obstacle1") != var_dict.end()){
+	if (var_dict.find("environment1") != var_dict.end()){
+		if (var_dict["environment1"].find("a_vehicle0_00") != var_dict["environment1"].end()){
+			for (int i=0; i<22; i++){
+				var_vect[52+i] = var_dict["environment1"]["a_vehicle0_00"][i];
+			}
+		}
+		if (var_dict["environment1"].find("b_vehicle0_00") != var_dict["environment1"].end()){
+			for (int i=0; i<11; i++){
+				var_vect[74+i] = var_dict["environment1"]["b_vehicle0_00"][i];
+			}
+		}
+		if (var_dict["environment1"].find("a_vehicle0_01") != var_dict["environment1"].end()){
+			for (int i=0; i<22; i++){
+				var_vect[85+i] = var_dict["environment1"]["a_vehicle0_01"][i];
+			}
+		}
+		if (var_dict["environment1"].find("b_vehicle0_01") != var_dict["environment1"].end()){
+			for (int i=0; i<11; i++){
+				var_vect[107+i] = var_dict["environment1"]["b_vehicle0_01"][i];
+			}
+		}
+	}
+	if (var_dict.find("admm0") != var_dict.end()){
+	}
+	if (var_dict.find("obstacle2") != var_dict.end()){
+	}
+	if (var_dict.find("obstacle3") != var_dict.end()){
 	}
 
 }
@@ -362,36 +413,36 @@ void Point2Point::getVariableDict(vector<double>& var_vect, map<string, map<stri
 		vec[i] = var_vect[0+i];
 	}
 	var_dict["vehicle0"]["splines0"] = vec;
-	vec.resize(11);
-	for (int i=0; i<11; i++){
+	vec.resize(13);
+	for (int i=0; i<13; i++){
 		vec[i] = var_vect[26+i];
 	}
-	var_dict["environment0"]["b01"] = vec;
-	vec.resize(11);
-	for (int i=0; i<11; i++){
-		vec[i] = var_vect[37+i];
-	}
-	var_dict["environment0"]["b00"] = vec;
-	vec.resize(22);
-	for (int i=0; i<22; i++){
-		vec[i] = var_vect[48+i];
-	}
-	var_dict["environment0"]["a00"] = vec;
-	vec.resize(22);
-	for (int i=0; i<22; i++){
-		vec[i] = var_vect[70+i];
-	}
-	var_dict["environment0"]["a01"] = vec;
+	var_dict["p2p0"]["g0"] = vec;
 	vec.resize(13);
 	for (int i=0; i<13; i++){
-		vec[i] = var_vect[92+i];
+		vec[i] = var_vect[39+i];
 	}
 	var_dict["p2p0"]["g1"] = vec;
-	vec.resize(13);
-	for (int i=0; i<13; i++){
-		vec[i] = var_vect[105+i];
+	vec.resize(22);
+	for (int i=0; i<22; i++){
+		vec[i] = var_vect[52+i];
 	}
-	var_dict["p2p0"]["g0"] = vec;
+	var_dict["environment1"]["a_vehicle0_00"] = vec;
+	vec.resize(11);
+	for (int i=0; i<11; i++){
+		vec[i] = var_vect[74+i];
+	}
+	var_dict["environment1"]["b_vehicle0_00"] = vec;
+	vec.resize(22);
+	for (int i=0; i<22; i++){
+		vec[i] = var_vect[85+i];
+	}
+	var_dict["environment1"]["a_vehicle0_01"] = vec;
+	vec.resize(11);
+	for (int i=0; i<11; i++){
+		vec[i] = var_vect[107+i];
+	}
+	var_dict["environment1"]["b_vehicle0_01"] = vec;
 
 }
 
@@ -414,72 +465,73 @@ void Point2Point::transformSplines(double current_time){
 			}
 		}
 		for(int k=0; k<1; k++){
-			for(int i=0; i<11; i++){
+			for(int i=0; i<13; i++){
 			spline_tf[i] = 0.0;
-				for(int j=0; j<11; j++){
-					spline_tf[i] += splines_tf["b01"][i][j]*variables[26+k*11+j];
+				for(int j=0; j<13; j++){
+					spline_tf[i] += splines_tf["g0"][i][j]*variables[13+k*13+j];
 				}
 			}
-			for(int i=0; i<11; i++){
-				variables[26+k*11+i] = spline_tf[i];
-			}
-		}
-		for(int k=0; k<1; k++){
-			for(int i=0; i<11; i++){
-			spline_tf[i] = 0.0;
-				for(int j=0; j<11; j++){
-					spline_tf[i] += splines_tf["b00"][i][j]*variables[37+k*11+j];
-				}
-			}
-			for(int i=0; i<11; i++){
-				variables[37+k*11+i] = spline_tf[i];
-			}
-		}
-		for(int k=0; k<2; k++){
-			for(int i=0; i<11; i++){
-			spline_tf[i] = 0.0;
-				for(int j=0; j<11; j++){
-					spline_tf[i] += splines_tf["a00"][i][j]*variables[48+k*11+j];
-				}
-			}
-			for(int i=0; i<11; i++){
-				variables[48+k*11+i] = spline_tf[i];
-			}
-		}
-		for(int k=0; k<2; k++){
-			for(int i=0; i<11; i++){
-			spline_tf[i] = 0.0;
-				for(int j=0; j<11; j++){
-					spline_tf[i] += splines_tf["a01"][i][j]*variables[70+k*11+j];
-				}
-			}
-			for(int i=0; i<11; i++){
-				variables[70+k*11+i] = spline_tf[i];
+			for(int i=0; i<13; i++){
+				variables[13+k*13+i] = spline_tf[i];
 			}
 		}
 		for(int k=0; k<1; k++){
 			for(int i=0; i<13; i++){
 			spline_tf[i] = 0.0;
 				for(int j=0; j<13; j++){
-					spline_tf[i] += splines_tf["g1"][i][j]*variables[92+k*13+j];
+					spline_tf[i] += splines_tf["g1"][i][j]*variables[26+k*13+j];
 				}
 			}
 			for(int i=0; i<13; i++){
-				variables[92+k*13+i] = spline_tf[i];
+				variables[26+k*13+i] = spline_tf[i];
+			}
+		}
+		for(int k=0; k<2; k++){
+			for(int i=0; i<11; i++){
+			spline_tf[i] = 0.0;
+				for(int j=0; j<11; j++){
+					spline_tf[i] += splines_tf["a_vehicle0_00"][i][j]*variables[39+k*11+j];
+				}
+			}
+			for(int i=0; i<11; i++){
+				variables[39+k*11+i] = spline_tf[i];
 			}
 		}
 		for(int k=0; k<1; k++){
-			for(int i=0; i<13; i++){
+			for(int i=0; i<11; i++){
 			spline_tf[i] = 0.0;
-				for(int j=0; j<13; j++){
-					spline_tf[i] += splines_tf["g0"][i][j]*variables[105+k*13+j];
+				for(int j=0; j<11; j++){
+					spline_tf[i] += splines_tf["b_vehicle0_00"][i][j]*variables[50+k*11+j];
 				}
 			}
-			for(int i=0; i<13; i++){
-				variables[105+k*13+i] = spline_tf[i];
+			for(int i=0; i<11; i++){
+				variables[50+k*11+i] = spline_tf[i];
+			}
+		}
+		for(int k=0; k<2; k++){
+			for(int i=0; i<11; i++){
+			spline_tf[i] = 0.0;
+				for(int j=0; j<11; j++){
+					spline_tf[i] += splines_tf["a_vehicle0_01"][i][j]*variables[61+k*11+j];
+				}
+			}
+			for(int i=0; i<11; i++){
+				variables[61+k*11+i] = spline_tf[i];
+			}
+		}
+		for(int k=0; k<1; k++){
+			for(int i=0; i<11; i++){
+			spline_tf[i] = 0.0;
+				for(int j=0; j<11; j++){
+					spline_tf[i] += splines_tf["b_vehicle0_01"][i][j]*variables[72+k*11+j];
+				}
+			}
+			for(int i=0; i<11; i++){
+				variables[72+k*11+i] = spline_tf[i];
 			}
 		}
 	}
+
 }
 
 

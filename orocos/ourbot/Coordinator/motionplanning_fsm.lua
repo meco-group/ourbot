@@ -59,14 +59,14 @@ return rfsm.state {
         rfsm.send_events(fsm,'e_failed')
         return
       end
+      reference:start()
       print("System started. Abort by using Break.")
     end,
 
     doo = function(fsm)
-      period     = tc:getPeriod()
-      report_rate = 10
       snapshot_cnt = 0
-      max_cnt = 1/(report_rate*period)
+      period = tc:getPeriod()
+      max_cnt = 1/(reporter_sample_rate*period)
       start_time = get_sec()
       prev_start_time = start_time
       end_time   = start_time
@@ -131,7 +131,7 @@ return rfsm.state {
       estimator:stop()
       reference:stop()
       controller:stop()
-      reporter:stop()
+      -- reporter:stop()
       print("System stopped. Waiting on Restart or Reset...")
     end,
   },

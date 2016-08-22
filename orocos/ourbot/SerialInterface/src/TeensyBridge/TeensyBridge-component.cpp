@@ -471,7 +471,7 @@ void TeensyBridge::addIMUPorts(TaskContext* comp, const std::string insertion, c
 		if(getPort(port_name) == NULL){
 			//Port not yet in use: we can add it to the container components ports
 			addPort(port_name, (**port));
-			std::cout << port_name << " added as port." << std::endl;
+			// std::cout << port_name << " added as port." << std::endl;
 		} else {
 			RTT::log(RTT::Warning) << "Could not add port " + port_name + " because it is already in use." << RTT::endlog();
 		}

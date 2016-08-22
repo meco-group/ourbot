@@ -1,4 +1,4 @@
-#define DEBUG
+// #define DEBUG
 
 #include "Reference-component.hpp"
 #include <rtt/Component.hpp>
@@ -50,12 +50,10 @@ bool Reference::configureHook(){
     _nxt_ref_pose_trajectory[i].resize(_trajectory_length);
     _nxt_ref_velocity_trajectory[i].resize(_trajectory_length);
   }
-
   // Show example data sample to ports to make data flow real-time
   std::vector<double> example(3, 0.0);
   _ref_pose_port.setDataSample(example);
   _ref_velocity_port.setDataSample(example);
-
   // Reset index & checks
   _index1 = 0;
   _index2 = 0;
@@ -72,6 +70,12 @@ bool Reference::startHook(){
   for(int i=0; i<3; i++){
     _con_ref_pose_trajectory[i] = _ref_pose_trajectory_port[i].connected();
     _con_ref_velocity_trajectory[i] = _ref_velocity_trajectory_port[i].connected();
+    if (!_con_ref_pose_trajectory[i]){
+      log(Warning) << "ref_pose_trajectory_port is not connected at index "<<i<<"!" <<endlog();
+    }
+    if (!_con_ref_velocity_trajectory[i]){
+      log(Warning) << "ref_velocity_trajectory_port is not connected at index "<<i<<"!" <<endlog();
+    }
   }
   _just_started = true;
   std::cout << "Reference started !" <<std::endl;
