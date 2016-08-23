@@ -7,7 +7,11 @@ Robot::Robot() :
     _omega(0),
     _width(0),
     _length(0),
-    _radius(0)
+    _radius(0),
+    _roi{0},
+    _bottomMarkers{0},
+    _topMarker{0},
+    _marker{}
 {
      
 }
@@ -55,6 +59,23 @@ void Robot::setRadius(int radius)
 {
     _radius = radius;
 }
+void Robot::setRoi(int x, int y){
+    _roi[0] = x;
+    _roi[1] = y;    
+}
+void Robot::setMarker(double *bottomMarkers, double *topMarker){
+    std::cout<<"In setMarkers"<<std::endl;
+    for (int k = 0 ; k<BOTTOMMARKERSLENGTH ; k++){
+      _bottomMarkers[k] = bottomMarkers[k];
+      _marker.bottomMarkers[k] = _bottomMarkers[k];
+    }
+    std::cout<<"set bottom markers"<<std::endl;
+    for (int k = 0 ; k<TOPMARKERLENGTH ; k++){
+        _topMarker[k] = topMarker[k];
+        _marker.topMarker[k] = _topMarker[k];
+    }        
+    std::cout<<"set top marker"<<std::endl;    
+}
 
 //Getters
 std::vector<int> Robot::getPos()
@@ -84,6 +105,22 @@ int Robot::getLength()
 int Robot::getRadius()
 {
     return _radius;
+}
+int* Robot::getRoi()
+{
+    return _roi;
+}
+Robot::marker Robot::getMarker()
+{
+    return _marker;
+}
+double* Robot::getBottomMarkers()
+{
+    return _marker.bottomMarkers;
+}
+double* Robot::getTopMarker()
+{
+    return _marker.topMarker;
 }
 
 //Conversion functions

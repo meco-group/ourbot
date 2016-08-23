@@ -92,6 +92,7 @@ class HawkEye : public RTT::TaskContext{
     int _width;
     int _height;
     resolution_t _resolution;
+    int _nRobots;
     uint8_t *_buffer;
     int _errno;  //error handling
 
@@ -111,8 +112,11 @@ class HawkEye : public RTT::TaskContext{
 
     //Templates
     cv::Mat _template_circle; //Mat is the openCV type of an image, it's a kind of vector
+    cv::Mat _template_circlehollow; 
     cv::Mat _template_star1;
     cv::Mat _template_star2;  
+    cv::Mat _template_cross; 
+    cv::Mat _template_cross_rot; 
 
     //Camera
     int _fd; //file descriptor for camera
@@ -130,7 +134,7 @@ class HawkEye : public RTT::TaskContext{
     cv::Mat _roi; //Todo: add size? Always 4?
 
     //Output
-    Robot _robot; //Make instance of robot
+    std::vector<Robot*> _robots; //Holds all robots
     Circle _circle; //Make instance of circle
     Rectangle _rectangle; //Make instance of rectangle
     std::vector<Obstacle*> _obstacles;
@@ -146,7 +150,7 @@ class HawkEye : public RTT::TaskContext{
     std::vector<int> _template_circles_pos; 
     cv::Point _template_star_pos; 
 
-    cv::RotatedRect _robobox; //holds robot state: position, width, height, angle
+    std::vector<cv::RotatedRect> _roboboxes; //vector with roboboxes, which holds robot state: position, width, height, angle
 
     double _drawmods[7]; //draw circular patterns
     double _drawstar[5]; //draw star pattern
@@ -176,10 +180,11 @@ class HawkEye : public RTT::TaskContext{
     void capture_image();
 
     //Class methods - matcher
-    void printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat template_star1, cv::Mat template_star2, bool *success, double *robottocks, double *starpat, float matchThresh, bool draw_markers, std::vector<int> rorig);
+    void printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat template_star1, cv::Mat template_star2, cv::Mat template_cross, cv::Mat template_cross_rot, cv::Mat template_circlehollow, bool *success, double *robottocks, double *starpat, double *crosspat, double *circlehollowpat, float matchThresh, bool draw_markers, std::vector<int> rorig);
     void oneObject(cv::Mat image, cv::Mat templim, float thresh, int *w, int *h, double *max_val, cv::Point *temploc);
     void multiObject(cv::Mat image, cv::Mat templim, float thresh, int *w, int *h, double *max_val, std::vector<int> *maxpoints);
     std::vector<int> twoTemplate(cv::Mat image, cv::Mat templim1, cv::Mat templim2, float thresh);
+    void addRobot(double *robottocks, double *starpat); //further processing to get coordinates and robot direction, save in a robot instance
 
   public:
     HawkEye(std::string const& name);
