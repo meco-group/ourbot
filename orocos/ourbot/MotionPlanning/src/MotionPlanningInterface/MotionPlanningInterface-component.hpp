@@ -5,7 +5,6 @@
 #include <rtt/Port.hpp>
 #include <rtt/os/TimeService.hpp>
 #include <rtt/Time.hpp>
-#include "Point2Point.hpp"
 
 using namespace RTT;
 using namespace RTT::os;
@@ -34,8 +33,6 @@ class MotionPlanningInterface : public RTT::TaskContext{
     int _predict_shift;
     std::vector<double> _est_pose;
     std::vector<double> _target_pose;
-    std::vector<omg::obstacle_t> _obstacles;
-
     std::vector<std::vector<double> > _ref_pose_trajectory;
     std::vector<std::vector<double> > _ref_velocity_trajectory;
 

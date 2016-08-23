@@ -23,7 +23,7 @@
 #------------------------------------------------------------------------------
 CASADILIB = /home/ruben/Documents/Work/Repositories/casadi_binary/casadi/
 CASADIINC = /home/ruben/Documents/Work/Repositories/casadi_binary/include/
-CASADIOBJ = /home/ourbot/orocos/ourbot/MotionPlanning/src/DistributedMotionPlanning/Toolbox/bin/
+CASADIOBJ = /home/ruben/ourbot/orocos/ourbot/MotionPlanning/src/DistributedMotionPlanning/Toolbox/bin/
 SOURCEFILES = test.cpp Holonomic.cpp
 EXECUTABLE = FormationPoint2Point
 #------------------------------------------------------------------------------
@@ -39,7 +39,7 @@ PROBSOURCES = subst_fleet_center1.c subst_fleet_center0.c updx.c updz.c updl.c u
 PROBOBJECTS = $(PROBSOURCES:.c=.so)
 SOURCES = $(SOURCEFILES) FormationPoint2Point.cpp ADMMPoint2Point.cpp Point2Point.cpp Vehicle.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
-LIB = libomg.so
+LIB = libomgformation.so
 SRCDIR = src
 OBJDIR = obj
 OUTDIR = bin
