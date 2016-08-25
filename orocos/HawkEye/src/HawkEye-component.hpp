@@ -89,6 +89,7 @@ class HawkEye : public RTT::TaskContext{
     int _fps;
     int _brightness; 
     int _exposure;
+    int _iso;
     int _width;
     int _height;
     resolution_t _resolution;
@@ -161,6 +162,7 @@ class HawkEye : public RTT::TaskContext{
     void setResolution(resolution_t resolution);
     void setBrightness(int brightness);
     void setExposure(int exposure);
+    void setISO(int iso);
     void checkFPS(resolution_t resolution);
     void getBackground();
     void backgroundSubtraction(std::vector<std::vector<cv::Point> > *contours, std::vector<cv::Vec4i> *hierarchy);
@@ -168,6 +170,7 @@ class HawkEye : public RTT::TaskContext{
     void processImage(); 
     void findRobots();  
     void findBigObstacles(cv::RotatedRect rotrect, std::vector<cv::Point> c, int cx, int cy, int cradius, std::vector<std::vector<cv::Point> > *contours, std::vector<cv::Vec4i> *hierarchy);
+    void mergeContourWithRobot(cv::RotatedRect robobox, std::vector<cv::Point> contourPoints, std::vector<std::vector<cv::Point> > *contours, std::vector<cv::Vec4i> *hierarchy); //found a contour which contains the robot, blank it out
     void processResults();
     void writeResults();
     void drawResults();
