@@ -63,7 +63,12 @@ void KalmanSM::gatherMeasurements(){
     //_trigger_scanmatcher_port.write(true);//ici
     _state_at_scanstart = _state_prev;
     // @@@Michiel
-    _scanstart_pose_port.write(_state_prev);
+    std::vector<double> prev_pose(3);
+    prev_pose[0] = _state_at_scanstart[10];
+    prev_pose[1] = _state_at_scanstart[11];
+    prev_pose[2] = _state_at_scanstart[12];
+    _scanstart_pose_port.write(prev_pose);
+    
     _P_at_scanstart = _P;
     // clear buffer: this buffer will save all information until scanmatcher writes a new update (i.e. is finished)
     _sensorbuffer.clear();
@@ -117,7 +122,7 @@ void KalmanSM::detectScanMatchInfo(){
     _sensorbuffer2 = _sensorbuffer;
     _state_prev = _state_at_scanstart;
     _P = _P_at_scanstart;
-    _got_scan = true;
+    _got_scan = true; //ici TODO
   }
   else{
     if(_sensorbuffer.size() >= 1){
@@ -205,7 +210,9 @@ void KalmanSM::updateKalman(){
     _H_T_hf = _H_hf.transpose();
 
     if(_got_scan){
-      // std::cout << "Received scanmatch data ... " << std::endl;
+      //std::cout << "bef: x: " << _est_pose[0] << "; y: " << _est_pose[1] << "; t:" << _est_pose[2] << std::endl;
+      //std::cout << "Received scanmatch data ... " << std::endl;
+      _print_data = true;
       replaceVectorBlock(&_y_hf, &_y, 0, 6);
       // extra measurement equations
       theta = _prev_scan_pose_abs[2];
@@ -222,6 +229,7 @@ void KalmanSM::updateKalman(){
       _scanmatch_covariance_port.read(_cov_scanmatch);
 
       // subblock of measurment noise regarding scanmatch
+      //ici standaard 100 000 000
       _R_lf <<  _cov_scanmatch[0]*100000000, _cov_scanmatch[1]*100000000, _cov_scanmatch[2]*100000000,
                 _cov_scanmatch[3]*100000000, _cov_scanmatch[4]*100000000, _cov_scanmatch[5]*100000000,
                 _cov_scanmatch[6]*100000000, _cov_scanmatch[7]*100000000, _cov_scanmatch[8]*100000000;
@@ -268,7 +276,14 @@ void KalmanSM::updateKalman(){
     _est_pose[0] = _state(10);
     _est_pose[1] = _state(11);
     _est_pose[2] = _state(12);
+
+    if (_print_data == true){
+      //std::cout << "aft: x: " << _est_pose[0] << "; y: " << _est_pose[1] << "; t:" << _est_pose[2] << std::endl;
+      _print_data = false;
+    }
+    
   }
+  //std::cout << "aft: x: " << _est_pose[0] << "; y: " << _est_pose[1] << "; t:" << _est_pose[2] << std::endl;
   _sensorbuffer2.clear();
 }
 
@@ -414,6 +429,7 @@ void KalmanSM::setInitData(){
   _left_bias_y = 0;
   _right_bias_x = 0;
   _right_bias_y = 0;
+  _print_data = false;
 }
 
 ORO_LIST_COMPONENT_TYPE(KalmanSM);

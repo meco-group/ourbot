@@ -3,7 +3,7 @@ require 'rfsm_rtt'
 require 'rfsmpp'
 
 --Some flags
-local test = true -- odroid is not in a robot (no teensy, lidar, ...)
+local test = false -- odroid is not in a robot (no teensy, lidar, ...)
 
 --Define component names here
 local estimator     = 'estimator'..index
@@ -26,10 +26,10 @@ local components_to_load = {
   [reference]       = 'Reference',
   [coordinator]     = 'OCL::LuaTLSFComponent',
   [reporter]        = 'OCL::NetcdfReporting',
-  [io]              = 'Container'
-  -- [teensy]          = 'TeensyBridge',
-  -- [lidar]           = 'RPLidar',
-  -- [scanmatcher]     = 'Scanmatcher'
+  [io]              = 'Container',
+  [teensy]          = 'TeensyBridge',
+  [lidar]           = 'RPLidar',
+  [scanmatcher]     = 'Scanmatcher'
    -- add here componentname = 'componenttype'
 }
 
@@ -45,31 +45,39 @@ end
 
 --Ports to report
 local ports_to_report = {
+
   -- [controller]      = {'cmd_velocity_port'},
-  -- [estimator]       = {'est_pose_port'},
-  [reference]       = {'ref_velocity_port'}
+  [estimator]       =  {'est_pose_port'},--, 'scanstart_pose_port'},
+  -- [reference]       = {'ref_velocity_port'}
   -- [coordinator]     = {'controlloop_duration', 'controlloop_jitter'},
-  -- [io]              = {--'cal_lidar_node_port',
-  --                     -- 'cal_imul_transacc_port',
-  --                     -- 'cal_imul_orientation_3d_port',
-  --                     -- 'cal_imul_orientation_port',
-  --                     -- 'cal_imul_dorientation_3d_port',
-  --                     -- 'cal_imul_dorientation_port',
-  --                     -- 'cal_imur_transacc_port',
-  --                     -- 'cal_imur_orientation_3d_port',
-  --                     -- 'cal_imur_orientation_port',
-  --                     -- 'cal_imur_dorientation_3d_port',
-  --                     -- 'cal_imur_dorientation_port'
-  --                     -- 'cal_lidar_x_port',
-  --                     -- 'cal_lidar_y_port',
-  --                     -- 'cal_enc_pose_port'
-  --                     -- 'raw_imul_mag_port',
-  --                     -- 'raw_imur_mag_port',
-  --                     -- 'cal_lidar_global_node_port',
-  --                     -- 'cal_motor_current_port',
-  --                     -- 'cal_motor_voltage_port',
-                      -- 'cal_velocity_port'
-                      -- }
+  [io]              = {-- 'cal_lidar_node_port',
+                       -- 'cal_imul_transacc_port',
+                       -- 'cal_imul_orientation_3d_port',
+                       -- 'cal_imul_orientation_port',
+                       -- 'cal_imul_dorientation_3d_port',
+                       -- 'cal_imul_dorientation_port',
+                       -- 'cal_imur_transacc_port',
+                       -- 'cal_imur_orientation_3d_port',
+                       -- 'cal_imur_orientation_port',
+                       -- 'cal_imur_dorientation_3d_port',
+                       -- 'cal_imur_dorientation_port'
+                       -- 'cal_lidar_x_port',
+                       -- 'cal_lidar_y_port',
+                       -- 'cal_enc_pose_port'
+                       -- 'raw_imul_mag_port',
+                       -- 'raw_imur_mag_port',
+                       -- 'cal_lidar_global_node_port',
+                       -- 'cal_motor_current_port',
+                       -- 'cal_motor_voltage_port',
+                       -- 'cal_velocity_port',
+                      'cor_lidar_distance_port',
+                      'cor_lidar_angle_port'
+                        
+                    },
+  [scanmatcher] = {   -- 'scanmatch_pose_port', 
+                      'artificial_lidar_distances_port',
+                      'artificial_lidar_angles_port'
+                    }
   --add here componentname = 'portnames'
 }
 
@@ -265,7 +273,7 @@ return rfsm.state {
 
     set_activities = rfsm.state {
       entry = function(fsm)
-        dp:setActivity(motionplanning,0, 10,rtt.globals.ORO_SCHED_RT)
+        --dp:setActivity(motionplanning,0, 10,rtt.globals.ORO_SCHED_RT)
         dp:setActivity(coordinator,1./control_sample_rate, 7,rtt.globals.ORO_SCHED_RT)
         dp:setActivity(reporter,0,1,rtt.globals.ORO_SCHED_RT)
         dp:setActivity(io,1./io_sample_rate, 7,rtt.globals.ORO_SCHED_RT)

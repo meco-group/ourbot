@@ -33,10 +33,10 @@ username = 'odroid'
 password = 'odroid'
 
 hosts = col.OrderedDict()
-# hosts['dave'] = '192.168.11.120'
-hosts['kurt'] = '192.168.11.121'
-hosts['krist'] = '192.168.11.122'
-server = 'kurt'
+hosts['dave'] = '192.168.11.120'
+#hosts['kurt'] = '192.168.11.121'
+#hosts['krist'] = '192.168.11.122'
+server = 'dave'
 
 
 def send_file(ftp, loc_file, rem_file):

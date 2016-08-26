@@ -1,13 +1,13 @@
 local tc = rtt.getTC()
 
--- local scanmatcher   = tc:getPeer('scanmatcher'..tostring(index))
+local scanmatcher   = tc:getPeer('scanmatcher'..tostring(index))
 local estimator     = tc:getPeer('estimator'..tostring(index))
 local reporter      = tc:getPeer('reporter'..tostring(index))
 local io            = tc:getPeer('io'..tostring(index))
 
 local estimatorUpdate           = estimator:getOperation("update")
 local estimatorInRunTimeError   = estimator:getOperation("inRunTimeError")
--- local scanmatcherInRunTimeError = scanmatcher:getOperation("inRunTimeError")
+local scanmatcherInRunTimeError = scanmatcher:getOperation("inRunTimeError")
 local snapshot                  = reporter:getOperation("snapshot")
 
 -- variables for the timing diagnostics
@@ -38,11 +38,11 @@ return rfsm.state {
 
   run = rfsm.state{
     entry = function(fsm)
-      -- if not scanmatcher:start() then
-      --   rtt.logl("Error","Could not start scanmatcher component")
-      --   rfsm.send_events(fsm,'e_failed')
-      --   return
-      -- end
+      if not scanmatcher:start() then
+        rtt.logl("Error","Could not start scanmatcher component")
+        rfsm.send_events(fsm,'e_failed')
+        return
+      end
       if not reporter:start() then
         rtt.logl("Error","Could not start reporter component")
         rfsm.send_events(fsm,'e_failed')
@@ -84,11 +84,11 @@ return rfsm.state {
           rfsm.send_events(fsm,'e_failed')
           return
         end
-        -- if scanmatcherInRunTimeError() then
-        --   rtt.logl("Error","RunTimeError in scanmatcher component")
-        --   rfsm.send_events(fsm,'e_failed')
-        --   return
-        -- end
+        if scanmatcherInRunTimeError() then
+          rtt.logl("Error","RunTimeError in scanmatcher component")
+          rfsm.send_events(fsm,'e_failed')
+          return
+        end
 
         -- check timings of previous iteration
         -- ditch the first two calculations due to the initially wrongly calculated prev_start_time

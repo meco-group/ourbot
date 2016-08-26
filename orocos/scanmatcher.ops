@@ -13,8 +13,8 @@ sm.marshalling.updateProperties("../Configuration/system-config.cpf");
 //sm.marshalling.updateProperties("./ourbot/Configuration/scanmatcher-config.cpf");
 //sm.marshalling.updateProperties("./ourbot/Configuration/system-config.cpf");
 
-sm.configure();
+//sm.configure();
 
-sm.start();
+//sm.start();
 
 //sm.update();

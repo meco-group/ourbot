@@ -90,6 +90,7 @@ class KalmanSM : public EstimatorInterface{
         double _left_bias_y;
         double _right_bias_x;
         double _right_bias_y;
+        bool _print_data;
 
   public:
         KalmanSM(std::string const& name);

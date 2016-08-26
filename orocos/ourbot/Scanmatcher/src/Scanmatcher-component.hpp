@@ -22,13 +22,17 @@ class Scanmatcher : public RTT::TaskContext{
     RTT::InputPort<std::vector<double> > _cal_enc_pose_port;
     //RTT::InputPort<bool> _trigger_scanmatcher_port;//ici
     // Outputs
-    //@@@Michiel: add extra output port with pose at start scan
+    //@@@Michiel: add extra input port with pose at start scan
     RTT::InputPort<std::vector<double> > _scanstart_pose_port;//ici
   	RTT::OutputPort<std::vector<double> > _scanmatch_pose_port;
   	RTT::OutputPort<std::vector<double> > _scanmatch_covariance_port;
 
+    RTT::OutputPort<std::vector<double> > _artificial_lidar_distances_port;
+    RTT::OutputPort<std::vector<double> > _artificial_lidar_angles_port;
+
     int _sensenumber;
     int _lidar_data_length;
+    int _rays;
   	double _max_sense_range;
     double _max_angular_correction_deg;
     double _max_linear_correction;
@@ -47,6 +51,7 @@ class Scanmatcher : public RTT::TaskContext{
     int _use_point_to_line_distance;
     int _use_odometry_guess;
     int _do_compute_covariance;
+    bool _correct_scanstart_pose;
 
     std::vector<double> _enc_pose;
     std::vector<double> _estimated_position_change;
@@ -91,6 +96,7 @@ class Scanmatcher : public RTT::TaskContext{
     bool smallerThan(double boundarie, double value);
     bool correctIntersection(double x, double y, double x_intersect, double y_intersect, double angle);
     void loadEnvironment();
+    double clip(double boundarie_1, double boundarie_2, double value);
 };
 
 #endif

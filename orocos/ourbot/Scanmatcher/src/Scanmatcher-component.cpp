@@ -31,6 +31,9 @@ _enc_pose(3), _estimated_position_change(3), _covariance(9), _rows(3), _columns(
  	ports()->addPort( "scanmatch_pose_port", _scanmatch_pose_port).doc("Estimated position-change of scanmatcher in encoder-form [x,y,orientation]");
 	ports()->addPort( "scanmatch_covariance_port", _scanmatch_covariance_port).doc("covariance scanmatcher [x,y,orientation]");
 
+  ports()->addPort( "artificial_lidar_distances_port", _artificial_lidar_distances_port).doc("Calculated artificial lidar distances");
+  ports()->addPort( "artificial_lidar_angles_port", _artificial_lidar_angles_port).doc("Calculated artificial lidar angles");
+
   // Properties
   addProperty("max_sense_range", _max_sense_range).doc("Maximum distance the lidar can measure");
   addProperty("max_angular_correction_deg",_max_angular_correction_deg).doc("Maximum correction for angles [deg]");
@@ -58,12 +61,13 @@ _enc_pose(3), _estimated_position_change(3), _covariance(9), _rows(3), _columns(
 }
 
 bool Scanmatcher::configureHook(){
+  _rays = _lidar_data_length - _sensenumber;
 	_available_lidar_distances.resize(_lidar_data_length);
 	_available_lidar_angles.resize(_lidar_data_length);
-  //_prev_lidar_distances.resize((_lidar_data_length - _sensenumber)*_scans);
-  //_prev_lidar_angles.resize((_lidar_data_length - _sensenumber)*_scans);
-	_lidar_distances.resize(_lidar_data_length- _sensenumber);
-	_lidar_angles.resize(_lidar_data_length- _sensenumber);
+  //_prev_lidar_distances.resize((_rays)*_scans);
+  //_prev_lidar_angles.resize((_rays)*_scans);
+	_lidar_distances.resize(_rays);
+	_lidar_angles.resize(_rays);
 
   _start_pose.resize(3);
 
@@ -71,16 +75,18 @@ bool Scanmatcher::configureHook(){
 	//std::fill(_prev_lidar_distances.begin(), _prev_lidar_distances.end(), 0);
 
   //ici
-  _artificial_lidar_angles.resize(_lidar_data_length - _sensenumber);
-  _artificial_lidar_distances.resize(_lidar_data_length - _sensenumber);
-  for (int i = 0; i < _lidar_data_length - _sensenumber; i++){
-    _artificial_lidar_angles[i] = 2*M_PI*i/(_lidar_data_length -_sensenumber);
+  _artificial_lidar_angles.resize(_rays);
+  _artificial_lidar_distances.resize(_rays);
+  for (int i = 0; i < _rays; i++){
+    _artificial_lidar_angles[i] = 2*M_PI*i/(_rays);
   }
-  std::fill(_artificial_lidar_distances.begin(), _artificial_lidar_distances.end(), _max_sense_range);
+  std::fill(_artificial_lidar_distances.begin(), _artificial_lidar_distances.end(), _max_sense_range+0.1);
 
   _scanmatch_pose_port.setDataSample(_estimated_position_change);
   std::vector<double> example(9, 0.0);
   _scanmatch_covariance_port.setDataSample(example);
+  _artificial_lidar_distances_port.setDataSample(_artificial_lidar_distances);
+  _artificial_lidar_angles_port.setDataSample(_artificial_lidar_angles);
 
   // Settings of scanmatcher
   ls.min_reading = 0.0;
@@ -130,9 +136,9 @@ bool Scanmatcher::startHook(){
 
 void Scanmatcher::updateHook(){
 
-  std::cout << "Scanmatcher updateHook !" <<std::endl;
+  //std::cout << "Scanmatcher updateHook !" <<std::endl;
   
-  int rays = _lidar_data_length - _sensenumber;
+  int rays = _rays;
 	sm_result result;
 
 	// local scope array to put in ls-struct
@@ -160,6 +166,18 @@ void Scanmatcher::updateHook(){
 
   //TODO
   _scanstart_pose_port.read(_start_pose);
+  // estimated position is NaN
+  _correct_scanstart_pose = !((_start_pose[0] != _start_pose[0]) || (_start_pose[1] != _start_pose[1]));
+  if (_correct_scanstart_pose){
+    //correcting startpose:
+    _start_pose[0] = clip(-1.12, 1.12, _start_pose[0]);
+    _start_pose[1] = clip(-1.12, 1.12, _start_pose[1]);
+  }
+  //_correct_scanstart_pose = (inRange(-1.22, 1.22, _start_pose[0]) && inRange(-1.22, 1.22, _start_pose[1]));
+  
+  //std::cout << std::endl;
+  //std::cout << "x: " << _start_pose[0] << "; y: " << _start_pose[1] << "; theta: " << _start_pose[2] << "; read;"<< std::endl;
+  //std::cout << std::endl;
 
   // Copying all laser beams that are not used by Slam to use them for positioning with the scanmatcher
   int index = 0;
@@ -211,7 +229,7 @@ void Scanmatcher::updateHook(){
     //TODO waar data gebruiken?
     artificialLidar();
 
-    std::cout << "artificial Lidar data created!" <<std::endl;
+    //std::cout << "artificial Lidar data created!" <<std::endl;
 
     // give ref distances and angles to sm-algorithm
   	double anglesref[rays*_scans];
@@ -237,7 +255,15 @@ void Scanmatcher::updateHook(){
     for(int i=0; i< rays; i++){
       ls.laser_ref->readings[i] = distancesref[i];
       ls.laser_ref->theta[i] = anglesref[i];
-      ls.laser_ref->valid[i] = 1;
+      //ls.laser_ref->valid[i] = 1;
+      /*if(distancesref[i] > _max_sense_range){
+        ls.laser_ref->valid[i] = 0;
+      }
+      else
+      {
+        ls.laser_ref->valid[i] = 1;
+      }*/
+      ls.laser_ref->valid[i] = _correct_scanstart_pose;
     }
 
     // information dependent settings
@@ -284,6 +310,9 @@ void Scanmatcher::updateHook(){
     // set data on ports
     _scanmatch_covariance_port.write(_covariance);
     _scanmatch_pose_port.write(_estimated_position_change);
+
+    _artificial_lidar_distances_port.write(_artificial_lidar_distances);
+    _artificial_lidar_angles_port.write(_artificial_lidar_angles);
 
   	//correctInformation(_prev_lidar_distances, _prev_lidar_angles, _estimated_position_change);
 
@@ -378,7 +407,7 @@ void Scanmatcher::correctInformation(std::vector<double> laser_scan_distance, st
   rotAngle = -delta_odo_scan[2];
 
   // In de tweede for loop worden de laserstralen eerst geroteerd
-  for(int i = (_lidar_data_length - _sensenumber); i < (_lidar_data_length - _sensenumber)*_scans; i++){
+  for(int i = (_rays); i < (_rays)*_scans; i++){
 
   // eerst wordt geroteerd zodat de coördinaten t.o.v. een assenstelsel zijn op het punt
   // van de tussenpositie van de robot, maar wel met dezelfde oriëntatie als de allereerste positie
@@ -394,17 +423,17 @@ void Scanmatcher::correctInformation(std::vector<double> laser_scan_distance, st
     // Ten laatste worden de x, y van de laserstraal nog omgezet naar een angle en een distance
 
 
-    //TODO: mag dit zeker weggelaten worden??
+    //TODO: mag dit  weggelaten worden??
     /*
-    _prev_lidar_angles[i-(_lidar_data_length - _sensenumber)]  = atan2(y_new,x_new);
+    _prev_lidar_angles[i-(_rays)]  = atan2(y_new,x_new);
 
-   	if (_prev_lidar_angles[i-(_lidar_data_length - _sensenumber)] > 2*M_PI)
-      	    _prev_lidar_angles[i-(_lidar_data_length - _sensenumber)] = _prev_lidar_angles[i-(_lidar_data_length - _sensenumber)] - 2*M_PI;
+   	if (_prev_lidar_angles[i-(_rays)] > 2*M_PI)
+      	    _prev_lidar_angles[i-(_rays)] = _prev_lidar_angles[i-(_rays)] - 2*M_PI;
 
-   	else if (_prev_lidar_angles[i-(_lidar_data_length - _sensenumber)] < 0)
-      	    _prev_lidar_angles[i-(_lidar_data_length - _sensenumber)] = _prev_lidar_angles[i-(_lidar_data_length - _sensenumber)] + 2*M_PI;
+   	else if (_prev_lidar_angles[i-(_rays)] < 0)
+      	    _prev_lidar_angles[i-(_rays)] = _prev_lidar_angles[i-(_rays)] + 2*M_PI;
 
-    _prev_lidar_distances[i-(_lidar_data_length - _sensenumber)]  = sqrt(x_new*x_new + y_new*y_new);
+    _prev_lidar_distances[i-(_rays)]  = sqrt(x_new*x_new + y_new*y_new);
     */
   }
 }
@@ -422,8 +451,10 @@ void Scanmatcher::artificialLidar(){
   double angle;
   double intersect_distance;
 
-  for(int i = 0; i < _lidar_data_length; i++){
-    angle = 2*M_PI*i/_lidar_data_length + _start_pose[2];
+  std::fill(_artificial_lidar_distances.begin(), _artificial_lidar_distances.end(), _max_sense_range+0.1);
+
+  for(int i = 0; i < _rays; i++){
+    angle = fmod(2*M_PI*i/(_rays) + _start_pose[2],2*M_PI);
     //_laser_angles[i] = angle;
   
     for (unsigned int c = 0; c < _environment_circles.size(); c++){
@@ -450,12 +481,11 @@ void Scanmatcher::artificialLidar(){
       }
     }
 
-    std::cout << "scan :" << i << "; angle abs:" << angle*180/3.141592 << "; distance :" << _artificial_lidar_distances[i] << "; angle_rel: " << _artificial_lidar_angles[i] <<std::endl;
+    //std::cout << "scan :" << i << "; angle abs:" << angle*180/3.141592 << "; distance :" << _artificial_lidar_distances[i] << "; angle_rel: " << _artificial_lidar_angles[i] <<std::endl;
   }
 };
 
-double Scanmatcher::getIntersectDistanceLine(double x_a, double y_a, 
-										 double x_b, double y_b, double angle){
+double Scanmatcher::getIntersectDistanceLine(double x_a, double y_a, double x_b, double y_b, double angle){
 	double determinant;
 	double tang;
 	double x_estimate;
@@ -521,13 +551,13 @@ double Scanmatcher::getIntersectDistanceCircle(Circle circle, double angle){
   radius = circle.getRadius();
 
   A = tangens*tangens + 1.;
-  B = -2.*(tangens*(tangens*x_estimate +y_estimate + y_centre) + x_centre);
-  C = (y_centre*y_centre + x_centre*x_centre - radius*radius + 
-          (tangens*x_estimate+y_estimate)*(-2*y_centre* + (-tangens*x_estimate - y_estimate)));
+  B = -2.*(tangens*(tangens*x_estimate - y_estimate + y_centre) + x_centre);
+  C = -radius*radius + x_centre*x_centre + 
+            (y_estimate - y_centre - tangens*x_estimate)*(y_estimate - y_centre - tangens*x_estimate);
 
   discriminant = B*B - 4*A*C;
 
-  if (greaterThan(0., discriminant)){
+  if (discriminant>0){
     for (int i=0; i<2; i++){
       x_intersect = (-B + pow(-1,i) * sqrt(discriminant))/(2.*A);
       y_intersect = tangens*(x_intersect - x_estimate) - y_estimate;
@@ -542,8 +572,7 @@ double Scanmatcher::getIntersectDistanceCircle(Circle circle, double angle){
   return intersect_distance;
 }
 
-bool Scanmatcher::inRange(double boundarie_1, double boundarie_2, 
-  double value){
+bool Scanmatcher::inRange(double boundarie_1, double boundarie_2, double value){
 
   return (((greaterThan(boundarie_1, value)) && (smallerThan(boundarie_2, value))) ||
           ((smallerThan(boundarie_1, value)) && (greaterThan(boundarie_2, value))));
@@ -555,6 +584,15 @@ bool Scanmatcher::greaterThan(double boundarie, double value){
 
 bool Scanmatcher::smallerThan(double boundarie, double value){
   return (value < boundarie + _precision);
+}
+
+double Scanmatcher::clip(double boundarie_1, double boundarie_2, double value){
+  if (value < boundarie_1)
+    return boundarie_1;
+  else if (value > boundarie_2)
+    return boundarie_2;
+  else
+    return value;
 }
 
 bool Scanmatcher::correctIntersection(double x, double y, 
@@ -586,7 +624,8 @@ void Scanmatcher::loadEnvironment(){
 
   // Read the xml file into a vector
   // TODO generate path automatically
-  std::ifstream myfile("/home/michiel/ourbot/orocos/ourbot/Scanmatcher/src/environment.xml");
+  //std::ifstream myfile("/home/michiel/ourbot/orocos/ourbot/Scanmatcher/src/environment.xml");
+  std::ifstream myfile("/home/odroid/orocos/Scanmatcher/src/environment.xml");
   std::vector<char> buffer((std::istreambuf_iterator<char>(myfile)), std::istreambuf_iterator<char>());
   buffer.push_back('\0');
   // Parse the buffer using the xml file parsing library into doc
