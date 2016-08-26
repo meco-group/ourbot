@@ -19,3 +19,4 @@ orocos/setup.zsh
 *.tb_history
 *.rosinstall
 *.rosinstall.bak
+*_
