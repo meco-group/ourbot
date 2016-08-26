@@ -21,6 +21,7 @@ local components_to_load = {
 -- containers to fill
 local containers_to_fill = {
   -- io  = {'teensy', 'lidar'}
+  -- io = {'teensy'}
   io = {}
 }
 
@@ -70,7 +71,6 @@ local packages_to_import = {
 
 -- configuration files to load
 local system_config_file      = 'Configuration/system-config.cpf'
-local reporter_config_file    = 'Configuration/reporter-config.cpf'
 local component_config_files  = {
   reporter        = 'Configuration/reporter-config.cpf',
   teensy          = 'Configuration/teensy-config.cpf',
@@ -117,7 +117,8 @@ return rfsm.state {
     rfsm.transition {src = 'connect_components',        tgt = 'connect_remote_components',  events = {'e_done'}},
     rfsm.transition {src = 'connect_remote_components', tgt = 'configure_components',       events = {'e_done'}},
     rfsm.transition {src = 'configure_components',      tgt = 'set_activities',             events = {'e_done'}},
-    rfsm.transition {src = 'set_activities',            tgt = 'load_coordinator',           events = {'e_done'}},
+    rfsm.transition {src = 'set_activities',            tgt = 'prepare_reporter',           events = {'e_done'}},
+    rfsm.transition {src = 'prepare_reporter',          tgt = 'load_coordinator',           events = {'e_done'}},
 
     load_components = rfsm.state {
       entry = function(fsm)
@@ -180,13 +181,6 @@ return rfsm.state {
             if not dp:addPeer('coordinator', name) then rfsm.send_events(fsm,'e_failed') return end
           end
         end
-        -- connect components-to-report
-        for comp, portlist in pairs(ports_to_report) do
-          for i, port in pairs(portlist) do
-            if not dp:addPeer('reporter', comp) then rfsm.send_events(fsm,'e_failed') end
-            if not components.reporter:reportPort(comp, port) then rfsm.send_events(fsm,'e_failed') end
-          end
-        end
       end
     },
 
@@ -198,7 +192,7 @@ return rfsm.state {
         dp:addPeer('communicator', 'coordinator')
         if not addIncoming('coordinator', 'coordinator_fsm_event_port', 4000) then rfsm.send_events(fsm, 'e_failed') return end
         -- io
-        if components_to_load['io'] then
+        if components_to_load['teensy'] then
           dp:addPeer('communicator', 'io')
           if not addIncoming('io', 'cmd_velocity_port', 4002) then rfsm.send_events(fsm, 'e_failed') return end
         end
@@ -206,9 +200,9 @@ return rfsm.state {
         if distributed_mp then
           dp:addPeer('communicator', 'motionplanning')
           if not addOutgoing('motionplanning', 'x_var_port', 5000 + 10*index, neighbors) then rfsm.send_events(fsm, 'e_failed') return end
-          for i=0, neighbors.size-1 do
-            if not addOutgoing('motionplanning', 'zl_ij_var_port_'..tostring(i), 5100 + 10*nghb_index[i] + i, neighbors[i]) then rfsm.send_events(fsm, 'e_failed') return end
-            if not addIncoming('motionplanning', 'zl_ji_var_port_'..tostring(i), 5100 + 10*nghb_index[i] + (i-1) then rfsm.send_events(fsm, 'e_failed') return end
+          for i=0, nghb_index.size-1 do
+            if not addOutgoing('motionplanning', 'zl_ij_var_port_'..tostring(i), 5100 + 10*nghb_index[i] + i, neighbor[i]) then rfsm.send_events(fsm, 'e_failed') return end
+            if not addIncoming('motionplanning', 'zl_ji_var_port_'..tostring(i), 5100 + 10*nghb_index[i] + (i-1)) then rfsm.send_events(fsm, 'e_failed') return end
             if not addIncoming('motionplanning', 'x_j_var_port_'..tostring(i), 5000 + 10*nghb_index[i]) then rfsm.send_events(fsm, 'e_failed') return end
           end
         end
@@ -216,39 +210,23 @@ return rfsm.state {
         dp:addPeer('communicator', 'lua')
         if not addIncoming('lua', 'deployer_fsm_event_port', 4001) then rfsm.send_events(fsm, 'e_failed') return end
         if not addOutgoing('lua', 'deployer_failure_event_port', 4001, broadcast) then rfsm.send_events(fsm,'e_failed') return end
-        -- if distributed_mp then
-        --   cp=rtt.Variable("ConnPolicy")
-        --   --Sleeping ...
-        --   local ntime = os.time() + 2
-        --   repeat until os.time() > ntime
-        --   --Load components over the network & connect ports
-        --   for i=0,neighbors.size-1 do
-        --     local nghb_index = neighbors[i]
-        --     local remote_cmp = 'motionplanning'..tostring(nghb_index)
-        --     if (not remote_components[remote_cmp] ) then
-        --       if (not dp:loadComponent(remote_cmp,'CORBA')) then rfsm.send_events(fsm,'e_failed') return end
-        --       remote_components[remote_cmp] = dp:getPeer(remote_cmp)
-        --     end
-        --     --Connect distributed motionplanning ports: THIS HOLDS ONLY FOR CIRCULAR INTERCONNECTION!!
-        --     if (not dp:connect(remote_cmp..'.x_var_port', 'motionplanning'..tostring(index)..'.x_j_var_port_'..tostring(i), cp)) then rfsm.send_events(fsm,'e_failed') return end
-        --     if (not dp:connect(remote_cmp..'.zl_ij_var_port_'..tostring(1-i), 'motionplanning'..tostring(index)..'.zl_ji_var_port_'..tostring(i), cp)) then rfsm.send_events(fsm,'e_failed') return end
-        --   end
-        -- end
       end
     },
 
     configure_components = rfsm.state {
       entry = function(fsm)
         for name, comp in pairs(components) do
-          comp:loadService('marshalling')
-          -- every component loads system configurations
-          if not comp:provides('marshalling'):updateProperties(system_config_file) then rfsm.send_events(fsm,'e_failed') return end
-          -- if available, a component loads its specific configurations
-          if(component_config_files[name]) then
-            if not comp:provides('marshalling'):updateProperties(component_config_files[name]) then rfsm.send_events(fsm,'e_failed') return end
+          if (name ~= 'reporter') then -- reporter configured in later stage
+            comp:loadService('marshalling')
+            -- every component loads system configurations
+            if not comp:provides('marshalling'):updateProperties(system_config_file) then rfsm.send_events(fsm,'e_failed') return end
+            -- if available, a component loads its specific configurations
+            if(component_config_files[name]) then
+              if not comp:provides('marshalling'):updateProperties(component_config_files[name]) then rfsm.send_events(fsm,'e_failed') return end
+            end
+            -- configure the component
+            if not comp:configure() then rfsm.send_events(fsm,'e_failed') return end
           end
-          -- configure the component
-          if not comp:configure() then rfsm.send_events(fsm,'e_failed') return end
         end
       end
     },
@@ -277,6 +255,23 @@ return rfsm.state {
         -- communicator should run in the fastest thread (= io thread)
         dp:setMasterSlaveActivity('coordinator', 'communicator')
 
+      end
+    },
+
+    prepare_reporter = rfsm.state {
+      entry = function(fsm)
+        -- load the mashalling service and the configuration file
+        components.reporter:loadService('marshalling')
+        components.reporter:provides('marshalling'):loadProperties(component_config_files['reporter'])
+        -- add components to report
+        for comp, portlist in pairs(ports_to_report) do
+          for i, port in pairs(portlist) do
+            if not dp:addPeer('reporter', comp) then rfsm.send_events(fsm,'e_failed') end
+            if not components.reporter:reportPort(comp, port) then rfsm.send_events(fsm,'e_failed') end
+          end
+        end
+        -- configure the reporter
+        if not components.reporter:configure() then rfsm.send_events(fsm, 'e_failed') return end
       end
     },
 

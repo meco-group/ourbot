@@ -49,12 +49,12 @@ function configureHook()
    estimator_type       = _estimator_type:get()
    controller_type      = _controller_type:get()
    motionplanning_type  = _motionplanning_type:get()
-   neighbors            = _neighbors:get()
    distributed_mp       = _distributed_mp:get()
    control_sample_rate  = _control_sample_rate:get()
    mp_sample_rate       = _mp_sample_rate:get()
    reporter_sample_rate = _reporter_sample_rate:get()
    io_sample_rate       = _io_sample_rate:get()
+   index                = _index:get()
    nghb_index           = _nghb_index:get()
    trusted_hosts        = _trusted_hosts:get()
 
@@ -66,6 +66,8 @@ function configureHook()
    emperor = rtt.Variable("strings")
    robots = rtt.Variable("strings")
    broadcast = rtt.Variable("strings")
+   neighbors = rtt.Variable("strings")
+
    dave:resize(1)
    kurt:resize(1)
    krist:resize(1)
@@ -73,17 +75,22 @@ function configureHook()
    emperor:resize(1)
    robots:resize(3)
    broadcast:resize(5)
+   neighbors:resize(nghb_index.size)
+
    dave:fromtab{trusted_hosts[0]}
    kurt:fromtab{trusted_hosts[1]}
    krist:fromtab{trusted_hosts[2]}
    hawkeye:fromtab{trusted_hosts[3]}
    emperor:fromtab{trusted_hosts[5]}
    robots:fromtab{trusted_hosts[0], trusted_hosts[1], trusted_hosts[2]}
-   broadcast:fromtab{trusted_hosts[0], trusted_hosts[1], trusted_hosts[2], trusted_hosts[3], trusted_hosts[4], trusted_hosts[5]}
-
-   neighbors = rtt.Variable("strings")
-   neighbors:resize(nghb_index.size)
-   neighbors:fromtab{_neighbors:get()}
+   broadcast = trusted_hosts
+   neighbors = _neighbors:get()
+   neighbor = {}
+   for i=0, nghb_index.size-1 do
+      neighbor[i] = rtt.Variable("strings")
+      neighbor[i]:resize(1)
+      neighbor[i]:fromtab{_neighbors:get()[i]}
+   end
 
    -- create some variables referering to files
    coordinator_file  = 'Coordinator/coordinator.lua'

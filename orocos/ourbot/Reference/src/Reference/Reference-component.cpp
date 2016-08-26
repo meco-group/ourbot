@@ -78,7 +78,7 @@ bool Reference::startHook(){
     }
   }
   _just_started = true;
-  std::cout << "Reference started !" <<std::endl;
+  // std::cout << "Reference started !" <<std::endl;
   return true;
 }
 
@@ -146,7 +146,7 @@ void Reference::updateHook(){
 }
 
 void Reference::stopHook() {
-  std::cout << "Reference stopped !" <<std::endl;
+  // std::cout << "Reference stopped !" <<std::endl;
 }
 
 void Reference::readPorts(){

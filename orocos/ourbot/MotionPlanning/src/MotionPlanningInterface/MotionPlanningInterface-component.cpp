@@ -1,4 +1,4 @@
-// #define DEBUG
+#define DEBUG
 
 #include "MotionPlanningInterface-component.hpp"
 #include <rtt/Component.hpp>

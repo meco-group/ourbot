@@ -17,36 +17,6 @@ local ports_to_report = {
     --add here componentname = 'portnames'
 }
 
--- remote ports to report
-local remote_ports_to_report = {
-  -- controller        = {'cmd_velocity_port'},
-  -- estimator         = {'est_pose_port'}
-  -- reference         = {'ref_pose_port', 'ref_velocity_port'}
-  -- coordinator       = {'controlloop_duration', 'controlloop_jitter'},
-  -- io                = {--'cal_lidar_node_port',
-  --                     -- 'cal_imul_transacc_port',
-  --                     -- 'cal_imul_orientation_3d_port',
-  --                     -- 'cal_imul_orientation_port',
-  --                     -- 'cal_imul_dorientation_3d_port',
-  --                     -- 'cal_imul_dorientation_port',
-  --                     -- 'cal_imur_transacc_port',
-  --                     -- 'cal_imur_orientation_3d_port',
-  --                     -- 'cal_imur_orientation_port',
-  --                     -- 'cal_imur_dorientation_3d_port',
-  --                     -- 'cal_imur_dorientation_port'
-  --                     -- 'cal_lidar_x_port',
-  --                     -- 'cal_lidar_y_port',
-  --                     -- 'cal_enc_pose_port'
-  --                     -- 'raw_imul_mag_port',
-  --                     -- 'raw_imur_mag_port',
-  --                     -- 'cal_lidar_global_node_port',
-  --                     -- 'cal_motor_current_port',
-  --                     -- 'cal_motor_voltage_port',
-  --                     -- 'cal_velocity_port'
-  --                     }
-  --add here componentname = 'portnames'
-}
-
 -- packages to import
 local packages_to_import = {
   gamepad = 'SerialInterfaceEmperor',
@@ -56,7 +26,6 @@ local packages_to_import = {
 
 -- configuration files to load
 local system_config_file      = 'Configuration/system-config.cpf'
-local reporter_config_file    = 'Configuration/reporter-config.cpf'
 local component_config_files  = {
   reporter  = 'Configuration/reporter-config.cpf',
   gamepad   = 'Configuration/gamepad-config.cpf'
@@ -101,7 +70,8 @@ return rfsm.state {
     rfsm.transition {src = 'connect_components',        tgt = 'connect_remote_components',  events = {'e_done'}},
     rfsm.transition {src = 'connect_remote_components', tgt = 'configure_components',       events = {'e_done'}},
     rfsm.transition {src = 'configure_components',      tgt = 'set_activities',             events = {'e_done'}},
-    rfsm.transition {src = 'set_activities',            tgt = 'load_emperor',               events = {'e_done'}},
+    rfsm.transition {src = 'set_activities',            tgt = 'prepare_reporter',           events = {'e_done'}},
+    rfsm.transition {src = 'prepare_reporter',          tgt = 'load_emperor',               events = {'e_done'}},
 
     initial = rfsm.conn{},
 
@@ -135,14 +105,6 @@ return rfsm.state {
         if not _deployer_failure_event_port:connect(components.emperor:getPort('emperor_fsm_event_port')) then rfsm.send_events(fsm,'e_failed') return end
 
         if not dp:connectPorts('emperor', 'gamepad') then rfsm.send_events(fsm,'e_failed') return end
-
-        -- connect components-to-report
-        for comp, portlist in pairs(ports_to_report) do
-          for i, port in pairs(portlist) do
-            if not dp:addPeer('reporter', comp) then rfsm.send_events(fsm,'e_failed') end
-            if not components.reporter:reportPort(comp, port) then rfsm.send_events(fsm,'e_failed') end
-          end
-        end
       end,
     },
 
@@ -166,15 +128,17 @@ return rfsm.state {
     configure_components = rfsm.state {
       entry = function(fsm)
         for name, comp in pairs(components) do
-          comp:loadService('marshalling')
-          -- every component loads system configurations
-          if not comp:provides('marshalling'):updateProperties(system_config_file) then rfsm.send_events(fsm,'e_failed') return end
-          -- if available, a component loads its specific configurations
-          if(component_config_files[name]) then
-            if not comp:provides('marshalling'):updateProperties(component_config_files[name]) then rfsm.send_events(fsm,'e_failed') return end
+          if (name ~= 'reporter') do -- reporter configured in later stage
+            comp:loadService('marshalling')
+            -- every component loads system configurations
+            if not comp:provides('marshalling'):updateProperties(system_config_file) then rfsm.send_events(fsm,'e_failed') return end
+            -- if available, a component loads its specific configurations
+            if(component_config_files[name]) then
+              if not comp:provides('marshalling'):updateProperties(component_config_files[name]) then rfsm.send_events(fsm,'e_failed') return end
+            end
+            -- configure the component
+            if not comp:configure() then rfsm.send_events(fsm,'e_failed') return end
           end
-          -- configure the component
-          if not comp:configure() then rfsm.send_events(fsm,'e_failed') return end
         end
       end,
     },
@@ -187,6 +151,23 @@ return rfsm.state {
         dp:setMasterSlaveActivity('emperor', 'communicator')
           --add here extra activities
       end,
+    },
+
+    prepare_reporter = rfsm.state {
+      entry = function(fsm)
+        -- load the mashalling service and the configuration file
+        components.reporter:loadService('marshalling')
+        components.reporter:provides('marshalling'):loadProperties(component_config_files['reporter'])
+        -- add components to report
+        for comp, portlist in pairs(ports_to_report) do
+          for i, port in pairs(portlist) do
+            if not dp:addPeer('reporter', comp) then rfsm.send_events(fsm,'e_failed') end
+            if not components.reporter:reportPort(comp, port) then rfsm.send_events(fsm,'e_failed') end
+          end
+        end
+        -- configure the reporter
+        if not components.reporter:configure() then rfsm.send_events(fsm, 'e_failed') return end
+      end
     },
 
     load_emperor = rfsm.state {

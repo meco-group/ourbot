@@ -85,11 +85,11 @@ bool EstimatorInterface::configureHook(){
 bool EstimatorInterface::startHook(){
   // Check if input ports are connected
   Ports ports = this->ports()->getPorts();
-  for (Ports::iterator port = ports.begin(); port != ports.end() ; ++port) {
-    if (!(*port)->connected()){
-      log(Warning) << (*port)->getName() << " is not connected!" <<endlog();
-    }
-  }
+  // for (Ports::iterator port = ports.begin(); port != ports.end() ; ++port) {
+  //   if (!(*port)->connected()){
+  //     log(Warning) << (*port)->getName() << " is not connected!" <<endlog();
+  //   }
+  // }
   if (!initialize()){
     log(Error) << "Error occured in initialize() !" <<endlog();
     return false;

@@ -50,7 +50,6 @@ bool ControllerInterface::startHook(){
   if (!check){
     return false;
   }
-  std::cout << "Controller started !" <<std::endl;
   return true;
 }
 
@@ -87,7 +86,6 @@ void ControllerInterface::stopHook() {
   std::vector<double> zerovelocity(3,0.0);
   setCmdVelocity(zerovelocity);
   _cmd_velocity_port.write(_cmd_velocity);
-  std::cout << "Controller stopped !" <<std::endl;
 }
 
 double ControllerInterface::getControlSampleRate(){ return _control_sample_rate; }

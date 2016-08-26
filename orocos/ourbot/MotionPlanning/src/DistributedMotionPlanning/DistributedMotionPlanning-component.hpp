@@ -45,7 +45,7 @@ class DistributedMotionPlanning : public MotionPlanningInterface{
 
     int _n_shared;
     int _n_nghb;
-    std::vector<int> _neighbors;
+    std::vector<int> _nghb_index;
     std::vector<double> _residuals;
     std::vector<double> _rel_pos_c;
     int _init_iter;

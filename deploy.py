@@ -27,9 +27,9 @@ username = 'odroid'
 password = 'odroid'
 
 hosts = col.OrderedDict()
-# hosts['dave'] = '192.168.11.120'
-hosts['kurt'] = '192.168.11.121'
-hosts['krist'] = '192.168.11.122'
+hosts['dave'] = '192.168.11.120'
+# hosts['kurt'] = '192.168.11.121'
+# hosts['krist'] = '192.168.11.122'
 
 
 def send_file(ftp, ssh, loc_file, rem_file):
@@ -68,11 +68,15 @@ def send_files(ftp, ssh, loc_files, rem_files, fancy_print=False):
 
 
 def get_ip():
-    # s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    # s.connect(("8.8.8.8", 80))
-    # ip =  s.getsockname()[0]
-    # return ip
-    return '192.168.11.113'
+    arg='ip route list'
+    p=subprocess.Popen(arg,shell=True,stdout=subprocess.PIPE)
+    data = p.communicate()
+    sdata = data[0].split()
+    for k, word in enumerate(sdata):
+        if (word == 'src'):
+            if sdata[k+1].startswith('192.168.11'):
+                return sdata[k+1]
+    return '0.0.0.0'
 
 
 def settings(distributed_mp):
@@ -161,7 +165,6 @@ def settings(distributed_mp):
             file.close()
         local_files_ad = [lf+'_' for lf in local_files]
         local_files = [lf+'_' for lf in local_files]
-        import pdb; pdb.set_trace()  # breakpoint 8612931e //
         # update deploy scripts
         for file in ['deploy.lua', 'deploy_fsm.lua']:
             local_files.append(os.path.join(current_dir+'/orocos/ourbot', file))
