@@ -1,32 +1,14 @@
 #!/usr/bin/python
 
-# This script
-# - creates new components on the remote odroids
-# - copies the source files from PC
-# - buildsss the components.
+"""
+This script
+- creates new components on the remote odroids
+- copies the source files from PC
+- build the components if desired
+Run ./write2ourbots.py --help for available options.
 
-# Run ./write2ourbots.py --help for available options.
-
-# Usage: ./write2ourbots.py [options] arg
-# Arguments:
-#   1: local root folder of orocos components
-#   2: remote root folder of orocos components
-#  if arguments are not provided, default values are used:
-#   1: current directory/orocos/ourbot
-#   2: /home/odroid/orocos
-
-# Options:
-#   -b, --build: build all components
-#   -l, --buildlist: list of components to build
-#   -u, --username: ssh username
-#   -p, --password: ssh password
-#   -c, --createcomponents: create missing components
-#
-# Note: you can not use the -c and -b options at the same time. You should first
-# copy the environment variables (env) to ~/.ssh/environment on the remote
-# odroid.
-
-# Ruben Van Parys - 2015
+Ruben Van Parys - 2015
+"""
 
 import optparse
 import os
@@ -34,6 +16,7 @@ import sys
 import paramiko
 import collections as col
 import math
+import errno
 
 # Default parameters
 current_dir = os.path.dirname(os.path.realpath(__file__))
@@ -44,7 +27,7 @@ password = 'odroid'
 hosts = col.OrderedDict()
 # hosts['dave'] = '192.168.11.120'
 hosts['kurt'] = '192.168.11.121'
-hosts['krist'] = '192.168.11.122'
+# hosts['krist'] = '192.168.11.122'
 ignore = ['TestCorba', 'VelocityCommandInterface', 'SPIMaster']
 build_list = []
 distributed = True
@@ -86,14 +69,23 @@ def change_cmakelist(ssh, component):
     ftp.close()
 
 
-def send_file(ftp, loc_file, rem_file):
+def send_file(ftp, ssh, loc_file, rem_file):
+    directory = os.path.dirname(rem_file)
+    try:
+        ftp.lstat(directory)
+    except IOError, e:
+        if e.errno == errno.ENOENT:
+            stdin, stdout, stderr = ssh.exec_command('mkdir -p ' + directory)
+            err = stderr.read()
+            if err:
+                print err
     try:
         ftp.put(loc_file, rem_file)
-    except:
-        raise ValueError('Could not send ' + loc_file + '!')
+    except IOError:
+        raise ValueError('Could not send ' + loc_file)
 
 
-def send_files(ftp, loc_files, rem_files):
+def send_files(ftp, ssh, loc_files, rem_files):
     n_blocks = 50
     interval = int(math.ceil(len(loc_files)/n_blocks*1.))
     string = '['
@@ -103,7 +95,7 @@ def send_files(ftp, loc_files, rem_files):
     cnt = 0
     for lf, rf in zip(loc_files, rem_files):
         string2 = string
-        send_file(ftp, lf, rf)
+        send_file(ftp, ssh, lf, rf)
         for k in range(cnt/interval):
             string2 = string2[:k+1] + '=' + string2[k+2:]
         sys.stdout.flush()
@@ -112,73 +104,41 @@ def send_files(ftp, loc_files, rem_files):
     print ''
 
 
-def mp_adaptations(ftp):
+def mp_adaptations(ftp, ssh):
     local_files = []
     remote_files = []
     # adapt CMakeLists.txt
-    local_files.append(os.path.join(current_dir,
-                                    'orocos/ourbot/MotionPlanning/CMakeLists.txt'))
-    remote_files.append(os.path.join(remote_root,
-                                     'MotionPlanning/CMakeLists.txt'))
+    local_files.append(os.path.join(
+        current_dir, 'orocos/ourbot/MotionPlanning/CMakeLists.txt'))
+    remote_files.append(os.path.join(
+        remote_root, 'MotionPlanning/CMakeLists.txt'))
     f1 = open(local_files[-1], 'r')
     body = f1.read()
     f1.close()
-    index = body.find(
-        'link_directories(/home/ruben/ourbot/orocos/ourbot/MotionPlanning/')
-    string1a = body[index:].split('\n')[0]
-    index = body.find(
-        'include_directories(/home/ruben/ourbot/orocos/ourbot/MotionPlanning/')
-    string1b = body[index:].split('\n')[0]
-    if distributed:
-        string2a = 'link_directories(/home/odroid/orocos/MotionPlanning/src/DistributedMotionPlanning/Toolbox/bin/)'
-        string2b = 'include_directories(/home/odroid/orocos/MotionPlanning/src/DistributedMotionPlanning/Toolbox/src/)'
-    else:
-        string2a = 'link_directories(/home/odroid/orocos/MotionPlanning/src/MotionPlanning/Toolbox/bin/)'
-        string2b = 'include_directories(/home/odroid/orocos/MotionPlanning/src/MotionPlanning/Toolbox/src/)'
-    body = body.replace(string1a, string2a)
-    body = body.replace(string1b, string2b)
-    f2 = open(local_files[-1]+'_', 'w')
-    f2.write(body)
-    f2.close()
-    # adapt other CMakeLists.txt
-    local_files.append(os.path.join(current_dir,
-        'orocos/ourbot/MotionPlanning/src/CMakeLists.txt'))
-    remote_files.append(os.path.join(remote_root,
-        'MotionPlanning/src/CMakeLists.txt'))
-    f1 = open(local_files[-1], 'r')
-    body = f1.read()
-    f1.close()
-    index = body.find('orocos_component(')
-    string1a = body[index:].split('\n')[0]
-    index = body.find('orocos_install_headers(')
-    string1b = body[index:].split('\n')[0]
-    if distributed:
-        string2a = ('orocos_component(MotionPlanning ' +
-                    'MotionPlanningInterface/MotionPlanningInterface-component.cpp ' +
-                    'MotionPlanningInterface/MotionPlanningInterface-component.hpp ' +
-                    'DistributedMotionPlanning/DistributedMotionPlanning-component.hpp ' +
-                    'DistributedMotionPlanning/DistributedMotionPlanning-component.cpp)')
-        string2b = ('orocos_install_headers(MotionPlanningInterface/MotionPlanningInterface-component.hpp ' +
-                    'DistributedMotionPlanning/DistributedMotionPlanning-component.hpp)')
-    else:
-        string2a = ('orocos_component(MotionPlanning ' +
-                    'MotionPlanningInterface/MotionPlanningInterface-component.cpp ' +
-                    'MotionPlanningInterface/MotionPlanningInterface-component.hpp ' +
-                    'MotionPlanning/MotionPlanning-component.hpp ' +
-                    'MotionPlanning/MotionPlanning-component.cpp)')
-        string2b = ('orocos_install_headers(MotionPlanningInterface/MotionPlanningInterface-component.hpp ' +
-                    'MotionPlanning/MotionPlanning-component.hpp)')
-    body = body.replace(string1a, string2a)
-    body = body.replace(string1b, string2b)
+    for repl in ['include_directories', 'link_directories']:
+        while(body.find(repl) > 0):
+            index = body.find(repl)
+            string = body[index:].split(')')[0]+')\n'
+            body = body.replace(string, '')
+    part1, part2 = body[:index], body[index:]
+    body = part1 + '\n'
+    body += 'link_directories('
+    body += os.path.join(
+        remote_root + '/MotionPlanning/src/MotionPlanning/Toolbox/bin/') + ')\n'
+    body += 'link_directories('
+    body += os.path.join(
+        remote_root + '/MotionPlanning/src/DistributedMotionPlanning/Toolbox/bin/') + ')\n'
+    body += part2
     f2 = open(local_files[-1]+'_', 'w')
     f2.write(body)
     f2.close()
     # adapt Makefiles
     for mp_type in ['MotionPlanning', 'DistributedMotionPlanning']:
-        local_files.append(os.path.join(current_dir,
-                                        'orocos/ourbot/MotionPlanning/src/'+mp_type+'/Toolbox/Makefile'))
-        remote_files.append(os.path.join(remote_root,
-                                         'MotionPlanning/src/'+mp_type+'/Toolbox/Makefile'))
+        local_files.append(os.path.join(
+            current_dir, ('orocos/ourbot/MotionPlanning/src/' +
+                          mp_type + '/Toolbox/Makefile')))
+        remote_files.append(os.path.join(
+            remote_root, 'MotionPlanning/src/'+mp_type+'/Toolbox/Makefile'))
         f1 = open(local_files[-1], 'r')
         body = f1.read()
         f1.close()
@@ -191,49 +151,39 @@ def mp_adaptations(ftp):
         index = body.find('CASADIOBJ =')
         string = body[index:].split('\n')[0]
         body = body.replace(
-            string, 'CASADIOBJ = ' + os.path.join(remote_root, 'MotionPlanning/src/'+mp_type+'/Toolbox/bin/'))
+            string, 'CASADIOBJ = ' + os.path.join(
+                remote_root, 'MotionPlanning/src/'+mp_type+'/Toolbox/bin/'))
         f2 = open(local_files[-1]+'_', 'w')
         f2.write(body)
         f2.close()
     # send files
     for lf, rf in zip(local_files, remote_files):
-        send_file(ftp, lf+'_', rf)
+        send_file(ftp, ssh, lf+'_', rf)
         os.remove(lf+'_')
 
 
 if __name__ == "__main__":
-    usage = ('''Usage: %prog [options] arg. There are 2 arguments:
-                local root path & remote root path. It can be left blank to use
-                default values.''')
+    usage = ('Usage: %prog [options]')
     op = optparse.OptionParser(usage=usage)
     op.add_option("-b", "--build", action="store_true", dest="build",
                   default=False, help="build all components")
     op.add_option("-l", "--buildlist", dest="build_list",
                   default=build_list, help="list of components to build")
-    op.add_option("-u", "--username", dest="username",
-                  default=username, help="ssh username")
-    op.add_option("-p", "--password", dest="password",
-                  default=password, help="ssh password")
     op.add_option("-c", "--createcomponents", action="store_true",
                   dest="createcomponents", default=False,
                   help="create missing components")
 
     options, args = op.parse_args()
 
-    if len(args) == 2:
-        local_root = args(0)
-        remote_root = args(1)
-
     local_files = [f for f in os.listdir(local_root)
                    if os.path.isfile(os.path.join(local_root, f))]
     local_dir = [d for d in os.listdir(local_root)
-                 if os.path.isdir(os.path.join(local_root, d)) and d not in ignore]
+                 if (os.path.isdir(os.path.join(local_root, d)) and
+                     d not in ignore)]
     components = [c for c in local_dir
                   if 'src' in os.listdir(os.path.join(local_root, c))]
     comp_dir = [d for d in local_dir if d not in components]
 
-    username = options.username
-    password = options.password
     build_list = options.build_list
     if options.build:
         build_list = components
@@ -248,7 +198,7 @@ if __name__ == "__main__":
         remote_dir = [d for d in ftp.listdir(remote_root) if 'd'
                       in str(ftp.lstat(os.path.join(remote_root, d))).split()[0]]
 
-        # Create unexisting components
+        # create unexisting components
         if options.createcomponents:
             print 'Creating unexisting components:'
             new_components = [c for c in components if c not in remote_dir]
@@ -269,8 +219,9 @@ if __name__ == "__main__":
                     ssh.exec_command('mkdir ' + dir_)
             ssh.exec_command('source ~/.bashrc')
 
-        # Sending source files
-        print 'sending source files'
+
+        # sending source files
+        print 'Sending source files'
         loc_files = []
         rem_files = []
         for f in local_files:
@@ -292,12 +243,12 @@ if __name__ == "__main__":
                         rem_file = loc_file.replace(local_root, remote_root)
                         loc_files.append(loc_file)
                         rem_files.append(rem_file)
-        send_files(ftp, loc_files, rem_files)
+        send_files(ftp, ssh, loc_files, rem_files)
 
-        # Adapt stuff for MotionPlanning component
-        mp_adaptations(ftp)
+        # adapt stuff for MotionPlanning component
+        mp_adaptations(ftp, ssh)
 
-        # Build components
+        # build components
         if options.build:
             if options.createcomponents:
                 raise ValueError('''Before you can build you should first copy
