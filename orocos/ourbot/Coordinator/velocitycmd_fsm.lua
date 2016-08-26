@@ -1,6 +1,6 @@
 local tc = rtt.getTC()
 
--- local scanmatcher   = tc:getPeer('scanmatcher')
+local scanmatcher   = tc:getPeer('scanmatcher')
 local estimator     = tc:getPeer('estimator')
 local reporter      = tc:getPeer('reporter')
 local io            = tc:getPeer('io')

@@ -128,7 +128,7 @@ return rfsm.state {
     configure_components = rfsm.state {
       entry = function(fsm)
         for name, comp in pairs(components) do
-          if (name ~= 'reporter') do -- reporter configured in later stage
+          if (name ~= 'reporter') then -- reporter configured in later stage
             comp:loadService('marshalling')
             -- every component loads system configurations
             if not comp:provides('marshalling'):updateProperties(system_config_file) then rfsm.send_events(fsm,'e_failed') return end
