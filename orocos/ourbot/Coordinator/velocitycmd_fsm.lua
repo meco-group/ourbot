@@ -1,9 +1,9 @@
 local tc = rtt.getTC()
 
--- local scanmatcher   = tc:getPeer('scanmatcher'..tostring(index))
-local estimator     = tc:getPeer('estimator'..tostring(index))
-local reporter      = tc:getPeer('reporter'..tostring(index))
-local io            = tc:getPeer('io'..tostring(index))
+-- local scanmatcher   = tc:getPeer('scanmatcher')
+local estimator     = tc:getPeer('estimator')
+local reporter      = tc:getPeer('reporter')
+local io            = tc:getPeer('io')
 
 local estimatorUpdate           = estimator:getOperation("update")
 local estimatorInRunTimeError   = estimator:getOperation("inRunTimeError")
@@ -19,11 +19,17 @@ return rfsm.state {
   rfsm.trans{src = 'idle',    tgt = 'init',   events = {'e_init'}},
   rfsm.trans{src = 'init',    tgt = 'run',    events = {'e_run'}},
   rfsm.trans{src = 'run',     tgt = 'stop',   events = {'e_stop'}},
-  rfsm.trans{src = 'stop',    tgt = 'run',    events = {'e_restart'}},  --No reinitiliaziation
-  rfsm.trans{src = 'stop',    tgt = 'reset',  events = {'e_reset'}},    --With reinitialization
+  rfsm.trans{src = 'stop',    tgt = 'run',    events = {'e_restart'}},  -- no reinitiliaziation
+  rfsm.trans{src = 'stop',    tgt = 'reset',  events = {'e_reset'}},    -- with reinitialization
   rfsm.trans{src = 'reset',   tgt = 'idle',   events = {'e_done'}},
 
-  idle = rfsm.state{entry=function() print("Waiting on Initialize...") end},
+  initial = rfsm.conn{},
+
+  idle = rfsm.state{
+    entry=function()
+      print("Waiting on Initialize...")
+    end
+  },
 
   init = rfsm.state{
     entry = function(fsm)

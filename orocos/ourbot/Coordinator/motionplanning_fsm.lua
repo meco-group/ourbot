@@ -1,11 +1,11 @@
 local tc = rtt.getTC()
 
-local motionplanning = tc:getPeer('motionplanning'..tostring(index))
-local controller    = tc:getPeer('controller'..tostring(index))
-local estimator     = tc:getPeer('estimator'..tostring(index))
-local reference     = tc:getPeer('reference'..tostring(index))
-local reporter      = tc:getPeer('reporter'..tostring(index))
-local io            = tc:getPeer('io'..tostring(index))
+local motionplanning  = tc:getPeer('motionplanning')
+local controller      = tc:getPeer('controller')
+local estimator       = tc:getPeer('estimator')
+local reference       = tc:getPeer('reference')
+local reporter        = tc:getPeer('reporter')
+local io              = tc:getPeer('io')
 
 local estimatorUpdate              = estimator:getOperation("update")
 local referenceUpdate              = reference:getOperation("update")
@@ -25,11 +25,17 @@ return rfsm.state {
   rfsm.trans{src = 'idle',    tgt = 'init',   events = {'e_init'}},
   rfsm.trans{src = 'init',    tgt = 'run',    events = {'e_run'}},
   rfsm.trans{src = 'run',     tgt = 'stop',   events = {'e_stop', 'e_failed'}},
-  rfsm.trans{src = 'stop',    tgt = 'run',    events = {'e_restart'}},  --No reinitiliaziation
-  rfsm.trans{src = 'stop',    tgt = 'reset',  events = {'e_reset'}},    --With reinitialization
+  rfsm.trans{src = 'stop',    tgt = 'run',    events = {'e_restart'}},  -- no reinitiliaziation
+  rfsm.trans{src = 'stop',    tgt = 'reset',  events = {'e_reset'}},    -- with reinitialization
   rfsm.trans{src = 'reset',   tgt = 'idle',   events = {'e_done'}},
 
-  idle = rfsm.state{entry=function() print("Waiting on Initialize...") end},
+  initial = rfsm.conn{},
+
+  idle = rfsm.state{
+    entry=function()
+      print("Waiting on Initialize...")
+    end
+  },
 
   init = rfsm.state{
     entry = function(fsm)
@@ -131,7 +137,7 @@ return rfsm.state {
       estimator:stop()
       reference:stop()
       controller:stop()
-      -- reporter:stop()
+      reporter:stop()
       print("System stopped. Waiting on Restart or Reset...")
     end,
   },

@@ -1,5 +1,5 @@
 export void VelocityControl(){
-  coordinator_send_event_port.write("e_velocitycmdintern")
+  coordinator_send_event_port.write("e_velocitycmd")
 }
 
 export void MotionPlanning(){

@@ -1,5 +1,5 @@
 export void VelocityControl(){
-  emperor_send_event_port.write("e_velocitycmdextern")
+  emperor_send_event_port.write("e_velocitycmd")
 }
 
 export void MotionPlanning(){

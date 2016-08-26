@@ -2,54 +2,35 @@ require 'rttlib'
 require 'rfsm_rtt'
 require 'rfsmpp'
 
---Some flags
-local test = true -- odroid is not in a robot (no teensy, lidar, ...)
-
---Define component names here
-local estimator     = 'estimator'..index
-local controller    = 'controller'..index
-local motionplanning= 'motionplanning'..index
-local reference     = 'reference'..index
-local coordinator   = 'coordinator'..index
-local reporter      = 'reporter'..index
-local io            = 'io'..index
-local teensy        = 'teensy'..index
-local lidar         = 'lidar'..index
-local scanmatcher   = 'scanmatcher'..index
-  --add here extra components
-
---Components to load
+-- components to load
 local components_to_load = {
-  [estimator]       = estimator_type,
-  [controller]      = controller_type,
-  [motionplanning]  = motionplanning_type,
-  [reference]       = 'Reference',
-  [coordinator]     = 'OCL::LuaTLSFComponent',
-  [reporter]        = 'OCL::NetcdfReporting',
-  [io]              = 'Container'
-  -- [teensy]          = 'TeensyBridge',
-  -- [lidar]           = 'RPLidar',
-  -- [scanmatcher]     = 'Scanmatcher'
-   -- add here componentname = 'componenttype'
+  coordinator     = 'OCL::LuaTLSFComponent',
+  communicator    = 'Communicator',
+  estimator       = estimator_type,
+  controller      = controller_type,
+  reference       = 'Reference',
+  motionplanning  = motionplanning_type,
+  reporter        = 'OCL::NetcdfReporting',
+  io              = 'Container'
+  -- teensy          = 'TeensyBridge'
+  -- lidar           = 'RPLidar',
+  -- scanmatcher     = 'Scanmatcher'
+    --add here componentname = 'componenttype'
 }
 
---Containers to fill
+-- containers to fill
 local containers_to_fill = {
-  [io]  = {teensy, lidar}
+  -- io  = {'teensy', 'lidar'}
+  io = {}
 }
-if test then
-  containers_to_fill = {
-  [io]  = {}
-  }
-end
 
---Ports to report
+-- ports to report
 local ports_to_report = {
-  -- [controller]      = {'cmd_velocity_port'},
-  -- [estimator]       = {'est_pose_port'},
-  [reference]       = {'ref_velocity_port'}
-  -- [coordinator]     = {'controlloop_duration', 'controlloop_jitter'},
-  -- [io]              = {--'cal_lidar_node_port',
+  -- controller      = {'cmd_velocity_port'},
+  -- estimator       = {'est_pose_port'},
+  reference       = {'ref_velocity_port'}
+  -- coordinator     = {'controlloop_duration', 'controlloop_jitter'},
+  -- io              = {--'cal_lidar_node_port',
   --                     -- 'cal_imul_transacc_port',
   --                     -- 'cal_imul_orientation_3d_port',
   --                     -- 'cal_imul_orientation_port',
@@ -70,75 +51,61 @@ local ports_to_report = {
   --                     -- 'cal_motor_voltage_port',
                       -- 'cal_velocity_port'
                       -- }
-  --add here componentname = 'portnames'
+    --add here componentname = 'portnames'
 }
 
---Packages to import
+-- packages to import
 local packages_to_import = {
-  [estimator]       = 'EstimatorInterface',
-  [controller]      = 'ControllerInterface',
-  [motionplanning]  = 'MotionPlanning',
-  [reference]       = 'Reference',
-  [io]              = 'Container',
-  [teensy]          = 'SerialInterface',
-  [lidar]           = 'SerialInterface',
-  [scanmatcher]     = 'Scanmatcher'
-  --add here componentname = 'parentcomponenttype'
+  communicator    = 'Communicator',
+  estimator       = 'EstimatorInterface',
+  controller      = 'ControllerInterface',
+  reference       = 'Reference',
+  motionplanning  = 'MotionPlanning',
+  io              = 'Container'
+  -- teensy          = 'SerialInterface'
+  -- lidar           = 'SerialInterface',
+  -- scanmatcher     = 'Scanmatcher'
+    --add here componentname = 'parentcomponenttype'
 }
 
-if test then
-  packages_to_import = {
-    [estimator]       = 'EstimatorInterface',
-    [controller]      = 'ControllerInterface',
-    [motionplanning]  = 'MotionPlanning',
-    [reference]       = 'Reference',
-    [io]              = 'Container'
-  }
-end
-
---Configuration files to load
+-- configuration files to load
 local system_config_file      = 'Configuration/system-config.cpf'
 local reporter_config_file    = 'Configuration/reporter-config.cpf'
 local component_config_files  = {
-  [teensy]          = 'Configuration/teensy-config.cpf',
-  [lidar]           = 'Configuration/lidar-config.cpf',
-  [motionplanning]  = 'Configuration/motionplanning-config.cpf',
-  [scanmatcher]     = 'Configuration/scanmatcher-config.cpf'
-  --add here componentname = 'Configuration/component-config.cpf'
+  reporter        = 'Configuration/reporter-config.cpf',
+  teensy          = 'Configuration/teensy-config.cpf',
+  lidar           = 'Configuration/lidar-config.cpf',
+  motionplanning  = 'Configuration/motionplanning-config.cpf',
+  scanmatcher     = 'Configuration/scanmatcher-config.cpf'
+    --add here componentname = 'Configuration/component-config.cpf'
 }
 
---Accessible components over CORBA
-local server_components = {coordinator, io}
--- for comp,ports in pairs(ports_to_report) do
---   table.insert(server_components,comp)
--- end
-if distributed_mp then
-  table.insert(server_components, motionplanning)
-end
-
 local components = {}
-local remote_components = {}
 local dp = rtt.getTC():getPeer('Deployer')
 
 return rfsm.state {
 
   rfsm.transition {src = 'initial',                   tgt = 'deploy'},
   rfsm.transition {src = 'deploy',                    tgt = 'failure',  events = {'e_failed'}},
-  rfsm.transition {src = '.deploy.prepare_reporter',  tgt = 'deployed', events = {'e_done'}},
+  rfsm.transition {src = 'deployed',                  tgt = 'failure',  events = {'e_failed'}},
+  rfsm.transition {src = '.deploy.load_coordinator',  tgt = 'deployed', events = {'e_done'}},
   rfsm.transition {src = 'failure',                   tgt = 'deploy',   events = {'e_reset'}},
+
+  initial = rfsm.conn{},
 
   deployed = rfsm.conn{},
 
   failure = rfsm.state {
     entry = function()
       _deployer_failure_event_port:write('e_failed')
-      for name,comp in pairs(components) do
+      components.communicator:update()
+      for name, comp in pairs(components) do
         comp:stop()
         comp:cleanup()
       end
     end,
     exit = function()
-      for name,type in pairs(components_to_load) do
+      for name, type in pairs(components_to_load) do
         dp:unloadComponent(name)
       end
     end,
@@ -146,29 +113,28 @@ return rfsm.state {
 
   deploy = rfsm.state {
     rfsm.transition {src = 'initial',                   tgt = 'load_components'},
-    rfsm.transition {src = 'load_components',           tgt = 'configure_components',       events = {'e_done'}},
-    rfsm.transition {src = 'configure_components',      tgt = 'connect_components',         events = {'e_done'}},
-    rfsm.transition {src = 'connect_components',        tgt = 'connect_distr_components',   events = {'e_done'}},
-    rfsm.transition {src = 'connect_distr_components',  tgt = 'set_activities',             events = {'e_done'}},
-    rfsm.transition {src = 'set_activities',            tgt = 'load_app_coordination',      events = {'e_done'}},
-    rfsm.transition {src = 'load_app_coordination',     tgt = 'prepare_reporter',           events = {'e_done'}},
+    rfsm.transition {src = 'load_components',           tgt = 'connect_components',         events = {'e_done'}},
+    rfsm.transition {src = 'connect_components',        tgt = 'connect_remote_components',  events = {'e_done'}},
+    rfsm.transition {src = 'connect_remote_components', tgt = 'configure_components',       events = {'e_done'}},
+    rfsm.transition {src = 'configure_components',      tgt = 'set_activities',             events = {'e_done'}},
+    rfsm.transition {src = 'set_activities',            tgt = 'load_coordinator',           events = {'e_done'}},
 
     load_components = rfsm.state {
       entry = function(fsm)
         components = {}
-        --Import necessary packages
-        for name,type in pairs(packages_to_import) do
-          if (not rtt.provides("ros"):import(type) ) then rfsm.send_events(fsm,'e_failed') return end
+        -- import necessary packages
+        for name, type in pairs(packages_to_import) do
+          if not rtt.provides("ros"):import(type) then rfsm.send_events(fsm,'e_failed') return end
         end
-        --Go through the table of components to load them
-        for name,type in pairs(components_to_load) do
-          if (not dp:loadComponent(name,type)) then rfsm.send_events(fsm,'e_failed') return end
+        -- go through the table of components to load them
+        for name, type in pairs(components_to_load) do
+          if not dp:loadComponent(name, type) then rfsm.send_events(fsm,'e_failed') return end
           components[name] = dp:getPeer(name)
         end
-        --Fill containers with correct components
-        for container,comps in pairs(containers_to_fill) do
-          addToContainer = components[container]:getOperation("addComponent")
-          for i,name in pairs(comps) do
+        -- fill containers with correct components
+        for container, comps in pairs(containers_to_fill) do
+          local addToContainer = components[container]:getOperation("addComponent")
+          for i, name in pairs(comps) do
             dp:addPeer(container, name)
             if not (name == imul or name == imur) then
               addToContainer(name,"")
@@ -179,150 +145,150 @@ return rfsm.state {
             end
           end
         end
-        -- Go through the table of components to make server
-        for i,name in pairs(server_components) do
-          if (not dp:server(name,true)) then rfsm.send_events(fsm,'e_failed') return end
+        -- load execution file in coordinator component
+        if not components.coordinator:exec_file(coordinator_file) then rfsm.send_events(fsm,'e_failed') return end
+      end
+    },
+
+
+    connect_components = rfsm.state {
+      entry = function(fsm)
+        -- connect teensy to lidar
+        if components_to_load['teensy'] and components_to_load[lidar] then
+          if not dp:connectPorts('teensy', 'lidar')            then rfsm.send_events(fsm,'e_failed') return end
         end
+        -- connect scanmatcher
+        if components_to_load['scanmatcher'] then
+          if not dp:connectPorts('estimator', 'scanmatcher')     then rfsm.send_events(fsm,'e_failed') return end
+          if not dp:connectPorts('scanmatcher', 'io')            then rfsm.send_events(fsm,'e_failed') return end
+        end
+        -- connect other components
+        if not dp:connectPorts('estimator', 'io')              then rfsm.send_events(fsm,'e_failed') return end
+        if not dp:connectPorts('estimator', 'controller')      then rfsm.send_events(fsm,'e_failed') return end
+        if not dp:connectPorts('reference', 'controller')      then rfsm.send_events(fsm,'e_failed') return end
+        if not dp:connectPorts('io', 'controller')             then rfsm.send_events(fsm,'e_failed') return end
+        if not dp:connectPorts('reference', 'motionplanning')  then rfsm.send_events(fsm,'e_failed') return end
+        if not dp:connectPorts('estimator', 'motionplanning')  then rfsm.send_events(fsm,'e_failed') return end
+          --add more connections here
+
+        -- connect the deployer to coordinator (for communicating failure events)
+        if not _deployer_fsm_event_port:connect(components.coordinator:getPort('coordinator_failure_event_port')) then rfsm.send_events(fsm,'e_failed') return end
+        if not _deployer_failure_event_port:connect(components.coordinator:getPort('coordinator_fsm_event_port')) then rfsm.send_events(fsm,'e_failed') return end
+        -- add every component as peer of coordinator
+        for name, comp in pairs(components) do
+          if (name ~= 'coordinator') then
+            if not dp:addPeer('coordinator', name) then rfsm.send_events(fsm,'e_failed') return end
+          end
+        end
+        -- connect components-to-report
+        for comp, portlist in pairs(ports_to_report) do
+          for i, port in pairs(portlist) do
+            if not dp:addPeer('reporter', comp) then rfsm.send_events(fsm,'e_failed') end
+            if not components.reporter:reportPort(comp, port) then rfsm.send_events(fsm,'e_failed') end
+          end
+        end
+      end
+    },
+
+    connect_remote_components = rfsm.state{
+      entry = function(fsm)
+        local addOutgoing = components.communicator:getOperation("addOutgoing")
+        local addIncoming = components.communicator:getOperation("addIncoming")
+        -- coordinator
+        dp:addPeer('communicator', 'coordinator')
+        if not addIncoming('coordinator', 'coordinator_fsm_event_port', 4000) then rfsm.send_events(fsm, 'e_failed') return end
+        -- io
+        if components_to_load['io'] then
+          dp:addPeer('communicator', 'io')
+          if not addIncoming('io', 'cmd_velocity_port', 4002) then rfsm.send_events(fsm, 'e_failed') return end
+        end
+        -- distributed motion planning
+        if distributed_mp then
+          dp:addPeer('communicator', 'motionplanning')
+          if not addOutgoing('motionplanning', 'x_var_port', 5000 + 10*index, neighbors) then rfsm.send_events(fsm, 'e_failed') return end
+          for i=0, neighbors.size-1 do
+            if not addOutgoing('motionplanning', 'zl_ij_var_port_'..tostring(i), 5100 + 10*nghb_index[i] + i, neighbors[i]) then rfsm.send_events(fsm, 'e_failed') return end
+            if not addIncoming('motionplanning', 'zl_ji_var_port_'..tostring(i), 5100 + 10*nghb_index[i] + (i-1) then rfsm.send_events(fsm, 'e_failed') return end
+            if not addIncoming('motionplanning', 'x_j_var_port_'..tostring(i), 5000 + 10*nghb_index[i]) then rfsm.send_events(fsm, 'e_failed') return end
+          end
+        end
+        -- deployer (added as last: highest priority)
+        dp:addPeer('communicator', 'lua')
+        if not addIncoming('lua', 'deployer_fsm_event_port', 4001) then rfsm.send_events(fsm, 'e_failed') return end
+        if not addOutgoing('lua', 'deployer_failure_event_port', 4001, broadcast) then rfsm.send_events(fsm,'e_failed') return end
+        -- if distributed_mp then
+        --   cp=rtt.Variable("ConnPolicy")
+        --   --Sleeping ...
+        --   local ntime = os.time() + 2
+        --   repeat until os.time() > ntime
+        --   --Load components over the network & connect ports
+        --   for i=0,neighbors.size-1 do
+        --     local nghb_index = neighbors[i]
+        --     local remote_cmp = 'motionplanning'..tostring(nghb_index)
+        --     if (not remote_components[remote_cmp] ) then
+        --       if (not dp:loadComponent(remote_cmp,'CORBA')) then rfsm.send_events(fsm,'e_failed') return end
+        --       remote_components[remote_cmp] = dp:getPeer(remote_cmp)
+        --     end
+        --     --Connect distributed motionplanning ports: THIS HOLDS ONLY FOR CIRCULAR INTERCONNECTION!!
+        --     if (not dp:connect(remote_cmp..'.x_var_port', 'motionplanning'..tostring(index)..'.x_j_var_port_'..tostring(i), cp)) then rfsm.send_events(fsm,'e_failed') return end
+        --     if (not dp:connect(remote_cmp..'.zl_ij_var_port_'..tostring(1-i), 'motionplanning'..tostring(index)..'.zl_ji_var_port_'..tostring(i), cp)) then rfsm.send_events(fsm,'e_failed') return end
+        --   end
+        -- end
       end
     },
 
     configure_components = rfsm.state {
       entry = function(fsm)
-        for name,comp in pairs(components) do
-          if (name ~= coordinator and name ~= reporter) then --coordinator/reporter is configured in a later stadium
-            comp:loadService('marshalling')
-            --Every component loads system configurations
-            if (not comp:provides('marshalling'):updateProperties(system_config_file)) then rfsm.send_events(fsm,'e_failed') return end
-            --If available, a component loads its specific configurations
-            if(component_config_files[name]) then
-              if (not comp:provides('marshalling'):updateProperties(component_config_files[name])) then rfsm.send_events(fsm,'e_failed') return end
-            end
-            --Configure the components
-            if (not comp:configure()) then rfsm.send_events(fsm,'e_failed') return end
+        for name, comp in pairs(components) do
+          comp:loadService('marshalling')
+          -- every component loads system configurations
+          if not comp:provides('marshalling'):updateProperties(system_config_file) then rfsm.send_events(fsm,'e_failed') return end
+          -- if available, a component loads its specific configurations
+          if(component_config_files[name]) then
+            if not comp:provides('marshalling'):updateProperties(component_config_files[name]) then rfsm.send_events(fsm,'e_failed') return end
           end
-        end
-      end,
-    },
-
-    connect_components = rfsm.state {
-      entry = function(fsm)
-        --Connect teensy to lidar
-        if components_to_load[teensy] and components_to_load[lidar] then
-          if (not dp:connectPorts(teensy,lidar))            then rfsm.send_events(fsm,'e_failed') return end
-        end
-
-        --Connect scanmatcher
-        if components_to_load[scanmatcher] then
-          if (not dp:connectPorts(estimator,scanmatcher))     then rfsm.send_events(fsm,'e_failed') return end
-          if (not dp:connectPorts(scanmatcher,io))            then rfsm.send_events(fsm,'e_failed') return end
-        end
-
-        --Connect all components
-        if (not dp:connectPorts(estimator,io))              then rfsm.send_events(fsm,'e_failed') return end
-        if (not dp:connectPorts(estimator,controller))      then rfsm.send_events(fsm,'e_failed') return end
-        if (not dp:connectPorts(reference,controller))      then rfsm.send_events(fsm,'e_failed') return end
-        if (not dp:connectPorts(io,controller))             then rfsm.send_events(fsm,'e_failed') return end
-        if (not dp:connectPorts(reference,motionplanning))  then rfsm.send_events(fsm,'e_failed') return end
-        if (not dp:connectPorts(estimator,motionplanning))  then rfsm.send_events(fsm,'e_failed') return end
-          --add more connections here
-
-        --Add every component as peer of coordinator
-        if (not dp:addPeer(coordinator,controller))         then rfsm.send_events(fsm,'e_failed') return end
-        if (not dp:addPeer(coordinator,estimator))          then rfsm.send_events(fsm,'e_failed') return end
-        if (not dp:addPeer(coordinator,motionplanning))     then rfsm.send_events(fsm,'e_failed') return end
-        if (not dp:addPeer(coordinator,reference))          then rfsm.send_events(fsm,'e_failed') return end
-        if (not dp:addPeer(coordinator,reporter))           then rfsm.send_events(fsm,'e_failed') return end
-        if (not dp:addPeer(coordinator,io))                 then rfsm.send_events(fsm,'e_failed') return end
-        if components_to_load[scanmatcher] then
-          if (not dp:addPeer(coordinator,scanmatcher))        then rfsm.send_events(fsm,'e_failed') return end
-        end
-          --add more peers here
-      end,
-    },
-
-    connect_distr_components = rfsm.state{
-      entry = function(fsm)
-        if distributed_mp then
-          cp=rtt.Variable("ConnPolicy")
-          --Sleeping ...
-          local ntime = os.time() + 2
-          repeat until os.time() > ntime
-          --Load components over the network & connect ports
-          for i=0,neighbors.size-1 do
-            local nghb_index = neighbors[i]
-            local remote_cmp = 'motionplanning'..tostring(nghb_index)
-            if (not remote_components[remote_cmp] ) then
-              if (not dp:loadComponent(remote_cmp,'CORBA')) then rfsm.send_events(fsm,'e_failed') return end
-              remote_components[remote_cmp] = dp:getPeer(remote_cmp)
-            end
-            --Connect distributed motionplanning ports: THIS HOLDS ONLY FOR CIRCULAR INTERCONNECTION!!
-            if (not dp:connect(remote_cmp..'.x_var_port', 'motionplanning'..tostring(index)..'.x_j_var_port_'..tostring(i), cp)) then rfsm.send_events(fsm,'e_failed') return end
-            if (not dp:connect(remote_cmp..'.zl_ij_var_port_'..tostring(1-i), 'motionplanning'..tostring(index)..'.zl_ji_var_port_'..tostring(i), cp)) then rfsm.send_events(fsm,'e_failed') return end
-          end
+          -- configure the component
+          if not comp:configure() then rfsm.send_events(fsm,'e_failed') return end
         end
       end
     },
 
     set_activities = rfsm.state {
       entry = function(fsm)
-        dp:setActivity(motionplanning,0, 10,rtt.globals.ORO_SCHED_RT)
-        dp:setActivity(coordinator,1./control_sample_rate, 7,rtt.globals.ORO_SCHED_RT)
-        dp:setActivity(reporter,0,1,rtt.globals.ORO_SCHED_RT)
-        dp:setActivity(io,1./io_sample_rate, 7,rtt.globals.ORO_SCHED_RT)
-        if components_to_load[scanmatcher] then
-          dp:setActivity(scanmatcher, 0, 5,rtt.globals.ORO_SCHED_RT)
+        dp:setActivity('motionplanning', 0, 10, rtt.globals.ORO_SCHED_RT)
+        dp:setActivity('coordinator', 1./control_sample_rate, 7, rtt.globals.ORO_SCHED_RT)
+        dp:setActivity('reporter', 0, 1, rtt.globals.ORO_SCHED_RT)
+        dp:setActivity('io', 1./io_sample_rate, 7,rtt.globals.ORO_SCHED_RT)
+        if components_to_load['scanmatcher'] then
+          dp:setActivity('scanmatcher', 0, 5, rtt.globals.ORO_SCHED_RT)
         end
           --add here extra activities
 
-        --The estimator, controller and reference component are triggered by the coordinator and executed in the same thread.
-        dp:setMasterSlaveActivity(coordinator,estimator)
-        dp:setMasterSlaveActivity(coordinator,controller)
-        dp:setMasterSlaveActivity(coordinator,reference)
-
-        for container,comps in pairs(containers_to_fill) do
+        -- the estimator, controller and reference component are triggered by the coordinator and executed in the same thread.
+        dp:setMasterSlaveActivity('coordinator', 'estimator')
+        dp:setMasterSlaveActivity('coordinator', 'controller')
+        dp:setMasterSlaveActivity('coordinator', 'reference')
+        -- all elements of a container are triggered by the container
+        for container, comps in pairs(containers_to_fill) do
           for i,name in pairs(comps) do
-            dp:setMasterSlaveActivity(container,name)
+            dp:setMasterSlaveActivity(container, name)
           end
         end
-      end,
+        -- communicator should run in the fastest thread (= io thread)
+        dp:setMasterSlaveActivity('coordinator', 'communicator')
+
+      end
     },
 
-    load_app_coordination = rfsm.state {
+    load_coordinator = rfsm.state {
       entry = function(fsm)
-        --Load execution file in coordinator component
-        if not components[coordinator]:exec_file(coordinator_file) then rfsm.send_events(fsm,'e_failed') return end
-        --Copy the values of the application properties into the coordinator component
-        components[coordinator]:getProperty('index'):set(index)
-        components[coordinator]:getProperty('print_level'):set(print_level)
-        components[coordinator]:getProperty('reporter_sample_rate'):set(reporter_sample_rate)
-        --Configure the coordinator
-        if not components[coordinator]:configure() then rfsm.send_events(fsm,'e_failed') return end
-        --Connect the deployer to coordinator (for receiving each others failure events)
-        if not _deployer_fsm_event_port:connect(components[coordinator]:getPort('coordinator_failure_event_port')) then rfsm.send_events(fsm,'e_failed') return end
-        if not _deployer_failure_event_port:connect(components[coordinator]:getPort('coordinator_fsm_event_port')) then rfsm.send_events(fsm,'e_failed') return end
-        --Load the local application script
-        components[coordinator]:loadService("scripting")
-        if not components[coordinator]:provides("scripting"):loadPrograms(app_file) then rfsm.send_events(fsm,'e_failed') return end
-        --Start the coordinator
-        if not components[coordinator]:start() then rfsm.send_events(fsm,'e_failed') return end
-      end,
-    },
-
-    prepare_reporter = rfsm.state{
-      entry = function(fsm)
-        --Load the marshalling service and the previously defined configuration file
-        components[reporter]:loadService('marshalling')
-        components[reporter]:provides('marshalling'):loadProperties(reporter_config_file)
-        --Add components to report
-        for comp,portlist in pairs(ports_to_report) do
-          for i,port in pairs(portlist) do
-            if (not dp:addPeer(reporter,comp)) then rfsm.send_events(fsm,'e_failed') end
-            if (not components[reporter]:reportPort(comp,port)) then rfsm.send_events(fsm,'e_failed') end
-          end
-        end
-        --Configure the reporter
-        if (not components[reporter]:configure()) then rfsm.send_events(fsm,'e_failed') return end
-      end,
+        -- load the local application script
+        components.coordinator:loadService("scripting")
+        if not components.coordinator:provides("scripting"):loadPrograms(app_file) then rfsm.send_events(fsm,'e_failed') return end
+        -- start the coordinator and communicator
+        if not components.coordinator:start() then rfsm.send_events(fsm,'e_failed') return end
+        if not components.communicator:start() then rfsm.send_events(fsm,'e_failed') return end
+      end
     },
   }
 }

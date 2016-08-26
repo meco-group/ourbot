@@ -12,9 +12,17 @@ return rfsm.state {
   rfsm.trans{src = 'stop',    tgt = 'reset',  events = {'e_reset'}},
   rfsm.trans{src = 'reset',   tgt = 'idle'},
 
-  idle  = rfsm.state{ entry = function() main_state = 'motionplanning' sub_state='idle' print("Waiting on Init (Button A)...") end },
+  initial = rfsm.conn{},
+  idle  = rfsm.state{
+    entry = function(fsm)
+      main_state = 'motionplanning'
+      sub_state='idle'
+      print("Waiting on Init (Button A)...")
+    end
+  },
+
   init  = rfsm.state{
-    entry = function()
+    entry = function(fsm)
       sub_state='init'
       print("Waiting on Run (Button A)...")
       if (not reporter:start()) then
@@ -26,14 +34,23 @@ return rfsm.state {
   },
 
   run   = rfsm.state{
-    entry = function()
+    entry = function(fsm)
       sub_state='run'
       print("System started. Abort by using Break (Button B).")
     end,
 
-    doo = function()
+    doo = function(fsm)
+      snapshot_cnt = 0
+      period = tc:getPeriod()
+      max_cnt = 1/(reporter_sample_rate*period)
       while true do
-        snapshot:send()
+        -- take snapshot for logger
+        if snapshot_cnt > max_cnt then
+          snapshot:send()
+          snapshot_cnt = 0
+        else
+          snapshot_cnt = snapshot_cnt + 1
+        end
         rfsm.yield(true)
       end
     end,
@@ -47,7 +64,7 @@ return rfsm.state {
   },
 
   reset = rfsm.state{
-    entry = function()
+    entry = function(fsm)
       reporter:stop()
     end,
   },
