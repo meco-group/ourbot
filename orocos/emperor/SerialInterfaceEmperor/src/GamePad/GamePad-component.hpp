@@ -64,7 +64,26 @@ class GamePad : public USBInterface
     double _gamepad_lt;
     double _gamepad_rt;
 
-    bool _enable_velcmd;
+    std::vector<double> _gamepad_laxis_prev;
+    std::vector<double> _gamepad_raxis_prev;
+    bool _gamepad_A_prev;
+    bool _gamepad_B_prev;
+    bool _gamepad_X_prev;
+    bool _gamepad_Y_prev;
+    bool _gamepad_back_prev;
+    bool _gamepad_start_prev;
+    bool _gamepad_logitech_prev;
+    bool _gamepad_laxisbutton_prev;
+    bool _gamepad_raxisbutton_prev;
+    bool _gamepad_up_prev;
+    bool _gamepad_down_prev;
+    bool _gamepad_left_prev;
+    bool _gamepad_right_prev;
+    bool _gamepad_lb_prev;
+    bool _gamepad_rb_prev;
+    double _gamepad_lt_prev;
+    double _gamepad_rt_prev;
+
 
     gamepad_event_t _event;
     void writePorts();
@@ -75,6 +94,8 @@ class GamePad : public USBInterface
     // velocity command related attributes
     OutputPort<std::vector<double> > _cmd_velocity_port;
     std::vector<double> _cmd_velocity;
+    std::vector<double> _cmd_velocity_prev;
+    bool _enable_velcmd;
     std::vector<double> _filter_state;
     double _filter_bandwidth;
     double _max_velocity;
