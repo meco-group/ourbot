@@ -1,0 +1,20 @@
+require("print");
+import("rtt_ros");
+ros.import("Scanmatcher");
+
+loadComponent("sm", "Scanmatcher");
+
+loadService("sm", "marshalling");
+
+
+sm.marshalling.updateProperties("../Configuration/scanmatcher-config.cpf");
+sm.marshalling.updateProperties("../Configuration/system-config.cpf");
+
+//sm.marshalling.updateProperties("./ourbot/Configuration/scanmatcher-config.cpf");
+//sm.marshalling.updateProperties("./ourbot/Configuration/system-config.cpf");
+
+//sm.configure();
+
+//sm.start();
+
+//sm.update();

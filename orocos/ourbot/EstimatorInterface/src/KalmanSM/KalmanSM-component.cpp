@@ -28,9 +28,9 @@ _I(16,16), _H_lf(3,3), _R_lf(3,3)
   ports()->addPort("scanmatch_pose_port", _scanmatch_pose_port).doc("Estimated position-change of scanmatcher [x,y,orientation]");
   ports()->addPort("scanmatch_covariance_port", _scanmatch_covariance_port).doc("covariance scanmatcher [x,y,orientation]");
   // Output ports (to trigger SM)
-  ports()->addPort("trigger_scanmatcher_port",_trigger_scanmatcher_port).doc("Output port which triggers scanmatcher");
+  //ports()->addPort("trigger_scanmatcher_port",_trigger_scanmatcher_port).doc("Output port which triggers scanmatcher");
   //@@@Michiel: add extra output port with pose at start scan
-  // ports()->addPort("scanstart_pose_port", _scanstart_pose_port).doc("Pose at start of a scan");
+  ports()->addPort("scanstart_pose_port", _scanstart_pose_port).doc("Pose at start of a scan");
   // Properties
   addProperty("accelero_mounting_distance", _accelero_mounting_distance).doc("Distance between the accelerometer and the center of the robot");
   // Set data vector, matrices, ... with initial values
@@ -60,10 +60,15 @@ void KalmanSM::gatherMeasurements(){
 
   // when new lidar data: trigger scanmatcher and save current state, covariance and abs pose
   if(_cor_lidar_angle_port.read(_corresponding_lidar_angles) == RTT::NewData){
-    _trigger_scanmatcher_port.write(true);
+    //_trigger_scanmatcher_port.write(true);//ici
     _state_at_scanstart = _state_prev;
     // @@@Michiel
-    // _scanstart_pose_port.write(_state_prev);
+    std::vector<double> prev_pose(3);
+    prev_pose[0] = _state_at_scanstart[10];
+    prev_pose[1] = _state_at_scanstart[11];
+    prev_pose[2] = _state_at_scanstart[12];
+    _scanstart_pose_port.write(prev_pose);
+    
     _P_at_scanstart = _P;
     // clear buffer: this buffer will save all information until scanmatcher writes a new update (i.e. is finished)
     _sensorbuffer.clear();
@@ -117,7 +122,7 @@ void KalmanSM::detectScanMatchInfo(){
     _sensorbuffer2 = _sensorbuffer;
     _state_prev = _state_at_scanstart;
     _P = _P_at_scanstart;
-    _got_scan = true;
+    _got_scan = true; //ici TODO
   }
   else{
     if(_sensorbuffer.size() >= 1){
@@ -185,7 +190,7 @@ void KalmanSM::updateKalman(){
     // correction step: incorporate measurments
     _z << _sensorinformation[3], _sensorinformation[4], _sensorinformation[5], _sensorinformation[6], _sensorinformation[7], _sensorinformation[8], _sensorinformation[9];
     _y_hf(0) = _z(0) - ( (_state(10)-_state(13))*cos(theta) + (_state(11)-_state(14))*sin(theta));
-    _y_hf(1) = _z(1) - (-(_state(10)-_state(13))*sin(theta) + (_state(11)-_state(14))*cos(theta));;
+    _y_hf(1) = _z(1) - (-(_state(10)-_state(13))*sin(theta) + (_state(11)-_state(14))*cos(theta));
     _y_hf(2) = _z(2) - (_state(12) - _state(15));
     _y_hf(3) = _z(3) - (_state(3) - _accelero_mounting_distance*_state(5) + _state(6));
     _y_hf(4) = _z(4) - (_state(4) + _state(7));
@@ -205,37 +210,40 @@ void KalmanSM::updateKalman(){
     _H_T_hf = _H_hf.transpose();
 
     if(_got_scan){
-      // std::cout << "Received scanmatch data ... " << std::endl;
+      //std::cout << "bef: x: " << _est_pose[0] << "; y: " << _est_pose[1] << "; t:" << _est_pose[2] << std::endl;
+      //std::cout << "Received scanmatch data ... " << std::endl;
+      _print_data = true;
       replaceVectorBlock(&_y_hf, &_y, 0, 6);
       // extra measurement equations
       theta = _prev_scan_pose_abs[2];
 
-      _y(7) = _scan_pose_rel[0] - ( (_state(10)-_prev_scan_pose_abs[0])*cos(theta) + (_state(11)-_prev_scan_pose_abs[1])*sin(theta));
-      _y(8) = _scan_pose_rel[1] - (-(_state(10)-_prev_scan_pose_abs[0])*sin(theta) + (_state(11)-_prev_scan_pose_abs[1])*cos(theta));
-      _y(9) = _scan_pose_rel[2] - (_state(12)-_prev_scan_pose_abs[2]);
+      //_y(7) = _scan_pose_rel[0] - ( (_state(10)-_prev_scan_pose_abs[0])*cos(theta) + (_state(11)-_prev_scan_pose_abs[1])*sin(theta));
+      //_y(8) = _scan_pose_rel[1] - (-(_state(10)-_prev_scan_pose_abs[0])*sin(theta) + (_state(11)-_prev_scan_pose_abs[1])*cos(theta));
+      //_y(9) = _scan_pose_rel[2] - (_state(12)-_prev_scan_pose_abs[2]);
 
-      // @@@Michiel
-      // _y(7) = _scan_pose_rel[0];
-      // _y(8) = _scan_pose_rel[1];
-      // _y(9) = _scan_pose_rel[2];
+      // @@@Michiel //ici
+      _y(7) = _scan_pose_rel[0];
+      _y(8) = _scan_pose_rel[1];
+      _y(9) = _scan_pose_rel[2];
 
       _scanmatch_covariance_port.read(_cov_scanmatch);
 
       // subblock of measurment noise regarding scanmatch
+      //ici standaard 100 000 000
       _R_lf <<  _cov_scanmatch[0]*100000000, _cov_scanmatch[1]*100000000, _cov_scanmatch[2]*100000000,
                 _cov_scanmatch[3]*100000000, _cov_scanmatch[4]*100000000, _cov_scanmatch[5]*100000000,
                 _cov_scanmatch[6]*100000000, _cov_scanmatch[7]*100000000, _cov_scanmatch[8]*100000000;
       _R.block<3,3>(7,7) = _R_lf;
 
-      // subblock of jacobian regarding extra measurement equations
-      _H_lf <<   cos(theta), sin(theta), 0,
-                -sin(theta), cos(theta), 0,
-                 0.,      0.,      1.;
+      // subblock of jacobian regarding extra measurement equations //ici
+      // _H_lf <<   cos(theta), sin(theta), 0,
+      //           -sin(theta), cos(theta), 0,
+      //            0.,      0.,      1.;
 
       // @@@Michiel
-      // _H_lf << 1., 0., 0.,
-      //          0., 1., 0.,
-      //          0., 0., 1.;
+      _H_lf << 1., 0., 0.,
+               0., 1., 0.,
+               0., 0., 1.;
 
       _H.block<3,3>(7,10) = _H_lf;
       _H.block<7,16>(0,0) = _H_hf;
@@ -268,7 +276,14 @@ void KalmanSM::updateKalman(){
     _est_pose[0] = _state(10);
     _est_pose[1] = _state(11);
     _est_pose[2] = _state(12);
+
+    if (_print_data == true){
+      //std::cout << "aft: x: " << _est_pose[0] << "; y: " << _est_pose[1] << "; t:" << _est_pose[2] << std::endl;
+      _print_data = false;
+    }
+    
   }
+  //std::cout << "aft: x: " << _est_pose[0] << "; y: " << _est_pose[1] << "; t:" << _est_pose[2] << std::endl;
   _sensorbuffer2.clear();
 }
 
@@ -414,6 +429,7 @@ void KalmanSM::setInitData(){
   _left_bias_y = 0;
   _right_bias_x = 0;
   _right_bias_y = 0;
+  _print_data = false;
 }
 
 ORO_LIST_COMPONENT_TYPE(KalmanSM);
