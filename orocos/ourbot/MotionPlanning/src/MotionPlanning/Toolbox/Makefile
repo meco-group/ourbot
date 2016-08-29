@@ -21,10 +21,10 @@
 #------------------------------------------------------------------------------
 # Change this
 #------------------------------------------------------------------------------
-CASADILIB = /home/ruben/Documents/Work/Repositories/casadi_binary/casadi/
-CASADIINC = /home/ruben/Documents/Work/Repositories/casadi_binary/include/
-CASADIOBJ = /home/ruben/ourbot/orocos/ourbot/MotionPlanning/src/MotionPlanning/Toolbox/bin/
-SOURCEFILES = test.cpp Holonomic.cpp
+CASADILIB = /usr/local/lib/
+CASADIINC = /usr/local/include/casadi/
+CASADIOBJ = /home/odroid/orocos/MotionPlanning/src/MotionPlanning/Toolbox/bin/
+SOURCEFILES = example.cpp Holonomic.cpp
 EXECUTABLE = Point2Point
 #------------------------------------------------------------------------------
 

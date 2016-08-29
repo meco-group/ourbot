@@ -9,7 +9,7 @@ MotionPlanning::MotionPlanning(std::string const& name) : MotionPlanningInterfac
 
 bool MotionPlanning::config(){
   omg::Holonomic* vehicle = new omg::Holonomic();
-  vehicle->setIdealPrediction(true);// because we do not have an update from our state yet
+  //vehicle->setIdealPrediction(true);// because we do not have an update from our state yet
   _p2p = new omg::Point2Point(vehicle, _update_time, _sample_time, _horizon_time, _trajectory_length);
   _obstacles.resize(_p2p->n_obs);
   _ref_pose.resize(_trajectory_length);
@@ -23,31 +23,35 @@ bool MotionPlanning::config(){
 
 bool MotionPlanning::initialize(){
   _p2p->reset();
-  _obstacles[0].position[0] = -0.6;
-  _obstacles[0].position[1] = 1.0;
+  _obstacles[0].position[0] = 0.;
+  _obstacles[0].position[1] = -0.58;
   _obstacles[0].velocity[0] = 0.0;
   _obstacles[0].velocity[1] = 0.0;
   _obstacles[0].acceleration[0] = 0.0;
   _obstacles[0].acceleration[1] = 0.0;
-  _obstacles[1].position[0] = 3.2;
-  _obstacles[1].position[1] = 1.0;
+  _obstacles[1].position[0] = -0.76;
+  _obstacles[1].position[1] = 0.7925;
   _obstacles[1].velocity[0] = 0.0;
   _obstacles[1].velocity[1] = 0.0;
   _obstacles[1].acceleration[0] = 0.0;
   _obstacles[1].acceleration[1] = 0.0;
-
-  //debug data
-  _target_pose[0] = 3.5;
-  _target_pose[1] = 3.5;
-  _target_pose[2] = 0.;
+  _obstacles[2].position[0] = 0.51;
+  _obstacles[2].position[1] = 0.45;
+  _obstacles[2].velocity[0] = 0.0;
+  _obstacles[2].velocity[1] = 0.0;
+  _obstacles[2].acceleration[0] = 0.0;
+  _obstacles[2].acceleration[1] = 0.0;
+  _obstacles[3].position[0] = 0.;
+  _obstacles[3].position[1] = 0.5;
+  _obstacles[3].velocity[0] = 0.0;
+  _obstacles[3].velocity[1] = 0.0;
+  _obstacles[3].acceleration[0] = 0.0;
+  _obstacles[3].acceleration[1] = 0.0;
   return true;
 }
 
 bool MotionPlanning::trajectoryUpdate(){
-  //debug data
-  _est_pose[0] = 0.;
-  _est_pose[1] = 0.;
-  _est_pose[2] = 0.;
+
   // update motion planning algorithm
   bool check = _p2p->update(_est_pose, _target_pose, _ref_pose, _ref_velocity, _obstacles, _predict_shift);
   for (int k=0; k<_trajectory_length; k++){

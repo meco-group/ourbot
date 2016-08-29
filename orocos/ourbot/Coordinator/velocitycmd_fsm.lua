@@ -1,6 +1,6 @@
 local tc = rtt.getTC()
 
--- local scanmatcher   = tc:getPeer('scanmatcher')
+local scanmatcher   = tc:getPeer('scanmatcher')
 local estimator     = tc:getPeer('estimator')
 local reporter      = tc:getPeer('reporter')
 local io            = tc:getPeer('io')
@@ -124,7 +124,7 @@ return rfsm.state {
 
   stop = rfsm.state{
     entry = function(fsm)
-      -- scanmatcher:stop()
+      scanmatcher:stop()
       estimator:stop()
       reporter:stop()
       print("System stopped. Waiting on Restart or Reset...")

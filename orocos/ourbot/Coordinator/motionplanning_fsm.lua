@@ -6,6 +6,7 @@ local estimator       = tc:getPeer('estimator')
 local reference       = tc:getPeer('reference')
 local reporter        = tc:getPeer('reporter')
 local io              = tc:getPeer('io')
+local scanmatcher   = tc:getPeer('scanmatcher')
 
 local estimatorUpdate              = estimator:getOperation("update")
 local referenceUpdate              = reference:getOperation("update")
@@ -15,6 +16,7 @@ local controllerInRunTimeError     = controller:getOperation("inRunTimeError")
 local referenceInRunTimeError      = reference:getOperation("inRunTimeError")
 local motionplanningInRunTimeError = motionplanning:getOperation("inRunTimeError")
 local snapshot                     = reporter:getOperation("snapshot")
+local scanmatcherInRunTimeError = scanmatcher:getOperation("inRunTimeError")
 
 -- variables for the timing diagnostics
 local jitter    = 0
@@ -65,7 +67,11 @@ return rfsm.state {
         rfsm.send_events(fsm,'e_failed')
         return
       end
-      reference:start()
+      if not scanmatcher:start() then
+        rtt.logl("Error","Could not start scanmatcher component")
+        rfsm.send_events(fsm,'e_failed')
+        return
+      end      
       print("System started. Abort by using Break.")
     end,
 
@@ -104,6 +110,11 @@ return rfsm.state {
           rfsm.send_events(fsm,'e_failed')
           return
         end
+        if scanmatcherInRunTimeError() then
+          rtt.logl("Error","RunTimeError in scanmatcher component")
+          rfsm.send_events(fsm,'e_failed')
+          return
+        end
 
         -- check timings of previous iteration
         -- ditch the first two calculations due to the initially wrongly calculated prev_start_time
@@ -138,6 +149,7 @@ return rfsm.state {
       reference:stop()
       controller:stop()
       reporter:stop()
+      scanmatcher:stop()
       print("System stopped. Waiting on Restart or Reset...")
     end,
   },
