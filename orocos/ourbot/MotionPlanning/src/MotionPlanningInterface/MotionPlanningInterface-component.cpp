@@ -4,7 +4,6 @@
 #include <rtt/Component.hpp>
 #include <iostream>
 
-
 MotionPlanningInterface::MotionPlanningInterface(std::string const& name) : TaskContext(name, PreOperational),
     _predict_shift(0), _est_pose(3), _target_pose(3),
     _ref_pose_trajectory(3), _ref_velocity_trajectory(3){
@@ -76,9 +75,7 @@ bool MotionPlanningInterface::startHook(){
 void MotionPlanningInterface::updateHook(){
   #ifdef DEBUG
   std::cout << "started mp update" << std::endl;
-  log(Info) << "started mp update" << endlog();
   #endif
-
   _predict_shift_port.read(_predict_shift);
   _timestamp = TimeService::Instance()->getTicks();
   // read data from estimator
@@ -104,8 +101,7 @@ void MotionPlanningInterface::updateHook(){
     log(Warning) << "MotionPlanning: Duration of calculation exceeded 90% of update_time" <<endlog();
   }
   #ifdef DEBUG
-  std::cout << "ended mp update in "<<time_elapsed<< " s" << std::endl;
-  log(Info) << "ended mp update in " << time_elapsed<< " s" << endlog();
+  std::cout << "ended mp update in " << time_elapsed << " s" << std::endl;
   #endif
 }
 

@@ -23,8 +23,8 @@
 #------------------------------------------------------------------------------
 CASADILIB = /home/ruben/Documents/Work/Repositories/casadi_binary/casadi/
 CASADIINC = /home/ruben/Documents/Work/Repositories/casadi_binary/include/
-CASADIOBJ = /home/ruben/ourbot/orocos/ourbot/MotionPlanning/src/MotionPlanning/Toolbox/bin/
-SOURCEFILES = test.cpp Holonomic.cpp
+CASADIOBJ = /home/ruben/Documents/Work/Programs/motionplanningtoolbox/examples/export/bin/
+SOURCEFILES = test_p2p.cpp Holonomic_p2p.cpp
 EXECUTABLE = Point2Point
 #------------------------------------------------------------------------------
 
@@ -37,9 +37,9 @@ CFLAGS = -fPIC -shared -std=c99
 LDFLAGS = -L$(LIBDIR) -lcasadi -lstdc++ -lcasadi -Wl,-rpath $(LIBDIR)
 PROBSOURCES = nlp.c
 PROBOBJECTS = $(PROBSOURCES:.c=.so)
-SOURCES = $(SOURCEFILES) Point2Point.cpp Vehicle.cpp
+SOURCES = $(SOURCEFILES) Point2Point_p2p.cpp Vehicle_p2p.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
-LIB = libomg.so
+LIB = libomg_p2p.so
 SRCDIR = src
 OBJDIR = obj
 OUTDIR = bin
@@ -49,6 +49,9 @@ PROBOBJ = $(patsubst %,$(OUTDIR)/%,$(PROBOBJECTS))
 all: dir $(OUTDIR)/$(EXECUTABLE)
 
 lib: dir $(OUTDIR)/$(LIB)
+
+libdebug: DEBUG = -DDEBUG
+libdebug: lib
 
 debug: DEBUG = -DDEBUG
 debug: all

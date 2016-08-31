@@ -15,7 +15,6 @@ import xml.etree.ElementTree as et
 import collections as col
 import numpy as np
 import errno
-import socket
 import sys
 import math
 
@@ -27,9 +26,9 @@ username = 'odroid'
 password = 'odroid'
 
 hosts = col.OrderedDict()
-hosts['dave'] = '192.168.11.120'
-# hosts['kurt'] = '192.168.11.121'
-# hosts['krist'] = '192.168.11.122'
+# hosts['dave'] = '192.168.11.120'
+hosts['kurt'] = '192.168.11.121'
+hosts['krist'] = '192.168.11.122'
 
 
 def send_file(ftp, ssh, loc_file, rem_file):
@@ -68,8 +67,8 @@ def send_files(ftp, ssh, loc_files, rem_files, fancy_print=False):
 
 
 def get_ip():
-    arg='ip route list'
-    p=subprocess.Popen(arg,shell=True,stdout=subprocess.PIPE)
+    arg = 'ip route list'
+    p = subprocess.Popen(arg, shell=True, stdout=subprocess.PIPE)
     data = p.communicate()
     sdata = data[0].split()
     for k, word in enumerate(sdata):
@@ -135,7 +134,7 @@ def settings(distributed_mp):
                     for e in elem.findall('simple'):
                         if e.attrib['name'] == 'neighbor0':
                             e.find('value').text = str((N+index+1) % N)
-                        if e.attrib['name'] == 'neighbor0':
+                        if e.attrib['name'] == 'neighbor1':
                             e.find('value').text = str((N+index-1) % N)
         file = open(local_files[-1]+'_', 'w')
         file.write(
@@ -184,11 +183,10 @@ def deploy():
         command.extend(['--tab', '-e', '''
             bash -c '
             sshpass -p %s ssh %s@%s "
-            ulimit -r 10
             cd %s
             rm reports.nc
             echo I am %s
-            deployer-gnulinux run.ops
+            deployer-gnulinux -s run.ops
             "'
             ''' % (password, username, address, remote_root, host)
         ])
@@ -196,9 +194,8 @@ def deploy():
         bash -c '
         cd %s
         rm reports.nc
-        ulimit -r 10
         echo I am emperor
-        deployer-gnulinux run.ops
+        deployer-gnulinux -s run.ops
         '
         ''' % (local_root)
     ])

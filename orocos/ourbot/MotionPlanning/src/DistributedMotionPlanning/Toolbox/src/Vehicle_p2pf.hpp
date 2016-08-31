@@ -24,7 +24,7 @@
 #include <vector>
 #include <map>
 
-namespace omg{
+namespace omgf{
 
 class Vehicle{
     private:

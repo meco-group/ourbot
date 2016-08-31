@@ -7,8 +7,8 @@
 #include <rtt/Port.hpp>
 #include <rtt/os/TimeService.hpp>
 #include <rtt/Time.hpp>
-#include "Toolbox/src/Holonomic.hpp"
-#include "Toolbox/src/FormationPoint2Point.hpp"
+#include "Holonomic_p2pf.hpp"
+#include "FormationPoint2Point_p2pf.hpp"
 
 using namespace RTT;
 using namespace RTT::os;
@@ -21,12 +21,12 @@ class DistributedMotionPlanning : public MotionPlanningInterface{
     InputPort<std::vector<double> > _x_j_var_port[2];
     InputPort<std::vector<double> > _zl_ji_var_port[2];
 
-    omg::FormationPoint2Point* _problem;
+    omgf::FormationPoint2Point* _problem;
     int _cnt = 0;
     const int _cnt_max = 5;
     std::vector<double> _state0;
     std::vector<double> _stateT;
-    std::vector<omg::obstacle_t> _obstacles;
+    std::vector<omgf::obstacle_t> _obstacles;
 
     std::vector<std::vector<double> > _ref_pose;
     std::vector<std::vector<double> > _ref_velocity;

@@ -13,6 +13,8 @@ orocos/ourbot/MotionPlanning/src/Toolbox/obj/
 *.log
 *.ior
 *~
+*.o
+*.so
 orocos/setup.bash
 orocos/setup.sh
 orocos/setup.zsh

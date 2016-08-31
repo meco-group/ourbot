@@ -23,8 +23,8 @@
 #------------------------------------------------------------------------------
 CASADILIB = /home/ruben/Documents/Work/Repositories/casadi_binary/casadi/
 CASADIINC = /home/ruben/Documents/Work/Repositories/casadi_binary/include/
-CASADIOBJ = /home/ruben/ourbot/orocos/ourbot/MotionPlanning/src/DistributedMotionPlanning/Toolbox/bin/
-SOURCEFILES = test.cpp Holonomic.cpp
+CASADIOBJ = /home/ruben/Documents/Work/Programs/motionplanningtoolbox/examples/export_f/bin/
+SOURCEFILES = test_p2pf.cpp Holonomic_p2pf.cpp
 EXECUTABLE = FormationPoint2Point
 #------------------------------------------------------------------------------
 
@@ -37,9 +37,9 @@ CFLAGS = -fPIC -shared -std=c99
 LDFLAGS = -L$(LIBDIR) -lcasadi -lstdc++ -lcasadi -Wl,-rpath $(LIBDIR)
 PROBSOURCES = subst_fleet_center1.c subst_fleet_center0.c updx.c updz.c updl.c updres.c
 PROBOBJECTS = $(PROBSOURCES:.c=.so)
-SOURCES = $(SOURCEFILES) FormationPoint2Point.cpp ADMMPoint2Point.cpp Point2Point.cpp Vehicle.cpp
+SOURCES = $(SOURCEFILES) FormationPoint2Point_p2pf.cpp ADMMPoint2Point_p2pf.cpp Point2Point_p2pf.cpp Vehicle_p2pf.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
-LIB = libomgformation.so
+LIB = libomg_p2pf.so
 SRCDIR = src
 OBJDIR = obj
 OUTDIR = bin
@@ -49,6 +49,9 @@ PROBOBJ = $(patsubst %,$(OUTDIR)/%,$(PROBOBJECTS))
 all: dir $(OUTDIR)/$(EXECUTABLE)
 
 lib: dir $(OUTDIR)/$(LIB)
+
+libdebug: DEBUG = -DDEBUG
+libdebug: lib
 
 debug: DEBUG = -DDEBUG
 debug: all

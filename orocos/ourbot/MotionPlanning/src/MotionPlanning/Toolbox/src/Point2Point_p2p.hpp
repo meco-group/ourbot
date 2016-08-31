@@ -20,7 +20,7 @@
 #ifndef POINT2POINT
 #define POINT2POINT
 
-#include "Vehicle.hpp"
+#include "Vehicle_p2p.hpp"
 #include <casadi/casadi.hpp>
 #include <math.h>
 #include <memory.h>

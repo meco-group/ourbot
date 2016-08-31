@@ -201,8 +201,8 @@ return rfsm.state {
           dp:addPeer('communicator', 'motionplanning')
           if not addOutgoing('motionplanning', 'x_var_port', 5000 + 10*index, neighbors) then rfsm.send_events(fsm, 'e_failed') return end
           for i=0, nghb_index.size-1 do
-            if not addOutgoing('motionplanning', 'zl_ij_var_port_'..tostring(i), 5100 + 10*nghb_index[i] + i, neighbor[i]) then rfsm.send_events(fsm, 'e_failed') return end
-            if not addIncoming('motionplanning', 'zl_ji_var_port_'..tostring(i), 5100 + 10*nghb_index[i] + (i-1)) then rfsm.send_events(fsm, 'e_failed') return end
+            if not addOutgoing('motionplanning', 'zl_ij_var_port_'..tostring(i), 5100 + 10*index + i, neighbor[i]) then rfsm.send_events(fsm, 'e_failed') return end
+            if not addIncoming('motionplanning', 'zl_ji_var_port_'..tostring(i), 5100 + 10*nghb_index[i] + (2+i-1)%2) then rfsm.send_events(fsm, 'e_failed') return end
             if not addIncoming('motionplanning', 'x_j_var_port_'..tostring(i), 5000 + 10*nghb_index[i]) then rfsm.send_events(fsm, 'e_failed') return end
           end
         end
@@ -233,12 +233,11 @@ return rfsm.state {
 
     set_activities = rfsm.state {
       entry = function(fsm)
-        dp:setActivity('motionplanning', 0, 10, rtt.globals.ORO_SCHED_RT)
-        dp:setActivity('coordinator', 1./control_sample_rate, 7, rtt.globals.ORO_SCHED_RT)
-        dp:setActivity('reporter', 0, 1, rtt.globals.ORO_SCHED_RT)
-        dp:setActivity('io', 1./io_sample_rate, 7,rtt.globals.ORO_SCHED_RT)
+        dp:setActivity('motionplanning', 0, 0, rtt.globals.ORO_SCHED_OTHER)
+        dp:setActivity('coordinator', 1./control_sample_rate, 0, rtt.globals.ORO_SCHED_OTHER)
+        dp:setActivity('io', 1./io_sample_rate, 0,rtt.globals.ORO_SCHED_OTHER)
         if components_to_load['scanmatcher'] then
-          dp:setActivity('scanmatcher', 0, 5, rtt.globals.ORO_SCHED_RT)
+          dp:setActivity('scanmatcher', 0, 0, rtt.globals.ORO_SCHED_OTHER)
         end
           --add here extra activities
 

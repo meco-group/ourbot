@@ -11,10 +11,12 @@
 # and installs in the directory lib/orocos/MotionPlanning/
 #
 orocos_component(MotionPlanning MotionPlanningInterface/MotionPlanningInterface-component.cpp MotionPlanningInterface/MotionPlanningInterface-component.hpp MotionPlanning/MotionPlanning-component.cpp MotionPlanning/MotionPlanning-component.hpp DistributedMotionPlanning/DistributedMotionPlanning-component.hpp DistributedMotionPlanning/DistributedMotionPlanning-component.cpp) # ...you may add multiple source files
+#orocos_component(MotionPlanning MotionPlanningInterface/MotionPlanningInterface-component.cpp MotionPlanningInterface/MotionPlanningInterface-component.hpp DistributedMotionPlanning/DistributedMotionPlanning-component.hpp DistributedMotionPlanning/DistributedMotionPlanning-component.cpp) # ...you may add multiple source files
 #
 # You may add multiple orocos_component statements.
 
-target_link_libraries(MotionPlanning -lomg -lomgformation -lcasadi) # Link libraries to Orocos component here
+target_link_libraries(MotionPlanning -lomg_p2p -lomg_p2pf -lcasadi) # Link libraries to Orocos component here
+#target_link_libraries(MotionPlanning -lomg_p2pf -lcasadi) # Link libraries to Orocos component here
 
 #
 # Additional headers:
@@ -22,6 +24,7 @@ target_link_libraries(MotionPlanning -lomg -lomgformation -lcasadi) # Link libra
 # Installs in the include/orocos/MotionPlanning/ directory
 #
 orocos_install_headers(MotionPlanningInterface/MotionPlanningInterface-component.hpp MotionPlanning/MotionPlanning-component.hpp DistributedMotionPlanning/DistributedMotionPlanning-component.hpp) # ...you may add multiple header files
+#orocos_install_headers(MotionPlanningInterface/MotionPlanningInterface-component.hpp DistributedMotionPlanning/DistributedMotionPlanning-component.hpp) # ...you may add multiple header files
 #
 # You may add multiple orocos_install_headers statements.
 

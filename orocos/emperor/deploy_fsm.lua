@@ -128,7 +128,7 @@ return rfsm.state {
     configure_components = rfsm.state {
       entry = function(fsm)
         for name, comp in pairs(components) do
-          if (name ~= 'reporter') do -- reporter configured in later stage
+          if (name ~= 'reporter') then -- reporter configured in later stage
             comp:loadService('marshalling')
             -- every component loads system configurations
             if not comp:provides('marshalling'):updateProperties(system_config_file) then rfsm.send_events(fsm,'e_failed') return end
@@ -145,9 +145,9 @@ return rfsm.state {
 
     set_activities = rfsm.state {
       entry = function(fsm)
-        dp:setActivity('emperor', 1./emperor_sample_rate, 10, rtt.globals.ORO_SCHED_RT)
-        dp:setActivity('gamepad', 1./velcmd_sample_rate, 10, rtt.globals.ORO_SCHED_RT)
-        dp:setActivity('reporter', 0, 2, rtt.globals.ORO_SCHED_RT)
+        dp:setActivity('emperor', 1./emperor_sample_rate, 0, rtt.globals.ORO_SCHED_OTHER)
+        dp:setActivity('gamepad', 1./velcmd_sample_rate, 0, rtt.globals.ORO_SCHED_OTHER)
+        dp:setActivity('reporter', 0, 0, rtt.globals.ORO_SCHED_OTHER)
         dp:setMasterSlaveActivity('emperor', 'communicator')
           --add here extra activities
       end,

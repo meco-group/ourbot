@@ -17,7 +17,7 @@
 // License along with this program; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include "Point2Point.hpp"
+#include "Point2Point_p2pf.hpp"
 #ifdef DEBUG
 #include <ctime>
 #endif
@@ -26,7 +26,7 @@
 using namespace std;
 using namespace casadi;
 
-namespace omg{
+namespace omgf{
 
 Point2Point::Point2Point(Vehicle* vehicle,
     double update_time, double sample_time, double horizon_time, int trajectory_length, bool initialize):
@@ -92,6 +92,8 @@ void Point2Point::generateProblem(){
 
 void Point2Point::generateSubstituteFunctions(){
 	string obj_path = CASADIOBJ;
+	substitutes["fleet_center1"] = external("fleet_center1", obj_path+"/subst_fleet_center1.so");
+	substitutes["fleet_center0"] = external("fleet_center0", obj_path+"/subst_fleet_center0.so");
 
 }
 
@@ -103,6 +105,8 @@ void Point2Point::initSplines(){
 	splines_tf["b_vehicle0_00"] = B_VEHICLE0_00_TF;
 	splines_tf["a_vehicle0_01"] = A_VEHICLE0_01_TF;
 	splines_tf["b_vehicle0_01"] = B_VEHICLE0_01_TF;
+	splines_tf["xvar_fleet_center0"] = XVAR_FLEET_CENTER0_TF;
+	splines_tf["xvar_fleet_center1"] = XVAR_FLEET_CENTER1_TF;
 
 }
 
@@ -305,34 +309,50 @@ void Point2Point::retrieveTrajectories(vector<vector<double>>& spline_coeffs){
 
 void Point2Point::getParameterVector(vector<double>& par_vect, map<string, map<string, vector<double>>>& par_dict){
 	for (int i=0; i<2; i++){
-		par_vect[0+i] = par_dict["vehicle0"]["state0"][i];
+		par_vect[0+i] = par_dict["vehicle0"]["rel_pos_c"][i];
 	}
 	for (int i=0; i<2; i++){
-		par_vect[2+i] = par_dict["vehicle0"]["input0"][i];
+		par_vect[2+i] = par_dict["vehicle0"]["state0"][i];
 	}
 	for (int i=0; i<2; i++){
-		par_vect[4+i] = par_dict["vehicle0"]["positionT"][i];
+		par_vect[4+i] = par_dict["vehicle0"]["input0"][i];
 	}
 	for (int i=0; i<2; i++){
-		par_vect[6+i] = par_dict["obstacle0"]["x"][i];
+		par_vect[6+i] = par_dict["vehicle0"]["positionT"][i];
+	}
+	par_vect[8] = par_dict["p2p0"]["T"][0];
+	par_vect[9] = par_dict["p2p0"]["t"][0];
+	for (int i=0; i<26; i++){
+		par_vect[10+i] = par_dict["admm0"]["z_i"][i];
+	}
+	for (int i=0; i<52; i++){
+		par_vect[36+i] = par_dict["admm0"]["z_ji"][i];
+	}
+	for (int i=0; i<26; i++){
+		par_vect[88+i] = par_dict["admm0"]["l_i"][i];
+	}
+	for (int i=0; i<52; i++){
+		par_vect[114+i] = par_dict["admm0"]["l_ji"][i];
+	}
+	par_vect[166] = par_dict["admm0"]["rho"][0];
+	for (int i=0; i<2; i++){
+		par_vect[167+i] = par_dict["obstacle2"]["x"][i];
 	}
 	for (int i=0; i<2; i++){
-		par_vect[8+i] = par_dict["obstacle0"]["v"][i];
+		par_vect[169+i] = par_dict["obstacle2"]["v"][i];
 	}
 	for (int i=0; i<2; i++){
-		par_vect[10+i] = par_dict["obstacle0"]["a"][i];
+		par_vect[171+i] = par_dict["obstacle2"]["a"][i];
 	}
 	for (int i=0; i<2; i++){
-		par_vect[12+i] = par_dict["obstacle1"]["x"][i];
+		par_vect[173+i] = par_dict["obstacle3"]["x"][i];
 	}
 	for (int i=0; i<2; i++){
-		par_vect[14+i] = par_dict["obstacle1"]["v"][i];
+		par_vect[175+i] = par_dict["obstacle3"]["v"][i];
 	}
 	for (int i=0; i<2; i++){
-		par_vect[16+i] = par_dict["obstacle1"]["a"][i];
+		par_vect[177+i] = par_dict["obstacle3"]["a"][i];
 	}
-	par_vect[18] = par_dict["p2p0"]["T"][0];
-	par_vect[19] = par_dict["p2p0"]["t"][0];
 
 }
 
@@ -343,10 +363,6 @@ void Point2Point::getVariableVector(vector<double>& var_vect, map<string, map<st
 				var_vect[0+i] = var_dict["vehicle0"]["splines0"][i];
 			}
 		}
-	}
-	if (var_dict.find("obstacle0") != var_dict.end()){
-	}
-	if (var_dict.find("obstacle1") != var_dict.end()){
 	}
 	if (var_dict.find("p2p0") != var_dict.end()){
 		if (var_dict["p2p0"].find("g0") != var_dict["p2p0"].end()){
@@ -360,27 +376,33 @@ void Point2Point::getVariableVector(vector<double>& var_vect, map<string, map<st
 			}
 		}
 	}
-	if (var_dict.find("environment0") != var_dict.end()){
-		if (var_dict["environment0"].find("a_vehicle0_00") != var_dict["environment0"].end()){
+	if (var_dict.find("environment1") != var_dict.end()){
+		if (var_dict["environment1"].find("a_vehicle0_00") != var_dict["environment1"].end()){
 			for (int i=0; i<22; i++){
-				var_vect[52+i] = var_dict["environment0"]["a_vehicle0_00"][i];
+				var_vect[52+i] = var_dict["environment1"]["a_vehicle0_00"][i];
 			}
 		}
-		if (var_dict["environment0"].find("b_vehicle0_00") != var_dict["environment0"].end()){
+		if (var_dict["environment1"].find("b_vehicle0_00") != var_dict["environment1"].end()){
 			for (int i=0; i<11; i++){
-				var_vect[74+i] = var_dict["environment0"]["b_vehicle0_00"][i];
+				var_vect[74+i] = var_dict["environment1"]["b_vehicle0_00"][i];
 			}
 		}
-		if (var_dict["environment0"].find("a_vehicle0_01") != var_dict["environment0"].end()){
+		if (var_dict["environment1"].find("a_vehicle0_01") != var_dict["environment1"].end()){
 			for (int i=0; i<22; i++){
-				var_vect[85+i] = var_dict["environment0"]["a_vehicle0_01"][i];
+				var_vect[85+i] = var_dict["environment1"]["a_vehicle0_01"][i];
 			}
 		}
-		if (var_dict["environment0"].find("b_vehicle0_01") != var_dict["environment0"].end()){
+		if (var_dict["environment1"].find("b_vehicle0_01") != var_dict["environment1"].end()){
 			for (int i=0; i<11; i++){
-				var_vect[107+i] = var_dict["environment0"]["b_vehicle0_01"][i];
+				var_vect[107+i] = var_dict["environment1"]["b_vehicle0_01"][i];
 			}
 		}
+	}
+	if (var_dict.find("admm0") != var_dict.end()){
+	}
+	if (var_dict.find("obstacle2") != var_dict.end()){
+	}
+	if (var_dict.find("obstacle3") != var_dict.end()){
 	}
 
 }
@@ -405,22 +427,22 @@ void Point2Point::getVariableDict(vector<double>& var_vect, map<string, map<stri
 	for (int i=0; i<22; i++){
 		vec[i] = var_vect[52+i];
 	}
-	var_dict["environment0"]["a_vehicle0_00"] = vec;
+	var_dict["environment1"]["a_vehicle0_00"] = vec;
 	vec.resize(11);
 	for (int i=0; i<11; i++){
 		vec[i] = var_vect[74+i];
 	}
-	var_dict["environment0"]["b_vehicle0_00"] = vec;
+	var_dict["environment1"]["b_vehicle0_00"] = vec;
 	vec.resize(22);
 	for (int i=0; i<22; i++){
 		vec[i] = var_vect[85+i];
 	}
-	var_dict["environment0"]["a_vehicle0_01"] = vec;
+	var_dict["environment1"]["a_vehicle0_01"] = vec;
 	vec.resize(11);
 	for (int i=0; i<11; i++){
 		vec[i] = var_vect[107+i];
 	}
-	var_dict["environment0"]["b_vehicle0_01"] = vec;
+	var_dict["environment1"]["b_vehicle0_01"] = vec;
 
 }
 

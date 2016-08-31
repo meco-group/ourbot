@@ -1,7 +1,7 @@
 #ifndef CONNECTION_HPP
 #define CONNECTION_HPP
 
-#define DEBUG
+// #define DEBUG
 
 #include <rtt/RTT.hpp>
 #include <rtt/Port.hpp>

@@ -20,7 +20,7 @@
 #ifndef POINT2POINT
 #define POINT2POINT
 
-#include "Vehicle.hpp"
+#include "Vehicle_p2pf.hpp"
 #include <casadi/casadi.hpp>
 #include <math.h>
 #include <memory.h>
@@ -59,7 +59,7 @@
 #define N_SHARED 26
 
 
-namespace omg{
+namespace omgf{
 
 typedef struct obstacle {
     double position[N_DIM];

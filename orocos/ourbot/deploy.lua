@@ -17,7 +17,7 @@ _reporter_sample_rate= rtt.Property("double","reporter_sample_rate", "Frequency 
 _io_sample_rate      = rtt.Property("double","io_sample_rate","Frequency to update io's")
 _index               = rtt.Property("int", "index", "Index of agent")
 _neighbors           = rtt.Property("strings", "neighbors", "Ip numbers of neighbouring agents")
-_nghb_index          = rtt.Property("ints", "Index numbers of neighbouring agents")
+_nghb_index          = rtt.Property("ints", "nghb_index", "Index numbers of neighbouring agents")
 _trusted_hosts       = rtt.Property("strings","trusted_hosts","Ip's of trusted hosts")
 
 tc:addProperty(_print_level)

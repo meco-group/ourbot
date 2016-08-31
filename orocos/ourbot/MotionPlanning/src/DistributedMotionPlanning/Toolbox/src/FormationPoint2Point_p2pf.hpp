@@ -20,9 +20,9 @@
 #ifndef FORMATIONPOINT2POINT
 #define FORMATIONPOINT2POINT
 
-#include "ADMMPoint2Point.hpp"
+#include "ADMMPoint2Point_p2pf.hpp"
 
-namespace omg{
+namespace omgf{
 
 class FormationPoint2Point: public ADMMPoint2Point{
     private:
@@ -37,7 +37,7 @@ class FormationPoint2Point: public ADMMPoint2Point{
         bool update1(std::vector<double>&, std::vector<double>&, std::vector<std::vector<double>>&, std::vector<std::vector<double>>&, std::vector<double>&, std::vector<std::vector<double>>&, std::vector<std::vector<double>>&, std::vector<obstacle_t>&, std::vector<double> &);
         bool update1(std::vector<double>&, std::vector<double>&, std::vector<std::vector<double>>&, std::vector<std::vector<double>>&, std::vector<double>&, std::vector<std::vector<double>>&, std::vector<std::vector<double>>&, std::vector<obstacle_t>&, std::vector<double> &, int);
         bool update2(std::vector<std::vector<double>>&, std::vector<std::vector<double>>&, std::vector<std::vector<double>>&, std::vector<double>&);
-    };
+};
 }
 
 #endif

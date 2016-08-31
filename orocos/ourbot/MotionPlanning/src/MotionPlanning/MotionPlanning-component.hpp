@@ -3,8 +3,8 @@
 
 #include "../MotionPlanningInterface/MotionPlanningInterface-component.hpp"
 #include <vector>
-#include "./Toolbox/src/Holonomic.hpp"
-#include "./Toolbox/src/Point2Point.hpp"
+#include "Holonomic_p2p.hpp"
+#include "Point2Point_p2p.hpp"
 
 class MotionPlanning : public MotionPlanningInterface{
   private:

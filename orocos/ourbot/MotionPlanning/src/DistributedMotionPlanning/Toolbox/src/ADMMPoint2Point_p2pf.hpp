@@ -20,9 +20,9 @@
 #ifndef ADMMPOINT2POINT
 #define ADMMPOINT2POINT
 
-#include "Point2Point.hpp"
+#include "Point2Point_p2pf.hpp"
 
-namespace omg{
+namespace omgf{
 
 class ADMMPoint2Point: public Point2Point{
     private:

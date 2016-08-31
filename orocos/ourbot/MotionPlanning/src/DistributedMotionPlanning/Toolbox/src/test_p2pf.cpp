@@ -17,8 +17,8 @@
 // License along with this program; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include "FormationPoint2Point.hpp"
-#include "Holonomic.hpp"
+#include "FormationPoint2Point_p2pf.hpp"
+#include "Holonomic_p2pf.hpp"
 #include <ctime>
 #include <iostream>
 #include <fstream>
@@ -36,8 +36,8 @@ int main()
     double sample_time = 0.01;
     double update_time = 0.1;
     int trajectory_length = 20;
-    vector<omg::Holonomic*> vehicles(N);
-    vector<omg::FormationPoint2Point*> problems(N);
+    vector<omgf::Holonomic*> vehicles(N);
+    vector<omgf::FormationPoint2Point*> problems(N);
     vector<vector<double>> state0(N, vector<double>(2));
     vector<vector<double>> stateT(N, vector<double>(2));
     // these will store the state and input trajectory
@@ -45,11 +45,11 @@ int main()
     vector<vector<vector<double>>> state_trajectory(N, vector<vector<double>>(trajectory_length, vector<double>(2)));
     vector<vector<double>> rel_pos_c(N, vector<double>(2));
     for (int v=0; v<N; v++){
-        vehicles[v] = new omg::Holonomic();
+        vehicles[v] = new omgf::Holonomic();
         // ideal update: prediction of initial state based on spline extrapolation
         // non-ideal update: prediction based on current state0 and model integration
         vehicles[v]->setIdealPrediction(true);
-        problems[v] = new omg::FormationPoint2Point(vehicles[v], update_time, sample_time, horizon_time, trajectory_length, init_iter);
+        problems[v] = new omgf::FormationPoint2Point(vehicles[v], update_time, sample_time, horizon_time, trajectory_length, init_iter);
     }
     int n_shared = problems[0]->n_shared;
 
@@ -69,7 +69,7 @@ int main()
     }
 
     // obstacles
-    vector<omg::obstacle_t> obstacles(problems[0]->n_obs);
+    vector<omgf::obstacle_t> obstacles(problems[0]->n_obs);
     obstacles[0].position[0] = -0.6;
     obstacles[0].position[1] = 1.0;
     obstacles[0].velocity[0] = 0.0;

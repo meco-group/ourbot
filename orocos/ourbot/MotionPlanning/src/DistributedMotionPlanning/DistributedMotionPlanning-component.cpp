@@ -37,9 +37,9 @@ void DistributedMotionPlanning::writeSample(){
 }
 
 bool DistributedMotionPlanning::config(){
-  omg::Holonomic* vehicle = new omg::Holonomic();
+  omgf::Holonomic* vehicle = new omgf::Holonomic();
   vehicle->setIdealPrediction(true);// because we do not have an update from our state yet
-  _problem = new omg::FormationPoint2Point(vehicle, _update_time, _sample_time, _horizon_time, _trajectory_length, _init_iter, _rho);
+  _problem = new omgf::FormationPoint2Point(vehicle, _update_time, _sample_time, _horizon_time, _trajectory_length, _init_iter, _rho);
   _obstacles.resize(_problem->n_obs);
   _ref_pose.resize(_trajectory_length);
   _ref_velocity.resize(_trajectory_length);
@@ -116,111 +116,108 @@ bool DistributedMotionPlanning::admmIteration(){
   _timestamp = TimeService::Instance()->getTicks();
   #endif
   // update1: determine x_var
-  clock_t begin = clock();
   bool check = _problem->update1(_est_pose, _target_pose, _ref_pose, _ref_velocity, _x_var, _z_ji_var, _l_ji_var, _obstacles, _rel_pos_c, _predict_shift);
-  clock_t end = clock();
-  cout << "update1: " << double(end-begin)/CLOCKS_PER_SEC << " s" << endl;
-  // #ifdef DEBUG
-  // Seconds time_elapsed = TimeService::Instance()->secondsSince(_timestamp);
-  // log(Info) << "update1: " << time_elapsed << " s" << endlog();
-  // _timestamp = TimeService::Instance()->getTicks();
-  // #endif
-  // // add index number and send this result to neighbors
-  // for (int i=0; i<_n_shared; i++){
-  //   _x_p_var[i] = _x_var[i];
-  // }
-  // _x_p_var[_n_shared] = _problem->getIteration();
-  // _x_var_port.write(_x_p_var);
-  // // in the meantime, extract trajectories and put them on port
-  // for (int k=0; k<_trajectory_length; k++){
-  //   for (int j=0; j<2; j++){
-  //     _ref_velocity_trajectory[j][k] = _ref_velocity[k][j];
-  //     _ref_pose_trajectory[j][k] = _ref_pose[k][j];
-  //   }
-  // }
-  // if (!check){
-  //   _cnt++;
-  // }
-  // if (_cnt >= _cnt_max){
-  //   return false;
-  // }
-  // #ifdef DEBUG
-  // time_elapsed = TimeService::Instance()->secondsSince(_timestamp);
-  // log(Info) << "extracting+sending1: " << time_elapsed << " s" << endlog();
-  // _timestamp = TimeService::Instance()->getTicks();
-  // #endif
-  // // receive from neighbors (wait until new data)
-  // for (int k=0; k<_n_nghb; k++){
-  //   while ( _x_j_var_port[k].read(_x_j_p_var[k]) != RTT::NewData );
-  // }
-  // #ifdef DEBUG
-  // time_elapsed = TimeService::Instance()->secondsSince(_timestamp);
-  // log(Info) << "waiting1: " << time_elapsed << " s" << endlog();
-  // _timestamp = TimeService::Instance()->getTicks();
-  // #endif
-  // // check index
-  // for (int k=0; k<_n_nghb; k++){
-  //   if (_x_j_p_var[k][_n_shared] != _problem->getIteration()){
-  //     log(Error)<<"Index mismatch!"<<endlog();
-  //     error();
-  //   }
-  //   for (int i=0; i<_n_shared; i++){
-  //     _x_j_var[k][i] = _x_j_p_var[k][i];
-  //   }
-  // }
-  // #ifdef DEBUG
-  // time_elapsed = TimeService::Instance()->secondsSince(_timestamp);
-  // log(Info) << "checking1: " << time_elapsed << " s" << endlog();
-  // _timestamp = TimeService::Instance()->getTicks();
-  // #endif
-  // // update2: determine z_i_var, z_ij_var, l_i_var and l_ij_var
-  // begin = clock();
-  // _problem->update2(_x_j_var, _z_ij_var, _l_ij_var, _residuals);
-  // end = clock();
-  // cout << "update2: " << double(end-begin)/CLOCKS_PER_SEC << " s" << endl;
-  // #ifdef DEBUG
-  // time_elapsed = TimeService::Instance()->secondsSince(_timestamp);
-  // log(Info) << "update2: " << time_elapsed << " s" << endlog();
-  // _timestamp = TimeService::Instance()->getTicks();
-  // #endif
-  // // add index number and send results to neighbors
-  // for (int k=0; k<_n_nghb; k++){
-  //   for (int i=0; i<_n_shared; i++){
-  //     _zl_ij_p_var[k][i] = _z_ij_var[k][i];
-  //     _zl_ij_p_var[k][i+_n_shared] = _l_ij_var[k][i];
-  //   }
-  //   _zl_ij_p_var[k][2*_n_shared] = _problem->getIteration();
-  //   _zl_ij_var_port[k].write(_zl_ij_p_var[k]);
-  // }
-  // #ifdef DEBUG
-  // time_elapsed = TimeService::Instance()->secondsSince(_timestamp);
-  // log(Info) << "extracting+sending2: " << time_elapsed << " s" << endlog();
-  // _timestamp = TimeService::Instance()->getTicks();
-  // #endif
-  // // receive from neighbors (wait until new data)
-  // for (int k=0; k<_n_nghb; k++){
-  //   while ( _zl_ji_var_port[k].read(_zl_ji_p_var[k]) != RTT::NewData );
-  // }
-  // #ifdef DEBUG
-  // time_elapsed = TimeService::Instance()->secondsSince(_timestamp);
-  // log(Info) << "waiting2: " << time_elapsed << " s" << endlog();
-  // _timestamp = TimeService::Instance()->getTicks();
-  // #endif
-  // // check index
-  // for (int k=0; k<_n_nghb; k++){
-  //   if (_zl_ji_p_var[k][2*_n_shared] != _problem->getIteration()){
-  //     log(Error)<<"Index mismatch!"<<endlog();
-  //     error();
-  //   }
-  //   for (int i=0; i<_n_shared; i++){
-  //     _z_ji_var[k][i] = _zl_ji_p_var[k][i];
-  //     _l_ji_var[k][i] = _zl_ji_p_var[k][i+_n_shared];
-  //   }
-  // }
-  // #ifdef DEBUG
-  // time_elapsed = TimeService::Instance()->secondsSince(_timestamp);
-  // log(Info) << "checking2: " << time_elapsed << " s" << endlog();
-  // #endif
+  #ifdef DEBUG
+  Seconds time_elapsed = TimeService::Instance()->secondsSince(_timestamp);
+  cout << "update1: " << time_elapsed << " s" << endl;
+  _timestamp = TimeService::Instance()->getTicks();
+  #endif
+  // add index number and send this result to neighbors
+  for (int i=0; i<_n_shared; i++){
+    _x_p_var[i] = _x_var[i];
+  }
+  _x_p_var[_n_shared] = _problem->getIteration();
+  _x_var_port.write(_x_p_var);
+  // in the meantime, extract trajectories and put them on port
+  for (int k=0; k<_trajectory_length; k++){
+    for (int j=0; j<2; j++){
+      _ref_velocity_trajectory[j][k] = _ref_velocity[k][j];
+      _ref_pose_trajectory[j][k] = _ref_pose[k][j];
+    }
+  }
+  if (!check){
+    _cnt++;
+  }
+  if (_cnt >= _cnt_max){
+    return false;
+  }
+  #ifdef DEBUG
+  time_elapsed = TimeService::Instance()->secondsSince(_timestamp);
+  cout << "extracting+sending1: " << time_elapsed << " s" << endl;
+  _timestamp = TimeService::Instance()->getTicks();
+  #endif
+  // receive from neighbors (wait until new data)
+  for (int k=0; k<_n_nghb; k++){
+    while ( _x_j_var_port[k].read(_x_j_p_var[k]) != RTT::NewData );
+  }
+  #ifdef DEBUG
+  time_elapsed = TimeService::Instance()->secondsSince(_timestamp);
+  cout << "waiting1: " << time_elapsed << " s" << endl;
+  _timestamp = TimeService::Instance()->getTicks();
+  #endif
+  // check index
+  for (int k=0; k<_n_nghb; k++){
+    if (_x_j_p_var[k][_n_shared] != _problem->getIteration()){
+      log(Error)<<"Index mismatch!"<< endlog();
+      error();
+    }
+    for (int i=0; i<_n_shared; i++){
+      _x_j_var[k][i] = _x_j_p_var[k][i];
+    }
+  }
+  #ifdef DEBUG
+  time_elapsed = TimeService::Instance()->secondsSince(_timestamp);
+  cout << "checking1: " << time_elapsed << " s" << endl;
+  _timestamp = TimeService::Instance()->getTicks();
+  #endif
+  // update2: determine z_i_var, z_ij_var, l_i_var and l_ij_var
+  begin = clock();
+  _problem->update2(_x_j_var, _z_ij_var, _l_ij_var, _residuals);
+  end = clock();
+  cout << "update2: " << double(end-begin)/CLOCKS_PER_SEC << " s" << endl;
+  #ifdef DEBUG
+  time_elapsed = TimeService::Instance()->secondsSince(_timestamp);
+  cout << "update2: " << time_elapsed << " s" << endl;
+  _timestamp = TimeService::Instance()->getTicks();
+  #endif
+  // add index number and send results to neighbors
+  for (int k=0; k<_n_nghb; k++){
+    for (int i=0; i<_n_shared; i++){
+      _zl_ij_p_var[k][i] = _z_ij_var[k][i];
+      _zl_ij_p_var[k][i+_n_shared] = _l_ij_var[k][i];
+    }
+    _zl_ij_p_var[k][2*_n_shared] = _problem->getIteration();
+    _zl_ij_var_port[k].write(_zl_ij_p_var[k]);
+  }
+  #ifdef DEBUG
+  time_elapsed = TimeService::Instance()->secondsSince(_timestamp);
+  cout << "extracting+sending2: " << time_elapsed << " s" << endl;
+  _timestamp = TimeService::Instance()->getTicks();
+  #endif
+  // receive from neighbors (wait until new data)
+  for (int k=0; k<_n_nghb; k++){
+    while ( _zl_ji_var_port[k].read(_zl_ji_p_var[k]) != RTT::NewData );
+  }
+  #ifdef DEBUG
+  time_elapsed = TimeService::Instance()->secondsSince(_timestamp);
+  cout << "waiting2: " << time_elapsed << " s" << endl;
+  _timestamp = TimeService::Instance()->getTicks();
+  #endif
+  // check index
+  for (int k=0; k<_n_nghb; k++){
+    if (_zl_ji_p_var[k][2*_n_shared] != _problem->getIteration()){
+      log(Error)<<"Index mismatch!"<< endlog();
+      error();
+    }
+    for (int i=0; i<_n_shared; i++){
+      _z_ji_var[k][i] = _zl_ji_p_var[k][i];
+      _l_ji_var[k][i] = _zl_ji_p_var[k][i+_n_shared];
+    }
+  }
+  #ifdef DEBUG
+  time_elapsed = TimeService::Instance()->secondsSince(_timestamp);
+  cout << "checking2: " << time_elapsed << " s" << endl;
+  #endif
   return true;
 }
 

@@ -65,7 +65,6 @@ return rfsm.state {
         rfsm.send_events(fsm,'e_failed')
         return
       end
-      reference:start()
       print("System started. Abort by using Break.")
     end,
 

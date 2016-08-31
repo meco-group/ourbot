@@ -3,9 +3,9 @@ ros.import("rtt_rospack")
 
 loadComponent("lua", "OCL::LuaComponent")
 
-//lua.setPeriod(0.1)
 lua.exec_file("deploy.lua")
 addPeer("lua","Deployer")
+setMasterSlaveActivity("lua","Deployer")
 
 loadService("lua", "marshalling")
 lua.marshalling.loadProperties("Configuration/system-config.cpf")
