@@ -26,10 +26,10 @@ int Circle::getRadius()
 
 void Circle::obj2vec(Circle obstacle, std::vector<double> *obstacleVector) 
 {
-	std::cout<<"in Circle obj2vec"<<std::endl;
+	CIRCLE_DEBUG_PRINT("in Circle obj2vec")
 	Obstacle::obj2vec(obstacle, obstacleVector);
-	std::cout<<"in Circle obj2vec, pushing back radius"<<std::endl;
-	std::cout<<"circle radius: "<<obstacle.getRadius()<<std::endl;
+	CIRCLE_DEBUG_PRINT("in Circle obj2vec, pushing back radius")
+	CIRCLE_DEBUG_PRINT("circle radius: "<<obstacle.getRadius())
 	(*obstacleVector)[6] = obstacle.getRadius();
 }
 
@@ -37,11 +37,10 @@ void Circle::vec2obj(std::vector<double> obstacleVector, Circle *obstacle)
 {
 
 	// obstacle = new Circle();
-
-	std::cout<<"in Circle vec2obj"<<std::endl;
+	CIRCLE_DEBUG_PRINT("in Circle vec2obj")
 	Obstacle::vec2obj(obstacleVector, obstacle);
-	std::cout<<"in Circle vec2obj, setting radius"<<std::endl;
-	std::cout<<"circle radius: "<<int(obstacleVector[6])<<std::endl;
+	CIRCLE_DEBUG_PRINT("in Circle vec2obj, setting radius")
+	CIRCLE_DEBUG_PRINT("circle radius: "<<int(obstacleVector[6]))
 	obstacle->setRadius(int(obstacleVector[6]));
 
 }

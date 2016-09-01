@@ -1,6 +1,14 @@
 #ifndef CIRCLE_H
 #define CIRCLE_H
 
+// #define CIRCLE_DEBUGFLAG
+
+#ifdef CIRCLE_DEBUGFLAG //print statements on/off
+	#define CIRCLE_DEBUG_PRINT(x)	std::cout << x << std::endl;
+#else
+	#define CIRCLE_DEBUG_PRINT(x)	//std::cout << x << std::endl;
+#endif
+
 #include <vector>
 #include "Obstacle.hpp"
 

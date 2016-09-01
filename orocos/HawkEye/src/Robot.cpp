@@ -64,17 +64,17 @@ void Robot::setRoi(int x, int y){
     _roi[1] = y;    
 }
 void Robot::setMarker(double *bottomMarkers, double *topMarker){
-    std::cout<<"In setMarkers"<<std::endl;
+    ROBOT_DEBUG_PRINT("In setMarkers")
     for (int k = 0 ; k<BOTTOMMARKERSLENGTH ; k++){
       _bottomMarkers[k] = bottomMarkers[k];
       _marker.bottomMarkers[k] = _bottomMarkers[k];
     }
-    std::cout<<"set bottom markers"<<std::endl;
+    ROBOT_DEBUG_PRINT("Set bottom markers")
     for (int k = 0 ; k<TOPMARKERLENGTH ; k++){
         _topMarker[k] = topMarker[k];
         _marker.topMarker[k] = _topMarker[k];
     }        
-    std::cout<<"set top marker"<<std::endl;    
+    ROBOT_DEBUG_PRINT("Set top marker")  
 }
 
 //Getters

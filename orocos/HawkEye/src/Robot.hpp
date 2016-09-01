@@ -1,6 +1,14 @@
 #ifndef ROBOT_H
 #define ROBOT_H
 
+// #define ROBOT_DEBUGFLAG
+
+#ifdef ROBOT_DEBUGFLAG //print statements on/off
+	#define ROBOT_DEBUG_PRINT(x)	std::cout << x << std::endl;
+#else
+	#define ROBOT_DEBUG_PRINT(x)	//std::cout << x << std::endl;
+#endif
+
 #define BOTTOMMARKERSLENGTH 7
 #define TOPMARKERLENGTH 5
 

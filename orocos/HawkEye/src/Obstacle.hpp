@@ -1,6 +1,14 @@
 #ifndef OBSTACLE_H
 #define OBSTACLE_H
 
+// #define OBSTACLE_TESTFLAG
+
+#ifdef OBSTACLE_DEBUGFLAG //print statements on/off
+	#define OBSTACLE_DEBUG_PRINT(x)	std::cout << x << std::endl;
+#else
+	#define OBSTACLE_DEBUG_PRINT(x)	//std::cout << x << std::endl;
+#endif
+
 #include <vector>
 #include <iostream>
 

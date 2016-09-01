@@ -1,6 +1,14 @@
 #ifndef RECTANGLE_H
 #define RECTANGLE_H
 
+// #define RECTANGLE_TESTFLAG
+
+#ifdef RECTANGLE_DEBUGFLAG //print statements on/off
+	#define RECTANGLE_DEBUG_PRINT(x)	std::cout << x << std::endl;
+#else
+	#define RECTANGLE_DEBUG_PRINT(x)	//std::cout << x << std::endl;
+#endif
+
 #include <vector>
 #include "Obstacle.hpp"
 
