@@ -18,6 +18,7 @@ class Communicator : public RTT::TaskContext{
     Connection* getIncomingConnection(Port port, int port_nr);
     Connection* getOutgoingConnection(Port port, int port_nr, const std::vector<std::string>& remote_addresses);
     bool retrieveSocket(Connection* connection, int port_nr);
+    Connection* findConnection(int port_nr);
 
   public:
     Communicator(std::string const& name);

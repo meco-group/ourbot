@@ -63,6 +63,10 @@ class Connection {
             return true;
         }
 
+        int getPortNr(){
+            return _port_nr;
+        }
+
         void setTrustedHosts(const std::vector<std::string>& trusted_hosts){
             _trusted_hosts = trusted_hosts;
         }
@@ -92,6 +96,21 @@ class Connection {
                 _rem_addresses[k].sin_family = AF_INET;
                 _rem_addresses[k].sin_port = htons(_port_nr);
                 if (inet_pton(AF_INET, remote_addresses[k].c_str(), &_rem_addresses[k].sin_addr)==0) {
+                  return false;
+                }
+            }
+            return true;
+        }
+
+        bool addRemoteAddresses(const std::vector<std::string>& remote_addresses){
+            std::vector<sockaddr_in> new_remote_addresses(remote_addresses.size());
+            int ori_size = _rem_addresses.size();
+            _rem_addresses.resize(ori_size + remote_addresses.size());
+            for (uint k=ori_size; k<_rem_addresses.size(); k++){
+                 memset((char *) &_rem_addresses[k], 0, sizeof(_rem_addresses[k]));
+                _rem_addresses[k].sin_family = AF_INET;
+                _rem_addresses[k].sin_port = htons(_port_nr);
+                if (inet_pton(AF_INET, remote_addresses[k-ori_size].c_str(), &_rem_addresses[k].sin_addr)==0) {
                   return false;
                 }
             }

@@ -44,15 +44,19 @@ bool Communicator::addOutgoing(const string& component_name, const string& port_
     return false;
   }
   Port anti_port;
+  Connection* connection;
   if (getPort(port_name) == NULL){
     anti_port = port->antiClone();
     addPort(port_name, *anti_port);
+  }
+  else if ((connection=findConnection(port_nr)) != NULL){ // just add extra send addresses
+    return connection->addRemoteAddresses(remote_addresses);
   }
   else {
     anti_port = getPort(port_name);
   }
   port->connectTo(anti_port);
-  Connection* connection = getOutgoingConnection(anti_port, port_nr, remote_addresses);
+  connection = getOutgoingConnection(anti_port, port_nr, remote_addresses);
   if (connection == NULL){
     log(Error) << "Type of port is not known!" << endlog();
     return false;
@@ -96,6 +100,15 @@ bool Communicator::addIncoming(const string& component_name, const string& port_
     return false;
   }
   return true;
+}
+
+Connection* Communicator::findConnection(int port_nr){
+  for (uint k=0; k<_connections.size(); k++){
+    if (port_nr == _connections[k]->getPortNr()){
+      return _connections[k];
+    }
+  }
+  return NULL;
 }
 
 bool Communicator::retrieveSocket(Connection* connection, int port_nr){
