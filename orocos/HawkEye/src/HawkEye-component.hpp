@@ -5,7 +5,7 @@
 #define HAWKEYE_TESTFLAG
 // #define HAWKEYE_PLOTFLAG
 #define HAWKEYE_SAVEFLAG
-#define HAWKEYE_DEBUGFLAG
+// #define HAWKEYE_DEBUGFLAG
 
 #ifdef HAWKEYE_DEBUGFLAG //print statements on/off
 	#define HAWKEYE_DEBUG_PRINT(x)	std::cout << x << std::endl;
@@ -28,6 +28,7 @@
 //General
 #include <iostream>
 #include <time.h> //to get timing information: difftime(), time(),...
+#include <ctime>  // to use clock_t
 #include <chrono> //to get time in milliseconds
 #include <math.h> //atan2
 
@@ -79,6 +80,9 @@ class HawkEye : public RTT::TaskContext{
     //Ports
     OutputPort <std::vector<double> >  _obstacles_state_port; //state of all obstacles
     OutputPort <std::vector<double> >  _robots_state_port;    //state of all robots (we will have 3)
+    OutputPort <std::vector<double> >  _kurt_state_port;  //state of the robot
+    OutputPort <std::vector<double> >  _dave_state_port;  //state of the robot
+    OutputPort <std::vector<double> >  _krist_state_port;  //state of the robot
     OutputPort <int>  _width_port;
     OutputPort <int>  _height_port;
     OutputPort <int>  _fps_port;
@@ -121,6 +125,7 @@ class HawkEye : public RTT::TaskContext{
 
     //Camera
     int _fd; //file descriptor for camera
+    double _pix2meter; //transform pixels to meter
 
     //Images
     unsigned long _capture_time; //timestamp for current frame
@@ -135,7 +140,14 @@ class HawkEye : public RTT::TaskContext{
     cv::Mat _roi; //Todo: add size? Always 4?
 
     //Output
+    // robots _robots; //struct which holds all robots
     std::vector<Robot*> _robots; //Holds all robots
+    std::vector<double> _kurt;  //robot is described by its 3 markers with x and y position + add timestamp: 7 elements
+    std::vector<double> _dave;
+    std::vector<double> _krist;
+    bool _found_kurt; //did we find Kurt?
+    bool _found_dave;
+    bool _found_krist;
     Circle _circle; //Make instance of circle
     Rectangle _rectangle; //Make instance of rectangle
     std::vector<Obstacle*> _obstacles;
@@ -175,6 +187,7 @@ class HawkEye : public RTT::TaskContext{
     void writeResults();
     void drawResults();
     bool reset();
+    void transform(std::vector<double> &values);
 
     //Low level image capturing
     void pabort(const char *s); //Error catching
@@ -183,11 +196,11 @@ class HawkEye : public RTT::TaskContext{
     void capture_image();
 
     //Class methods - matcher
-    void printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat template_star1, cv::Mat template_star2, cv::Mat template_cross, cv::Mat template_cross_rot, cv::Mat template_circlehollow, bool *success, double *robottocks, double *starpat, double *crosspat, double *circlehollowpat, float matchThresh, bool draw_markers, std::vector<int> rorig);
+    void printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat template_star1, cv::Mat template_star2, cv::Mat template_cross, cv::Mat template_cross_rot, cv::Mat template_circlehollow, bool *success, double *templ_locs, double *robottocks, double *starpat, double *crosspat, double *circlehollowpat, float matchThresh, bool draw_markers, std::vector<int> rorig);
     void oneObject(cv::Mat image, cv::Mat templim, float thresh, int *w, int *h, double *max_val, cv::Point *temploc);
     void multiObject(cv::Mat image, cv::Mat templim, float thresh, int *w, int *h, double *max_val, std::vector<int> *maxpoints);
     std::vector<int> twoTemplate(cv::Mat image, cv::Mat templim1, cv::Mat templim2, float thresh);
-    void addRobot(double *robottocks, double *starpat); //further processing to get coordinates and robot direction, save in a robot instance
+    void addRobot(double *robottocks, double *starpat, std::string robotType, double *templ_locs); //further processing to get coordinates and robot direction, save in a robot instance
 
   public:
     HawkEye(std::string const& name);

@@ -1,6 +1,7 @@
 #include "HawkEye-component.hpp"
 
-HawkEye::HawkEye(std::string const& name) : TaskContext(name, PreOperational), _drawstar{0}, _drawmods{0}{
+HawkEye::HawkEye(std::string const& name) : TaskContext(name, PreOperational), _drawstar{0}, _drawmods{0},
+                                    _kurt(7,0.), _dave(7,0.), _krist(7,0.){
 
 #ifndef HAWKEYE_TESTFLAG
   //Add properties
@@ -15,14 +16,17 @@ HawkEye::HawkEye(std::string const& name) : TaskContext(name, PreOperational), _
   _fps = 90;   //max for this resolution, if using USB 3.0
   _nRobots = 1; //Amount of robots in field
   _workspace_path = "/home/tim/orocos/ourbot/orocos"; //TODO: adapt to right path //directory where Orocos component is situated in
-  _brightness = 10; //0...40
-  _exposure = 30; //1...10000
+  _brightness = 5; //0...40
+  _exposure = 20; //1...10000
   _iso = 200; //
+  _pix2meter = 1; //conversion of pixels to meter
 
 #endif //HAWKEYE_TESTFLAG
 
   ports()->addPort("obstacles_state_port",_obstacles_state_port).doc("Obstacles state output port");
-  ports()->addPort("robots_state_port",   _robots_state_port).doc("Robots state output port"); //We will have multiple robots
+  ports()->addPort("kurt_state_port",   _kurt_state_port).doc("Kurt's state output port");
+  ports()->addPort("dave_state_port",   _dave_state_port).doc("Dave's state output port");
+  ports()->addPort("krist_state_port",   _krist_state_port).doc("Krist's state output port");
   ports()->addPort("width_port",          _width_port).doc("Frame width output port");
   ports()->addPort("height_port",         _height_port).doc("Frame height output port");
   ports()->addPort("fps_port",            _fps_port).doc("Frames per second output port");
@@ -46,6 +50,10 @@ bool HawkEye::configureHook(){
   //Initialize class variables
   _save_img_path = _workspace_path + "/HawkEye/src/Images/"; //path where to save captured images
   _path = _workspace_path + "/HawkEye/src/";
+
+  _found_kurt = false;
+  _found_dave = false;
+  _found_krist = false;
 
   //Read in templates of robot markers
   HAWKEYE_DEBUG_PRINT("circle template path: "<<_path+"Images/templates/mod1.tiff")
@@ -95,7 +103,9 @@ bool HawkEye::configureHook(){
   std::vector<double> exampleObstacle(80, 0.0); //Todo: 8 inputs per obstacle required --> suppose you have 10 obstacles maximum
   std::vector<double> exampleRobot(27, 0.0); //Todo: 9 inputs per robot required --> suppose you have 3 robots maximum
   _obstacles_state_port.setDataSample(exampleObstacle);
-  _robots_state_port.setDataSample(exampleRobot);
+  _kurt_state_port.setDataSample(exampleRobot);
+  _dave_state_port.setDataSample(exampleRobot);
+  _krist_state_port.setDataSample(exampleRobot);
   _width_port.setDataSample(example);
   _height_port.setDataSample(example);
   _fps_port.setDataSample(example);
@@ -123,6 +133,8 @@ bool HawkEye::startHook(){
 
 void HawkEye::updateHook(){
   
+  clock_t begin = clock();
+
   HAWKEYE_DEBUG_PRINT("Starting processImage")
   
   processImage(); //grab image, find patterns, discern obstacles from robot, save contours
@@ -134,6 +146,10 @@ void HawkEye::updateHook(){
   HAWKEYE_DEBUG_PRINT("Starting writeResults")
   
   writeResults(); //write results to output ports
+
+  clock_t end = clock();
+
+  std::cout << "this took " << double(end-begin)/CLOCKS_PER_SEC << std::endl;
 
   if (HAWKEYE_SAVE){ 
     HAWKEYE_DEBUG_PRINT("Starting drawResults")
@@ -704,7 +720,9 @@ void HawkEye::findRobots() //match templates of robot
     double starpat[5] = {0};    //temploc(x,y), w, h, max_val --> position of star marker
     double crosspat[5] = {0};    //temploc(x,y), w, h, max_val --> position of starfull marker
     double circlehollowpat[5] = {0};    //temploc(x,y), w, h, max_val --> position of circle marker
-    printedMatch(_roi, _template_circle, _template_star1, _template_star2, _template_cross, _template_cross_rot, _template_circlehollow, &success, robottocks, starpat, crosspat, circlehollowpat, _matchThresh, _draw_markers, _rorig);
+    double templ_locs[2*3] = {0}; //suppose we have 3 markers, holds template locations, each has x,y position
+    std::string robotType;
+    printedMatch(_roi, _template_circle, _template_star1, _template_star2, _template_cross, _template_cross_rot, _template_circlehollow, &success, templ_locs, robottocks, starpat, crosspat, circlehollowpat, _matchThresh, _draw_markers, _rorig);
     HAWKEYE_DEBUG_PRINT("printedMatch completed")
     // Add robots
     if (success == true){
@@ -712,19 +730,22 @@ void HawkEye::findRobots() //match templates of robot
         if (starpat[4] != 0){ //if a hollow star was detected (max_val != 0)
             HAWKEYE_DEBUG_PRINT("Found robot with hollow star pattern!")
             HAWKEYE_DEBUG_PRINT("max_val starpat in findrobots():"<<starpat[4])
-            addRobot(robottocks, starpat); //further processing to get coordinates and robot direction, save in a robot instance
+            robotType = "Kurt";
+            addRobot(robottocks, starpat, robotType, templ_locs); //further processing to get coordinates and robot direction, save in a robot instance
             HAWKEYE_DEBUG_PRINT("Added robot with hollow star pattern!")
         }
         if (crosspat[4] != 0){ //if a cross star was detected (max_val != 0)
             HAWKEYE_DEBUG_PRINT("Found robot with cross pattern!")
             HAWKEYE_DEBUG_PRINT("max_val crosspat in findrobots():"<<crosspat[4])
-            addRobot(robottocks, crosspat); //further processing to get coordinates and robot direction, save in a robot instance
+            robotType = "Dave";
+            addRobot(robottocks, crosspat, robotType, templ_locs); //further processing to get coordinates and robot direction, save in a robot instance
             HAWKEYE_DEBUG_PRINT("Added robot with cross pattern!")
         }
         if (circlehollowpat[4] != 0){ //if a hollow circle was detected (max_val != 0)
             HAWKEYE_DEBUG_PRINT("Found robot with hollow circle pattern!")
             HAWKEYE_DEBUG_PRINT("max_val circlehollow in findrobots():"<<circlehollowpat[4])
-            addRobot(robottocks, circlehollowpat); //further processing to get coordinates and robot direction, save in a robot instance
+            robotType = "Krist";
+            addRobot(robottocks, circlehollowpat, robotType, templ_locs); //further processing to get coordinates and robot direction, save in a robot instance
             HAWKEYE_DEBUG_PRINT("Added robot with hollow circle pattern!")
         }  
     }
@@ -734,12 +755,23 @@ void HawkEye::findRobots() //match templates of robot
 
 }
 
-void HawkEye::addRobot(double *robottocks, double *pattern)
+void HawkEye::addRobot(double *robottocks, double *pattern, std::string type, double *templ_locs)
 {
-  //determine robot direction from detected markers
+    // There are two options to add the robots. Option1 adds all robots to _robots and includes the robots with their position, orientation,...
+    // Then the results are put on a port in one big vector. On the listener side you can run vec2obj to obtain the robots in one vector
+    // Option2 only passes on the markers of the robot, not the position. These markers are kept separate for each robot. The results are put on 
+    // three different ports, since we will have three different robots. 
+
+    // For now only option2 is completely implemented. The basics for option1 are also implemented, but only tested for one robot and timestamp is not included yet
+
+    //determine robot direction from detected markers
     HAWKEYE_DEBUG_PRINT("Starting to calculate robot center and orientation")
     HAWKEYE_DEBUG_PRINT("robottocks: "<<robottocks[0]<<", "<<robottocks[1]<<", "<<robottocks[2]<<", "<<robottocks[3])
     try{
+
+        // Option 1
+        // ========
+
         double lineside = (robottocks[2] - robottocks[0])*(pattern[1]-robottocks[1]) - (robottocks[3] - robottocks[1])*(pattern[0] - robottocks[0]); //(circle2_x-circle1_x)*(star_y-circle1_y) - (circle2_y-circle1_y)*(star_x-circle1_x)
         double moddirection = 180/M_PI*(std::atan2((robottocks[3]-robottocks[1]),(robottocks[2]-robottocks[0])));
         double robdirection;
@@ -791,6 +823,32 @@ void HawkEye::addRobot(double *robottocks, double *pattern)
         robot->setMarker(robottocks, pattern);
         HAWKEYE_DEBUG_PRINT("Pushing new robot instance")
         _robots.push_back(robot);
+        
+        // Option 2
+        // ========
+
+        //Get type of robot and push to appropriate class variable
+        if (type == "Kurt"){
+            for (int k = 0; k<=6 ; k++){ //only select x,y values of templates, not timestamp
+              _kurt[k] = templ_locs[k];
+              _found_kurt = true;
+            }
+            _kurt[7] = _capture_time; //add timestamp
+        }
+        else if (type == "Dave"){
+            for (int k = 0; k<=6 ; k++){
+              _dave[k] = templ_locs[k];
+              _found_dave = true;
+            }
+            _dave[7] = _capture_time; //add timestamp
+        }
+        else if (type == "Krist"){
+            for (int k = 0; k<=6 ; k++){
+              _krist[k] = templ_locs[k];
+              _found_krist = true;
+            }
+            _krist[7] = _capture_time; //add timestamp
+        }
     }  
     catch (const std::exception &e){
         HAWKEYE_DEBUG_PRINT("No direction and center can be calculated!") 
@@ -1114,9 +1172,21 @@ void HawkEye::writeResults(){
   //Put data on output ports
   _robots_state_port.write(robotVec);
   _obstacles_state_port.write(obstacleVec);
-  // _width_port.write(data);
-  // _height_port.write(data);
-  // _fps_port.write(data);
+
+  if (_found_kurt){
+    transform(_kurt);
+    _kurt_state_port.write(_kurt);
+  }
+
+  if (_found_dave){
+    transform(_dave);
+    _dave_state_port.write(_dave); 
+  }
+
+  if (_found_krist){
+    transform(_krist);
+    _krist_state_port.write(_krist);
+  }
 
   // Empty robot vector
   // for (int k = 0 ; k < _robots.size() ; k++) //since we used new below
@@ -1127,7 +1197,7 @@ void HawkEye::writeResults(){
   // }
   // _robots.resize(0);
 
-  //Todo: also empty _obstacles here instead of above?
+  //Todo: also empty _obstacles here instead of above? or empty both above?
 
 }
 
@@ -1220,7 +1290,7 @@ void HawkEye::drawResults(){
     }
 }
 
-void HawkEye::printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat template_star1, cv::Mat template_star2, cv::Mat template_cross, cv::Mat template_cross_rot, cv::Mat template_circlehollow, bool *success, double *robottocks, double *starpat, double *crosspat, double *circlehollowpat, float matchThresh, bool draw_markers, std::vector<int> rorig){ //Todo: adapt input: should become varType varName
+void HawkEye::printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat template_star1, cv::Mat template_star2, cv::Mat template_cross, cv::Mat template_cross_rot, cv::Mat template_circlehollow, bool *success, double *templ_locs, double *robottocks, double *starpat, double *crosspat, double *circlehollowpat, float matchThresh, bool draw_markers, std::vector<int> rorig){ //Todo: adapt input: should become varType varName
     
     cv::Mat image = roi; //image to examine is limited to roi
 
@@ -1257,6 +1327,10 @@ void HawkEye::printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat templat
             robottocks[4] = temp_circle_size.width;
             robottocks[5] = temp_circle_size.height;
             // robottocks[6] = max_val;
+            templ_locs[0] = maxpoints[0];
+            templ_locs[1] = maxpoints[1];
+            templ_locs[2] = maxpoints[2];
+            templ_locs[3] = maxpoints[3];
 
             //Todo: translated this correctly? robottocks[6] = max_value was forgotten in original code? This is the value of the first template which did not reach the threshold --> no info!
             robottocks[0] = robottocks[0]+robottocks[4]/2; // the coords of the should be at the centre of the pattern //calculate pos, w, h of marker
@@ -1353,6 +1427,10 @@ void HawkEye::printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat templat
             for (int k = 0 ; k <=4 ; k++){
               starpat[k] = starcand1[k];
             }
+            for (int k = 0 ; k<2 ; k++){ // assign position of star pattern
+              templ_locs[4] = temploc1.x;
+              templ_locs[5] = temploc1.y;
+            }            
             star = true;
             HAWKEYE_DEBUG_PRINT("star pos x"<<(starpat)[0]<<"star pos y"<<(starpat)[1])
         }
@@ -1360,6 +1438,10 @@ void HawkEye::printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat templat
             for (int k = 0 ; k <=4 ; k++){
               starpat[k] = starcand2[k];
             }
+            for (int k = 0 ; k<2 ; k++){ // assign position of star pattern
+              templ_locs[4] = temploc2.x;
+              templ_locs[5] = temploc2.y;
+            }            
             star = true;
             HAWKEYE_DEBUG_PRINT("star pos x"<<(starpat)[0]<<"star pos y"<<(starpat)[1])
         }
@@ -1420,6 +1502,10 @@ void HawkEye::printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat templat
             for (int k = 0 ; k <=4 ; k++){
               crosspat[k] = crosscand[k];
             }
+            for (int k = 0 ; k<2 ; k++){ // assign position of cross pattern
+              templ_locs[4] = temploc_cross.x;
+              templ_locs[5] = temploc_cross.y;
+            }                        
             cross = true;
             HAWKEYE_DEBUG_PRINT("cross pos x"<<(crosspat)[0]<<"cross pos y"<<(crosspat)[1])
         }
@@ -1427,6 +1513,10 @@ void HawkEye::printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat templat
             for (int k = 0 ; k <=4 ; k++){
               crosspat[k] = crossrotcand[k];
             }
+            for (int k = 0 ; k<2 ; k++){ // assign position of crossrot pattern
+              templ_locs[4] = temploc_crossrot.x;
+              templ_locs[5] = temploc_crossrot.y;
+            }                        
             cross = true;
             HAWKEYE_DEBUG_PRINT("cross pos x"<<(crosspat)[0]<<"cross pos y"<<(crosspat)[1])
         }
@@ -1463,8 +1553,12 @@ void HawkEye::printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat templat
             for (int k = 0 ; k <=4 ; k++){
               circlehollowpat[k] = circlehollowcand[k];
             }
+            for (int k = 0 ; k<2 ; k++){ // assign position of hollow circle pattern
+              templ_locs[4] = temploccirclehollow.x;
+              templ_locs[5] = temploccirclehollow.y;
+            }            
             circlehollow = true;
-            HAWKEYE_DEBUG_PRINT("starhollow pos x"<<(circlehollowpat)[0]<<"starhollow pos y"<<(circlehollowpat)[1])
+            HAWKEYE_DEBUG_PRINT("circlehollow pos x"<<(circlehollowpat)[0]<<"circlehollow pos y"<<(circlehollowpat)[1])
         }
     }
     else{
@@ -1472,6 +1566,28 @@ void HawkEye::printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat templat
     }
     if ((mods == true && star == true) or (mods == true && cross == true) or (mods == true && circlehollow == true)){
         *success = true; //robot was detected
+
+        // order of markers is important: left circle, right circle, top marker
+        // decide which is the left and which is the right template
+        double x1 = templ_locs[4];  // top marker
+        double y1 = templ_locs[5];
+        double x2 = templ_locs[0];  // guessed left circle marker
+        double y2 = templ_locs[1];
+        double x3 = templ_locs[2];  // guessed right circle marker
+        double y3 = templ_locs[3];
+
+        double ax = x2-x1;
+        double ay = y2-y1;
+        double bx = x3-x1;
+        double by = y3-y1;
+
+        if (ax*by-ay*bx <= 0){  //assumption was wrong, change order
+            templ_locs[0] = x3;
+            templ_locs[1] = y3;
+            templ_locs[2] = x2;
+            templ_locs[3] = y2;  
+        }
+        // else{}  //assumption was right, keep order
     }
     else{
         *success = false;
@@ -1708,11 +1824,19 @@ resolution_t HawkEye::getResolution()
   return _resolution;
 }
 
+void HawkEye::transform(std::vector<double> &values){
+  for (int k = 0 ; k<=6 ; k+=2){ //select y-values
+    values[k] = -(values[k]+_f.size().height); // invert y and shift over height
+  }
+  for (int k = 0 ; k<=6 ; k++){  //scale pixels to meter
+    values[k] = values[k]*_pix2meter;
+  }
+}
 /*
  * Using this macro, only one component may live
  * in one library *and* you may *not* link this library
  * with another component library. Use
- * ORO_CREATE_COMPONENT_TYPE()
+ & ORO_CREATE_COMPONENT_TYPE()
  * ORO_LIST_COMPONENT_TYPE(HawkEye)
  * In case you want to link with another library that
  * already contains components.
