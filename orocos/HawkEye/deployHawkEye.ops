@@ -17,7 +17,7 @@ loadComponent("HawkEye", "HawkEye")
 
 //connectPorts(TaskContext* A, TaskContext* B) this should also work, use this to automatically connect ports of the components which have the same name
 
-HawkEye.setPeriod(4)
+HawkEye.setPeriod(0.5)
 
 HawkEye.configure
 HawkEye.start
