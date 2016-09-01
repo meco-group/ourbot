@@ -1,0 +1,25 @@
+require("print")
+import("rtt_ros")
+
+ros.import("HawkEye") 
+
+loadComponent("HawkEye", "HawkEye")
+
+//var ConnPolicy cp;   //make a connection policy
+//cp.type = DATA ; 
+//cp.lock_policy = LOCKED;
+
+//Connect ports
+//connect("SPIMaster.fd_port", "IMU.fd_port", cp); 
+//connect("SPIMaster.spi_mode_port", "IMU.spi_mode_port", cp); 
+//connect("SPIMaster.spi_word_length_port", "IMU.spi_word_length_port", cp); 
+//connect("SPIMaster.spi_speed_port", "IMU.spi_speed_port", cp); 
+
+//connectPorts(TaskContext* A, TaskContext* B) this should also work, use this to automatically connect ports of the components which have the same name
+
+HawkEye.setPeriod(0.5)
+
+HawkEye.configure
+HawkEye.start
+
+
