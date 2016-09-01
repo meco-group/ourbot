@@ -1,9 +1,8 @@
-#define DEBUG
+// #define DEBUG
 
 #include "DistributedMotionPlanning-component.hpp"
 #include <rtt/Component.hpp>
 #include <iostream>
-#include <ctime>
 
 using namespace std;
 
@@ -171,10 +170,7 @@ bool DistributedMotionPlanning::admmIteration(){
   _timestamp = TimeService::Instance()->getTicks();
   #endif
   // update2: determine z_i_var, z_ij_var, l_i_var and l_ij_var
-  begin = clock();
   _problem->update2(_x_j_var, _z_ij_var, _l_ij_var, _residuals);
-  end = clock();
-  cout << "update2: " << double(end-begin)/CLOCKS_PER_SEC << " s" << endl;
   #ifdef DEBUG
   time_elapsed = TimeService::Instance()->secondsSince(_timestamp);
   cout << "update2: " << time_elapsed << " s" << endl;
