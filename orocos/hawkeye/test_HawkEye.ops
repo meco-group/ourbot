@@ -1,0 +1,13 @@
+require("print")
+import("rtt_ros")
+ros.import("HawkEye")
+
+loadComponent("he", "HawkEye")
+
+loadService("he", "marshalling")
+he.marshalling.loadProperties("Configuration/hawkeye-config.cpf")
+
+HawkEye.setPeriod(5)
+
+HawkEye.configure
+HawkEye.start

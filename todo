@@ -1,0 +1,25 @@
+todo
+----
+
++ distr motion planning:
+    + check result
+    + check waiting
+    + check possible update frequency
++ test Connection: addpeers
+- deploy script for hawkeye
++ test write2ourbots
++ test write2hawkeye
+- cleanup hawkeye
+    - properties
+    - save_image
+    - background capture
+
+
+- deploy.py adapt for hawkeye
+- async kalman embedding
+- signals streaming over udp
+    * save previous and append new
+- python gui
+    + video in gui
+    * matplotlib in gui
++ video streaming python

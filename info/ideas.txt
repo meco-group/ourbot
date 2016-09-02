@@ -1,0 +1,8 @@
+General ideas for improvement
+-----------------------------
+
+- cal_velocity_port: velocity is computed based on encoder values of 3 wheels. Ideally this should be determined by means of a least squares solution of the 4 wheel encoder measurement.
+
+- check what causes commanding/reporting-over-corba problem. Is it really corba? Or maybe ssh? Monitor processes on ourbot (and on PC?).
+
+- If necessary, send crucial stuff over own implemented udp-protocol. Via a Communicator-component which runs as slave of Coordinator. When designed right, this can eventually also interface USB/Serial protocol.
