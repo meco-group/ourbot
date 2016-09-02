@@ -19,19 +19,18 @@ class EstimatorInterface : public RTT::TaskContext{
     InputPort<double> _cal_imul_orientation_port;
     InputPort<std::vector<double> > _cal_imul_dorientation_3d_port;
     InputPort<double> _cal_imul_dorientation_port;
-    InputPort<double> _cal_imul_temperature_port;
 
     InputPort<std::vector<double> > _cal_imur_transacc_port;
     InputPort<std::vector<double> > _cal_imur_orientation_3d_port;
     InputPort<double> _cal_imur_orientation_port;
     InputPort<std::vector<double> > _cal_imur_dorientation_3d_port;
     InputPort<double> _cal_imur_dorientation_port;
-    InputPort<double> _cal_imur_temperature_port;
 
     InputPort<std::vector<double> > _cal_enc_pose_port;
     InputPort<std::vector<double> > _cal_motor_current_port;
     InputPort<std::vector<double> > _cal_motor_voltage_port;
     InputPort<std::vector<double> > _cal_velocity_port;
+    InputPort<std::vector<double> > _cmd_velocity_passthrough_port;
 
     OutputPort<std::vector<double> > _est_pose_port;
     OutputPort<std::vector<double> > _est_velocity_port;
@@ -49,19 +48,18 @@ class EstimatorInterface : public RTT::TaskContext{
     double _cal_imul_orientation;
     std::vector<double> _cal_imul_dorientation_3d;
     double _cal_imul_dorientation;
-    double _cal_imul_temperature;
 
     std::vector<double> _cal_imur_transacc;
     std::vector<double> _cal_imur_orientation_3d;
     double _cal_imur_orientation;
     std::vector<double> _cal_imur_dorientation_3d;
     double _cal_imur_dorientation;
-    double _cal_imur_temperature;
 
     std::vector<double> _cal_enc_pose;
     std::vector<double> _cal_motor_current;
     std::vector<double> _cal_motor_voltage;
     std::vector<double> _cal_velocity;
+    std::vector<double> _cmd_velocity;
 
     std::vector<double> _est_pose;
     std::vector<double> _est_velocity;
@@ -90,17 +88,16 @@ class EstimatorInterface : public RTT::TaskContext{
     std::vector<double> getImuL3dOrientation();
     double getImuLDOrientation();
     std::vector<double> getImuL3dDOrientation();
-    double getImuLTemperature();
     std::vector<double> getImuRTransAcc();
     double getImuROrientation();
     std::vector<double> getImuR3dOrientation();
     double getImuRDOrientation();
     std::vector<double> getImuR3dDOrientation();
-    double getImuRTemperature();
     std::vector<double> getEncPose();
     std::vector<double> getMotorCurrent();
     std::vector<double> getMotorVoltage();
     std::vector<double> getCalVelocity();
+    std::vector<double> getCmdVelocity();
 
     void setEstPose(std::vector<double> const&);
     void setEstVelocity(std::vector<double> const&);

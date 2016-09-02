@@ -9,18 +9,17 @@ local fqn_out, events_in
 local start_time
 state = ''
 main_state = ''
--- local menu_options = {{'VelocityControl','e_velocitycmdextern'},{'PathFollowing','e_updpathfollowing'}}
-local menu_options         = {'VelocityControl','PathFollowing'}
-local main_states          = {'velocitycmdextern', 'updpathfollowing'}
+local menu_options         = {'VelocityControl','MotionPlanning'}
+local main_states          = {'velocitycmd', 'motionplanning'}
 local sub_states           = {'idle', 'init', 'run', 'stop'}
 local menu_option_ind = 1
 
 --Create properties
-_print_level   = rtt.Property("int","print_level","Level of output printing")
-_peers         = rtt.Property("ints","peers","Index numbers of peer agents")
+_print_level            = rtt.Property("int","print_level","Level of output printing")
+_reporter_sample_rate   = rtt.Property("double","reporter_sample_rate", "Frequency to take snapshots for the reporter")
 
 tc:addProperty(_print_level)
-tc:addProperty(_peers)
+tc:addProperty(_reporter_sample_rate)
 
 --Ports which drive/read the FSM
 _emperor_fsm_event_port      = rtt.InputPort("string")
@@ -34,22 +33,27 @@ _gamepad_B_port      = rtt.InputPort("bool")
 _gamepad_up_port     = rtt.InputPort("bool")
 _gamepad_down_port   = rtt.InputPort("bool")
 
-tc:addEventPort(_emperor_fsm_event_port, "emperor_fsm_event_port", "Event port for driving the emperor FSM")
+tc:addPort(_emperor_fsm_event_port, "emperor_fsm_event_port", "Event port for driving the emperor FSM")
 tc:addPort(_emperor_send_event_port, "emperor_send_event_port", "Port to send events to the emperor FSM from the emperor")
 tc:addPort(_emperor_failure_event_port,"emperor_failure_event_port","Port to send indicate a failure in the emperor")
 tc:addPort(_emperor_current_state_port, "emperor_current_state_port", "current active state of the emperor FSM")
 
-tc:addEventPort(_gamepad_A_port, "gamepad_A_port", "A button of gamepad")
-tc:addEventPort(_gamepad_B_port, "gamepad_B_port", "B button of gamepad")
-tc:addEventPort(_gamepad_up_port, "gamepad_up_port", "Up button of gamepad")
-tc:addEventPort(_gamepad_down_port, "gamepad_down_port", "Down button of gamepad")
+tc:addPort(_gamepad_A_port, "gamepad_A_port", "A button of gamepad")
+tc:addPort(_gamepad_B_port, "gamepad_B_port", "B button of gamepad")
+tc:addPort(_gamepad_up_port, "gamepad_up_port", "Up button of gamepad")
+tc:addPort(_gamepad_down_port, "gamepad_down_port", "Down button of gamepad")
 
 _emperor_send_event_port:connect(_emperor_fsm_event_port)
 
 function configureHook()
-   --create local copies of the property values
+   -- create local copies of the property values
    print_level = _print_level:get()
-   peers       = _peers:get()
+   reporter_sample_rate = _reporter_sample_rate:get()
+
+   -- variables to use in updateHook
+   communicator = tc:getPeer('communicator')
+   communicatorUpdate = communicator:getOperation("update")
+   communicatorInRunTimeError = communicator:getOperation("inRunTimeError")
 
    -- load state machine
    fsm = rfsm.init(rfsm.load("Emperor/emperor_fsm.lua"))
@@ -71,11 +75,18 @@ function configureHook()
       fsm.warn=function(...) rtt.logl('Warning', table.concat({...}, ' ')) end
       fsm.err=function(...) rtt.logl('Error', table.concat({...}, ' ')) end
    end
-
    return true
 end
 
 function updateHook()
+   -- update communication
+   communicatorUpdate()
+   if communicatorInRunTimeError() then
+      rtt.logl("Error","RunTimeError in communicator")
+      rfsm.send_events(fsm,'e_failed')
+      return
+   end
+
    rfsm.run(fsm)
    if main_state == 'idle' then
       menuToggle()
@@ -133,7 +144,7 @@ function switchStates()
    end
 end
 
---Local function to get the current time in seconds
+-- local function to get the current time in seconds
 function get_sec()
    local sec,nsec = rtt.getTime()
    return sec+nsec*1e-9

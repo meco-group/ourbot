@@ -17,7 +17,8 @@ RPLidar::RPLidar(std::string const& name) :
 	this->ports()->addPort( "cal_lidar_encoder_stamp_x_port", _cal_lidar_encoder_stamp_x_port ).doc( "Output port for lidar calibrated encoder stamps. Holds a vector of RPLIDAR_NODE_BUFFER_SIZE x-coordinates [m] wrt to the local robot frame." );
 	this->ports()->addPort( "cal_lidar_encoder_stamp_y_port", _cal_lidar_encoder_stamp_y_port ).doc( "Output port for lidar calibrated encoder stamps. Holds a vector of RPLIDAR_NODE_BUFFER_SIZE y-coordinates [m] wrt to the local robot frame." );
 	this->ports()->addPort( "cal_lidar_encoder_stamp_angle_port", _cal_lidar_encoder_stamp_angle_port ).doc( "Output port for lidar calibrated encoder stamps. Holds a vector of RPLIDAR_NODE_BUFFER_SIZE angles [rad] wrt to the initial frame." );
-	
+	this->ports()->addPort( "cor_lidar_distance_port",_cor_lidar_distance_port).doc("output port for corrected lidar node positions. HOlds a vector of rplidar_node_buffer_size x-coordinates [m]");
+    this->ports()->addPort( "cor_lidar_angle_port",_cor_lidar_angle_port).doc("output port for corrected lidar node positions. HOlds a vector of rplidar_node_buffer_size y-coordinates [m]");
 	this->ports()->addPort( "cal_lidar_local_node_port", _cal_lidar_local_node_port ).doc( "Output port for the calibrated local lidar nodes [m,m,-]" );
 	this->ports()->addPort( "cal_lidar_global_node_port", _cal_lidar_global_node_port ).doc( "Output port for the calibrated global lidar nodes [m,m,-]" );
 
@@ -188,6 +189,8 @@ bool RPLidar::configureHook()
   _cal_lidar_encoder_stamp_x_port.setDataSample(example);
   _cal_lidar_encoder_stamp_y_port.setDataSample(example);
   _cal_lidar_encoder_stamp_angle_port.setDataSample(example);
+  _cor_lidar_distance_port.setDataSample(example);
+  _cor_lidar_angle_port.setDataSample(example);
 
 #ifndef RPLIDAR_TESTFLAG
 	return true;
@@ -380,21 +383,21 @@ void RPLidar::addNodeToMeasurements(const rplidar_response_measurement_node_t &n
 		//angle and distance both get a minus to make the reference frame compliant to the robot frame
 		angle = -angle;
 		distance = -distance;
-		
+
 		//add node to current buffer
 		_primary_node_buffer[0][_node_buffer_fill] = angle;                             //lidar raw angle
 		_primary_node_buffer[1][_node_buffer_fill] = distance;		                      //lidar raw distance
 		_primary_node_buffer[2][_node_buffer_fill] = distance*cos(angle);               //lidar x value
 		_primary_node_buffer[3][_node_buffer_fill] = distance*sin(angle);               //lidar y value
-		_primary_node_buffer[4][_node_buffer_fill] = (node.sync_quality && 0x3F)/64.0;  //lidar quality 
-		
+		_primary_node_buffer[4][_node_buffer_fill] = (node.sync_quality && 0x3F)/64.0;  //lidar quality
+
 		// Read encoder data from the encoder port and add to the node as encoder stamp
 		std::vector<double> pose(3,0.0), node(3,0.0);
 		_cal_enc_pose_port.read(pose);
-		
+
 		for(int k=0;k<3;k++){
 		  _primary_node_buffer[k+5][_node_buffer_fill] = pose[k]; //copy encoder stamp to the stamp vector
-		  node[k] = _primary_node_buffer[k+2][_node_buffer_fill]; //write the node value to the vector v		  
+		  node[k] = _primary_node_buffer[k+2][_node_buffer_fill]; //write the node value to the vector v
 		}
 		_cal_lidar_local_node_port.write(node);
 
@@ -408,13 +411,15 @@ void RPLidar::addNodeToMeasurements(const rplidar_response_measurement_node_t &n
 		if(_node_buffer_fill >= _lidar_data_length){
 			//set to ports
 			_cal_lidar_angle_port.write(*_primary_node_buffer);
-			_cal_lidar_distance_port.write(*(_primary_node_buffer+1));			
+			_cal_lidar_distance_port.write(*(_primary_node_buffer+1));
 			_cal_lidar_x_port.write(*(_primary_node_buffer+2));
 			_cal_lidar_y_port.write(*(_primary_node_buffer+3));
-			_cal_lidar_quality_port.write(*(_primary_node_buffer+4));			
+			_cal_lidar_quality_port.write(*(_primary_node_buffer+4));
 			_cal_lidar_encoder_stamp_x_port.write(*(_primary_node_buffer+5));
 			_cal_lidar_encoder_stamp_y_port.write(*(_primary_node_buffer+6));
 			_cal_lidar_encoder_stamp_angle_port.write(*(_primary_node_buffer+7));
+
+            correctInformation();
 
 			//make other buffer current buffer
 			std::vector<double> *ptemp = _primary_node_buffer;
@@ -427,6 +432,82 @@ void RPLidar::addNodeToMeasurements(const rplidar_response_measurement_node_t &n
 			RPLIDAR_DEBUG_PRINT("switched buffers.")
 		}
 	}
+}
+
+void RPLidar::correctInformation()
+{
+
+  double delta_x, delta_y, delta_theta, x_old, y_old, x_new, y_new;
+  double rotAngle, movAngle;
+  std::vector<double> x_cart(_lidar_data_length);
+  std::vector<double> y_cart(_lidar_data_length);
+  std::vector<double> theta_cart(_lidar_data_length);
+  std::vector<double> angle(_lidar_data_length);
+  std::vector<double> distance(_lidar_data_length);
+
+  // De eerste positie wordt gelijkgezet met (0,0) en alle volgende punten worden relatief t.o.v. dit punt berekend
+  x_cart[0] = 0;
+  y_cart[0] = 0;
+  theta_cart[0] = 0;
+
+  // In de eerste for loop worden cartesiaanse coordinaten berekend in het het robotassenstelsel van op de eerste positie
+  for(int i = 0; i < _lidar_data_length-1; i++){
+
+    // De hoeveelheid van beweging in één richting volgens het assenstelsel van het punt i
+    delta_x   = _primary_node_buffer[5][i+1] - _primary_node_buffer[5][i];
+    delta_y   = _primary_node_buffer[6][i+1] - _primary_node_buffer[6][i];
+    delta_theta = _primary_node_buffer[7][i+1] - _primary_node_buffer[7][i];
+    movAngle = theta_cart[i] + delta_theta/2;
+
+    //De hoek wordt beperkt tussen -M_PI en M_PI
+
+    // De cartesiaanse coordinaten in het robotassenstelsel van de eerste positie, theta_cart is de hoek tussen het assenstelsel
+    // op positie i en de allereerste positie. De veranderingen in bewegin moeten dus geprojecteerd (geroteerd) worden t.o.v.
+    // het cartesiaans assenstelsel en opgeteld worden bij de vorige positie.
+    x_cart[i+1]     = x_cart[i] + delta_x*cos(movAngle) - delta_y*sin(movAngle);
+    y_cart[i+1]     = y_cart[i] + delta_y*cos(movAngle) + delta_x*sin(movAngle);
+    theta_cart[i+1] = theta_cart[i] + delta_theta;
+
+  }
+
+
+  // In de tweede for loop worden de laserstralen eerst geroteerd
+  for(int i = 0; i < _lidar_data_length; i++){
+
+  // eerst wordt geroteerd zodat de coördinaten t.o.v. een assenstelsel zijn op het punt
+  // van de tussenpositie van de robot, maar wel met dezelfde oriëntatie als de allereerste positie
+    rotAngle = theta_cart[i];
+
+    x_old = _primary_node_buffer[2][i];
+    y_old = _primary_node_buffer[3][i];
+    x_new = x_old*cos(rotAngle) - y_old*sin(rotAngle);
+    y_new = x_old*sin(rotAngle) + y_old*cos(rotAngle);
+
+    //Aangezien nu de huidige positie en de allerlaatste positie gekend zijn wordt dit assenstelsel (met dezelfde oriëntatie als
+    // het cartesiaans assenstelsel), getransleerd naar het laatste punt in de beweging
+
+    x_new = (x_cart[i] + x_new) - x_cart[_lidar_data_length-1];
+    y_new = (y_cart[i] + y_new) - y_cart[_lidar_data_length-1];
+
+    rotAngle = -theta_cart[_lidar_data_length-1];
+
+    // Nu worden de laserstralen opnieuw geroteerd zodat hun coördinaten zoals deze opgemeten zouden worden kunnen berekend worden
+    x_old = x_new;
+    y_old = y_new;
+    x_new = x_old*cos(rotAngle) - y_old*sin(rotAngle);
+    y_new = x_old*sin(rotAngle) + y_old*cos(rotAngle);
+
+    // Ten laatste worden de x, y van de laserstraal nog omgezet naar een angle en een distance
+    angle[i]  = atan2(y_new,x_new);
+    distance[i]  = sqrt(x_new*x_new + y_new*y_new);
+
+
+  }
+
+  // Hier worden ze op de poort geschreven
+  _cor_lidar_distance_port.write(distance);
+  _cor_lidar_angle_port.write(angle);
+
 }
 
 //ORO_CREATE_COMPONENT(RPLidar)

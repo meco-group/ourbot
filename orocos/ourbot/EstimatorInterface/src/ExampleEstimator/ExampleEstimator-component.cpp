@@ -20,13 +20,11 @@ bool ExampleEstimator::estimateUpdate(){
   std::vector<double> imul_3d_orientation       = getImuL3dOrientation();
   double imul_dorientation                      = getImuLDOrientation();
   std::vector<double> imul_3d_dorientation      = getImuL3dDOrientation();
-  double imul_temperature                       = getImuLTemperature();
   std::vector<double> imur_trans_acc            = getImuRTransAcc();
   double imur_orientation                       = getImuROrientation();
   std::vector<double> imur_3d_orientation       = getImuR3dOrientation();
   double imur_dorientation                      = getImuRDOrientation();
   std::vector<double> imur_3d_dorientation      = getImuR3dDOrientation();
-  double imur_temperature                       = getImuRTemperature();
   std::vector<double> enc_pose                  = getEncPose();
   std::vector<double> motor_current             = getMotorCurrent();
   std::vector<double> motor_voltage             = getMotorVoltage();

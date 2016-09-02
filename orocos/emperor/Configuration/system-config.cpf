@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "cpf.dtd">
+<properties>
+  <simple name="print_level" type="long">
+    <description>Level of output printing</description>
+    <value>2</value>
+  </simple>
+  <simple name="velocitycmd" type="string">
+    <description>VelocityCommand component to use (only for intern velocitycmd)</description>
+    <value>GamePadCommand</value>
+  </simple>
+  <simple name="velcmd_sample_rate" type="double">
+    <description>Frequency to update velocity commander</description>
+    <value>20.</value>
+  </simple>
+  <simple name="emperor_sample_rate" type="double">
+    <description>Frequency to update communicator</description>
+    <value>100.</value>
+  </simple>
+  <simple name="reporter_sample_rate" type="double">
+    <description>Frequency to take snapshots for the reporter</description>
+    <value>10.</value>
+  </simple>
+
+  <struct name="trusted_hosts" type="strings">
+    <description>From which hosts should received packets be interpreted</description>
+    <simple name="dave" type="string">
+      <value>192.168.11.120</value>
+    </simple>
+    <simple name="kurt" type="string">
+      <value>192.168.11.121</value>
+    </simple>
+    <simple name="krist" type="string">
+      <value>192.168.11.122</value>
+    </simple>
+    <simple name="hawkeye" type="string">
+      <value>192.168.11.123</value>
+    </simple>
+    <simple name="emperor" type="string">
+      <value>192.168.11.113</value>
+    </simple>
+  </struct>
+</properties>

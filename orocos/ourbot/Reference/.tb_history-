@@ -1,8 +1,0 @@
-rfsm::send_events.write(
-rfsm::send_events.write("e_run")
-rfsm:send_events.write("e_run")
-rfsm:send_events:write("e_run")
-send_events:write("e_run")
-reference.configure
-reference.configure
-reference.start

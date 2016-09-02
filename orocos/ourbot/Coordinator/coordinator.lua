@@ -3,19 +3,19 @@ require "rfsm"
 require "rfsm_rtt"
 require "rfsmpp"
 
-local tc=rtt.getTC();
+local tc = rtt.getTC();
 local fsm
 local fqn_out, events_in
 local start_time
 
---Create properties
-_index         = rtt.Property("int","index","Index number of agent")
-_print_level   = rtt.Property("int","print_level","Level of output printing")
+-- create properties
+_print_level            = rtt.Property("int","print_level","Level of output printing")
+_reporter_sample_rate   = rtt.Property("double","reporter_sample_rate", "Frequency to take snapshots for the reporter")
 
-tc:addProperty(_index)
 tc:addProperty(_print_level)
+tc:addProperty(_reporter_sample_rate)
 
---Ports which drive/read the FSM
+-- ports that drive/read the FSM
 _coordinator_fsm_event_port      = rtt.InputPort("string")
 _coordinator_send_event_port     = rtt.OutputPort("string")
 _coordinator_failure_event_port  = rtt.OutputPort("string")
@@ -30,8 +30,13 @@ _coordinator_send_event_port:connect(_coordinator_fsm_event_port)
 
 function configureHook()
    -- create local copies of the property values
-   index       = _index:get()
    print_level = _print_level:get()
+   reporter_sample_rate = _reporter_sample_rate:get()
+
+   -- variables to use in updateHook
+   communicator = tc:getPeer('communicator')
+   communicatorUpdate = communicator:getOperation("update")
+   communicatorInRunTimeError = communicator:getOperation("inRunTimeError")
 
    -- load state machine
    fsm = rfsm.init(rfsm.load("Coordinator/coordinator_fsm.lua"))
@@ -47,12 +52,10 @@ function configureHook()
    if print_level >= 2 then
       -- enable state entry and exit dbg output
       fsm.dbg=rfsmpp.gen_dbgcolor('Coordinator FSM', { STATE_ENTER=true, STATE_EXIT=true}, false)
-
       -- redirect FSM output to rtt log
       fsm.info=function(...) rtt.logl('Info', table.concat({...}, ' ')) end
       fsm.warn=function(...) rtt.logl('Warning', table.concat({...}, ' ')) end
       fsm.err=function(...) rtt.logl('Error', table.concat({...}, ' ')) end
-
    end
 
    -- create ports with timing info
@@ -60,11 +63,18 @@ function configureHook()
    _controlloop_jitter   = rtt.OutputPort("double")
    tc:addPort(_controlloop_duration,"controlloop_duration","Duration of executing the control loop")
    tc:addPort(_controlloop_jitter,"controlloop_jitter","Jitter of the control loop")
-
    return true
 end
 
 function updateHook()
+   -- update communication
+   communicatorUpdate()
+   if communicatorInRunTimeError() then
+      rtt.logl("Error","RunTimeError in communicator")
+      rfsm.send_events(fsm,'e_failed')
+      return
+   end
+
    rfsm.run(fsm)
 end
 
@@ -74,6 +84,6 @@ end
 
 --Local function to get the current time in seconds
 function get_sec()
-   local sec,nsec = rtt.getTime()
-   return sec+nsec*1e-9
+   local sec, nsec = rtt.getTime()
+   return sec + nsec*1e-9
 end

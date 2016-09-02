@@ -62,7 +62,7 @@ void USBInterface::setUSBPortName(std::string usb_port_name)
 
 bool USBInterface::connectSerial()
 {
-  _usb_fd = open(_usb_port_name.c_str(), O_RDWR | O_NOCTTY | O_NDELAY | O_TRUNC);
+  _usb_fd = open(_usb_port_name.c_str(), O_RDWR | O_NOCTTY | O_NDELAY | O_TRUNC |O_NONBLOCK);
 
   if (_usb_fd > 0)
 	{
@@ -148,8 +148,7 @@ int USBInterface::readBytes(uint8_t* bytes, uint32_t length, uint8_t port_select
 {
   uint32_t bytes_received = read(_usb_fd, bytes, length);
   if(bytes_received == -1){
-  	std::cout << "Error while reading file(" + getName() + "). The error received was " + strerror(errno) << std::endl;
-  	
+  	// std::cout << "Error while reading file(" + getName() + "). The error received was " + strerror(errno) << std::endl;
   	bytes_received = 0;
   }
 

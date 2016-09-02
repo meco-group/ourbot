@@ -1,153 +1,250 @@
 #!/usr/bin/python
 
-# This script create new components on the ourbots, copies the source codes from PC and build the components.
-# This done based on the directory structure on the local PC (starting from local_root).
-# Run ./write2ourbots.py --help for available options.
+"""
+This script
+- copies the source files from PC
+- creates new components on the remote odroids if desired
+Run ./write2ourbots.py --help for available options.
 
-# Usage: ./write2ourbots.py [options] arg
-# Arguments:
-#   1: local root folder of orocos components
-#   2: remote root folder of orocos components
-#  if arguments are not provided, default values are used:
-#   1: current directory/orocos/ourbot
-#   2; /home/odroid/orocos
+Ruben Van Parys - 2015
+"""
 
-# Options:
-#   -b, --build: build all components
-#   -n, --buildnew: build new created components
-#   -l, --buildlist: list of components to build
-#   -u, --username: ssh username
-#   -p, --password: ssh password
-#   -c, --createcomponents: create missing components
-#
-# Ruben Van Parys - 2015
-
-import optparse, sys, os, paramiko, string
+import optparse
+import os
+import sys
+import paramiko
+import collections as col
+import math
+import errno
 
 # Default parameters
 current_dir = os.path.dirname(os.path.realpath(__file__))
-local_root  = os.path.join(current_dir,'orocos/ourbot')
+local_root = os.path.join(current_dir, 'orocos/ourbot')
+other_local_dirs = []
 remote_root = '/home/odroid/orocos'
-username    = 'odroid'
-password    = 'odroid'
-hosts       = ['192.168.10.248']
-ignore      = ['TestCorba']
-build_list  = []
+username = 'odroid'
+password = 'odroid'
+hosts = col.OrderedDict()
+# hosts['dave'] = '192.168.11.120'
+hosts['kurt'] = '192.168.11.121'
+hosts['krist'] = '192.168.11.122'
+ignore = ['TestCorba', 'VelocityCommandInterface', 'SPIMaster']
 
-def createComponent(ssh, component):
+
+def create_component(ssh, component):
+    print component
+    cmd = 'cd ' + remote_root + ' && rosrun ocl orocreate-pkg ' + component
+    stdin, stdout, stderr = ssh.exec_command(cmd)
+    err = stderr.read()
+    if err:
+        print err
+
+
+def add_to_ros_env(ssh, component):
     comp_path = os.path.join(remote_root, component)
+    stdin, stdout, stderr = ssh.exec_command('echo y | rosws set ' + comp_path)
+    err = stderr.read()
+    if err:
+        print err
 
-    print ('Creating component %s ...') % (component)
-    cmd = 'cd ' + remote_root + ' && rosrun ocl orocreate-pkg '+ component
-    ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(cmd)
-    print ssh_stdout.read()
-    print 'DONE'
-    print 'Add %s to ROS environment ...' % (component),
-    ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command('rosws set ' + comp_path)
-    ssh_stdin.write('y\n')
-    ssh_stdin.flush()
-    print 'DONE'
-    ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command('source ~/.bashrc')
 
-    print ('Changing CMakeListst.txt ...'),
-    path    = os.path.join(comp_path, 'CMakeLists.txt')
-    ftp     = ssh.open_sftp()
-    f_in    = ftp.file(path, 'r')
-    c_in    = f_in.readlines()
-    c_out   = []
+def change_cmakelist(ssh, component):
+    comp_path = os.path.join(remote_root, component)
+    path = os.path.join(comp_path, 'CMakeLists.txt')
+    ftp = ssh.open_sftp()
+    f_in = ftp.file(path, 'r')
+    c_in = f_in.readlines()
+    c_out = []
     for line in c_in:
         if line.find('orocos_typegen_headers(') >= 0:
             c_out.append('#'+line)
         else:
             c_out.append(line)
     f_in.close()
-    f_out   = ftp.file(path, 'w')
+    f_out = ftp.file(path, 'w')
     f_out.writelines(c_out)
     f_out.close()
     ftp.close()
-    print 'DONE\n'
 
-def send(ftp, loc_file, rem_file):
-    print loc_file
-    ftp.put(loc_file, rem_file)
+
+def send_file(ftp, ssh, loc_file, rem_file):
+    directory = os.path.dirname(rem_file)
+    try:
+        ftp.lstat(directory)
+    except IOError, e:
+        if e.errno == errno.ENOENT:
+            stdin, stdout, stderr = ssh.exec_command('mkdir -p ' + directory)
+            err = stderr.read()
+            if err:
+                print err
+    try:
+        ftp.put(loc_file, rem_file)
+    except IOError:
+        raise ValueError('Could not send ' + loc_file)
+
+
+def send_files(ftp, ssh, loc_files, rem_files):
+    n_blocks = 50
+    interval = int(math.ceil(len(loc_files)/n_blocks*1.))
+    string = '['
+    for k in range(len(loc_files)/interval):
+        string += ' '
+    string += ']'
+    cnt = 0
+    for lf, rf in zip(loc_files, rem_files):
+        string2 = string
+        send_file(ftp, ssh, lf, rf)
+        for k in range(cnt/interval):
+            string2 = string2[:k+1] + '=' + string2[k+2:]
+        sys.stdout.flush()
+        sys.stdout.write("\r"+string2)
+        cnt += 1
+    print ''
+
+
+def mp_adaptations(ftp, ssh):
+    local_files = []
+    remote_files = []
+    # adapt CMakeLists.txt
+    local_files.append(os.path.join(
+        current_dir, 'orocos/ourbot/MotionPlanning/CMakeLists.txt'))
+    remote_files.append(os.path.join(
+        remote_root, 'MotionPlanning/CMakeLists.txt'))
+    f1 = open(local_files[-1], 'r')
+    body = f1.read()
+    f1.close()
+    for repl in ['include_directories', 'link_directories']:
+        while(body.find(repl) > 0):
+            index = body.find(repl)
+            string = body[index:].split(')')[0]+')\n'
+            body = body.replace(string, '')
+    part1, part2 = body[:index], body[index:]
+    body = part1 + '\n'
+    body += 'link_directories('
+    body += os.path.join(
+        remote_root + '/MotionPlanning/src/MotionPlanning/Toolbox/bin/') + ')\n'
+    body += 'link_directories('
+    body += os.path.join(
+        remote_root + '/MotionPlanning/src/DistributedMotionPlanning/Toolbox/bin/') + ')\n'
+    body += 'include_directories('
+    body += os.path.join(
+        remote_root + '/MotionPlanning/src/MotionPlanning/Toolbox/src/') + ')\n'
+    body += 'include_directories('
+    body += os.path.join(
+        remote_root + '/MotionPlanning/src/DistributedMotionPlanning/Toolbox/src/') + ')\n'
+
+    body += part2
+    f2 = open(local_files[-1]+'_', 'w')
+    f2.write(body)
+    f2.close()
+    # adapt Makefiles
+    for mp_type in ['MotionPlanning', 'DistributedMotionPlanning']:
+        local_files.append(os.path.join(
+            current_dir, ('orocos/ourbot/MotionPlanning/src/' +
+                          mp_type + '/Toolbox/Makefile')))
+        remote_files.append(os.path.join(
+            remote_root, 'MotionPlanning/src/'+mp_type+'/Toolbox/Makefile'))
+        f1 = open(local_files[-1], 'r')
+        body = f1.read()
+        f1.close()
+        index = body.find('CASADILIB =')
+        string = body[index:].split('\n')[0]
+        body = body.replace(string, 'CASADILIB = /usr/local/lib/')
+        index = body.find('CASADIINC =')
+        string = body[index:].split('\n')[0]
+        body = body.replace(string, 'CASADIINC = /usr/local/include/casadi/')
+        index = body.find('CASADIOBJ =')
+        string = body[index:].split('\n')[0]
+        body = body.replace(
+            string, 'CASADIOBJ = ' + os.path.join(
+                remote_root, 'MotionPlanning/src/'+mp_type+'/Toolbox/bin/'))
+        f2 = open(local_files[-1]+'_', 'w')
+        f2.write(body)
+        f2.close()
+    # send files
+    for lf, rf in zip(local_files, remote_files):
+        send_file(ftp, ssh, lf+'_', rf)
+        os.remove(lf+'_')
+
 
 if __name__ == "__main__":
-    usage = ("Usage: %prog [options] arg. There are 2 arguments: local root path & remote root path. It can be left blank to use default values.")
+    usage = ('Usage: %prog [options]')
     op = optparse.OptionParser(usage=usage)
-    op.add_option("-b", "--build", action = "store_true", dest = "build", default = False, help = "build all components")
-    op.add_option("-n", "--buildnew", action = "store_true", dest = "build_new", default = False, help = "build new created components")
-    op.add_option("-l", "--buildlist", dest = "build_list", default = build_list, help = "list of components to build")
-    op.add_option("-u", "--username", dest = "username", default = username, help = "ssh username")
-    op.add_option("-p", "--password", dest = "password", default = password, help = "ssh password")
-    op.add_option("-c", "--createcomponents", action = "store_true", dest = "createcomponents", default = True, help = "create missing components")
+    op.add_option("-c", "--createcomponents", action="store_true",
+                  dest="createcomponents", default=False,
+                  help="create missing components")
 
-    options, args   = op.parse_args()
+    options, args = op.parse_args()
 
-    if len(args) == 2:
-        local_root  = args(0)
-        remote_root = args(1)
-
-    local_files     = [ f for f in os.listdir(local_root) if os.path.isfile(os.path.join(local_root,f)) ]
-    local_dir       = [ d for d in os.listdir(local_root) if os.path.isdir(os.path.join(local_root,d)) and not d in ignore ]
-    components      = [ c for c in local_dir if 'src' in os.listdir(os.path.join(local_root,c))]
-
-    username        = options.username
-    password        = options.password
-
-    build_list      = options.build_list
-    if options.build_new:
-        build_list = [comp for comp in components if not comp in remote_dir]
-    if options.build:
-        build_list = components
+    # all relevant local folders and files
+    local_folders = [os.path.join(local_root, d) for d in os.listdir(local_root)
+                     if (os.path.isdir(os.path.join(local_root, d)) and d not in ignore)] + other_local_dirs
+    local_files = [f for f in os.listdir(local_root)
+                   if os.path.isfile(os.path.join(local_root, f))]
+    # split between components and non-components
+    comp_dir = [c for c in local_folders if 'src' in os.listdir(c)]
+    noncomp_dir = [d for d in local_folders if d not in comp_dir]
 
     ssh = paramiko.SSHClient()
-    ssh.set_missing_host_key_policy( paramiko.AutoAddPolicy() )
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-    for host in hosts:
-        print 'Host %s ...\n' % host
-        ssh.connect(host, username = username, password = password)
+    for host, address in hosts.items():
+        print 'Host %s' % host
+        ssh.connect(address, username=username, password=password)
         ftp = ssh.open_sftp()
-        remote_dir   = [d for d in ftp.listdir(remote_root) if 'd' in str(ftp.lstat(os.path.join(remote_root,d))).split()[0]]
+        remote_dir = [d for d in ftp.listdir(remote_root) if 'd'
+                      in str(ftp.lstat(os.path.join(remote_root, d))).split()[0]]
 
-        # Create unexisting components
+        # create unexisting components
         if options.createcomponents:
-            for comp in components:
-                if not comp in remote_dir:
-                    createComponent(ssh, comp)
-                    dir_ = os.path.join(local_root,comp)
-                    for dirpath, dirnames, filenames in os.walk(os.path.join(dir_,'src')):
-                        new_dir = dirpath.replace(local_root,remote_root)
-                        ssh.exec_command('mkdir ' + new_dir)
+            print 'Creating unexisting components:'
+            new_comp_dir = [c for c in comp_dir if os.path.basename(c) not in remote_dir]
+            new_comp_name = [os.path.basename(c) for c in new_comp_dir]
+            new_comp_parent = [os.path.dirname(c) for c in new_comp_dir]
+            for comp in new_comp_name:
+                create_component(ssh, comp)
+            for comp in new_comp_name:
+                add_to_ros_env(ssh, comp)
+            for comp in new_comp_name:
+                change_cmakelist(ssh, comp)
+            for comp_name, comp_parent in zip(new_comp_name, new_comp_dir):
+                dir_ = os.path.join(comp_parent, comp)
+                for dirpath, dirnames, filenames in os.walk(os.path.join(dir_, 'src')):
+                    new_dir = dirpath.replace(comp_parent, remote_root)
+                    ssh.exec_command('mkdir ' + new_dir)
+            for nc_dir in noncomp_dir:
+                if os.path.basename(nc_dir) not in remote_dir:
+                    dir_ = nc_dir.replace(os.path.dirname(nc_dir), remote_root)
+                    ssh.exec_command('mkdir ' + dir_)
+            ssh.exec_command('source ~/.bashrc')
 
-        # Sending source files
-        print 'Sending source files:'
-
+        # sending source files
+        print 'Sending source files'
+        loc_files = []
+        rem_files = []
         for f in local_files:
             if f.endswith('.ops') or f.endswith('.lua'):
                 loc_file = os.path.join(local_root, f)
                 rem_file = os.path.join(remote_root, f)
-                send(ftp, loc_file, rem_file)
-
-        for d in local_dir:
-            loc_dir = os.path.join(local_root,d)
-            rem_dir = os.path.join(remote_root,d)
-            if d in components:
-                loc_dir = os.path.join(loc_dir,'src')
-                rem_dir = os.path.join(rem_dir,'src')
+                loc_files.append(loc_file)
+                rem_files.append(rem_file)
+        for loc_dir in local_folders:
+            rem_dir = loc_dir.replace(os.path.dirname(loc_dir), remote_root)
+            if loc_dir in comp_dir:
+                loc_dir = os.path.join(loc_dir, 'src')
+                rem_dir = os.path.join(rem_dir, 'src')
             for dirpath, dirnames, filenames in os.walk(loc_dir):
-                for f in filenames:
-                    loc_file = os.path.join(dirpath,f)
-                    rem_file = loc_file.replace(local_root, remote_root)
-                    send(ftp, loc_file, rem_file)
+                if not (dirpath.endswith('bin') or dirpath.endswith('obj')):
+                    for f in filenames:
+                        loc_file = os.path.join(dirpath, f)
+                        rem_file = loc_file.replace(loc_dir, rem_dir)
+                        loc_files.append(loc_file)
+                        rem_files.append(rem_file)
+        send_files(ftp, ssh, loc_files, rem_files)
 
-        # Building components
-        if options.build:
-            print '\n'
-            for comp in components:
-                comp_path = os.path.join(remote_root,comp)
-                print 'Building component %s ...\n' % (comp)
-                ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command('cd ' + comp_path +'/  && make -j4')
-                print 'Warning and Errors: \n %s' % (ssh_stderr.read())
+        # adapt stuff for MotionPlanning component
+        mp_adaptations(ftp, ssh)
 
         ftp.close()
         ssh.close()
+    os.system('clear')

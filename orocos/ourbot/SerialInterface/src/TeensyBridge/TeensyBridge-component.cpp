@@ -3,14 +3,16 @@
 #include <math.h>
 
 #define TEENSYBRIDGE_SERIALBUFFERSIZE	1024
-#define MAVLINK_MSG_OVERHEAD					8
+#define MAVLINK_MSG_OVERHEAD			8
 
 TeensyBridge::TeensyBridge(std::string const& name) :
-	USBInterface(name), _platform_length(0.3), _platform_width(0.265), _wheel_radius(0.05), _encoder_ticks_per_revolution(38400),
+	USBInterface(name), _platform_length(0.3), _platform_width(0.265), _wheel_radius(0.05), _encoder_ticks_per_revolution(35840),
 	_current_sensor_gain(1.0), _current_sensor_offset(0.0),
 	_kinematic_conversion_position(0.0), _kinematic_conversion_orientation(0.0), _kinematic_conversion_wheel(0.0), _pose(3,0.0), _velocity(3,0.0),
-	_control_mode(TEENSYBRIDGE_CONTROL_MODE_SIMPLE), _velocity_controller_P(0.0f), _velocity_controller_I(0.0f), _velocity_controller_D(0.0f)
+	_control_mode(TEENSYBRIDGE_CONTROL_MODE_SIMPLE), _velocity_controller_P(0.0f), _velocity_controller_I(0.0f), _velocity_controller_D(0.0f),
+	_imus{new IMU(std::string("left_imu")), new IMU(std::string("right_imu"))}
 {
+	// SETUP KINEMATICS
 	this->addProperty("platform_length",_platform_length).doc("Property containing the platform length in [m].");
 	this->addProperty("platform_width",_platform_width).doc("Property containing the platform width in [m].");
 	this->addProperty("wheel_radius",_wheel_radius).doc("Property containing the wheel radius in [m].");
@@ -21,6 +23,7 @@ TeensyBridge::TeensyBridge(std::string const& name) :
 	this->addProperty("velocity_controller_D",_velocity_controller_D).doc("Derivative gain for the velocity controller.");
 
 	this->ports()->addPort( "cmd_velocity_port", _cmd_velocity_port ).doc("Input port for low level velocity controller. Vector contains [vx,vy,w]");
+	this->ports()->addPort( "cmd_velocity_passthrough_port", _cmd_velocity_passthrough_port ).doc("Passthrough for cmd velocity port.");
 	this->ports()->addPort( "cal_enc_pose_port", _cal_enc_pose_port ).doc( "Output port for calibrated encoder values. Outputs the pose (x,y,orientation) in [m,m,rad]" );
 	this->ports()->addPort( "cal_velocity_port", _cal_velocity_port ).doc( "Output port for calibrated encoder velocity values. Outputs the velocity (Dx,Dy,Dorientation) in [m/s,m/s,rad/s]" );
 	this->ports()->addPort( "raw_enc_ticks_port", _raw_enc_ticks_port ).doc( "Output port for raw encoder values. Outputs the raw encoder values (FL,FR,RL,RR) in [ticks]" );
@@ -47,6 +50,25 @@ TeensyBridge::TeensyBridge(std::string const& name) :
 	addOperation("showMotorState", &TeensyBridge::showMotorState, this).doc("Displays the motor state.");
 	addOperation("showDebug", &TeensyBridge::showDebug, this).doc("Displays the ourbot debug variables.");
 	addOperation("showThreadTime", &TeensyBridge::showThreadTime, this).doc("Displays the ourbot onboard thread times.");
+	addOperation("showIMUData", &TeensyBridge::showIMUData, this).doc("Displays the ourbot onboard thread times.").arg("ID","ID of the sensor");
+
+	// SETUP IMU
+	addIMUPorts(_imus[0], std::string("l"), 7);
+	addIMUPorts(_imus[1], std::string("r"), 7);
+
+	addProperty("imul_acc_offset", _imus[0]->_acc._offset).doc("User defined offset of accelerometer");
+	addProperty("imul_gyr_offset", _imus[0]->_gyr._offset).doc("User defined offset of gyroscope");
+	addProperty("imul_mag_offset", _imus[0]->_mag._offset).doc("User defined offset of magnetometer");
+	addProperty("imur_acc_offset", _imus[1]->_acc._offset).doc("User defined offset of accelerometer");
+	addProperty("imur_gyr_offset", _imus[1]->_gyr._offset).doc("User defined offset of gyroscope");
+	addProperty("imur_mag_offset", _imus[1]->_mag._offset).doc("User defined offset of magnetometer");
+
+	addProperty("imul_acc_scale", _imus[0]->_acc._scale).doc("User defined scale of accelerometer");
+	addProperty("imul_gyr_scale", _imus[0]->_gyr._scale).doc("User defined scale of gyroscope");
+	addProperty("imul_mag_scale", _imus[0]->_mag._scale).doc("User defined scale of magnetometer");
+	addProperty("imur_acc_scale", _imus[1]->_acc._scale).doc("User defined scale of accelerometer");
+	addProperty("imur_gyr_scale", _imus[1]->_gyr._scale).doc("User defined scale of gyroscope");
+	addProperty("imur_mag_scale", _imus[1]->_mag._scale).doc("User defined scale of magnetometer");
 }
 
 bool TeensyBridge::action(mavlink_message_t msg)
@@ -62,6 +84,14 @@ bool TeensyBridge::action(mavlink_message_t msg)
 			recalculateVelocity();
 			writeRawDataToPorts();
 			TEENSYBRIDGE_DEBUG_PRINT("Motor State message received.")
+			break;}
+
+		case MAVLINK_MSG_ID_RAW_IMU_DATA:{
+			mavlink_raw_imu_data_t raw_imu_data;
+			mavlink_msg_raw_imu_data_decode(&msg, _raw_imu_data + msg.compid); // decode raw imu data
+
+			updateIMU(msg.compid);
+			TEENSYBRIDGE_DEBUG_PRINT("IMU raw data message received.")
 			break;}
 
 		case MAVLINK_MSG_ID_THREADTIME:{
@@ -94,7 +124,7 @@ void TeensyBridge::recalculatePose()
 {
 	// UPDATE 14/07/2015: Make reference frame conform youbot frame
 	_pose[0] = (_motor_states[0].position + _motor_states[1].position)*_kinematic_conversion_position;
-	_pose[1] = (-_motor_states[0].position + _motor_states[2].position)*_kinematic_conversion_position;
+	_pose[1] =  (-_motor_states[0].position + _motor_states[2].position)*_kinematic_conversion_position;
 	// UPDATE 5/11/2015: Average over all wheels so that the rotation is more accurate
 	//_pose[2] = (_motor_states[1].position - _motor_states[2].position)*_kinematic_conversion_orientation;
   _pose[2] = 0.5*((_motor_states[1].position - _motor_states[2].position) + (_motor_states[3].position - _motor_states[0].position))*_kinematic_conversion_orientation;
@@ -144,29 +174,38 @@ void TeensyBridge::writeRawDataToPorts()
 bool TeensyBridge::configureHook()
 {
 	// Show example data sample to ports to make data flow real-time
-  std::vector<double> example(3, 0.0);
-  // set 3D ports
-  _cal_enc_pose_port.setDataSample(example);
-  // set 4D ports
-  example.resize(4);
-  _raw_enc_ticks_port.setDataSample(example);
-  _raw_enc_speed_port.setDataSample(example);
-  _raw_enc_cmd_speed_port.setDataSample(example);
-  _cal_motor_voltage_port.setDataSample(example);
-  _cal_motor_current_port.setDataSample(example);
-  // set 6D ports
-  example.resize(6);
-  _debug_port.setDataSample(example);
+  	std::vector<double> example(3, 0.0);
+  	// set 3D ports
+  	_cal_enc_pose_port.setDataSample(example);
+  	_cmd_velocity_passthrough_port.setDataSample(example);
+  	// set 4D ports
+  	example.resize(4);
+  	_raw_enc_ticks_port.setDataSample(example);
+  	_raw_enc_speed_port.setDataSample(example);
+  	_raw_enc_cmd_speed_port.setDataSample(example);
+  	_cal_motor_voltage_port.setDataSample(example);
+  	_cal_motor_current_port.setDataSample(example);
+  	// set 6D ports
+  	example.resize(6);
+  	_debug_port.setDataSample(example);
 
-  //calculate kinematic conversion
-  _kinematic_conversion_position = _wheel_radius*M_PI/_encoder_ticks_per_revolution; //2*R*pi/enc_res
+	//calculate kinematic conversion
+  	_kinematic_conversion_position = _wheel_radius*M_PI/_encoder_ticks_per_revolution; //2*R*pi/enc_res
 	_kinematic_conversion_orientation = _wheel_radius*M_PI/_encoder_ticks_per_revolution/(_platform_length/2.0 + _platform_width/2.0);
 	_kinematic_conversion_wheel = _encoder_ticks_per_revolution/(2.0*M_PI*_wheel_radius);
+
+	//setup imus
+	_imus[0]->configure();
+	_imus[1]->configure();
 
 #ifndef TEENSYBRIDGE_TESTFLAG
   return true;
 #else
 	_usb_port_name = "/dev/ttyACM0";
+
+	_imus[0]->_acc._offset[0] = 1250.0;
+	_imus[0]->_acc._scale = std::vector<double>(3,0.000613125);
+
 	return setPeriod(0.005);
 #endif //TEENSYBRIDGE_TESTFLAG
 }
@@ -175,10 +214,18 @@ bool TeensyBridge::startHook()
 {
 	if(USBInterface::startHook()){
 		setVelocityController(_velocity_controller_P, _velocity_controller_I, _velocity_controller_D);
-		return true;
+		_imus[0]->start();
+		_imus[1]->start();
 	}else{
 		return false;
 	}
+	return true;
+}
+
+void TeensyBridge::stopHook()
+{
+	setVelocity(0., 0., 0.);
+	USBInterface::stopHook();
 }
 
 void TeensyBridge::updateHook()
@@ -196,6 +243,7 @@ void TeensyBridge::updateHook()
 	// Possible return values are: NoData, OldData and NewData.
 	if(_cmd_velocity_port.read(cmd_velocity) == RTT::NewData){
 		setVelocity(cmd_velocity[0], cmd_velocity[1], cmd_velocity[2]);
+		_cmd_velocity_passthrough_port.write(cmd_velocity);
 	}
 }
 
@@ -321,6 +369,34 @@ void TeensyBridge::setVelocityController(double P, double I, double D)
 	setController(3, P, I, D);
 }
 
+// IMU RELATED FUNCTIONS
+void TeensyBridge::updateIMU(uint8_t ID)
+{
+	std::vector<double> acc = std::vector<double>(3,0.0);
+	std::vector<double> gyr = std::vector<double>(3,0.0);
+	std::vector<double> mag = std::vector<double>(3,0.0);
+
+	for(uint8_t k=0;k<3;k++){
+		 acc[k] = _raw_imu_data[ID].acc[k];
+		 gyr[k] = _raw_imu_data[ID].gyro[k];
+		 mag[k] = _raw_imu_data[ID].mag[k];
+	}
+
+	_imus[ID]->updateMeasurements(acc, gyr, mag);
+}
+
+IMU* TeensyBridge::findIMU(uint8_t ID)
+{
+	uint8_t k;
+	for(k=0;k<2;k++){
+		if(_imus[k]->getID() == ID){
+			break;
+		}
+	}
+	return _imus[k];
+}
+
+// DEBUG DISPLAY FUNCTIONS
 void TeensyBridge::showCurrents()
 {
 	for(uint8_t k=0;k<4;k++)
@@ -375,6 +451,31 @@ void TeensyBridge::showThreadTime()
 	std::cout << "thread 4: " << _threadtime.thread4 << " (" << (double)_threadtime.thread4/_threadtime.time << ")" << std::endl;
 	std::cout << "thread 5: " << _threadtime.thread5 << " (" << (double)_threadtime.thread5/_threadtime.time << ")" << std::endl;
 	std::cout << "thread 6: " << _threadtime.thread6 << " (" << (double)_threadtime.thread6/_threadtime.time << ")" << std::endl;
+}
+
+void TeensyBridge::showIMUData(int ID)
+{
+	if(ID < 2){
+		std::cout << "accel = " << _raw_imu_data[ID].acc[0] << " " << _raw_imu_data[ID].acc[1] << " " << _raw_imu_data[ID].acc[2] << std::endl; ///< IMU raw acceleration
+		std::cout << "gyro = " << _raw_imu_data[ID].gyro[0] << " " << _raw_imu_data[ID].gyro[1] << " " << _raw_imu_data[ID].gyro[2] << std::endl; ///< IMU raw gyroscope data
+		std::cout << "magn = " << _raw_imu_data[ID].mag[0] << " " << _raw_imu_data[ID].mag[1] << " " << _raw_imu_data[ID].mag[2] << std::endl; ///< IMU raw magnetic data
+	}
+}
+
+void TeensyBridge::addIMUPorts(TaskContext* comp, const std::string insertion, const int i)
+{
+	Ports ports = comp->ports()->getPorts();
+	for (Ports::iterator port = ports.begin(); port != ports.end() ; ++port) {
+		std::string port_name = (*port)->getName();
+		port_name.insert(i,insertion);
+		if(getPort(port_name) == NULL){
+			//Port not yet in use: we can add it to the container components ports
+			addPort(port_name, (**port));
+			// std::cout << port_name << " added as port." << std::endl;
+		} else {
+			RTT::log(RTT::Warning) << "Could not add port " + port_name + " because it is already in use." << RTT::endlog();
+		}
+	}
 }
 
 //ORO_CREATE_COMPONENT(TeensyBridge)

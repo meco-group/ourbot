@@ -1,36 +1,37 @@
+local tc        = rtt.getTC()
+local communicator  = tc:getPeer('communicator')
 
 return rfsm.state {
-  rfsm.trans{src = 'initial', tgt = 'idle'},
 
-  idle = rfsm.state{entry=function() main_state='idle' print('\nSelect mode...\n') end},
-
-  rfsm.trans{src = 'idle', tgt = 'updpathfollowing', events={'e_updpathfollowing'}},
-  rfsm.trans{src = 'idle', tgt = 'fixedpathfollowing', events={'e_fixedpathfollowing'}},
-  rfsm.trans{src = 'idle', tgt = 'velocitycmdintern', events={'e_velocitycmdintern'}},
-  rfsm.trans{src = 'idle', tgt = 'velocitycmdextern', events={'e_velocitycmdextern'}},
+  rfsm.trans{src = 'initial',             tgt = 'idle'},
+  rfsm.trans{src = 'idle',                tgt = 'motionplanning', events = {'e_motionplanning'}},
+  rfsm.trans{src = 'idle',                tgt = 'velocitycmd',    events = {'e_velocitycmd'}},
+  rfsm.trans{src = 'motionplanning',      tgt = 'failure',        events = {'e_failed'}},
+  rfsm.trans{src = 'velocitycmd',         tgt = 'failure',        events = {'e_failed'}},
+  rfsm.trans{src = 'motionplanning.idle', tgt = 'idle',           events = {'e_idle'}},
+  rfsm.trans{src = 'velocitycmd.idle',    tgt = 'idle',           events = {'e_idle'}},
+  rfsm.trans{src = 'failure',             tgt = 'idle',           events = {'e_recover'}},
     --add more state transitions here
 
-  --If an 'e_failed' event is raised, we drop out to the failure state
-  rfsm.trans{src = 'updpathfollowing', tgt = 'failure', events={'e_failed'}},
-  rfsm.trans{src = 'fixedpathfollowing', tgt = 'failure', events={'e_failed'}},
-  rfsm.trans{src = 'velocitycmdintern', tgt = 'failure', events={'e_failed'}},
-  rfsm.trans{src = 'velocitycmdextern', tgt = 'failure', events={'e_failed'}},
-    --add more state transitions here
+  initial = rfsm.conn{},
 
-  --Get back to idle state
-  rfsm.trans{src = 'updpathfollowing.idle', tgt = 'idle', events={'e_idle'}},
-  rfsm.trans{src = 'fixedpathfollowing.idle', tgt = 'idle', events={'e_idle'}},
-  rfsm.trans{src = 'velocitycmdintern.idle', tgt = 'idle', events={'e_idle'}},
-  rfsm.trans{src = 'velocitycmdextern.idle', tgt = 'idle', events={'e_idle'}},
-    --add more state transitions here
+  idle = rfsm.state{
+    entry=function()
+      main_state='idle'
+      print('\nSelect mode...\n')
+    end
+  },
 
-  --There is currently no logic to recover from a failure except telling others of failure
-  failure = rfsm.state{entry = function() main_state='failure' rtt.logl("Error","System in Failure!") _emperor_failure_event_port:write('e_failed') end},
+  failure = rfsm.state{
+    entry = function()
+      main_state='failure'
+      _emperor_failure_event_port:write('e_failed')
+      rtt.logl("Error","System in Failure!")
+    end
+  },
 
-  updpathfollowing  = rfsm.load("Emperor/updpathfollowing_fsm.lua"),
-  fixedpathfollowing= rfsm.load("Emperor/fixedpathfollowing_fsm.lua"),
-  velocitycmdintern = rfsm.load("Emperor/velocitycmdintern_fsm.lua"),
-  velocitycmdextern = rfsm.load("Emperor/velocitycmdextern_fsm.lua")
+  motionplanning  = rfsm.load("Emperor/motionplanning_fsm.lua"),
+  velocitycmd     = rfsm.load("Emperor/velocitycmd_fsm.lua")
     --add more state descriptions here
 
 }

@@ -8,7 +8,7 @@ ControllerInterface::ControllerInterface(std::string const& name) : TaskContext(
 
   ports()->addPort("est_pose_port", _est_pose_port).doc("Estimated pose");
   ports()->addPort("ref_pose_port", _ref_pose_port).doc("Pose reference sample");
-  ports()->addPort("ref_ffw_port", _ref_ffw_port).doc("Feedforward reference sample");
+  ports()->addPort("ref_velocity_port", _ref_velocity_port).doc("Velocity reference sample");
 
   ports()->addPort("cmd_velocity_port",_cmd_velocity_port).doc("Velocity command for actuator");
 
@@ -40,8 +40,8 @@ bool ControllerInterface::startHook(){
     log(Error) << "ref_pose_port not connected !" <<endlog();
     check = false;
   }
-  if (!_ref_ffw_port.connected()){
-    log(Warning) << "ref_ffw_port not connected !" <<endlog();
+  if (!_ref_velocity_port.connected()){
+    log(Warning) << "ref_velocity_port not connected !" <<endlog();
   }
   if (!initialize()){
     log(Error) << "Error occured in initialize() !" <<endlog();
@@ -50,7 +50,6 @@ bool ControllerInterface::startHook(){
   if (!check){
     return false;
   }
-  std::cout << "Controller started !" <<std::endl;
   return true;
 }
 
@@ -60,14 +59,21 @@ bool ControllerInterface::startHook(){
 
 void ControllerInterface::updateHook(){
   // Read estimated state from estimator
-  if (_est_pose_port.read(_est_pose) == RTT::NoData) {log(Error) << "No data on _est_pose_port !" <<endlog(); error();}
-
-  // Read reference
-  if (_ref_pose_port.read(_ref_pose) == RTT::NoData) {log(Error) << "No data on _ref_pose_port !" <<endlog(); error();}
-  if (_ref_ffw_port.connected()){
-    if (_ref_ffw_port.read(_ref_ffw) == RTT::NoData) {log(Error) << "No data on _ref_ffw_port !" <<endlog(); error();}
+  if (_est_pose_port.read(_est_pose) == RTT::NoData) {
+    // log(Warning) << "No data on _est_pose_port ! No control action." <<endlog();
+    return;
   }
-
+  // Read reference
+  if (_ref_pose_port.read(_ref_pose) == RTT::NoData) {
+    // log(Warning) << "No data on _ref_pose_port ! No control action." <<endlog();
+    return;
+  }
+  if (_ref_velocity_port.connected()){
+    if (_ref_velocity_port.read(_ref_ffw) == RTT::NoData) {
+      // log(Warning) << "No data on _ref_velocity_port ! No control action." <<endlog();
+      return;
+    }
+  }
   // Apply control law
   controlUpdate();
 
@@ -80,7 +86,6 @@ void ControllerInterface::stopHook() {
   std::vector<double> zerovelocity(3,0.0);
   setCmdVelocity(zerovelocity);
   _cmd_velocity_port.write(_cmd_velocity);
-  std::cout << "Controller stopped !" <<std::endl;
 }
 
 double ControllerInterface::getControlSampleRate(){ return _control_sample_rate; }

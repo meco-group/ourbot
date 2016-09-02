@@ -7,57 +7,41 @@
   </simple>
   <simple name="estimator" type="string">
     <description>Estimator component to use</description>
-    <value>ExampleEstimator</value>
+    <value>SimpleEstimator</value>
   </simple>
-  <simple name="pathgenerator" type="string">
-    <description>Pathgenerator component to use</description>
-    <value>ExamplePathGenerator</value>
+  <simple name="motionplanning" type="string">
+    <description>MotionPlanning component to use</description>
+    <value>MotionPlanning</value>
   </simple>
   <simple name="controller" type="string">
     <description>Controller component to use</description>
-    <value>ExampleController</value>
+    <value>FfwController</value>
   </simple>
   <simple name="velocitycmd" type="string">
     <description>VelocityCommand component to use (only for intern velocitycmd)</description>
     <value>ExampleVelocityCommand</value>
   </simple>
-  <simple name="distributed" type="boolean">
-    <description>Distributed working?</description>
-    <value>false</value>
-  </simple>
-  <simple name="index" type="long">
-    <description>Index number of agent</description>
-    <value>1</value>
-  </simple>
-  <struct name="neighbours" type="ints">
-    <description>Index numbers of neighbouring agents</description>
-    <simple name="Element0" type="long">
-      <value>2</value>
-    </simple>
-    <simple name="Element1" type="long">
-      <value>3</value>
-    </simple>
-  </struct>
+
   <simple name="control_sample_rate" type="double">
     <description>Frequency to update controller</description>
-    <value>200.</value>
+    <value>100.</value>
   </simple>
   <simple name="pathupd_sample_rate" type="double">
-    <description>Frequency to update path updater</description>
-    <value>2.</value>
-  </simple>
-  <simple name="velcmd_sample_rate" type="double">
-    <description>Frequency to update velocity commander</description>
-    <value>200.</value>
+    <description>Frequency to update motion planning</description>
+    <value>5.</value>
   </simple>
   <simple name="io_sample_rate" type="double">
-    <description>Frequency to update velocity commander</description>
+    <description>Frequency to update io</description>
     <value>200.</value>
+  </simple>
+  <simple name="reporter_sample_rate" type="double">
+    <description>Frequency to take snapshots for the reporter</description>
+    <value>10.</value>
   </simple>
 
   <simple name="lidar_data_length" type="long">
     <description>Length of lidar data</description>
-    <value>128</value>
+    <value>400</value>
   </simple>
   <simple name="ir_data_length" type="long">
     <description>Length of ir data (= number of ir's)</description>
@@ -81,7 +65,6 @@
     <value>0.05</value>
   </simple>
 
-
   <struct name="kin_limitations" type="array">
     <description>Kinematic limitations (vmax, vmin, amax, amin)</description>
     <simple name="vmax" type="double">
@@ -97,4 +80,56 @@
       <value>-1.</value>
     </simple>
   </struct>
+
+  <simple name="accelero_mounting_distance" type="double">
+    <description>Distance between the accelerometer and the center of the robot</description>
+    <value>0.10738</value>
+  </simple>
+
+  <simple name="distributed_mp" type="boolean">
+    <description>Distributed motion planning?</description>
+    <value>false</value>
+  </simple>
+  <simple name="index" type="long">
+    <description>Index of agent</description>
+    <value>0</value>
+  </simple>
+  <struct name="neighbors" type="strings">
+    <description>Ip numbers of neighbouring agents</description>
+    <simple name="neighbor0" type="string">
+      <value>192.168.11.120</value>
+    </simple>
+    <simple name="neighbor1" type="string">
+      <value>192.168.11.120</value>
+    </simple>
+  </struct>
+  <struct name="nghb_index" type="ints">
+    <description>Index numbers of neighbouring agents</description>
+    <simple name="neighbor0" type="long">
+      <value>1</value>
+    </simple>
+    <simple name="neighbor1" type="long">
+      <value>1</value>
+    </simple>
+  </struct>
+
+  <struct name="trusted_hosts" type="strings">
+    <description>From which hosts should received packets be interpreted</description>
+    <simple name="dave" type="string">
+      <value>192.168.11.120</value>
+    </simple>
+    <simple name="kurt" type="string">
+      <value>192.168.11.121</value>
+    </simple>
+    <simple name="krist" type="string">
+      <value>192.168.11.122</value>
+    </simple>
+    <simple name="hawkeye" type="string">
+      <value>192.168.11.123</value>
+    </simple>
+    <simple name="emperor" type="string">
+      <value></value>
+    </simple>
+  </struct>
+
 </properties>

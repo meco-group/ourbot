@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+ <!DOCTYPE properties SYSTEM "cpf.dtd">
+<properties>
+    <simple name="max_sense_range" type="double">
+        <description>Maximum distance the lidar can measure</description>
+        <value>4</value>
+    </simple>
+    <simple name="max_angular_correction_deg" type="double">
+        <description>Maximum correction for angles [deg]</description>
+        <value>35</value>
+    </simple>
+    <simple name="max_linear_correction" type="double">
+        <description>Maximum translation between scans [m]</description>
+        <value>0.3</value>
+    </simple>
+    <simple name="use_corr_tricks" type="boolean">
+        <description>Use smart tricks for finding correspondences.</description>
+        <value>1</value>
+    </simple>
+    <simple name="max_iterations" type="long">
+        <description>Maximum iterations to do</description>
+        <value>1000000</value>
+    </simple>
+    <simple name="epsilon_xy" type="double">
+        <description>A threshold for stopping [m]</description>
+        <value>0.0001</value>
+    </simple>
+    <simple name="epsilon_theta" type="double">
+        <description>A threshold for stopping (rad)</description>
+        <value>0.0001</value>
+    </simple>
+    <simple name="sigma" type="double">
+        <description>Noise in the scan [m]</description>
+        <value>0.0001</value>
+    </simple>
+    <simple name="max_correspondence_dist" type="double">
+        <description>Dubious parameter [m]</description>
+        <value>0.2</value>
+    </simple>
+    <simple name="orientation_neighbourhood" type="double">
+        <description>Number of neighbour rays used to estimate the orientation</description>
+        <value>5</value>
+    </simple>
+    <simple name="outliers_maxPerc" type="double">
+        <description>Percentage of correspondences to consider: if 0.9, always discard top 10 percent of correspondences with more error</description>
+        <value>0.7</value>
+    </simple>
+    <simple name="outliers_adaptive_order" type="double">
+        <description>Outlier adaptive order</description>
+        <value>0.7</value>
+    </simple>
+    <simple name="outliers_adaptive_mult" type="double">
+        <description>Outliers adaptive mult</description>
+        <value>2.0</value>
+    </simple>
+    <simple name="use_point_to_line_distance" type="boolean">
+        <description>1 to use PLICP, 0 for ICP</description>
+        <value>1</value>
+    </simple>
+    <simple name="use_odometry_guess" type="boolean">
+        <description>1 to make guess with odometry information, 0 pure scanmatch</description>
+        <value>1</value>
+    </simple>
+    <simple name="scans" type="long">
+        <description>Number of reference scans to keep as reference to match new scan</description>
+        <value>1</value>
+    </simple>
+    <simple name="do_compute_covariance" type="boolean">
+        <description>Calculate covariance matrix Scan matcher</description>
+        <value>1</value>
+    </simple>
+</properties>
