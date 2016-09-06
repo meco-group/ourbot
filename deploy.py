@@ -27,8 +27,8 @@ password = 'odroid'
 
 hosts = col.OrderedDict()
 # hosts['dave'] = '192.168.11.120'
-hosts['kurt'] = '192.168.11.121'
-hosts['krist'] = '192.168.11.122'
+# hosts['kurt'] = '192.168.11.121'
+# hosts['krist'] = '192.168.11.122'
 
 
 def send_file(ftp, ssh, loc_file, rem_file):
@@ -192,6 +192,7 @@ def deploy():
         ])
     command.extend(['--tab', '-e', '''
         bash -c '
+        ./occ.py &
         cd %s
         rm reports.nc
         echo I am emperor

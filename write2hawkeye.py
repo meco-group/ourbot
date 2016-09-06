@@ -175,4 +175,4 @@ if __name__ == "__main__":
 
         ftp.close()
         ssh.close()
-    # os.system('clear')
+    os.system('clear')
