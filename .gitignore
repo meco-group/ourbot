@@ -8,7 +8,10 @@ orocos/*/*/lib/
 orocos/*/*/Makefile
 orocos/*/*/manifest.xml
 orocos/*/*/images/
-orocos/ourbot/MotionPlanning/src/DistributedMotionPlanning/Toolbox/bin/*.so
+!orocos/emperor/HawkEye/images/templates/*
+orocos/ourbot/MotionPlanning/src/*/Toolbox/bin/
+orocos/ourbot/MotionPlanning/src/*/Toolbox/obj/
+todo
 *.nc
 *.log
 *.ior
@@ -21,4 +24,3 @@ orocos/setup.zsh
 *.rosinstall
 *.rosinstall.bak
 *_
-!orocos/emperor/HawkEye/images/templates/*
