@@ -110,6 +110,7 @@ class HawkEye : public RTT::TaskContext{
     bool _stream_images;
     std::string _server_address;
     std::vector<int> _stream_image_size;
+    std::vector<int> _plot_image_size;
 
     // TCP streaming stuff
     int _socket;
@@ -185,10 +186,12 @@ class HawkEye : public RTT::TaskContext{
     void processResults();
     void writeResults();
     void drawResults();
-    void transform(std::vector<double> &values);
+    std::vector<double> transform(std::vector<double> values);
     void printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat template_star1, cv::Mat template_star2, cv::Mat template_cross, cv::Mat template_cross_rot, cv::Mat template_circlehollow, bool *success, double *templ_locs, double *robottocks, double *starpat, double *crosspat, double *circlehollowpat, float matchThresh, std::vector<int> rorig);
     void oneObject(cv::Mat image, cv::Mat templim, float thresh, int *w, int *h, double *max_val, cv::Point *temploc);
     void multiObject(cv::Mat image, cv::Mat templim, float thresh, int *w, int *h, double *max_val, std::vector<int> *maxpoints);
+    void showFrame();
+
 
     // TCP related methods
     bool connectToServer();

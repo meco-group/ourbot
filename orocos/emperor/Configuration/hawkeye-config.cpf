@@ -3,11 +3,11 @@
 <properties>
     <simple name="video_port_name" type="string">
         <description>Port name for the video device. Full path required.</description>
-        <value>/dev/video1</value>
+        <value>/dev/video0</value>
     </simple>
     <simple name="resolution" type="long">
         <description>Resolution</description>
-        <value>2</value>
+        <value>3</value>
     </simple>
     <simple name="brightness" type="long">
         <description>Brightness (0-40)</description>
@@ -47,7 +47,7 @@
     </simple>
     <simple name="stream_images" type="boolean">
         <description>Stream images over udp?</description>
-        <value>1</value>
+        <value>0</value>
     </simple>
     <simple name="port_nr" type="long">
         <description>Port to stream images over</description>
@@ -64,6 +64,15 @@
         </simple>
         <simple name="height" type="long">
           <value>108</value>
+        </simple>
+    </struct>
+    <struct name="plot_image_size" type="ints">
+        <description>Size of images that are streamed.</description>
+        <simple name="width" type="long">
+          <value>672</value>
+        </simple>
+        <simple name="height" type="long">
+          <value>380</value>
         </simple>
     </struct>
 </properties>
