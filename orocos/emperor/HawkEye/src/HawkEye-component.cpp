@@ -16,8 +16,7 @@ _found_kurt(false), _found_dave(false), _found_krist(false)
   addOperation("captureBackground", &HawkEye::captureBackground, this);
   // Properties
   addProperty("video_port_name", _video_port_name).doc("Port name for the video device. Full path required.");
-  addProperty("resolution", _resolution).doc("Resolution");
-  addProperty("fps", _fps).doc("Frames per second");
+  addProperty("resolution", _reso).doc("Resolution");
   addProperty("brightness", _brightness).doc("Brightness (0-40)");
   addProperty("exposure", _exposure).doc("Exposure (1-10000)");
   addProperty("iso", _iso).doc("ISO");
@@ -27,6 +26,10 @@ _found_kurt(false), _found_dave(false), _found_krist(false)
   addProperty("print_cam_info", _print_cam_info).doc("Print information of camera.");
   addProperty("number_of_bg_samples", _number_of_bg_samples).doc("Number of samples taken to determine the background.");
   addProperty("capture_bg_at_start", _capture_bg_at_start).doc("Capture background at start of camera?");
+  addProperty("stream_images", _stream_images).doc("Stream images over UDP?");
+  addProperty("port_nr", _port_nr).doc("Port to stream images over");
+  addProperty("server_address", _server_address).doc("Server address to send image stream to.");
+  addProperty("stream_image_size", _stream_image_size).doc("Size of images that are streamed.");
 
   // Set operating flags and constants
   _cntapprox = 0.025; //parameter of approxPolyDP which approximates a polygon/contour by another, simplified, polygon/contour
@@ -36,17 +39,15 @@ _found_kurt(false), _found_dave(false), _found_krist(false)
   HAWKEYE_DEBUG_PRINT("HawkEye constructed!")
 }
 
+
 bool HawkEye::configureHook(){
+  _resolution = static_cast<resolution_t>(_reso);
   //read in templates of robot markers
   if(!loadTemplates()){
     return false;
   }
   //load resolution into class variables
   if(!setResolution(_resolution)){
-    return false;
-  }
-  //check if selected fps is compatible with the resolution
-  if (!checkFPS(_resolution)){
     return false;
   }
 
@@ -64,6 +65,13 @@ bool HawkEye::configureHook(){
 }
 
 bool HawkEye::startHook(){
+  // Set-up udp strem
+  if (_stream_images){
+    if(!connectToServer()){
+      log(Error) << "Could not connect to server!" << endlog();
+      return false;
+    }
+  }
   // Set-up camera
   if(!startCamera()){
     return false;
@@ -88,6 +96,38 @@ bool HawkEye::startHook(){
   return true;
 }
 
+bool HawkEye::connectToServer(){
+  // create socket
+  struct sockaddr_in servaddr;
+  if ((_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+    return false;
+  }
+  // create server address
+  memset((char *)&servaddr, 0, sizeof(servaddr));
+  servaddr.sin_family = AF_INET;
+  servaddr.sin_port = htons(_port_nr);
+  if (inet_pton(AF_INET, _server_address.c_str(), &servaddr.sin_addr)==0) {
+    return false;
+  }
+  // connect to server
+  if (connect(_socket, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0){
+    return false;
+  }
+  std::cout << "Connected with server application " << _server_address <<":"<<_port_nr<<std::endl;
+  return true;
+}
+
+bool HawkEye::sendImage(const cv::Mat& image){
+  cv::Mat image2;
+  cv::resize(image, image2, cv::Size(_stream_image_size[0], _stream_image_size[1]), 0, 0, cv::INTER_NEAREST);
+  int im_size = image2.total()*image2.elemSize();
+  int bytes;
+  if ((bytes = send(_socket, image2.data, im_size, 0)) == -1){
+    return false;
+  }
+  return true;
+}
+
 void HawkEye::updateHook(){
   clock_t begin = clock();
   _found_kurt = false;
@@ -109,13 +149,16 @@ void HawkEye::updateHook(){
     drawResults(); //save images of image processing
   }
 
-  HAWKEYE_DEBUG_PRINT("HawkEye executes updateHook!")
+  // HAWKEYE_DEBUG_PRINT("HawkEye executes updateHook!")
   clock_t end = clock();
   std::cout << "HawkEye update took " << double(end-begin)/CLOCKS_PER_SEC << "s" << std::endl;
 }
 
 void HawkEye::stopHook() {
   close(_fd); //Stop the camera
+  if(_stream_images){
+    close(_socket);
+  }
   HAWKEYE_DEBUG_PRINT("HawkEye executes stopping!")
 }
 
@@ -180,6 +223,29 @@ bool HawkEye::startCamera(){
     pabort("Error while opening video device");
     return false;
   }
+  //Set data format and resolution
+  struct v4l2_format fmt;
+  char fourcc[5] = {0};
+  fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+  fmt.fmt.pix.width = _width; //were already assigned in the configureHook
+  fmt.fmt.pix.height = _height;
+  fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_Y16;//V4L2_PIX_FMT_MJPEG;
+  fmt.fmt.pix.field = V4L2_FIELD_NONE;
+  if (-1 == xioctl(_fd, VIDIOC_S_FMT, &fmt)){
+    pabort("Error while setting Pixel Format");
+  }
+  if (_print_cam_info){
+    strncpy(fourcc, (char *)&fmt.fmt.pix.pixelformat, 4);
+    printf( "Selected Camera Mode:\n"
+            "  Width: %d\n"
+            "  Height: %d\n"
+            "  PixFmt: %s\n"
+            "  Field: %d\n",
+            fmt.fmt.pix.width,
+            fmt.fmt.pix.height,
+            fourcc,
+            fmt.fmt.pix.field);
+  }
   //Print camera capabilities
   if (_print_cam_info){
     struct v4l2_capability caps = {};
@@ -216,7 +282,7 @@ bool HawkEye::startCamera(){
   //Print format description
   struct v4l2_fmtdesc fmtdesc = {0};
   fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-  char fourcc[5] = {0};
+
   char c, e;
   while (0 == xioctl(_fd, VIDIOC_ENUM_FMT, &fmtdesc)){
     strncpy(fourcc, (char *)&fmtdesc.pixelformat, 4);
@@ -225,28 +291,6 @@ bool HawkEye::startCamera(){
     HAWKEYE_DEBUG_PRINT("Format: "<<fourcc)
     HAWKEYE_DEBUG_PRINT("CE description: "<<c<<e<<fmtdesc.description)
     fmtdesc.index++;
-  }
-  //Set data format and resolution
-  struct v4l2_format fmt;
-  fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-  fmt.fmt.pix.width = _width; //were already assigned in the configureHook
-  fmt.fmt.pix.height = _height;
-  fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_Y16;//V4L2_PIX_FMT_MJPEG;
-  fmt.fmt.pix.field = V4L2_FIELD_NONE;
-  if (-1 == xioctl(_fd, VIDIOC_S_FMT, &fmt)){
-    pabort("Error while setting Pixel Format");
-  }
-  if (_print_cam_info){
-    strncpy(fourcc, (char *)&fmt.fmt.pix.pixelformat, 4);
-    printf( "Selected Camera Mode:\n"
-            "  Width: %d\n"
-            "  Height: %d\n"
-            "  PixFmt: %s\n"
-            "  Field: %d\n",
-            fmt.fmt.pix.width,
-            fmt.fmt.pix.height,
-            fourcc,
-            fmt.fmt.pix.field);
   }
   //Initialize buffers
   struct v4l2_requestbuffers req = {0};
@@ -365,41 +409,6 @@ void HawkEye::setISO(int iso){ //From Videostreaming::changeSettings()
   }
 }
 
-bool HawkEye::checkFPS(resolution_t resolution) {
-  //Check if _fps for selected resolution is not too high
-  switch (resolution){
-    case LOW:
-      if (_fps > 256){
-        log(Error)<<"For the selected resolution: "<<_width<<"x"<<_height<<", "<<_fps<<"fps is too high, maximum value is 256 for USB 3.0."<<endlog();
-        return false;
-      }
-      break;
-    case HD720p:
-      if (_fps > 90){
-        log(Error)<<"For the selected resolution: "<<_width<<"x"<<_height<<", "<<_fps<<"fps is too high, maximum value is 90 for USB 3.0."<<endlog();
-        return false;
-      }
-      break;
-    case HD1080p:
-      if (_fps > 40){
-        log(Error)<<"For the selected resolution: "<<_width<<"x"<<_height<<", "<<_fps<<"fps is too high, maximum value is 40 for USB 3.0."<<endlog();
-        return false;
-      }
-      break;
-    case FULL:
-      if (_fps > 14){
-        log(Error)<<"For the selected resolution: "<<_width<<"x"<<_height<<", "<<_fps<<"fps is too high, maximum value is 14 for USB 3.0."<<endlog();
-        return false;
-      }
-      break;
-    default:
-      log(Error) << "Invalid resolution selected, you selected: "<<resolution<<". The possiblities are: LOW(672x380) , HD720(1280x720) , HD1080(1920x1080), FULL(2688x1520)."<< endlog();
-      return false;
-  }
-  HAWKEYE_DEBUG_PRINT("Checked FPS: the selected "<<_fps<< " frames per second are appropriate for the selected resolution")
-  return true;
-}
-
 void HawkEye::captureBackground(){
   //update _f to current frame
   capture_image();
@@ -408,8 +417,6 @@ void HawkEye::captureBackground(){
   for (int i = 0; i < _number_of_bg_samples; ++i){
       capture_image(); //update _f to current frame
       cv::accumulateWeighted(_f, _background, 0.1);
-      //std::cout << "sleep..." << i << std::endl;
-      //usleep(500000);
   }
   HAWKEYE_DEBUG_PRINT("Average aquired over " << _number_of_bg_samples << " frames")
   _background.convertTo(_background, CV_8UC3); //convert background to uint8_t presentation
@@ -436,10 +443,9 @@ void HawkEye::bayer10_to_rgb24(uint16_t *pBay, uint8_t *pRGB24, int width, int h
 #define CLIP(value) (uint8_t)(((value)>0xFF)?0xff:(((value)<0)?0:(value)))
 //#define CLIP(x) ((x < 0) ? 0 : ((x > 255) ? 255 : x))
 #define Bay(a,x, y) a[(x) + width * (y)]
-  int x = 0,y = 0;
   //B-G-IR-R Nearest Neighbor
-  for(x = 0; x < width; x += 2){
-    for(y = 0; y < height; y += 2){
+  for(int x = 0; x < width; x += 2){
+    for(int y = 0; y < height; y += 2){
       B(pRGB24,x, y) = B(pRGB24,x + 1, y) = B(pRGB24,x, y + 1) = B(pRGB24,x + 1, y + 1) = CLIP(Bay(pBay,x, y));// - Bay(x, y + 1));
       G(pRGB24,x, y) = G(pRGB24,x + 1, y) = G(pRGB24,x, y + 1) = G(pRGB24,x + 1, y + 1) = CLIP(Bay(pBay,x + 1, y));// - Bay(x, y + 1));
       R(pRGB24,x, y) = R(pRGB24,x + 1, y) = R(pRGB24,x, y + 1) = R(pRGB24,x + 1, y + 1) = CLIP(Bay(pBay,x + 1, y + 1));// - Bay(x, y + 1));
@@ -461,14 +467,12 @@ void HawkEye::capture_image(){ //save the current image in _f
   if(-1 == r){
     pabort("Error while waiting for frame");
   }
-  std::cout << "here4" << std::endl;
   //Todo: _capture time should be set here? or after xioctl?
   _capture_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
   if(-1 == xioctl(_fd, VIDIOC_DQBUF, &buf)){
     pabort("Error while retrieving frame");
   }
   cv::Mat m_RGB(cv::Size(_width, _height), CV_8UC3);
-  std::cout << "here5" << std::endl;
   bayer10_to_rgb24(reinterpret_cast<uint16_t*>(_buffer), m_RGB.data, _width, _height, 2); //Todo: is this a new buffer or _buffer?
   HAWKEYE_DEBUG_PRINT("RGB channels: "<<m_RGB.channels())
   cv::Mat grayImg( cv::Size(_width,_height), CV_8UC1 );
@@ -606,6 +610,12 @@ void HawkEye::backgroundSubtraction(std::vector<std::vector<cv::Point> > *contou
       // read_time =  difftime(time(0) , _capture_time); //Todo: not used? Time it took to read image
   // }
 
+  if(_stream_images){
+    if(!sendImage(_f)){
+      std::cout << "Could not send image!" << std::endl;
+    }
+  }
+
   if (_save_images){
     HAWKEYE_DEBUG_PRINT("Saving current frame")
     HAWKEYE_DEBUG_PRINT(_image_path + "1img-" + std::to_string(_capture_time) + ".png")
@@ -654,6 +664,7 @@ void HawkEye::findRobots(){
       if (starpat[4] != 0){ //if a hollow star was detected (max_val != 0)
           HAWKEYE_DEBUG_PRINT("Found robot with hollow star pattern (Kurt)!")
           HAWKEYE_DEBUG_PRINT("max_val starpat in findrobots():"<<starpat[4])
+          std::cout << "kurt found" << std::endl;
           for (int k = 0; k<=6 ; k++){
             _kurt[k] = templ_locs[k];
             _found_kurt = true;
@@ -663,6 +674,8 @@ void HawkEye::findRobots(){
       if (crosspat[4] != 0){ //if a cross star was detected (max_val != 0)
           HAWKEYE_DEBUG_PRINT("Found robot with cross pattern (Dave)!")
           HAWKEYE_DEBUG_PRINT("max_val crosspat in findrobots():"<<crosspat[4])
+          std::cout << "dave found" << std::endl;
+
           for (int k = 0; k<=6 ; k++){
             _dave[k] = templ_locs[k];
             _found_dave = true;
@@ -671,6 +684,8 @@ void HawkEye::findRobots(){
       }
       if (circlehollowpat[4] != 0){ //if a hollow circle was detected (max_val != 0)
           HAWKEYE_DEBUG_PRINT("Found robot with hollow circle pattern (Krist)!")
+          std::cout << "krist found" << std::endl;
+
           HAWKEYE_DEBUG_PRINT("max_val circlehollow in findrobots():"<<circlehollowpat[4])
           for (int k = 0; k<=6 ; k++){
             _krist[k] = templ_locs[k];

@@ -3,41 +3,37 @@
 <properties>
     <simple name="video_port_name" type="string">
         <description>Port name for the video device. Full path required.</description>
-        <value>/dev/video0</value>
+        <value>/dev/video1</value>
     </simple>
-    <simple name="resolution" type="int">
+    <simple name="resolution" type="long">
         <description>Resolution</description>
-        <value>1</value>
+        <value>2</value>
     </simple>
-    <simple name="fps" type="int">
-        <description>Frames per second</description>
-        <value>90</value>
-    </simple>
-    <simple name="brightness" type="int">
+    <simple name="brightness" type="long">
         <description>Brightness (0-40)</description>
         <value>5</value>
     </simple>
-    <simple name="exposure" type="int">
+    <simple name="exposure" type="long">
         <description>Exposure (1-10000)</description>
         <value>20</value>
     </simple>
-    <simple name="iso" type="int">
+    <simple name="iso" type="long">
         <description>ISO</description>
         <value>200</value>
     </simple>
-    <simple name="pixels2meter" type="int">
+    <simple name="pixels2meter" type="long">
         <description>Conversion from pixels to meters</description>
         <value>1</value>
     </simple>
     <simple name="image_path" type="string">
         <description>Path to save/find images</description>
-        <value>/home/odroid/orocos/Images/</value>
+        <value>/home/ruben/ourbot/orocos/emperor/HawkEye/images/</value>
     </simple>
     <simple name="save_images" type="boolean">
         <description>Save captured images?</description>
-        <value>1</value>
+        <value>0</value>
     </simple>
-    <simple name="number_of_bg_samples" type="int">
+    <simple name="number_of_bg_samples" type="long">
         <description>Number of samples taken to determine the background.</description>
         <value>50</value>
     </simple>
@@ -49,4 +45,25 @@
         <description>Print information of camera.</description>
         <value>1</value>
     </simple>
+    <simple name="stream_images" type="boolean">
+        <description>Stream images over udp?</description>
+        <value>1</value>
+    </simple>
+    <simple name="port_nr" type="long">
+        <description>Port to stream images over</description>
+        <value>6000</value>
+    </simple>
+    <simple name="server_address" type="string">
+        <description>Server address to send image stream to.</description>
+        <value>127.0.0.1</value>
+    </simple>
+    <struct name="stream_image_size" type="ints">
+        <description>Size of images that are streamed.</description>
+        <simple name="width" type="long">
+          <value>192</value>
+        </simple>
+        <simple name="height" type="long">
+          <value>108</value>
+        </simple>
+    </struct>
 </properties>

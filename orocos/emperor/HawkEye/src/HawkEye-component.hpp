@@ -4,7 +4,7 @@
 //Set flags:
 // #define HAWKEYE_PLOTFLAG
 // #define HAWKEYE_SAVEFLAG
-#define HAWKEYE_DEBUGFLAG
+// #define HAWKEYE_DEBUGFLAG
 
 #ifdef HAWKEYE_DEBUGFLAG //print statements on/off
 	#define HAWKEYE_DEBUG_PRINT(x)	std::cout << x << std::endl;
@@ -53,6 +53,19 @@
 #include <fcntl.h>
 #include <linux/videodev2.h> //v4l2
 
+//UDP stuff
+#include <stdlib.h> /* defines exit and other sys calls */
+#include <stdio.h>
+#include <string.h> // needed for memset
+#include <sys/socket.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
+
 //To use Obstacle class
 #include "Circle.hpp"
 #include "Rectangle.hpp"
@@ -85,8 +98,8 @@ class HawkEye : public RTT::TaskContext{
     // Properties
     std::string _video_port_name; // standard value is "/dev/video0". The name is: See3CAM_CU40
     std::string _image_path;
+    int _reso;
     resolution_t _resolution;
-    int _fps;
     int _brightness;
     int _exposure;
     int _iso;
@@ -94,6 +107,13 @@ class HawkEye : public RTT::TaskContext{
     int _number_of_bg_samples;
     bool _capture_bg_at_start;
     bool _print_cam_info;
+    bool _stream_images;
+    std::string _server_address;
+    std::vector<int> _stream_image_size;
+
+    // TCP streaming stuff
+    int _socket;
+    int _port_nr;
 
     // width/heigt related to resolution
     int _width;
@@ -153,7 +173,6 @@ class HawkEye : public RTT::TaskContext{
     void setBrightness(int brightness);
     void setExposure(int exposure);
     void setISO(int iso);
-    bool checkFPS(resolution_t resolution);
     bool loadTemplates();
     bool loadBackground();
     void captureBackground();
@@ -170,6 +189,10 @@ class HawkEye : public RTT::TaskContext{
     void printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat template_star1, cv::Mat template_star2, cv::Mat template_cross, cv::Mat template_cross_rot, cv::Mat template_circlehollow, bool *success, double *templ_locs, double *robottocks, double *starpat, double *crosspat, double *circlehollowpat, float matchThresh, std::vector<int> rorig);
     void oneObject(cv::Mat image, cv::Mat templim, float thresh, int *w, int *h, double *max_val, cv::Point *temploc);
     void multiObject(cv::Mat image, cv::Mat templim, float thresh, int *w, int *h, double *max_val, std::vector<int> *maxpoints);
+
+    // TCP related methods
+    bool connectToServer();
+    bool sendImage(const cv::Mat& image);
 
     // Low level image capturing
     void pabort(const char *s); //Error catching
