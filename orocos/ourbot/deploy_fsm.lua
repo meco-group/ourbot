@@ -11,8 +11,8 @@ local components_to_load = {
   reference       = 'Reference',
   motionplanning  = motionplanning_type,
   reporter        = 'OCL::NetcdfReporting',
-  io              = 'Container'
-  -- teensy          = 'TeensyBridge'
+  io              = 'Container',
+  teensy          = 'TeensyBridge'
   -- lidar           = 'RPLidar',
   -- scanmatcher     = 'Scanmatcher'
     --add here componentname = 'componenttype'
@@ -21,8 +21,8 @@ local components_to_load = {
 -- containers to fill
 local containers_to_fill = {
   -- io  = {'teensy', 'lidar'}
-  -- io = {'teensy'}
-  io = {}
+  io = {'teensy'}
+  -- io = {}
 }
 
 -- ports to report
@@ -62,8 +62,8 @@ local packages_to_import = {
   controller      = 'ControllerInterface',
   reference       = 'Reference',
   motionplanning  = 'MotionPlanning',
-  io              = 'Container'
-  -- teensy          = 'SerialInterface'
+  io              = 'Container',
+  teensy          = 'SerialInterface'
   -- lidar           = 'SerialInterface',
   -- scanmatcher     = 'Scanmatcher'
     --add here componentname = 'parentcomponenttype'

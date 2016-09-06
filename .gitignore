@@ -7,8 +7,8 @@ orocos/*/*/include/
 orocos/*/*/lib/
 orocos/*/*/Makefile
 orocos/*/*/manifest.xml
-orocos/*/*/images/
-!orocos/emperor/HawkEye/images/templates/*
+orocos/emperor/HawkEye/images/*
+!orocos/emperor/HawkEye/images/templates
 orocos/ourbot/MotionPlanning/src/*/Toolbox/bin/
 orocos/ourbot/MotionPlanning/src/*/Toolbox/obj/
 todo

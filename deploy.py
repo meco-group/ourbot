@@ -27,7 +27,7 @@ password = 'odroid'
 
 hosts = col.OrderedDict()
 # hosts['dave'] = '192.168.11.120'
-# hosts['kurt'] = '192.168.11.121'
+hosts['kurt'] = '192.168.11.121'
 # hosts['krist'] = '192.168.11.122'
 
 
@@ -192,7 +192,6 @@ def deploy():
         ])
     command.extend(['--tab', '-e', '''
         bash -c '
-        ./occ.py &
         cd %s
         rm reports.nc
         echo I am emperor
@@ -202,6 +201,7 @@ def deploy():
     ])
     subprocess.call(command)
 
+        # ./occ.py &
 
 if __name__ == "__main__":
     usage = ("Usage: %prog [options]")

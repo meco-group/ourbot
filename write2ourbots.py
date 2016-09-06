@@ -27,7 +27,7 @@ password = 'odroid'
 hosts = col.OrderedDict()
 # hosts['dave'] = '192.168.11.120'
 hosts['kurt'] = '192.168.11.121'
-hosts['krist'] = '192.168.11.122'
+# hosts['krist'] = '192.168.11.122'
 ignore = ['TestCorba', 'VelocityCommandInterface', 'SPIMaster']
 
 
