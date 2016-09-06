@@ -30,6 +30,7 @@ _found_kurt(false), _found_dave(false), _found_krist(false)
   addProperty("port_nr", _port_nr).doc("Port to stream images over");
   addProperty("server_address", _server_address).doc("Server address to send image stream to.");
   addProperty("stream_image_size", _stream_image_size).doc("Size of images that are streamed.");
+  addProperty("plot_image_size", _plot_image_size).doc("Size of images that are streamed.");
 
   // Set operating flags and constants
   _cntapprox = 0.025; //parameter of approxPolyDP which approximates a polygon/contour by another, simplified, polygon/contour
@@ -117,6 +118,13 @@ bool HawkEye::connectToServer(){
   return true;
 }
 
+void HawkEye::showFrame(){
+    cv::Mat image2;
+    cv::resize(_f, image2, cv::Size(_plot_image_size[0], _plot_image_size[1]), 0, 0, cv::INTER_NEAREST);
+    cv::imshow("Frame", image2);
+    cv::waitKey(25);
+}
+
 bool HawkEye::sendImage(const cv::Mat& image){
   cv::Mat image2;
   cv::resize(image, image2, cv::Size(_stream_image_size[0], _stream_image_size[1]), 0, 0, cv::INTER_NEAREST);
@@ -144,10 +152,8 @@ void HawkEye::updateHook(){
   HAWKEYE_DEBUG_PRINT("Starting writeResults")
   writeResults();
 
-  if (_save_images){
-    HAWKEYE_DEBUG_PRINT("Starting drawResults")
-    drawResults(); //save images of image processing
-  }
+  HAWKEYE_DEBUG_PRINT("Starting drawResults")
+  drawResults(); //save images of image processing
 
   // HAWKEYE_DEBUG_PRINT("HawkEye executes updateHook!")
   clock_t end = clock();
@@ -189,7 +195,7 @@ bool HawkEye::loadTemplates(){
       log(Error)<<"Could not open or find the hollow circle template"<<endlog();
       return false;
   }
-  _template_star1= cv::imread(_image_path + "templates/star3.tiff",CV_LOAD_IMAGE_GRAYSCALE);
+  _template_star1= cv::imread(_image_path + "templates/star.tiff",CV_LOAD_IMAGE_GRAYSCALE);
   if(! _template_star1.data )                              // Check for invalid input
   {
       log(Error)<<"Could not open or find the star template"<<endlog();
@@ -412,15 +418,17 @@ void HawkEye::setISO(int iso){ //From Videostreaming::changeSettings()
 void HawkEye::captureBackground(){
   //update _f to current frame
   capture_image();
-  _background.create(_f.size(), CV_32FC3); //RGB image
+  _background = cv::Mat(_f.size(), CV_32FC3, cv::Scalar(0,0,0)); //RGB image
   //loop over images and estimate background
   for (int i = 0; i < _number_of_bg_samples; ++i){
       capture_image(); //update _f to current frame
-      cv::accumulateWeighted(_f, _background, 0.1);
+      cv::accumulate(_f, _background);
   }
+  _background = _background/_number_of_bg_samples;
   HAWKEYE_DEBUG_PRINT("Average aquired over " << _number_of_bg_samples << " frames")
-  _background.convertTo(_background, CV_8UC3); //convert background to uint8_t presentation
-  cv::imwrite(_image_path+"background.png",_background); //save new background
+  _background.convertTo(_background, CV_8UC3);
+  cv::imwrite(_image_path+"background.tiff",_background); //save new background
+  // cv::imwrite(_image_path+"background.png",_background); //save new background
 }
 
 bool HawkEye::loadBackground(){
@@ -973,22 +981,17 @@ void HawkEye::writeResults(){
 }
 
 void HawkEye::drawResults(){
-  HAWKEYE_DEBUG_PRINT("Plotting obstacles")
   int circleRadius;
   cv::Point2i circleCenter;
-  cv::Point2i rectanglePt1; //holds bottom left vertex
-  cv::Point2i rectanglePt2; //holds top right vertex
+  // obstacles
   for (uint k = 0 ; k < _obstacles.size(); k++){
     if(_obstacles[k]->getShape() == CIRCLE){
-
       circleRadius = static_cast<Circle*>(_obstacles[k])->getRadius();
       circleCenter.x = _obstacles[k]->getPos()[0];
       circleCenter.y = _obstacles[k]->getPos()[1];
       cv::circle(_f, circleCenter, circleRadius, cv::Scalar(0,0,255), 2);
-
     }
     if(_obstacles[k]->getShape() == RECTANGLE){
-      //Plot rotated rectangle around obstacle
       cv::RotatedRect rRect = cv::RotatedRect(cv::Point2f(_obstacles[k]->getPos()[0],_obstacles[k]->getPos()[1]), cv::Size2f(static_cast<Rectangle*>(_obstacles[k])->getWidth(),static_cast<Rectangle*>(_obstacles[k])->getLength()), static_cast<Rectangle*>(_obstacles[k])->getTheta());
       cv::Point2f vertices[4];
       rRect.points(vertices);
@@ -997,47 +1000,101 @@ void HawkEye::drawResults(){
       }
     }
   }
-  HAWKEYE_DEBUG_PRINT("Plotting robots")
-  cv::Point2f roboboxPoints[4];
-  for(uint k = 0; k<_roboboxes.size(); k++) {
-    _roboboxes[k].points(roboboxPoints);
-    HAWKEYE_DEBUG_PRINT(roboboxPoints[0])
-    HAWKEYE_DEBUG_PRINT(roboboxPoints[1])
-    HAWKEYE_DEBUG_PRINT(roboboxPoints[2])
-    HAWKEYE_DEBUG_PRINT(roboboxPoints[3])
-    for( int k = 0; k < 4; k++ ){
-      cv::line( _f, roboboxPoints[k], roboboxPoints[(k+1)%4], cv::Scalar(0,255,0), 2, 8 );
+  // robots
+  circleRadius = 10;
+  if (_found_kurt){
+    for (int i=0; i<3; i++){
+      circleCenter.x = _kurt[2*i];
+      circleCenter.y = _kurt[2*i+1];
+      cv::circle(_f, circleCenter, circleRadius, cv::Scalar(255,0,0), 2);
     }
   }
-  // //Draw markers
-  // HAWKEYE_DEBUG_PRINT("Plotting markers")
-  // Robot::marker robotMarker;
-  // double* bottomMarkers;
-  // double* topMarker;
-  // int* roi;
-  // for(uint k = 0; k<_robots.size(); k++) {
-  //   // robotMarker =  _robots[k].getMarkers();
-  //   bottomMarkers = _robots[k]->getBottomMarkers();
-  //   topMarker = _robots[k]->getTopMarker();
-  //   roi = _robots[k]->getRoi();
-  //   //Bottom markers
-  //   HAWKEYE_DEBUG_PRINT("Plotting bottom markers")
-  //   for (int k = 0 ; k <= 1 ; k++ ){
-  //       HAWKEYE_DEBUG_PRINT("pos x and y: "<<bottomMarkers[2*k]<<" , "<<bottomMarkers[2*k+1])
-  //       HAWKEYE_DEBUG_PRINT("radius: "<<bottomMarkers[4])
-  //       cv::circle(_f, cv::Point(bottomMarkers[2*k]+roi[0], bottomMarkers[2*k+1]+roi[1]), bottomMarkers[4]/2.0, cv::Scalar(255,0,0), 2);
-  //   }
-  //   //Top markers
-  //   HAWKEYE_DEBUG_PRINT("Plotting top markers")
-  //   HAWKEYE_DEBUG_PRINT("pos x and y: "<<topMarker[0]<<" , "<<topMarker[1])
-  //   HAWKEYE_DEBUG_PRINT("radius: "<<topMarker[2])
-  //   cv::circle(_f, cv::Point(topMarker[0]+roi[0], topMarker[1]+roi[1]), topMarker[2]/2.0, cv::Scalar(255,255,0), 2);
-  // }
-  HAWKEYE_DEBUG_PRINT("Plotting contours of rectangles")
-  cv::drawContours(_f , _rectanglesDetectedContours , -1 , cv::Scalar(128,200,255) , 2);
-  HAWKEYE_DEBUG_PRINT("Saving final image with markers")
-  cv::imwrite(_image_path + "4final-" + std::to_string(_capture_time) + ".png" , _f);
+  if (_found_krist){
+    for (int i=0; i<3; i++){
+      circleCenter.x = _krist[2*i];
+      circleCenter.y = _krist[2*i+1];
+      cv::circle(_f, circleCenter, circleRadius, cv::Scalar(255,0,0), 2);
+    }
+  }
+  if (_found_dave){
+    for (int i=0; i<3; i++){
+      circleCenter.x = _dave[2*i];
+      circleCenter.y = _dave[2*i+1];
+      cv::circle(_f, circleCenter, circleRadius, cv::Scalar(255,0,0), 2);
+    }
+  }
+  showFrame();
 }
+
+// void HawkEye::drawResults(){
+//   HAWKEYE_DEBUG_PRINT("Plotting obstacles")
+//   int circleRadius;
+//   cv::Point2i circleCenter;
+//   cv::Point2i rectanglePt1; //holds bottom left vertex
+//   cv::Point2i rectanglePt2; //holds top right vertex
+//   for (uint k = 0 ; k < _obstacles.size(); k++){
+//     if(_obstacles[k]->getShape() == CIRCLE){
+
+//       circleRadius = static_cast<Circle*>(_obstacles[k])->getRadius();
+//       circleCenter.x = _obstacles[k]->getPos()[0];
+//       circleCenter.y = _obstacles[k]->getPos()[1];
+//       cv::circle(_f, circleCenter, circleRadius, cv::Scalar(0,0,255), 2);
+
+//     }
+//     if(_obstacles[k]->getShape() == RECTANGLE){
+//       //Plot rotated rectangle around obstacle
+//       cv::RotatedRect rRect = cv::RotatedRect(cv::Point2f(_obstacles[k]->getPos()[0],_obstacles[k]->getPos()[1]), cv::Size2f(static_cast<Rectangle*>(_obstacles[k])->getWidth(),static_cast<Rectangle*>(_obstacles[k])->getLength()), static_cast<Rectangle*>(_obstacles[k])->getTheta());
+//       cv::Point2f vertices[4];
+//       rRect.points(vertices);
+//       for (int k = 0; k < 4; k++){
+//         cv::line(_f, vertices[k], vertices[(k+1)%4], cv::Scalar(0,0,255), 2);
+//       }
+//     }
+//   }
+//   HAWKEYE_DEBUG_PRINT("Plotting robots")
+//   cv::Point2f roboboxPoints[4];
+//   for(uint k = 0; k<_roboboxes.size(); k++) {
+//     _roboboxes[k].points(roboboxPoints);
+//     HAWKEYE_DEBUG_PRINT(roboboxPoints[0])
+//     HAWKEYE_DEBUG_PRINT(roboboxPoints[1])
+//     HAWKEYE_DEBUG_PRINT(roboboxPoints[2])
+//     HAWKEYE_DEBUG_PRINT(roboboxPoints[3])
+//     for( int k = 0; k < 4; k++ ){
+//       cv::line( _f, roboboxPoints[k], roboboxPoints[(k+1)%4], cv::Scalar(0,255,0), 2, 8 );
+//     }
+//   }
+//   // //Draw markers
+//   // HAWKEYE_DEBUG_PRINT("Plotting markers")
+//   // Robot::marker robotMarker;
+//   // double* bottomMarkers;
+//   // double* topMarker;
+//   // int* roi;
+//   // for(uint k = 0; k<_robots.size(); k++) {
+//   //   // robotMarker =  _robots[k].getMarkers();
+//   //   bottomMarkers = _robots[k]->getBottomMarkers();
+//   //   topMarker = _robots[k]->getTopMarker();
+//   //   roi = _robots[k]->getRoi();
+//   //   //Bottom markers
+//   //   HAWKEYE_DEBUG_PRINT("Plotting bottom markers")
+//   //   for (int k = 0 ; k <= 1 ; k++ ){
+//   //       HAWKEYE_DEBUG_PRINT("pos x and y: "<<bottomMarkers[2*k]<<" , "<<bottomMarkers[2*k+1])
+//   //       HAWKEYE_DEBUG_PRINT("radius: "<<bottomMarkers[4])
+//   //       cv::circle(_f, cv::Point(bottomMarkers[2*k]+roi[0], bottomMarkers[2*k+1]+roi[1]), bottomMarkers[4]/2.0, cv::Scalar(255,0,0), 2);
+//   //   }
+//   //   //Top markers
+//   //   HAWKEYE_DEBUG_PRINT("Plotting top markers")
+//   //   HAWKEYE_DEBUG_PRINT("pos x and y: "<<topMarker[0]<<" , "<<topMarker[1])
+//   //   HAWKEYE_DEBUG_PRINT("radius: "<<topMarker[2])
+//   //   cv::circle(_f, cv::Point(topMarker[0]+roi[0], topMarker[1]+roi[1]), topMarker[2]/2.0, cv::Scalar(255,255,0), 2);
+//   // }
+//   HAWKEYE_DEBUG_PRINT("Plotting contours of rectangles")
+//   cv::drawContours(_f , _rectanglesDetectedContours , -1 , cv::Scalar(128,200,255) , 2);
+//   HAWKEYE_DEBUG_PRINT("Saving final image with markers")
+
+//   if(_save_images){
+//     cv::imwrite(_image_path + "4final-" + std::to_string(_capture_time) + ".png" , _f);
+//   }
+// }
 
 void HawkEye::printedMatch(cv::Mat roi, cv::Mat template_circle,
 cv::Mat template_star1, cv::Mat template_star2, cv::Mat template_cross,
@@ -1451,13 +1508,16 @@ void HawkEye::multiObject(cv::Mat image, cv::Mat templim, float thresh, int *w, 
   }
 }
 
-void HawkEye::transform(std::vector<double> &values){
+std::vector<double> HawkEye::transform(std::vector<double> values){
+  std::vector<double> values2(7);
   for (int k = 0 ; k<=6 ; k+=2){ //select y-values
-    values[k] = -(values[k]+_f.size().height); // invert y and shift over height
+    values2[k] = -(values[k]+_f.size().height); // invert y and shift over height
   }
   for (int k = 0 ; k<=6 ; k++){  //scale pixels to meter
-    values[k] = values[k]*_pix2meter;
+    values2[k] = values[k]*_pix2meter;
   }
+  values2[6] = values[6];
+  return values2;
 }
 /*
  * Using this macro, only one component may live
