@@ -150,6 +150,8 @@ void HawkEye::updateHook(){
   }
 
   // HAWKEYE_DEBUG_PRINT("HawkEye executes updateHook!")
+  // cv::imshow("currentFrame", _f);
+  // cv::waitKey(25); //display the image
   clock_t end = clock();
   std::cout << "HawkEye update took " << double(end-begin)/CLOCKS_PER_SEC << "s" << std::endl;
 }
@@ -410,17 +412,18 @@ void HawkEye::setISO(int iso){ //From Videostreaming::changeSettings()
 }
 
 void HawkEye::captureBackground(){
-  //update _f to current frame
   capture_image();
-  _background.create(_f.size(), CV_32FC3); //RGB image
+  _background = cv::Mat(_f.size(), CV_32FC3, cv::Scalar(0,0,0));
   //loop over images and estimate background
   for (int i = 0; i < _number_of_bg_samples; ++i){
       capture_image(); //update _f to current frame
-      cv::accumulateWeighted(_f, _background, 0.1);
+      cv::accumulate(_f, _background);
   }
+  _background = _background/_number_of_bg_samples;
+
   HAWKEYE_DEBUG_PRINT("Average aquired over " << _number_of_bg_samples << " frames")
   _background.convertTo(_background, CV_8UC3); //convert background to uint8_t presentation
-  cv::imwrite(_image_path+"background.png",_background); //save new background
+  cv::imwrite(_image_path+"background.tiff",_background); //save new background
 }
 
 bool HawkEye::loadBackground(){
