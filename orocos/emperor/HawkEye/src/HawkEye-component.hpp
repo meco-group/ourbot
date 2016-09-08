@@ -4,7 +4,7 @@
 //Set flags:
 // #define HAWKEYE_PLOTFLAG
 // #define HAWKEYE_SAVEFLAG
-// #define HAWKEYE_DEBUGFLAG
+#define HAWKEYE_DEBUGFLAG
 
 #ifdef HAWKEYE_DEBUGFLAG //print statements on/off
 	#define HAWKEYE_DEBUG_PRINT(x)	std::cout << x << std::endl;
@@ -111,6 +111,8 @@ class HawkEye : public RTT::TaskContext{
     std::string _server_address;
     std::vector<int> _stream_image_size;
     std::vector<int> _plot_image_size;
+    std::vector<double> _camera_matrix;
+    std::vector<double> _distortion_coeffs;
 
     // TCP streaming stuff
     int _socket;
@@ -147,7 +149,8 @@ class HawkEye : public RTT::TaskContext{
     cv::Mat _maskcopy; //copy of the current mask
     std::vector<int> _rorig; //region of interest
     cv::Mat _roi; //Todo: add size? Always 4?
-
+    cv::Mat_<double> _camera_matrix_m;  //cv::Mat version of camera matrix
+    cv::Mat_<double> _distortion_coeffs_m; //cv::Mat version of distortion coefficients
 
     //Intermediate results
     std::vector<std::vector<cv::Point> > _boxcontours; //holds contours of all obstacles contours
@@ -186,7 +189,7 @@ class HawkEye : public RTT::TaskContext{
     void processResults();
     void writeResults();
     void drawResults();
-    std::vector<double> transform(std::vector<double> values);
+    std::vector<double> transform(const std::vector<double> &values);
     void printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat template_star1, cv::Mat template_star2, cv::Mat template_cross, cv::Mat template_cross_rot, cv::Mat template_circlehollow, bool *success, double *templ_locs, double *robottocks, double *starpat, double *crosspat, double *circlehollowpat, float matchThresh, std::vector<int> rorig);
     void oneObject(cv::Mat image, cv::Mat templim, float thresh, int *w, int *h, double *max_val, cv::Point *temploc);
     void multiObject(cv::Mat image, cv::Mat templim, float thresh, int *w, int *h, double *max_val, std::vector<int> *maxpoints);
