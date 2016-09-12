@@ -58,13 +58,13 @@ local ports_to_report = {
 -- packages to import
 local packages_to_import = {
   communicator    = 'Communicator',
-  estimator       = 'EstimatorInterface',
-  controller      = 'ControllerInterface',
+  estimator       = 'Estimator',
+  controller      = 'Controller',
   reference       = 'Reference',
   motionplanning  = 'MotionPlanning',
   io              = 'Container',
-  teensy          = 'SerialInterface'
-  -- lidar           = 'SerialInterface',
+  teensy          = 'Serial'
+  -- lidar           = 'Serial',
   -- scanmatcher     = 'Scanmatcher'
     --add here componentname = 'parentcomponenttype'
 }

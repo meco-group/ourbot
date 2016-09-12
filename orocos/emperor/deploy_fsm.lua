@@ -20,7 +20,7 @@ local ports_to_report = {
 
 -- packages to import
 local packages_to_import = {
-  gamepad = 'SerialInterfaceEmperor',
+  gamepad = 'Serial',
   -- hawkeye = 'HawkEye',
   communicator = 'Communicator'
     --add here componentname = 'parentcomponenttype'

@@ -28,7 +28,8 @@ hosts = col.OrderedDict()
 # hosts['dave'] = '192.168.11.120'
 hosts['kurt'] = '192.168.11.121'
 # hosts['krist'] = '192.168.11.122'
-ignore = ['TestCorba', 'VelocityCommandInterface', 'SPIMaster']
+ignore = []
+exclude = ['build', 'include', 'bin', 'lib', '.tb_history']
 
 
 def create_component(ssh, component):
@@ -230,11 +231,8 @@ if __name__ == "__main__":
                 rem_files.append(rem_file)
         for loc_dir in local_folders:
             rem_dir = loc_dir.replace(os.path.dirname(loc_dir), remote_root)
-            if loc_dir in comp_dir:
-                loc_dir = os.path.join(loc_dir, 'src')
-                rem_dir = os.path.join(rem_dir, 'src')
             for dirpath, dirnames, filenames in os.walk(loc_dir):
-                if not (dirpath.endswith('bin') or dirpath.endswith('obj')):
+                if sum(['/'+d in dirpath for d in exclude]) == 0:
                     for f in filenames:
                         loc_file = os.path.join(dirpath, f)
                         rem_file = loc_file.replace(loc_dir, rem_dir)
