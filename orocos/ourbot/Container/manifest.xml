@@ -1,0 +1,11 @@
+<package>
+    <description brief="Orocos Container Component package">
+        This package contains the components of the Container package
+    </description>
+    <!--NOTE: set the license and author before you publish this code-->
+    <license></license>
+    <author>Unknown Author</author>
+    <rosdep name="rtt" />
+    <rosdep name="orogen" />
+</package>
+

@@ -6,7 +6,7 @@ require 'rfsmpp'
 local components_to_load = {
   gamepad         = 'GamePad',
   communicator    = 'Communicator',
-  hawkeye         = 'HawkEye',
+  -- hawkeye         = 'HawkEye',
   emperor         = 'OCL::LuaTLSFComponent',
   reporter        = 'OCL::NetcdfReporting'
     --add here componentname = 'componenttype'
@@ -21,7 +21,7 @@ local ports_to_report = {
 -- packages to import
 local packages_to_import = {
   gamepad = 'SerialInterfaceEmperor',
-  hawkeye = 'HawkEye',
+  -- hawkeye = 'HawkEye',
   communicator = 'Communicator'
     --add here componentname = 'parentcomponenttype'
 }
@@ -30,7 +30,7 @@ local packages_to_import = {
 local system_config_file      = 'Configuration/system-config.cpf'
 local component_config_files  = {
   reporter  = 'Configuration/reporter-config.cpf',
-  hawkeye   = 'Configuration/hawkeye-config.cpf',
+  -- hawkeye   = 'Configuration/hawkeye-config.cpf',
   gamepad   = 'Configuration/gamepad-config.cpf'
     --add here componentname = 'Configuration/component-config.cpf'
 }

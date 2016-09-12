@@ -1,7 +1,7 @@
 local tc        = rtt.getTC()
 
 local gamepad       = tc:getPeer('gamepad')
-local hawkeye       = tc:getPeer('hawkeye')
+-- local hawkeye       = tc:getPeer('hawkeye')
 local reporter      = tc:getPeer('reporter')
 local snapshot      = reporter:getOperation("snapshot")
 local enablevelcmd  = gamepad:getOperation("enableVelocityCmd")
@@ -35,11 +35,11 @@ return rfsm.state {
         rfsm.send_events(fsm,'e_failed')
         return
       end
-      if (not hawkeye:start()) then
-        rtt.log("Error","Could not start hawkeye component")
-        rfsm.send_events(fsm,'e_failed')
-        return
-      end
+      -- if (not hawkeye:start()) then
+      --   rtt.log("Error","Could not start hawkeye component")
+      --   rfsm.send_events(fsm,'e_failed')
+      --   return
+      -- end
     end
   },
 
@@ -78,7 +78,7 @@ return rfsm.state {
   reset = rfsm.state{
     entry = function(fsm)
       reporter:stop()
-      hawkeye:stop()
+      -- hawkeye:stop()
     end,
   },
 

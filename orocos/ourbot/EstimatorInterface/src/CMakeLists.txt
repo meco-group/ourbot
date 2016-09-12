@@ -10,7 +10,7 @@
 # Creates a component library libEstimatorInterface-<target>.so
 # and installs in the directory lib/orocos/EstimatorInterface/
 #
-orocos_component(EstimatorInterface EstimatorInterface/EstimatorInterface-component.hpp EstimatorInterface/EstimatorInterface-component.cpp SimpleEstimator/SimpleEstimator-component.hpp SimpleEstimator/SimpleEstimator-component.cpp KalmanSM/KalmanSM-component.hpp KalmanSM/KalmanSM-component.cpp)
+orocos_component(EstimatorInterface EstimatorInterface/EstimatorInterface-component.hpp EstimatorInterface/EstimatorInterface-component.cpp Kalman/Kalman-component.hpp Kalman/Kalman-component.cpp Kalman/kalman_odometry.cpp Kalman/kalman_odometry.hpp Kalman/kalman_odometry_impl.hpp Kalman/kalman_kinematic.hpp Kalman/kalman_filter.hpp Kalman/kalman_operations.cpp Kalman/kalman_operations.hpp)
 #
 # You may add multiple orocos_component statements.
 
@@ -19,9 +19,12 @@ orocos_component(EstimatorInterface EstimatorInterface/EstimatorInterface-compon
 #
 # Installs in the include/orocos/EstimatorInterface/ directory
 #
-orocos_install_headers(EstimatorInterface/EstimatorInterface-component.hpp SimpleEstimator/SimpleEstimator-component.hpp KalmanSM/KalmanSM-component.hpp)
+orocos_install_headers(EstimatorInterface/EstimatorInterface-component.hpp Kalman/Kalman-component.hpp Kalman/kalman_odometry.hpp Kalman/kalman_odometry_impl.hpp Kalman/kalman_kinematic.hpp Kalman/kalman_filter.hpp Kalman/kalman_operations.hpp)
 #
 # You may add multiple orocos_install_headers statements.
+
+
+target_link_libraries (EstimatorInterface ${SLICOT_LIB})
 
 #
 # Building a Plugin

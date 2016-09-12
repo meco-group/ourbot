@@ -7,7 +7,7 @@
   </simple>
   <simple name="estimator" type="string">
     <description>Estimator component to use</description>
-    <value>SimpleEstimator</value>
+    <value>Kalman</value>
   </simple>
   <simple name="motionplanning" type="string">
     <description>MotionPlanning component to use</description>

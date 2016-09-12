@@ -135,7 +135,7 @@ void EstimatorInterface::updateHook(){
 
   // Apply estimation update
   estimateUpdate();
-
+  std::cout << _est_pose[0] << "," << _est_pose[1] << "," << _est_pose[2] << std::endl;
   // Write estimated values
   _est_pose_port.write(_est_pose);
   _est_velocity_port.write(_est_velocity);

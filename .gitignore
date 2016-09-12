@@ -3,10 +3,7 @@ identify_velcontrol/*
 .test/
 orocos/*/*/bin/
 orocos/*/*/build/
-orocos/*/*/include/
 orocos/*/*/lib/
-orocos/*/*/Makefile
-orocos/*/*/manifest.xml
 orocos/emperor/HawkEye/images/*
 !orocos/emperor/HawkEye/images/templates
 orocos/ourbot/MotionPlanning/src/*/Toolbox/bin/
