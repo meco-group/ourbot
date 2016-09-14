@@ -11,7 +11,7 @@
     </simple>
     <simple name="brightness" type="long">
         <description>Brightness (0-40)</description>
-        <value>14</value>
+        <value>15</value>
     </simple>
     <simple name="exposure" type="long">
         <description>Exposure (1-10000)</description>
@@ -23,7 +23,7 @@
     </simple>
     <simple name="pixels2meter" type="long">
         <description>Conversion from pixels to meters</description>
-        <value>1</value>
+        <value>240</value>
     </simple>
     <simple name="image_path" type="string">
         <description>Path to save/find images</description>

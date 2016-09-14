@@ -149,8 +149,8 @@ class HawkEye : public RTT::TaskContext{
     cv::Mat _maskcopy; //copy of the current mask
     std::vector<int> _rorig; //region of interest
     cv::Mat _roi; //Todo: add size? Always 4?
-    cv::Mat_<double> _camera_matrix_m;  //cv::Mat version of camera matrix
-    cv::Mat_<double> _distortion_coeffs_m; //cv::Mat version of distortion coefficients
+    cv::Mat _camera_matrix_m;  //cv::Mat version of camera matrix
+    cv::Mat _distortion_coeffs_m; //cv::Mat version of distortion coefficients
 
     //Intermediate results
     std::vector<std::vector<cv::Point> > _boxcontours; //holds contours of all obstacles contours

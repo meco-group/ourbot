@@ -31,8 +31,8 @@ _found_kurt(false), _found_dave(false), _found_krist(false)
   addProperty("server_address", _server_address).doc("Server address to send image stream to.");
   addProperty("stream_image_size", _stream_image_size).doc("Size of images that are streamed.");
   addProperty("plot_image_size", _plot_image_size).doc("Size of images that are streamed.");
-  addProperty("camera matrix", _camera_matrix).doc("Camera matrix, used to remove distortion and go from pixels to meter");
-  addProperty("distortion coefficients", _distortion_coeffs).doc("Distortion coefficients, to remove radial and tangential distortion");
+  addProperty("camera_matrix", _camera_matrix).doc("Camera matrix, used to remove distortion and go from pixels to meter");
+  addProperty("distortion_coefficients", _distortion_coeffs).doc("Distortion coefficients, to remove radial and tangential distortion");
 
   // Set operating flags and constants
   _cntapprox = 0.025; //parameter of approxPolyDP which approximates a polygon/contour by another, simplified, polygon/contour
@@ -56,23 +56,24 @@ bool HawkEye::configureHook(){
 
   //build camera matrix and distortion coefficients matrix
   // _camera_matrix = [fx 0 cx ; 0 fy cy ; 0 0 1]
-  _camera_matrix_m.reshape(3,3);
-  _camera_matrix_m(0,0) = _camera_matrix[0];  //fx
-  _camera_matrix_m(0,1) = 0;
-  _camera_matrix_m(0,2) = _camera_matrix[1];  //cx
-  _camera_matrix_m(1,0) = 0;
-  _camera_matrix_m(1,1) = _camera_matrix[2];  //fy
-  _camera_matrix_m(1,2) = _camera_matrix[3];  //cy
-  _camera_matrix_m(2,0) = 0;
-  _camera_matrix_m(2,1) = 0;
-  _camera_matrix_m(2,2) = 1;  //1
+  // Mat res_img = cur_img(Rect(0,0,100,100)).clone().reshape(1,1);
+  _camera_matrix_m = cv::Mat::eye(3, 3, CV_64F);
+  _camera_matrix_m.at<double>(0,0) = _camera_matrix[0];  //fx
+  _camera_matrix_m.at<double>(0,1) = 0;
+  _camera_matrix_m.at<double>(0,2) = _camera_matrix[1];  //cx
+  _camera_matrix_m.at<double>(1,0) = 0;
+  _camera_matrix_m.at<double>(1,1) = _camera_matrix[2];  //fy
+  _camera_matrix_m.at<double>(1,2) = _camera_matrix[3];  //cy
+  _camera_matrix_m.at<double>(2,0) = 0;
+  _camera_matrix_m.at<double>(2,1) = 0;
+  _camera_matrix_m.at<double>(2,2) = 1;  //1
   // _distortion_coeffs = [k1 k2 p1 p2 k3]
-  _distortion_coeffs_m.reshape(5,1);
-  _distortion_coeffs_m(0,0) = _distortion_coeffs[0]; //k1
-  _distortion_coeffs_m(1,0) = _distortion_coeffs[1]; //k2 
-  _distortion_coeffs_m(2,0) = _distortion_coeffs[2]; //p1
-  _distortion_coeffs_m(3,0) = _distortion_coeffs[3]; //p2
-  _distortion_coeffs_m(4,0) = _distortion_coeffs[4]; //k3
+  _distortion_coeffs_m = cv::Mat::zeros(5, 1, CV_64F);
+  _distortion_coeffs_m.at<double>(0,0) = _distortion_coeffs[0]; //k1
+  _distortion_coeffs_m.at<double>(1,0) = _distortion_coeffs[1]; //k2 
+  _distortion_coeffs_m.at<double>(2,0) = _distortion_coeffs[2]; //p1
+  _distortion_coeffs_m.at<double>(3,0) = _distortion_coeffs[3]; //p2
+  _distortion_coeffs_m.at<double>(4,0) = _distortion_coeffs[4]; //k3
 
   //show example data sample to output ports to make data flow real-time
   std::vector<double> exampleObstacle(80, 0.0); //Todo: 8 inputs per obstacle required --> suppose you have 10 obstacles maximum
@@ -145,6 +146,9 @@ void HawkEye::showFrame(){
     cv::resize(_f, image2, cv::Size(_plot_image_size[0], _plot_image_size[1]), 0, 0, cv::INTER_NEAREST);
     cv::imshow("Frame", image2);
     cv::waitKey(25);
+    if(_save_images){
+      cv::imwrite(_image_path + "4final-" + std::to_string(_capture_time) + ".png" , _f);
+    }
 }
 
 bool HawkEye::sendImage(const cv::Mat& image){
@@ -509,20 +513,21 @@ void HawkEye::capture_image(){ //save the current image in _f
     cv::cvtColor(m_RGB , grayImg, CV_BGR2GRAY);
     HAWKEYE_DEBUG_PRINT("m_RGB type: "<<m_RGB.type())
   }
-  _f = m_RGB; //save as current frame _f
-  cv::resize(_f, _f, cv::Size(), 0.5, 0.5, cv::INTER_NEAREST); //Todo: improve this, now we capture at double resolution and resize to half the size because pixels are grouped per 4
-  // _f = grayImg; //save as current frame _f
-  HAWKEYE_DEBUG_PRINT("current frame channels: "<<_f.channels())
-  HAWKEYE_DEBUG_PRINT("current frame type: "<<_f.type())
+  cv::Mat fRaw; //raw frame, with distortion
+  fRaw = m_RGB; //save as current frame fRaw
+  cv::resize(fRaw, fRaw, cv::Size(), 0.5, 0.5, cv::INTER_NEAREST); //Todo: improve this, now we capture at double resolution and resize to half the size because pixels are grouped per 4
+  // fRaw = grayImg; //save as current frame fRaw
+  HAWKEYE_DEBUG_PRINT("current frame channels: "<<fRaw.channels())
+  HAWKEYE_DEBUG_PRINT("current frame type: "<<fRaw.type())
 
-  // undistort frame _f
-  if(_save_images){
-    cv::imwrite(_image_path + "beforeUndistort-" + std::to_string(_capture_time) + ".png" , _f);
-  }
-  cv::undistort(_f, _f, _camera_matrix_m, _distortion_coeffs_m);
-  if(_save_images){
-    cv::imwrite(_image_path + "afterUndistort-" + std::to_string(_capture_time) + ".png" , _f);
-  }
+  // undistort frame fRaw
+  // if(_save_images){
+  //   cv::imwrite(_image_path + "beforeUndistort-" + std::to_string(_capture_time) + ".png" , fRaw);
+  // }
+  cv::undistort(fRaw, _f, _camera_matrix_m, _distortion_coeffs_m);  //save undistorted frame in _f
+  // if(_save_images){
+  //   cv::imwrite(_image_path + "afterUndistort-" + std::to_string(_capture_time) + ".png" , _f);
+  // }
 
   buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
   buf.memory = V4L2_MEMORY_MMAP;
@@ -655,9 +660,9 @@ void HawkEye::backgroundSubtraction(std::vector<std::vector<cv::Point> > *contou
   if (_save_images){
     HAWKEYE_DEBUG_PRINT("Saving current frame")
     HAWKEYE_DEBUG_PRINT(_image_path + "1img-" + std::to_string(_capture_time) + ".png")
-    cv::imwrite(_image_path + "1img-" + std::to_string(_capture_time) + ".tiff" ,_f);
     cv::imwrite(_image_path + "1img-" + std::to_string(_capture_time) + ".png" ,_f);
-    cv::imwrite(_image_path + "1img-" + std::to_string(_capture_time) + ".jpg" ,_f);
+    // cv::imwrite(_image_path + "1img-" + std::to_string(_capture_time) + ".tiff" ,_f);
+    // cv::imwrite(_image_path + "1img-" + std::to_string(_capture_time) + ".jpg" ,_f);
 
   }
 
@@ -710,7 +715,7 @@ void HawkEye::findRobots(){
             HAWKEYE_DEBUG_PRINT("putting templ_locs in _kurt: "<<templ_locs[k])
             _found_kurt = true;
           }
-          _kurt[7] = _capture_time; //add timestamp
+          _kurt[7] = (double)_capture_time; //add timestamp
       }
       if (crosspat[4] != 0){ //if a cross star was detected (max_val != 0)
           HAWKEYE_DEBUG_PRINT("Found robot with cross pattern (Dave)!")
@@ -721,7 +726,7 @@ void HawkEye::findRobots(){
             _dave[k] = templ_locs[k];
             _found_dave = true;
           }
-          _dave[7] = _capture_time; //add timestamp
+          _dave[7] = (double)_capture_time; //add timestamp
       }
       if (circlehollowpat[4] != 0){ //if a hollow circle was detected (max_val != 0)
           HAWKEYE_DEBUG_PRINT("Found robot with hollow circle pattern (Krist)!")
@@ -732,7 +737,7 @@ void HawkEye::findRobots(){
             _krist[k] = templ_locs[k];
             _found_krist = true;
           }
-          _krist[7] = _capture_time; //add timestamp
+          _krist[7] = (double)_capture_time; //add timestamp
       }
   }
   else{
@@ -999,6 +1004,7 @@ void HawkEye::writeResults(){
 
   if (_found_kurt){
     _kurt_state_port.write(transform(_kurt));
+    std::vector<double> kurtValues(7);
   }
 
   if (_found_dave){
@@ -1549,23 +1555,32 @@ void HawkEye::multiObject(cv::Mat image, cv::Mat templim, float thresh, int *w, 
 std::vector<double> HawkEye::transform(const std::vector<double> &values){
   std::vector<double> values2(7);
   for (int k = 1 ; k<=5 ; k+=2){ //select y-values
-    values2[k] = -(values[k]+_f.size().height); // invert y and shift over height
+    values2[k] = -values[k]+_f.size().height; // invert y and shift over height
+    values2[k-1] = values[k-1];  //keep x-values
+    HAWKEYE_DEBUG_PRINT("Values: "<<values[k])
+    HAWKEYE_DEBUG_PRINT("Values2: "<<values2[k])
+    HAWKEYE_DEBUG_PRINT(_f.size().height)
   }
   // Use inverse of camera matrix to compute coordinates in world frame
   // camera_matrix = [fx 0 cx ; 0 fy cy ; 0 0 1]
   // get inverse via wolfram alpha: {{a,0,c },{ 0,b,d },{ 0,0,1}}^(-1)
   // camera_matrix^(-1) = [1/fx 0 -cx/fx ; 0 1/fy -cy/fy ; 0 0 1]
-  // world_coords = camera_matrix^(-1)*local_coords and z = 0
-  // x_w = x_l*1/fx
-  // y_w = y_l*1/fy
-  for (int k = 0 ; k<=4 ; k+=2){
-    values2[k] = values[k]/_camera_matrix[0];
-    values2[k+1] = values[k+1]/_camera_matrix[2]; 
-  }
-  // for (int k = 0 ; k<=6 ; k++){  //scale pixels to meter
-  //   values2[k] = values[k]*_pix2meter;
+  // world_coords = camera_matrix^(-1)*local_coords and z = 1
+  // x_w = (x_l-cx)*1/fx
+  // y_w = (y_l-cy)*1/fy
+  // for (int k = 0 ; k<=4 ; k+=2){
+  //   values2[k] = values[k]/_camera_matrix[0];  //Beware, use values, not values2!
+  //   values2[k+1] = values2[k+1]/_camera_matrix[2]; //Beware, use values2, since y was adapted
   // }
+  
+  // You should also use rotation and translation vectors!
+
+  for (int k = 0 ; k<=6 ; k++){  //scale pixels to meter
+    values2[k] = values2[k]*1.0/_pix2meter;
+  }
   values2[6] = values[6];
+  HAWKEYE_DEBUG_PRINT("Template positions: "<<values2[0]<<", "<<values2[1]<<", "<<values2[2]<<", "<<values2[3]<<", "<<values2[4]<<", "<<values2[5]<<" time:"<<(unsigned long)values2[6]<<"time2: "<<_capture_time)
+  HAWKEYE_DEBUG_PRINT("Before transform: "<<values[0]<<", "<<values[1]<<", "<<values[2]<<", "<<values[3]<<", "<<values[4]<<", "<<values[5]<<" time:"<<(unsigned long)values[6]<<"time2: "<<_capture_time)
   return values2;
 }
 /*
