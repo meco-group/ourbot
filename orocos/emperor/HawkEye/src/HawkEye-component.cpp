@@ -8,10 +8,10 @@ HawkEye::HawkEye(std::string const& name) : TaskContext(name, PreOperational),
 _found_kurt(false), _found_dave(false), _found_krist(false)
 {
   // Ports
-  ports()->addPort("obstacles_state_port",_obstacles_state_port).doc("Obstacles state output port");
-  ports()->addPort("kurt_state_port",   _kurt_state_port).doc("Kurt's state output port");
-  ports()->addPort("dave_state_port",   _dave_state_port).doc("Dave's state output port");
-  ports()->addPort("krist_state_port",   _krist_state_port).doc("Krist's state output port");
+  ports()->addPort("obstacles_state_port", _obstacles_state_port).doc("Obstacles state output port");
+  ports()->addPort("kurt_state_port", _kurt_state_port).doc("Kurt's state output port");
+  ports()->addPort("dave_state_port", _dave_state_port).doc("Dave's state output port");
+  ports()->addPort("krist_state_port", _krist_state_port).doc("Krist's state output port");
   // Operation
   addOperation("captureBackground", &HawkEye::captureBackground, this);
   // Properties
@@ -30,7 +30,7 @@ _found_kurt(false), _found_dave(false), _found_krist(false)
   addProperty("port_nr", _port_nr).doc("Port to stream images over");
   addProperty("server_address", _server_address).doc("Server address to send image stream to.");
   addProperty("stream_image_size", _stream_image_size).doc("Size of images that are streamed.");
-  addProperty("plot_image_size", _plot_image_size).doc("Size of images that are streamed.");
+  addProperty("plot_image_size", _plot_image_size).doc("Size of images that are plotted.");
   addProperty("camera_matrix", _camera_matrix).doc("Camera matrix, used to remove distortion and go from pixels to meter");
   addProperty("distortion_coefficients", _distortion_coeffs).doc("Distortion coefficients, to remove radial and tangential distortion");
 
@@ -70,7 +70,7 @@ bool HawkEye::configureHook(){
   // _distortion_coeffs = [k1 k2 p1 p2 k3]
   _distortion_coeffs_m = cv::Mat::zeros(5, 1, CV_64F);
   _distortion_coeffs_m.at<double>(0,0) = _distortion_coeffs[0]; //k1
-  _distortion_coeffs_m.at<double>(1,0) = _distortion_coeffs[1]; //k2 
+  _distortion_coeffs_m.at<double>(1,0) = _distortion_coeffs[1]; //k2
   _distortion_coeffs_m.at<double>(2,0) = _distortion_coeffs[2]; //p1
   _distortion_coeffs_m.at<double>(3,0) = _distortion_coeffs[3]; //p2
   _distortion_coeffs_m.at<double>(4,0) = _distortion_coeffs[4]; //k3
@@ -96,6 +96,7 @@ bool HawkEye::startHook(){
       return false;
     }
   }
+
   // Set-up camera
   if(!startCamera()){
     return false;
@@ -1179,7 +1180,7 @@ double *circlehollowpat, float matchThresh, std::vector<int> rorig){ //Todo: ada
       robottocks[2] = robottocks[2]+robottocks[4]/2;
       robottocks[3] = robottocks[3]+robottocks[5]/2;
       // HAWKEYE_DEBUG_PRINT("Mod max score: "<<robottocks[6])
-      
+
       templ_locs[0] = robottocks[0];
       templ_locs[1] = robottocks[1];
       templ_locs[2] = robottocks[2];
@@ -1432,7 +1433,7 @@ double *circlehollowpat, float matchThresh, std::vector<int> rorig){ //Todo: ada
         templ_locs[3] = y2;
     }
     // else{}  //assumption was right, keep order
-    
+
     //transform template locations to world frame
     for (int k = 0; k<5; k+=2){
       templ_locs[k] = templ_locs[k] + _rorig[0];
@@ -1572,7 +1573,7 @@ std::vector<double> HawkEye::transform(const std::vector<double> &values){
   //   values2[k] = values[k]/_camera_matrix[0];  //Beware, use values, not values2!
   //   values2[k+1] = values2[k+1]/_camera_matrix[2]; //Beware, use values2, since y was adapted
   // }
-  
+
   // You should also use rotation and translation vectors!
 
   for (int k = 0 ; k<=6 ; k++){  //scale pixels to meter

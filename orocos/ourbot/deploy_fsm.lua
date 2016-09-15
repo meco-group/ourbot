@@ -252,7 +252,7 @@ return rfsm.state {
             dp:setMasterSlaveActivity(container, name)
           end
         end
-        -- communicator should run in the fastest thread (= io thread)
+        -- communicator should run in a fast thread
         dp:setMasterSlaveActivity('coordinator', 'communicator')
 
       end

@@ -66,6 +66,15 @@
           <value>108</value>
         </simple>
     </struct>
+    <struct name="plot_image_size" type="ints">
+        <description>Size of images that are plotted.</description>
+        <simple name="width" type="long">
+          <value>672</value>
+        </simple>
+        <simple name="height" type="long">
+          <value>380</value>
+        </simple>
+    </struct>
     <struct name="camera_matrix" type="array">
         <description>Camera matrix, used to remove distortion and transform image.</description>
         <simple name="fx" type="double">
@@ -97,15 +106,6 @@
         </simple>
         <simple name="k3" type="double">
           <value>-0.0043247578401430509</value>
-        </simple>
-    </struct>
-    <struct name="plot_image_size" type="ints">
-        <description>Size of images that are streamed.</description>
-        <simple name="width" type="long">
-          <value>672</value>
-        </simple>
-        <simple name="height" type="long">
-          <value>380</value>
         </simple>
     </struct>
 </properties>

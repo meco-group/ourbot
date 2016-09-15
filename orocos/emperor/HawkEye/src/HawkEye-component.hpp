@@ -4,7 +4,7 @@
 //Set flags:
 // #define HAWKEYE_PLOTFLAG
 // #define HAWKEYE_SAVEFLAG
-#define HAWKEYE_DEBUGFLAG
+// #define HAWKEYE_DEBUGFLAG
 
 #ifdef HAWKEYE_DEBUGFLAG //print statements on/off
 	#define HAWKEYE_DEBUG_PRINT(x)	std::cout << x << std::endl;
