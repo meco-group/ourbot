@@ -7,7 +7,7 @@ loadComponent("he", "HawkEye")
 loadService("he", "marshalling")
 he.marshalling.loadProperties("../Configuration/hawkeye-config.cpf")
 
-//he.setPeriod(10)
+he.setPeriod(5)
 
 he.configure
 he.start

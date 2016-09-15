@@ -3,7 +3,7 @@
 <properties>
     <simple name="video_port_name" type="string">
         <description>Port name for the video device. Full path required.</description>
-        <value>/dev/video0</value>
+        <value>/dev/video1</value>
     </simple>
     <simple name="resolution" type="long">
         <description>Resolution</description>
@@ -11,11 +11,11 @@
     </simple>
     <simple name="brightness" type="long">
         <description>Brightness (0-40)</description>
-        <value>5</value>
+        <value>15</value>
     </simple>
     <simple name="exposure" type="long">
         <description>Exposure (1-10000)</description>
-        <value>20</value>
+        <value>80</value>
     </simple>
     <simple name="iso" type="long">
         <description>ISO</description>
@@ -23,15 +23,15 @@
     </simple>
     <simple name="pixels2meter" type="long">
         <description>Conversion from pixels to meters</description>
-        <value>1</value>
+        <value>240</value>
     </simple>
     <simple name="image_path" type="string">
         <description>Path to save/find images</description>
-        <value>/home/ruben/ourbot/orocos/emperor/HawkEye/images/</value>
+        <value>/home/tim/orocos/ourbot/orocos/emperor/HawkEye/images/</value>
     </simple>
     <simple name="save_images" type="boolean">
         <description>Save captured images?</description>
-        <value>0</value>
+        <value>1</value>
     </simple>
     <simple name="number_of_bg_samples" type="long">
         <description>Number of samples taken to determine the background.</description>
@@ -64,6 +64,39 @@
         </simple>
         <simple name="height" type="long">
           <value>108</value>
+        </simple>
+    </struct>
+    <struct name="camera_matrix" type="array">
+        <description>Camera matrix, used to remove distortion and transform image.</description>
+        <simple name="fx" type="double">
+          <value>471.26940306532094</value>
+        </simple>
+        <simple name="cx" type="double">
+          <value>479.5</value>
+        </simple>
+        <simple name="fy" type="double">
+          <value>471.26940306532094</value>
+        </simple>
+        <simple name="cy" type="double">
+          <value>269.5</value>
+        </simple>
+    </struct>
+    <struct name="distortion_coefficients" type="array">
+        <description>Distortion coefficients, used to remove distortion.</description>
+        <simple name="k1" type="double">
+          <value>-0.15532428084649783</value>
+        </simple>
+        <simple name="k2" type="double">
+          <value>0.034072764528751832</value>
+        </simple>
+        <simple name="p1" type="double">
+          <value>0</value>
+        </simple>
+        <simple name="p2" type="double">
+          <value>0</value>
+        </simple>
+        <simple name="k3" type="double">
+          <value>-0.0043247578401430509</value>
         </simple>
     </struct>
     <struct name="plot_image_size" type="ints">
