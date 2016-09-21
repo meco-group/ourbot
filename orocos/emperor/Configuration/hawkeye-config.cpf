@@ -27,8 +27,7 @@
     </simple>
     <simple name="image_path" type="string">
         <description>Path to save/find images</description>
-        <!-- <value>/home/tim/orocos/ourbot/orocos/emperor/HawkEye/images/</value> -->
-        <value>/home/ruben/ourbot/orocos/emperor/HawkEye/images/</value>
+        <value>./HawkEye/images/</value>
     </simple>
     <simple name="save_images" type="boolean">
         <description>Save captured images?</description>

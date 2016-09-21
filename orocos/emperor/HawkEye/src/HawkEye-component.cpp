@@ -442,6 +442,7 @@ void HawkEye::setISO(int iso){ //From Videostreaming::changeSettings()
 }
 
 void HawkEye::captureBackground(){
+  std::cout << "Capturing background ... " << std::endl;
   capture_image();
   _background = cv::Mat(_f.size(), CV_32FC3, cv::Scalar(0,0,0));
   //loop over images and estimate background
@@ -454,6 +455,7 @@ void HawkEye::captureBackground(){
   HAWKEYE_DEBUG_PRINT("Average aquired over " << _number_of_bg_samples << " frames")
   _background.convertTo(_background, CV_8UC3); //convert background to uint8_t presentation
   cv::imwrite(_image_path+"background.png",_background); //save new background
+  std::cout << "done." << std::endl;
 }
 
 bool HawkEye::loadBackground(){
