@@ -54,11 +54,11 @@ return rfsm.state {
         rfsm.send_events(fsm,'e_failed')
         return
       end
-      if not estimator:start() then
-        rtt.logl("Error","Could not start estimator component")
-        rfsm.send_events(fsm,'e_failed')
-        return
-      end
+      -- if not estimator:start() then
+      --   rtt.logl("Error","Could not start estimator component")
+      --   rfsm.send_events(fsm,'e_failed')
+      --   return
+      -- end
       print("System started. Abort by using Break.")
     end,
 
@@ -75,7 +75,7 @@ return rfsm.state {
         start_time      = get_sec()
 
         -- update estimator
-        estimatorUpdate()
+        -- estimatorUpdate()
 
         -- take snapshot for logger
         if snapshot_cnt > max_cnt then
@@ -85,11 +85,11 @@ return rfsm.state {
           snapshot_cnt = snapshot_cnt + 1
         end
 
-        if estimatorInRunTimeError() then
-          rtt.logl("Error","RunTimeError in estimator component")
-          rfsm.send_events(fsm,'e_failed')
-          return
-        end
+        -- if estimatorInRunTimeError() then
+        --   rtt.logl("Error","RunTimeError in estimator component")
+        --   rfsm.send_events(fsm,'e_failed')
+        --   return
+        -- end
         -- if scanmatcherInRunTimeError() then
         --   rtt.logl("Error","RunTimeError in scanmatcher component")
         --   rfsm.send_events(fsm,'e_failed')
@@ -125,7 +125,7 @@ return rfsm.state {
   stop = rfsm.state{
     entry = function(fsm)
       -- scanmatcher:stop()
-      estimator:stop()
+      -- estimator:stop()
       reporter:stop()
       print("System stopped. Waiting on Restart or Reset...")
     end,

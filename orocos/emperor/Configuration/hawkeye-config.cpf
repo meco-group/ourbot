@@ -11,7 +11,7 @@
     </simple>
     <simple name="brightness" type="long">
         <description>Brightness (0-40)</description>
-        <value>15</value>
+        <value>7</value>
     </simple>
     <simple name="exposure" type="long">
         <description>Exposure (1-10000)</description>
@@ -27,11 +27,12 @@
     </simple>
     <simple name="image_path" type="string">
         <description>Path to save/find images</description>
-        <value>/home/tim/orocos/ourbot/orocos/emperor/HawkEye/images/</value>
+        <!-- <value>/home/tim/orocos/ourbot/orocos/emperor/HawkEye/images/</value> -->
+        <value>/home/ruben/ourbot/orocos/emperor/HawkEye/images/</value>
     </simple>
     <simple name="save_images" type="boolean">
         <description>Save captured images?</description>
-        <value>1</value>
+        <value>0</value>
     </simple>
     <simple name="number_of_bg_samples" type="long">
         <description>Number of samples taken to determine the background.</description>
@@ -39,11 +40,11 @@
     </simple>
     <simple name="capture_bg_at_start" type="boolean">
         <description>Capture background at start of camera?</description>
-        <value>1</value>
+        <value>0</value>
     </simple>
     <simple name="print_cam_info" type="boolean">
         <description>Print information of camera.</description>
-        <value>1</value>
+        <value>0</value>
     </simple>
     <simple name="stream_images" type="boolean">
         <description>Stream images over udp?</description>
@@ -108,4 +109,17 @@
           <value>-0.0043247578401430509</value>
         </simple>
     </struct>
+
+    <simple name="cnt_approx" type="double">
+        <description>Parameter of approxPolyDP which approximates a polygon/contour by antother, simplified, polygon/contour</description>
+        <value>0.025</value>
+    </simple>
+    <simple name="diff_threshold" type="long">
+        <description>Threshold for background subtraction for captured image vs background: determines diff image</description>
+        <value>35</value>
+    </simple>
+    <simple name="match_threshold" type="double">
+        <description>Threshold for template matching</description>
+        <value>0.6</value>
+    </simple>
 </properties>

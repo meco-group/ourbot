@@ -34,10 +34,9 @@ _found_kurt(false), _found_dave(false), _found_krist(false)
   addProperty("camera_matrix", _camera_matrix).doc("Camera matrix, used to remove distortion and go from pixels to meter");
   addProperty("distortion_coefficients", _distortion_coeffs).doc("Distortion coefficients, to remove radial and tangential distortion");
 
-  // Set operating flags and constants
-  _cntapprox = 0.025; //parameter of approxPolyDP which approximates a polygon/contour by another, simplified, polygon/contour
-  _diffthresh = 30; //threshold for background subtraction for captured image vs background: determines diff image
-  _matchThresh = 0.6; //threshold for template matching
+  addProperty("cnt_approx", _cntapprox).doc("Parameter of approxPolyDP which approximates a polygon/contour by antother, simplified, polygon/contour");
+  addProperty("diff_threshold", _diffthresh).doc("Threshold for background subtraction for captured image vs background: determines diff image");
+  addProperty("match_threshold", _matchThresh).doc("Threshold for template matching");
 
   HAWKEYE_DEBUG_PRINT("HawkEye constructed!")
 }
@@ -104,8 +103,8 @@ bool HawkEye::startHook(){
 
   // Set camera brightness, exposure, iso
   setBrightness(_brightness);
-  setExposure(_exposure);
-  setISO(_iso);
+  // setExposure(_exposure);
+  // setISO(_iso);
 
   // Get background and save for further use in backgroundSubtraction()
   if (_capture_bg_at_start){
@@ -144,11 +143,11 @@ bool HawkEye::connectToServer(){
 
 void HawkEye::showFrame(){
     cv::Mat image2;
-    cv::resize(_f, image2, cv::Size(_plot_image_size[0], _plot_image_size[1]), 0, 0, cv::INTER_NEAREST);
+    cv::resize(_captured_frame, image2, cv::Size(_plot_image_size[0], _plot_image_size[1]), 0, 0, cv::INTER_NEAREST);
     cv::imshow("Frame", image2);
     cv::waitKey(25);
     if(_save_images){
-      cv::imwrite(_image_path + "4final-" + std::to_string(_capture_time) + ".png" , _f);
+      cv::imwrite(_image_path + "4final-" + std::to_string(_capture_time) + ".png" , _captured_frame);
     }
 }
 
@@ -521,14 +520,8 @@ void HawkEye::capture_image(){ //save the current image in _f
   HAWKEYE_DEBUG_PRINT("current frame channels: "<<fRaw.channels())
   HAWKEYE_DEBUG_PRINT("current frame type: "<<fRaw.type())
 
-  // undistort frame fRaw
-  // if(_save_images){
-  //   cv::imwrite(_image_path + "beforeUndistort-" + std::to_string(_capture_time) + ".png" , fRaw);
-  // }
   cv::undistort(fRaw, _f, _camera_matrix_m, _distortion_coeffs_m);  //save undistorted frame in _f
-  // if(_save_images){
-  //   cv::imwrite(_image_path + "afterUndistort-" + std::to_string(_capture_time) + ".png" , _f);
-  // }
+  _f.copyTo(_captured_frame);
 
   buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
   buf.memory = V4L2_MEMORY_MMAP;
@@ -574,24 +567,22 @@ void HawkEye::processImage(){
     double cx, cy;
     int roriArray[4];
 
-    // First find the robots
+    // find all robots
     for (uint c_i = 0; c_i < contours.size(); c_i++){
       cv::convexHull(contours[c_i], c); //convex hull of the detected obstacle/contour
       rectangle = cv::boundingRect(c); //rectangle around contour: rectangle.x, y, width, height
       area = cv::contourArea(c);
       rotrect = cv::minAreaRect(c); //minimum area rectangle around contour
 
-      if (area > 900){
+      if (area > 3400){
         roriArray[0] = rectangle.x;
         roriArray[1] = rectangle.y;
         roriArray[2] = rectangle.height;
         roriArray[3] = rectangle.width;
         _rorig.assign(roriArray, roriArray + 4);
-        _roi = _f(rectangle);
-
+        _f(rectangle).copyTo(_roi);
         HAWKEYE_DEBUG_PRINT("Starting to find robots")
-        findRobots();  // in each contour which is large enough try to find the robot
-        // if success{blank out contour?}
+        findRobots();
       }
     }
 
@@ -619,6 +610,7 @@ void HawkEye::processImage(){
       }
       // process large objects: this is where the robot will be detected
       if (area > 900){ //Todo: adapt value for new camera
+        // only those obstacles will result in _obstacles
         cx = ccenter.x;
         cy = ccenter.y;
 
@@ -634,7 +626,8 @@ void HawkEye::processImage(){
         roriArray[2] = rectangle.height;
         roriArray[3] = rectangle.width;
         _rorig.assign(roriArray, roriArray + 4);
-        _roi = _f(rectangle);
+        _f(rectangle).copyTo(_roi);
+
         findBigObstacles(rotrect, c, cx, cy, cradius, &contours, &hierarchy);
       }
       else{
@@ -662,26 +655,11 @@ void HawkEye::backgroundSubtraction(std::vector<std::vector<cv::Point> > *contou
     HAWKEYE_DEBUG_PRINT("Saving current frame")
     HAWKEYE_DEBUG_PRINT(_image_path + "1img-" + std::to_string(_capture_time) + ".png")
     cv::imwrite(_image_path + "1img-" + std::to_string(_capture_time) + ".png" ,_f);
-    // cv::imwrite(_image_path + "1img-" + std::to_string(_capture_time) + ".tiff" ,_f);
-    // cv::imwrite(_image_path + "1img-" + std::to_string(_capture_time) + ".jpg" ,_f);
-
   }
 
   cv::absdiff(_background, _f, _diff);  //Todo: why on RGB? Background subtraction on RGB images
   cv::cvtColor(_diff, _diff , CV_RGB2GRAY); //convert _diff to grayscale
-
-  // if (_save_images){
-  //   HAWKEYE_DEBUG_PRINT("Saving current difference with background")
-  //   cv::imwrite(_image_path + "2diff-" + std::to_string(_capture_time) + ".png",_diff);
-  // }
-  //gives a black/white image: compared background to captured frame and makes pixels which differ enough from background black (= obstacle)
-  //+cv::THRESH_OTSU: didn't seem to work better
   cv::threshold(_diff, _mask,_diffthresh, 255, cv::THRESH_BINARY);
-
-  // if (_save_images){
-  //   HAWKEYE_DEBUG_PRINT("Saving current mask")
-  //   cv::imwrite(_image_path + "3mask-" + std::to_string(_capture_time) + ".png",_mask);
-  // }
 
   if (HAWKEYE_PLOT){ //Plot results of background subtraction
     HAWKEYE_DEBUG_PRINT("Showing current frame, difference and mask")
@@ -702,6 +680,7 @@ void HawkEye::findRobots(){
   double crosspat[5] = {0};    //temploc(x,y), w, h, max_val --> position of starfull marker
   double circlehollowpat[5] = {0};    //temploc(x,y), w, h, max_val --> position of circle marker
   double templ_locs[2*3] = {0}; //suppose we have 3 markers, holds template locations, each has x,y position
+
   printedMatch(_roi, _template_circle, _template_star1, _template_star2, _template_cross, _template_cross_rot, _template_circlehollow, &success, templ_locs, robottocks, starpat, crosspat, circlehollowpat, _matchThresh, _rorig);
   HAWKEYE_DEBUG_PRINT("printedMatch completed")
   HAWKEYE_DEBUG_PRINT("templ_locs:"<<templ_locs[0]<<", "<<templ_locs[1]<<", "<<templ_locs[2]<<", "<<templ_locs[3]<<", "<<templ_locs[4]<<", "<<templ_locs[5])
@@ -717,6 +696,7 @@ void HawkEye::findRobots(){
             _found_kurt = true;
           }
           _kurt[7] = (double)_capture_time; //add timestamp
+          addRoboBox(robottocks, starpat);
       }
       if (crosspat[4] != 0){ //if a cross star was detected (max_val != 0)
           HAWKEYE_DEBUG_PRINT("Found robot with cross pattern (Dave)!")
@@ -728,6 +708,7 @@ void HawkEye::findRobots(){
             _found_dave = true;
           }
           _dave[7] = (double)_capture_time; //add timestamp
+          addRoboBox(robottocks, crosspat);
       }
       if (circlehollowpat[4] != 0){ //if a hollow circle was detected (max_val != 0)
           HAWKEYE_DEBUG_PRINT("Found robot with hollow circle pattern (Krist)!")
@@ -739,11 +720,52 @@ void HawkEye::findRobots(){
             _found_krist = true;
           }
           _krist[7] = (double)_capture_time; //add timestamp
+          addRoboBox(robottocks, circlehollowpat);
       }
   }
   else{
     HAWKEYE_DEBUG_PRINT("No robots were found.")
   }
+}
+
+void HawkEye::addRoboBox(double *robottocks, double *pattern){
+  double lineside = (robottocks[2] - robottocks[0])*(pattern[1]-robottocks[1]) - (robottocks[3] - robottocks[1])*(pattern[0] - robottocks[0]); //(circle2_x-circle1_x)*(star_y-circle1_y) - (circle2_y-circle1_y)*(star_x-circle1_x)
+  double moddirection = 180/M_PI*(std::atan2((robottocks[3]-robottocks[1]),(robottocks[2]-robottocks[0])));
+  double robdirection;
+  if (lineside>0){
+      robdirection = moddirection + 90; //we need the direction of the orthogonal to the line of the mod points
+  }
+  else{
+      robdirection = moddirection - 90;
+  }
+
+  double xmodcen = 0.5*(robottocks[0] + robottocks[2]);
+  double ymodcen = 0.5*(robottocks[1] + robottocks[3]);
+  double dist = sqrt(pow(pattern[0]-xmodcen, 2) + pow(pattern[1]-ymodcen, 2));
+  double scale = dist/100.;
+  double xrobcen = xmodcen + 20.*scale*std::cos(M_PI/180 * robdirection);
+  double yrobcen = ymodcen + 20.*scale*std::sin(M_PI/180 * robdirection);
+
+  robdirection += 90; // north should be 0
+  if (robdirection < 0){
+      robdirection += 360;
+  }
+
+  // double b1 = robottocks[1]-(std::tan(M_PI/180*moddirection)*robottocks[0]);
+  // double b2 = pattern[1]- (std::tan(M_PI/180*robdirection)*pattern[0]);
+  // double xmodcen = (b1-b2)/(std::tan(M_PI/180*robdirection)-std::tan(M_PI/180*moddirection));
+  // double ymodcen = ((std::tan(M_PI/180*moddirection)*xmodcen)+b1);
+
+  //Todo: adapt to ourBot scale, scale is used to determine the reference point on the youbot. pattern is the location of the pattern. xrobcen and yrobcen are computed by adding to the position of the star a certain scale times the distance between the star and the midpoint of the two circles. In reality, this distance is 100 mm. The distance from the center of the star to the front of the plate on which the markers are placed is 75.9 mm, and the distance from the front of this plate to the center of the youbot (midpoint between the 4 wheels) is 40.0 mm. This 40.0 mm is only a rough measurement done by Kurt Geebelen and can be off a few milimeters. If you do not trust this, you can remeasure it and propose to change it.
+  // double scale = (40.+75.9)/100.0;
+  // double xrobcen= pattern[0] + std::abs(pattern[0] - xmodcen) * scale * std::sin(M_PI/180 * robdirection);
+  // double yrobcen= pattern[1] - std::abs(pattern[1] - ymodcen) * scale * std::cos(M_PI/180 * robdirection);
+  double robcen[2] = {xrobcen + _rorig[0], yrobcen + _rorig[1]};
+
+  //Gather results
+  cv::RotatedRect robobox;
+  robobox = cv::RotatedRect(cv::Point2f(robcen[0],robcen[1]), cv::Size2f(90,130), robdirection); //fixed size of box: [x,y,w,h,theta]
+  _roboboxes.push_back(robobox);
 }
 
 void HawkEye::findBigObstacles(cv::RotatedRect rotrect, std::vector<cv::Point> c, int cx, int cy, int cradius, std::vector<std::vector<cv::Point> > *contours, std::vector<cv::Vec4i> *hierarchy){
@@ -778,8 +800,8 @@ void HawkEye::findBigObstacles(cv::RotatedRect rotrect, std::vector<cv::Point> c
       for(uint k = 0; k<_roboboxes.size(); k++) {  //check all robots
           isrobotbox[k]= cv::pointPolygonTest(boxPoints, _roboboxes[k].center, false); // only add boxes that don't contain the robot //i.e. test if robot center lies in box
           if (isrobotbox[k] > 0){  // returns positive value if robobox center is inside the contour
-              insideRobot = true;  // this contour overlaps with robot k
               mergeContourWithRobot(_roboboxes[k], boxPoints, contours, hierarchy); //rectangle/box contained the robot, so delete its contour from the mask = draw the contour on the mask (via drawContours)
+              insideRobot = true;  // this contour overlaps with robot k
           }
       }
       if (insideRobot == false){  //contour overlaps with none of the robots
@@ -808,11 +830,9 @@ void HawkEye::mergeContourWithRobot(cv::RotatedRect robobox, std::vector<cv::Poi
     std::vector<std::vector<cv::Point> > roboboxVectorPoints;
     roboboxVectorPoints.push_back(roboboxcontourPoints);
     cv::drawContours(_mask, roboboxVectorPoints, 0, cv::Scalar(0,0,0), -1); //draw robot contour on the mask = update the mask
-
     if (HAWKEYE_PLOT){
       cv::imshow("cleared mask", _mask); //plot the updated mask
     }
-
     cv::findContours(_mask, *contours, *hierarchy, cv::RETR_EXTERNAL,cv::CHAIN_APPROX_SIMPLE); //find object in the remaining contours, to see if there were overlapping or touching objects with the robot box
 
     //Todo: this will only return obstacles touching the original robot box?
@@ -820,15 +840,14 @@ void HawkEye::mergeContourWithRobot(cv::RotatedRect robobox, std::vector<cv::Poi
       for (uint c_i = 0; c_i < contours->size(); c_i++){
         // std::vector<Point> c = cv::convexHull(contours[c_i]); //Todo: was there in previous loop of this kind and now not anymore?
         std::vector<cv::Point> c = contours->at(c_i);
-        cv::Rect rectangle = cv::boundingRect(c); //rectangle around contour: rectangle.x, y, width, height
         _boxcontours.push_back(c);
-        int area = rectangle.width * rectangle.height;
         cv::RotatedRect rotrect= cv::minAreaRect(c);
+        int area = cv::contourArea(c);
         cv::Point2f ccenter;
         float cradius;
         cv::minEnclosingCircle(c, ccenter, cradius); //circle around contour
 
-        if (area > 10){// and hier[3]==-1: //minimum area to see something as an obstacle
+        if (area > 1000){// and hier[3]==-1: //minimum area to see something as an obstacle
             int cx = ccenter.x;
             int cy = ccenter.y;
             std::vector<double> current_circle; //set up a vector to push in circles
@@ -846,11 +865,11 @@ void HawkEye::mergeContourWithRobot(cv::RotatedRect robobox, std::vector<cv::Poi
 void HawkEye::processResults(){
   if ( (_circles_correct.size())>0 ){
     HAWKEYE_DEBUG_PRINT("circles_correct size: "<<_circles_correct.size()<<" boxes_correct size: "<<_boxes_correct.size())
-    _circlesDetected =_circles_correct;
+    _circlesDetected = _circles_correct;
   }
   else {
     HAWKEYE_DEBUG_PRINT("_circles size: "<<_circles.size())
-    _circlesDetected =_circles;
+    _circlesDetected = _circles;
   }
 
   if (_boxes_correct.size() > 0){
@@ -866,31 +885,48 @@ void HawkEye::processResults(){
   HAWKEYE_DEBUG_PRINT("rectangles_detected_size: "<<_rectanglesDetected.size())
   HAWKEYE_DEBUG_PRINT("circles_detected_size: "<<_circlesDetected.size())
 
-  cv::Point2f roboboxcontour[4];
-  std::vector<cv::Point> roboboxcontourPoints;
+  cv::Point2f othercontour[4];
+  std::vector<cv::Point> othercontourPoints;
   std::vector<cv::RotatedRect> filter_boxes;
-  bool toAdd = false;
+  std::vector<std::vector<double> > filter_circles;
+  bool toAdd;
+  double withinother;
   for (uint j = 0 ; j < _rectanglesDetected.size() ; j++){
-    toAdd = false;
+    toAdd = true;
     for (uint k=0; k<_roboboxes.size(); k++){
-      _roboboxes[k].points(roboboxcontour);
+      _roboboxes[k].points(othercontour);
       for (int l = 0 ; l < 4 ; l++){
-        roboboxcontourPoints.push_back(roboboxcontour[l]); //add robobox vertices to contour points
+        othercontourPoints.push_back(othercontour[l]); //add robobox vertices to contour points
       }
-      double isboxwithinrobot= cv::pointPolygonTest(roboboxcontourPoints, _rectanglesDetected[j].center, false); //only add boxes that are not within the robot
-      if (isboxwithinrobot < 0){ //not within robot and not yet added
-        toAdd = true;
+      withinother = cv::pointPolygonTest(othercontourPoints, _rectanglesDetected[j].center, false); //only add boxes that are not within the robot
+      if (withinother > 0){ // it is inside the robot
+        toAdd = false;
+      }
+      othercontourPoints.clear();
+    }
+    for (uint k=0; k<_rectanglesDetected.size(); k++){
+      if (k != j){
+        _rectanglesDetected[k].points(othercontour);
+        for (int l = 0 ; l < 4 ; l++){
+          othercontourPoints.push_back(othercontour[l]);
+        }
+        withinother = cv::pointPolygonTest(othercontourPoints, _rectanglesDetected[j].center, false); //only add boxes that are not within another obstacle
+        if (withinother > 0){ // it is inside other obstacle
+          toAdd = false;
+        }
+        othercontourPoints.clear();
       }
     }
-    if (toAdd == true){
+    if (toAdd){
       filter_boxes.push_back(_rectanglesDetected[j]); //save rectangle in filtered boxes
+      filter_circles.push_back(_circlesDetected[j]);
     }
-    roboboxcontourPoints.clear();
   }
 
   HAWKEYE_DEBUG_PRINT("filter_boxes.size(): "<<filter_boxes.size())
   if (filter_boxes.size() > 0){ // if-loop was executed for at least one of the roboboxes
     _rectanglesDetected = filter_boxes; //overwrite detected rectangles vector with filtered version
+    _circlesDetected = filter_circles;
   }
   HAWKEYE_DEBUG_PRINT("rectangles_detected_size: "<<_rectanglesDetected.size())
 
@@ -1021,19 +1057,20 @@ void HawkEye::drawResults(){
   int circleRadius;
   cv::Point2i circleCenter;
   // obstacles
+  std::cout << _obstacles.size() << std::endl;
   for (uint k = 0 ; k < _obstacles.size(); k++){
     if(_obstacles[k]->getShape() == CIRCLE){
       circleRadius = static_cast<Circle*>(_obstacles[k])->getRadius();
       circleCenter.x = _obstacles[k]->getPos()[0];
       circleCenter.y = _obstacles[k]->getPos()[1];
-      cv::circle(_f, circleCenter, circleRadius, cv::Scalar(0,0,255), 2);
+      cv::circle(_captured_frame, circleCenter, circleRadius, cv::Scalar(0,0,255), 2);
     }
     if(_obstacles[k]->getShape() == RECTANGLE){
       cv::RotatedRect rRect = cv::RotatedRect(cv::Point2f(_obstacles[k]->getPos()[0],_obstacles[k]->getPos()[1]), cv::Size2f(static_cast<Rectangle*>(_obstacles[k])->getWidth(),static_cast<Rectangle*>(_obstacles[k])->getLength()), static_cast<Rectangle*>(_obstacles[k])->getTheta());
       cv::Point2f vertices[4];
       rRect.points(vertices);
       for (int k = 0; k < 4; k++){
-        cv::line(_f, vertices[k], vertices[(k+1)%4], cv::Scalar(0,0,255), 2);
+        cv::line(_captured_frame, vertices[k], vertices[(k+1)%4], cv::Scalar(0,0,255), 2);
       }
     }
   }
@@ -1043,95 +1080,34 @@ void HawkEye::drawResults(){
     for (int i=0; i<3; i++){
       circleCenter.x = _kurt[2*i];
       circleCenter.y = _kurt[2*i+1];
-      cv::circle(_f, circleCenter, circleRadius, cv::Scalar(255,0,0), 2);
+      cv::circle(_captured_frame, circleCenter, circleRadius, cv::Scalar(255,0,0), 2);
     }
   }
   if (_found_krist){
     for (int i=0; i<3; i++){
       circleCenter.x = _krist[2*i];
       circleCenter.y = _krist[2*i+1];
-      cv::circle(_f, circleCenter, circleRadius, cv::Scalar(255,0,0), 2);
+      cv::circle(_captured_frame, circleCenter, circleRadius, cv::Scalar(255,0,0), 2);
     }
   }
   if (_found_dave){
     for (int i=0; i<3; i++){
       circleCenter.x = _dave[2*i];
       circleCenter.y = _dave[2*i+1];
-      cv::circle(_f, circleCenter, circleRadius, cv::Scalar(255,0,0), 2);
+      cv::circle(_captured_frame, circleCenter, circleRadius, cv::Scalar(255,0,0), 2);
+    }
+  }
+
+  for(uint k=0; k<_roboboxes.size(); k++){
+    cv::Point2f vertices[4];
+    _roboboxes[k].points(vertices);
+    for (int k = 0; k < 4; k++){
+      cv::line(_captured_frame, vertices[k], vertices[(k+1)%4], cv::Scalar(255,0,0), 2);
     }
   }
   showFrame();
 }
 
-// void HawkEye::drawResults(){
-//   HAWKEYE_DEBUG_PRINT("Plotting obstacles")
-//   int circleRadius;
-//   cv::Point2i circleCenter;
-//   cv::Point2i rectanglePt1; //holds bottom left vertex
-//   cv::Point2i rectanglePt2; //holds top right vertex
-//   for (uint k = 0 ; k < _obstacles.size(); k++){
-//     if(_obstacles[k]->getShape() == CIRCLE){
-
-//       circleRadius = static_cast<Circle*>(_obstacles[k])->getRadius();
-//       circleCenter.x = _obstacles[k]->getPos()[0];
-//       circleCenter.y = _obstacles[k]->getPos()[1];
-//       cv::circle(_f, circleCenter, circleRadius, cv::Scalar(0,0,255), 2);
-
-//     }
-//     if(_obstacles[k]->getShape() == RECTANGLE){
-//       //Plot rotated rectangle around obstacle
-//       cv::RotatedRect rRect = cv::RotatedRect(cv::Point2f(_obstacles[k]->getPos()[0],_obstacles[k]->getPos()[1]), cv::Size2f(static_cast<Rectangle*>(_obstacles[k])->getWidth(),static_cast<Rectangle*>(_obstacles[k])->getLength()), static_cast<Rectangle*>(_obstacles[k])->getTheta());
-//       cv::Point2f vertices[4];
-//       rRect.points(vertices);
-//       for (int k = 0; k < 4; k++){
-//         cv::line(_f, vertices[k], vertices[(k+1)%4], cv::Scalar(0,0,255), 2);
-//       }
-//     }
-//   }
-//   HAWKEYE_DEBUG_PRINT("Plotting robots")
-//   cv::Point2f roboboxPoints[4];
-//   for(uint k = 0; k<_roboboxes.size(); k++) {
-//     _roboboxes[k].points(roboboxPoints);
-//     HAWKEYE_DEBUG_PRINT(roboboxPoints[0])
-//     HAWKEYE_DEBUG_PRINT(roboboxPoints[1])
-//     HAWKEYE_DEBUG_PRINT(roboboxPoints[2])
-//     HAWKEYE_DEBUG_PRINT(roboboxPoints[3])
-//     for( int k = 0; k < 4; k++ ){
-//       cv::line( _f, roboboxPoints[k], roboboxPoints[(k+1)%4], cv::Scalar(0,255,0), 2, 8 );
-//     }
-//   }
-//   // //Draw markers
-//   // HAWKEYE_DEBUG_PRINT("Plotting markers")
-//   // Robot::marker robotMarker;
-//   // double* bottomMarkers;
-//   // double* topMarker;
-//   // int* roi;
-//   // for(uint k = 0; k<_robots.size(); k++) {
-//   //   // robotMarker =  _robots[k].getMarkers();
-//   //   bottomMarkers = _robots[k]->getBottomMarkers();
-//   //   topMarker = _robots[k]->getTopMarker();
-//   //   roi = _robots[k]->getRoi();
-//   //   //Bottom markers
-//   //   HAWKEYE_DEBUG_PRINT("Plotting bottom markers")
-//   //   for (int k = 0 ; k <= 1 ; k++ ){
-//   //       HAWKEYE_DEBUG_PRINT("pos x and y: "<<bottomMarkers[2*k]<<" , "<<bottomMarkers[2*k+1])
-//   //       HAWKEYE_DEBUG_PRINT("radius: "<<bottomMarkers[4])
-//   //       cv::circle(_f, cv::Point(bottomMarkers[2*k]+roi[0], bottomMarkers[2*k+1]+roi[1]), bottomMarkers[4]/2.0, cv::Scalar(255,0,0), 2);
-//   //   }
-//   //   //Top markers
-//   //   HAWKEYE_DEBUG_PRINT("Plotting top markers")
-//   //   HAWKEYE_DEBUG_PRINT("pos x and y: "<<topMarker[0]<<" , "<<topMarker[1])
-//   //   HAWKEYE_DEBUG_PRINT("radius: "<<topMarker[2])
-//   //   cv::circle(_f, cv::Point(topMarker[0]+roi[0], topMarker[1]+roi[1]), topMarker[2]/2.0, cv::Scalar(255,255,0), 2);
-//   // }
-//   HAWKEYE_DEBUG_PRINT("Plotting contours of rectangles")
-//   cv::drawContours(_f , _rectanglesDetectedContours , -1 , cv::Scalar(128,200,255) , 2);
-//   HAWKEYE_DEBUG_PRINT("Saving final image with markers")
-
-//   if(_save_images){
-//     cv::imwrite(_image_path + "4final-" + std::to_string(_capture_time) + ".png" , _f);
-//   }
-// }
 
 void HawkEye::printedMatch(cv::Mat roi, cv::Mat template_circle,
 cv::Mat template_star1, cv::Mat template_star2, cv::Mat template_cross,
@@ -1179,7 +1155,6 @@ double *circlehollowpat, float matchThresh, std::vector<int> rorig){ //Todo: ada
       robottocks[1] = robottocks[1]+robottocks[5]/2;
       robottocks[2] = robottocks[2]+robottocks[4]/2;
       robottocks[3] = robottocks[3]+robottocks[5]/2;
-      // HAWKEYE_DEBUG_PRINT("Mod max score: "<<robottocks[6])
 
       templ_locs[0] = robottocks[0];
       templ_locs[1] = robottocks[1];
@@ -1480,7 +1455,7 @@ void HawkEye::oneObject(cv::Mat image, cv::Mat templim, float thresh, int *w, in
             }
         }
         else{
-            log(Error)<<"Maximum value of detection was lower than threshold:"<<*max_val<<" < "<<thresh<<" No top marker detected"<<endlog();
+            HAWKEYE_DEBUG_PRINT("Maximum value of detection was lower than threshold:"<<*max_val<<" < "<<thresh<<" No top marker detected");
         }
     }
 }
@@ -1517,6 +1492,7 @@ void HawkEye::multiObject(cv::Mat image, cv::Mat templim, float thresh, int *w, 
 
     //Todo: how do you make sure that you get the midpoint of the template and not a random point on the template? You find the whole template so...
 
+
     while (true)
     {
       // double minval, maxval, threshold = 0.8;
@@ -1545,7 +1521,7 @@ void HawkEye::multiObject(cv::Mat image, cv::Mat templim, float thresh, int *w, 
     }
 
     if(maxpoints->empty()){ //if maxpoints still empty no patterns were found
-        log(Error)<<"Maximum value of detection was lower than threshold:"<<*max_val<<" < "<<thresh<<" No circle patterns detected"<<endlog();
+        HAWKEYE_DEBUG_PRINT("Maximum value of detection was lower than threshold:"<<*max_val<<" < "<<thresh<<" No circle patterns detected");
     }
     else{
       HAWKEYE_DEBUG_PRINT("template locations: "<<(*maxpoints)[0]<<" , "<<(*maxpoints)[1]<<" , "<<(*maxpoints)[2]<<" , "<<(*maxpoints)[3]<<" template width: "<<*w<<"template height: "<<*h)

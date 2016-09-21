@@ -143,6 +143,7 @@ class HawkEye : public RTT::TaskContext{
 
     //Images
     cv::Mat _f; //current frame
+    cv::Mat _captured_frame; //frame after capture
     cv::Mat _background; //background image
     cv::Mat _diff; //current difference with background image
     cv::Mat _mask; //the current mask
@@ -184,6 +185,7 @@ class HawkEye : public RTT::TaskContext{
     void processImage();
     void backgroundSubtraction(std::vector<std::vector<cv::Point> > *contours, std::vector<cv::Vec4i> *hierarchy);
     void findRobots();
+    void addRoboBox(double *robottocks, double *pattern);
     void findBigObstacles(cv::RotatedRect rotrect, std::vector<cv::Point> c, int cx, int cy, int cradius, std::vector<std::vector<cv::Point> > *contours, std::vector<cv::Vec4i> *hierarchy);
     void mergeContourWithRobot(cv::RotatedRect robobox, std::vector<cv::Point> contourPoints, std::vector<std::vector<cv::Point> > *contours, std::vector<cv::Vec4i> *hierarchy); //found a contour which contains the robot, blank it out
     void processResults();

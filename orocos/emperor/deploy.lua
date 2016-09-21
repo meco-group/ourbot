@@ -10,12 +10,14 @@ _print_level            = rtt.Property("int","print_level","Level of output prin
 _velocitycmd_type       = rtt.Property("string","velocitycmd","VelocityCommand component to use")
 _velcmd_sample_rate     = rtt.Property("double","velcmd_sample_rate","Frequency to update velocity commander")
 _emperor_sample_rate    = rtt.Property("double","emperor_sample_rate","Frequency to update communicator")
+_hawkeye_sample_rate    = rtt.Property("double","hawkeye_sample_rate","Frequency to update hawkeye")
 _trusted_hosts          = rtt.Property("strings","trusted_hosts","Ip's of trusted hosts")
 
 tc:addProperty(_print_level)
 tc:addProperty(_velcmd_sample_rate)
 tc:addProperty(_velocitycmd_type)
 tc:addProperty(_emperor_sample_rate)
+tc:addProperty(_hawkeye_sample_rate)
 tc:addProperty(_trusted_hosts)
 
 -- ports that drive/read the FSM
@@ -33,6 +35,7 @@ function configureHook()
    velcmd_sample_rate   = _velcmd_sample_rate:get()
    velocitycmd_type     = _velocitycmd_type:get()
    emperor_sample_rate  = _emperor_sample_rate:get()
+   hawkeye_sample_rate  = _hawkeye_sample_rate:get()
    trusted_hosts        = _trusted_hosts:get()
 
    -- create host aliases
