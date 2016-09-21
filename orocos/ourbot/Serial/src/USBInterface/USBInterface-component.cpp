@@ -5,7 +5,8 @@
 #include <sys/ioctl.h>
 
 USBInterface::USBInterface(std::string const& name) :
-	SerialInterface(name), _usb_port_name(std::string("/dev/ttyACM0")), _usb_fd(0), _rw_options(O_RDWR | O_NOCTTY | O_NDELAY | O_TRUNC)
+	SerialInterface(name), _usb_port_name(std::string("/dev/ttyACM0")),
+	_usb_fd(0), _rw_options(O_RDWR | O_NOCTTY | O_NDELAY | O_TRUNC), _disable_unknown(false)
 {
 	addProperty("usb_port_name",_usb_port_name).doc("The usb port name.");
 
@@ -63,6 +64,11 @@ void USBInterface::setReadWriteOptions(int rw_options)
 	_rw_options = rw_options;
 }
 
+void USBInterface::disableUnknownStuff(){
+	// disable part which we do not know what it does...
+	_disable_unknown = true;
+}
+
 bool USBInterface::connectSerial()
 {
   _usb_fd = open(_usb_port_name.c_str(), _rw_options|O_NONBLOCK);
@@ -92,16 +98,20 @@ bool USBInterface::connectSerial()
 
 		tcflush(_usb_fd,TCIFLUSH);
 
-		// if (fcntl(_usb_fd, F_SETFL, FNDELAY))
-		// {
-		//     disconnectSerial();
-		//     return false;
-		// }
-		// if (tcsetattr(_usb_fd, TCSANOW, &options))
-		// {
-		//     disconnectSerial();
-		//     return false;
-		// }
+		// can this be included for gamepad?? -> no
+
+		if (!_disable_unknown) {
+			if (fcntl(_usb_fd, F_SETFL, FNDELAY))
+			{
+			    disconnectSerial();
+			    return false;
+			}
+			if (tcsetattr(_usb_fd, TCSANOW, &options))
+			{
+			    disconnectSerial();
+			    return false;
+			}
+		}
 
 		//Clear the DTR bit to let the motor spin
 		uint32_t controll = TIOCM_DTR;

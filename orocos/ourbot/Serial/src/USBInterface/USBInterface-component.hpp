@@ -13,6 +13,7 @@ class USBInterface : public SerialInterface
 		std::string		_usb_port_name;
 		int _usb_fd;
 		int _rw_options;
+		bool _disable_unknown;
 
 	public:
 		USBInterface(std::string const& name);
@@ -27,6 +28,7 @@ class USBInterface : public SerialInterface
 		bool connectSerial();
 		bool disconnectSerial();
 		bool isConnectedSerial();
+		void disableUnknownStuff();
 
 		int available();
     int readByte(uint8_t* byte, uint8_t port_select = 0);

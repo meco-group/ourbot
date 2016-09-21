@@ -93,6 +93,7 @@ bool GamePad::configureHook()
 bool GamePad::startHook()
 {
   setReadWriteOptions(O_RDONLY);
+  disableUnknownStuff();
   return USBInterface::startHook();
 }
 
