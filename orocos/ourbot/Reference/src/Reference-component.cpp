@@ -3,13 +3,19 @@
 #include "Reference-component.hpp"
 #include <rtt/Component.hpp>
 #include <iostream>
+#include <fstream>
 
 Reference::Reference(std::string const& name) : TaskContext(name, PreOperational),
     _ref_pose_sample(3), _ref_velocity_sample(3), _just_started(true),
-    _index1(0), _index2(0), _new_data(false){
+    _index1(0), _index2(0), _new_data(false), _offline_trajectory(false){
   ports()->addPort("ref_pose_trajectory_x_port", _ref_pose_trajectory_port[0]).doc("x reference trajectory");
   ports()->addPort("ref_pose_trajectory_y_port", _ref_pose_trajectory_port[1]).doc("y reference trajectory");
   ports()->addPort("ref_pose_trajectory_t_port", _ref_pose_trajectory_port[2]).doc("theta reference trajectory");
+
+  ports()->addPort("ref_pose_trajectory_x_tx_port", _ref_pose_trajectory_tx_port[0]).doc("x reference trajectory for tx over wifi");
+  ports()->addPort("ref_pose_trajectory_y_tx_port", _ref_pose_trajectory_tx_port[1]).doc("y reference trajectory for tx over wifi");
+  ports()->addPort("ref_pose_trajectory_t_tx_port", _ref_pose_trajectory_tx_port[2]).doc("t reference trajectory for tx over wifi");
+
 
   ports()->addPort("predict_shift_port", _predict_shift_port).doc("Trigger for motion planning");
 
@@ -23,7 +29,10 @@ Reference::Reference(std::string const& name) : TaskContext(name, PreOperational
   addProperty("control_sample_rate", _control_sample_rate).doc("Frequency to update the control loop");
   addProperty("pathupd_sample_rate", _pathupd_sample_rate).doc("Frequency to update the path");
 
+  addProperty("trajectory_path", _trajectory_path).doc("Path of offline trajectory");
+
   addOperation("writeSample",&Reference::writeSample, this).doc("Set data sample on output ports");
+  addOperation("loadTrajectory",&Reference::loadTrajectory, this).doc("Load offline trajectory");
 
   _cur_ref_pose_trajectory = _ref_pose_trajectory_1;
   _cur_ref_velocity_trajectory = _ref_velocity_trajectory_1;
@@ -65,6 +74,44 @@ bool Reference::configureHook(){
   return true;
 }
 
+bool Reference::loadTrajectory(){
+    for (int k=0; k<66; k++){
+      _cur_ref_pose_trajectory[k].clear();
+      _cur_ref_velocity_trajectory[k].clear();
+    }
+
+    std::ifstream file;
+    file.open(_trajectory_path.c_str());
+    std::string line, str;
+    double value;
+    if (!file.good()){
+      return false;
+    }
+    while(file.good()){
+      std::getline(file, line);
+      std::stringstream iss(line);
+      for (int k=0; k<6; k++){
+        std::getline(iss, str, ',');
+        std::stringstream convertor(str);
+        convertor >> value;
+        if (k < 3){
+          _cur_ref_pose_trajectory[k].push_back(value);
+        } else {
+          _cur_ref_velocity_trajectory[k-3].push_back(value);
+        }
+      }
+    }
+    file.close();
+    _trajectory_length = _cur_ref_pose_trajectory[0].size(); // klopt dit?
+    _offline_trajectory =  true;
+    _index1 = 0;
+    _index2 = 0;
+    for (int k=0; k<3; k++){
+      _ref_pose_trajectory_tx_port[k].write(_cur_ref_pose_trajectory[k]);
+    }
+    return true;
+}
+
 bool Reference::startHook(){
   // Check connections
   for(int i=0; i<3; i++){
@@ -83,42 +130,52 @@ bool Reference::startHook(){
 }
 
 void Reference::updateHook(){
-  // Check for new data and read ports
-  readPorts();
-  // If not retrieved first trajectory yet: do nothing
-  if (_just_started){
-    return;
-  }
-  // Update index/trajectory vector
-  if(_index1 >= 2*_update_length){
-    log(Error)<<"I did not receive a new trajectory for a whole update cycle!"<<endlog();
-    error();
-  }
-  if(_index1 >= _update_length){
-    if( _new_data){
-      // Swap current and next pointers
-      std::vector<double>* swap_pose = _cur_ref_pose_trajectory;
-      std::vector<double>* swap_velocity = _cur_ref_velocity_trajectory;
-      _cur_ref_pose_trajectory = _nxt_ref_pose_trajectory;
-      _cur_ref_velocity_trajectory = _nxt_ref_velocity_trajectory;
-      _nxt_ref_pose_trajectory = swap_pose;
-      _nxt_ref_velocity_trajectory = swap_velocity;
-      // Reset index & checks
-      _index2 = _index1%_update_length;
-      _index1 = 0;
-      _new_data = false;
-      for (int i=0; i<3; i++){
-        _got_ref_pose_trajectory[i] = false;
-        _got_ref_velocity_trajectory[i] = false;
+  if (!_offline_trajectory){
+    // Check for new data and read ports
+    readPorts();
+    // If not retrieved first trajectory yet: do nothing
+    if (_just_started){
+      return;
+    }
+    // Update index/trajectory vector
+    if(_index1 >= 2*_update_length){
+      log(Error)<<"I did not receive a new trajectory for a whole update cycle!"<<endlog();
+      error();
+    }
+    if(_index1 >= _update_length){
+      if( _new_data){
+        // Swap current and next pointers
+        std::vector<double>* swap_pose = _cur_ref_pose_trajectory;
+        std::vector<double>* swap_velocity = _cur_ref_velocity_trajectory;
+        _cur_ref_pose_trajectory = _nxt_ref_pose_trajectory;
+        _cur_ref_velocity_trajectory = _nxt_ref_velocity_trajectory;
+        _nxt_ref_pose_trajectory = swap_pose;
+        _nxt_ref_velocity_trajectory = swap_velocity;
+        // Reset index & checks
+        _index2 = _index1%_update_length;
+        _index1 = 0;
+        _new_data = false;
+        for (int i=0; i<3; i++){
+          _got_ref_pose_trajectory[i] = false;
+          _got_ref_velocity_trajectory[i] = false;
+        }
+        // put on tx port
+        for (int i=0; i<3; i++){
+          _ref_pose_trajectory_tx_port[i].write(_cur_ref_pose_trajectory[i]);
+        }
+      }
+      else{
+        log(Warning)<<"No new trajectory ! Proceeding with previous trajectory."<<endlog();
       }
     }
-    else{
-      log(Warning)<<"No new trajectory ! Proceeding with previous trajectory."<<endlog();
+    // Retrigger motion planner and send the predict shift which is stored at _index2
+    if (_index1 == 0){
+      _predict_shift_port.write(_index2);
     }
-  }
-  // Retrigger motion planner and send the predict shift which is stored at _index2
-  if (_index1 == 0){
-    _predict_shift_port.write(_index2);
+  } else {
+    if (_index2 >= _trajectory_length){
+      return;
+    }
   }
   // Get next sample
   for (int i=0; i<3; i++){
