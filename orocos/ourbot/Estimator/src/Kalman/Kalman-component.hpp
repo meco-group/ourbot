@@ -15,6 +15,7 @@ class Kalman : public EstimatorInterface{
     std::vector<double> _psd_state;
     std::vector<double> _sigma_odo;
     double _sigma_markers;
+    std::vector<double> _marker_loc;
 
     // kalman variables
     OdometryFilter<3>* _kf;
@@ -25,11 +26,16 @@ class Kalman : public EstimatorInterface{
     M<3, 2> _Mmeas;
 
     double _time;
+    double _start_time;
     double _control_sample_rate;
+    double _time_offset;
+    double _marker_time;
 
     std::vector<double> _cal_velocity;
     std::vector<double> _est_pose;
     std::vector<double> _marker_data;
+
+    double captureTime();
 
   public:
     Kalman(std::string const& name);
