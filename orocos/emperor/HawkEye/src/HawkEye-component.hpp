@@ -95,6 +95,30 @@ class HawkEye : public RTT::TaskContext{
     OutputPort <std::vector<double> >  _dave_state_port;  //state of the robot
     OutputPort <std::vector<double> >  _krist_state_port;  //state of the robot
 
+    InputPort <std::vector<double> > _est_pose_kurt_port;
+    InputPort <std::vector<double> > _est_pose_krist_port;
+    InputPort <std::vector<double> > _est_pose_dave_port;
+
+    InputPort <std::vector<double> > _ref_x_kurt_port;
+    InputPort <std::vector<double> > _ref_x_krist_port;
+    InputPort <std::vector<double> > _ref_x_dave_port;
+    InputPort <std::vector<double> > _ref_y_kurt_port;
+    InputPort <std::vector<double> > _ref_y_krist_port;
+    InputPort <std::vector<double> > _ref_y_dave_port;
+
+
+    std::vector<double> _est_pose_kurt;
+    std::vector<double> _est_pose_krist;
+    std::vector<double> _est_pose_dave;
+
+    std::vector<double> _ref_x_kurt;
+    std::vector<double> _ref_x_krist;
+    std::vector<double> _ref_x_dave;
+    std::vector<double> _ref_y_kurt;
+    std::vector<double> _ref_y_krist;
+    std::vector<double> _ref_y_dave;
+
+
     // Properties
     std::string _video_port_name; // standard value is "/dev/video0". The name is: See3CAM_CU40
     std::string _image_path;
@@ -114,6 +138,10 @@ class HawkEye : public RTT::TaskContext{
     std::vector<double> _camera_matrix;
     std::vector<double> _distortion_coeffs;
 
+    std::vector<int> _color_kurt;
+    std::vector<int> _color_krist;
+    std::vector<int> _color_dave;
+
     // TCP streaming stuff
     int _socket;
     int _port_nr;
@@ -131,8 +159,7 @@ class HawkEye : public RTT::TaskContext{
     // Camera
     int _fd; //file descriptor for camera
     double _pix2meter; //transform pixels to meter
-    unsigned long _capture_time; //timestamp for current frame
-
+    double _capture_time; //timestamp for current frame
     // Templates
     cv::Mat _template_circle; //Mat is the openCV type of an image, it's a kind of vector
     cv::Mat _template_circlehollow;
@@ -171,6 +198,9 @@ class HawkEye : public RTT::TaskContext{
     bool _found_kurt; //did we find Kurt?
     bool _found_dave;
     bool _found_krist;
+    int _kurt_index;
+    int _krist_index;
+    int _dave_index;
     std::vector<Obstacle*> _obstacles;
 
     // Class methods
@@ -181,22 +211,30 @@ class HawkEye : public RTT::TaskContext{
     bool loadTemplates();
     bool loadBackground();
     void captureBackground();
+    double captureTime();
     bool startCamera();
     void processImage();
     void backgroundSubtraction(std::vector<std::vector<cv::Point> > *contours, std::vector<cv::Vec4i> *hierarchy);
     void findRobots();
-    void addRoboBox(double *robottocks, double *pattern);
+    int addRoboBox(double *robottocks, double *pattern);
     void findBigObstacles(cv::RotatedRect rotrect, std::vector<cv::Point> c, int cx, int cy, int cradius, std::vector<std::vector<cv::Point> > *contours, std::vector<cv::Vec4i> *hierarchy);
     void mergeContourWithRobot(cv::RotatedRect robobox, std::vector<cv::Point> contourPoints, std::vector<std::vector<cv::Point> > *contours, std::vector<cv::Vec4i> *hierarchy); //found a contour which contains the robot, blank it out
     void processResults();
     void writeResults();
     void drawResults();
-    std::vector<double> transform(const std::vector<double> &values);
+    std::vector<double> transform(const std::vector<double> &point);
+    std::vector<double> invtransform(const std::vector<double> &point);
+    std::vector<double> transformMarkers(const std::vector<double> &values);
     void printedMatch(cv::Mat roi, cv::Mat template_circle, cv::Mat template_star1, cv::Mat template_star2, cv::Mat template_cross, cv::Mat template_cross_rot, cv::Mat template_circlehollow, bool *success, double *templ_locs, double *robottocks, double *starpat, double *crosspat, double *circlehollowpat, float matchThresh, std::vector<int> rorig);
     void oneObject(cv::Mat image, cv::Mat templim, float thresh, int *w, int *h, double *max_val, cv::Point *temploc);
     void multiObject(cv::Mat image, cv::Mat templim, float thresh, int *w, int *h, double *max_val, std::vector<int> *maxpoints);
     void showFrame();
+    std::vector<int> mixWithWhite(int r, int g, int b, double perc_white);
 
+
+    std::vector<int> _mouse_position;
+    std::vector<int> _mouseclick_position;
+    // void mouseCallBack(int event, int x, int y, int flags, void* userdata)
 
     // TCP related methods
     bool connectToServer();
@@ -211,6 +249,8 @@ class HawkEye : public RTT::TaskContext{
 
   public:
     HawkEye(std::string const& name);
+    void setMousePosition(int x, int y);
+    void setMouseClickPosition(int x, int y);
     bool configureHook();
     bool startHook();
     void updateHook();

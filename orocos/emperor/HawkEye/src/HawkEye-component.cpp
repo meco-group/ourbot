@@ -4,14 +4,29 @@
 using namespace RTT;
 
 HawkEye::HawkEye(std::string const& name) : TaskContext(name, PreOperational),
- _kurt(7,0.), _dave(7,0.), _krist(7,0.),
-_found_kurt(false), _found_dave(false), _found_krist(false)
+ _kurt(7,0.), _dave(7,0.), _krist(7,0.), _est_pose_kurt(3), _est_pose_krist(3),
+ _est_pose_dave(3), _found_kurt(false), _found_dave(false), _found_krist(false),
+ _mouse_position(2, -100), _mouseclick_position(2, -100),
+ _kurt_index(0), _krist_index(0), _dave_index(0)
 {
   // Ports
   ports()->addPort("obstacles_state_port", _obstacles_state_port).doc("Obstacles state output port");
   ports()->addPort("kurt_state_port", _kurt_state_port).doc("Kurt's state output port");
   ports()->addPort("dave_state_port", _dave_state_port).doc("Dave's state output port");
   ports()->addPort("krist_state_port", _krist_state_port).doc("Krist's state output port");
+
+  ports()->addPort("est_pose_kurt_port", _est_pose_kurt_port).doc("Estimated pose from Kurt");
+  ports()->addPort("est_pose_krist_port", _est_pose_krist_port).doc("Estimated pose from Krist");
+  ports()->addPort("est_pose_dave_port", _est_pose_dave_port).doc("Estimated pose from Dave");
+
+  ports()->addPort("ref_x_kurt_port", _ref_x_kurt_port).doc("Reference x of Kurt");
+  ports()->addPort("ref_x_krist_port", _ref_x_krist_port).doc("Reference x of Krist");
+  ports()->addPort("ref_x_dave_port", _ref_x_dave_port).doc("Reference x of Dave");
+  ports()->addPort("ref_y_kurt_port", _ref_y_kurt_port).doc("Reference y of Kurt");
+  ports()->addPort("ref_y_krist_port", _ref_y_krist_port).doc("Reference y of Krist");
+  ports()->addPort("ref_y_dave_port", _ref_y_dave_port).doc("Reference y of Dave");
+
+
   // Operation
   addOperation("captureBackground", &HawkEye::captureBackground, this);
   // Properties
@@ -37,6 +52,10 @@ _found_kurt(false), _found_dave(false), _found_krist(false)
   addProperty("cnt_approx", _cntapprox).doc("Parameter of approxPolyDP which approximates a polygon/contour by antother, simplified, polygon/contour");
   addProperty("diff_threshold", _diffthresh).doc("Threshold for background subtraction for captured image vs background: determines diff image");
   addProperty("match_threshold", _matchThresh).doc("Threshold for template matching");
+
+  addProperty("color_kurt", _color_kurt).doc("RGB for Kurt plotting");
+  addProperty("color_krist", _color_krist).doc("RGB for Krist plotting");
+  addProperty("color_dave", _color_dave).doc("RGB for Dave plotting");
 
   HAWKEYE_DEBUG_PRINT("HawkEye constructed!")
 }
@@ -141,15 +160,7 @@ bool HawkEye::connectToServer(){
   return true;
 }
 
-void HawkEye::showFrame(){
-    cv::Mat image2;
-    cv::resize(_captured_frame, image2, cv::Size(_plot_image_size[0], _plot_image_size[1]), 0, 0, cv::INTER_NEAREST);
-    cv::imshow("Frame", image2);
-    cv::waitKey(25);
-    if(_save_images){
-      cv::imwrite(_image_path + "4final-" + std::to_string(_capture_time) + ".png" , _captured_frame);
-    }
-}
+
 
 bool HawkEye::sendImage(const cv::Mat& image){
   cv::Mat image2;
@@ -183,7 +194,7 @@ void HawkEye::updateHook(){
 
   // HAWKEYE_DEBUG_PRINT("HawkEye executes updateHook!")
   clock_t end = clock();
-  std::cout << "HawkEye update took " << double(end-begin)/CLOCKS_PER_SEC << "s" << std::endl;
+  // std::cout << "HawkEye update took " << double(end-begin)/CLOCKS_PER_SEC << "s" << std::endl;
 }
 
 void HawkEye::stopHook() {
@@ -488,6 +499,14 @@ void HawkEye::bayer10_to_rgb24(uint16_t *pBay, uint8_t *pRGB24, int width, int h
   }
 }
 
+double HawkEye::captureTime(){
+  uint32_t ms;
+  double s;
+  ms = std::chrono::duration_cast< std::chrono::milliseconds >(std::chrono::system_clock::now().time_since_epoch()).count();
+  s = ms * double(std::chrono::milliseconds::period::num) / std::chrono::milliseconds::period::den;
+  return s;
+}
+
 void HawkEye::capture_image(){ //save the current image in _f
   struct v4l2_buffer buf = {0};
   buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -498,12 +517,12 @@ void HawkEye::capture_image(){ //save the current image in _f
   FD_SET(_fd, &fds);
   struct timeval tv = {0};
   tv.tv_sec = 2;  //tv_sec is number of whole seconds of elapsed time, so amount of seconds to wait?
+  _capture_time = captureTime();
   int r = select(_fd+1, &fds, NULL, NULL, &tv);
   if(-1 == r){
     pabort("Error while waiting for frame");
   }
   //Todo: _capture time should be set here? or after xioctl?
-  _capture_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
   if(-1 == xioctl(_fd, VIDIOC_DQBUF, &buf)){
     pabort("Error while retrieving frame");
   }
@@ -691,38 +710,38 @@ void HawkEye::findRobots(){
       if (starpat[4] != 0){ //if a hollow star was detected (max_val != 0)
           HAWKEYE_DEBUG_PRINT("Found robot with hollow star pattern (Kurt)!")
           HAWKEYE_DEBUG_PRINT("max_val starpat in findrobots():"<<starpat[4])
-          std::cout << "kurt found" << std::endl;
-          for (int k = 0; k<=6 ; k++){
+          // std::cout << "kurt found" << std::endl;
+          for (int k = 0; k<6 ; k++){
             _kurt[k] = templ_locs[k];
             HAWKEYE_DEBUG_PRINT("putting templ_locs in _kurt: "<<templ_locs[k])
             _found_kurt = true;
           }
-          _kurt[7] = (double)_capture_time; //add timestamp
-          addRoboBox(robottocks, starpat);
+          _kurt[6] = _capture_time; //add timestamp
+          _kurt_index = addRoboBox(robottocks, starpat);
       }
       if (crosspat[4] != 0){ //if a cross star was detected (max_val != 0)
           HAWKEYE_DEBUG_PRINT("Found robot with cross pattern (Dave)!")
           HAWKEYE_DEBUG_PRINT("max_val crosspat in findrobots():"<<crosspat[4])
-          std::cout << "dave found" << std::endl;
+          // std::cout << "dave found" << std::endl;
 
-          for (int k = 0; k<=6 ; k++){
+          for (int k = 0; k<6 ; k++){
             _dave[k] = templ_locs[k];
             _found_dave = true;
           }
-          _dave[7] = (double)_capture_time; //add timestamp
-          addRoboBox(robottocks, crosspat);
+          _dave[6] = _capture_time; //add timestamp
+          _dave_index = addRoboBox(robottocks, crosspat);
       }
       if (circlehollowpat[4] != 0){ //if a hollow circle was detected (max_val != 0)
           HAWKEYE_DEBUG_PRINT("Found robot with hollow circle pattern (Krist)!")
-          std::cout << "krist found" << std::endl;
+          // std::cout << "krist found" << std::endl;
 
           HAWKEYE_DEBUG_PRINT("max_val circlehollow in findrobots():"<<circlehollowpat[4])
-          for (int k = 0; k<=6 ; k++){
+          for (int k = 0; k<6 ; k++){
             _krist[k] = templ_locs[k];
             _found_krist = true;
           }
-          _krist[7] = (double)_capture_time; //add timestamp
-          addRoboBox(robottocks, circlehollowpat);
+          _krist[6] = _capture_time; //add timestamp
+          _krist_index = addRoboBox(robottocks, circlehollowpat);
       }
   }
   else{
@@ -730,7 +749,7 @@ void HawkEye::findRobots(){
   }
 }
 
-void HawkEye::addRoboBox(double *robottocks, double *pattern){
+int HawkEye::addRoboBox(double *robottocks, double *pattern){
   double lineside = (robottocks[2] - robottocks[0])*(pattern[1]-robottocks[1]) - (robottocks[3] - robottocks[1])*(pattern[0] - robottocks[0]); //(circle2_x-circle1_x)*(star_y-circle1_y) - (circle2_y-circle1_y)*(star_x-circle1_x)
   double moddirection = 180/M_PI*(std::atan2((robottocks[3]-robottocks[1]),(robottocks[2]-robottocks[0])));
   double robdirection;
@@ -768,6 +787,7 @@ void HawkEye::addRoboBox(double *robottocks, double *pattern){
   cv::RotatedRect robobox;
   robobox = cv::RotatedRect(cv::Point2f(robcen[0],robcen[1]), cv::Size2f(90,130), robdirection); //fixed size of box: [x,y,w,h,theta]
   _roboboxes.push_back(robobox);
+  return _roboboxes.size()-1;
 }
 
 void HawkEye::findBigObstacles(cv::RotatedRect rotrect, std::vector<cv::Point> c, int cx, int cy, int cradius, std::vector<std::vector<cv::Point> > *contours, std::vector<cv::Vec4i> *hierarchy){
@@ -926,10 +946,8 @@ void HawkEye::processResults(){
   }
 
   HAWKEYE_DEBUG_PRINT("filter_boxes.size(): "<<filter_boxes.size())
-  if (filter_boxes.size() > 0){ // if-loop was executed for at least one of the roboboxes
-    _rectanglesDetected = filter_boxes; //overwrite detected rectangles vector with filtered version
-    _circlesDetected = filter_circles;
-  }
+  _rectanglesDetected = filter_boxes; //overwrite detected rectangles vector with filtered version
+  _circlesDetected = filter_circles;
   HAWKEYE_DEBUG_PRINT("rectangles_detected_size: "<<_rectanglesDetected.size())
 
   if (_save_images){ //this part only needs to be executed if _save_images is true
@@ -1040,18 +1058,17 @@ void HawkEye::writeResults(){
 
   //Put data on output ports
   _obstacles_state_port.write(obstacleVec);
-
   if (_found_kurt){
-    _kurt_state_port.write(transform(_kurt));
+    _kurt_state_port.write(transformMarkers(_kurt));
     std::vector<double> kurtValues(7);
   }
 
   if (_found_dave){
-    _dave_state_port.write(transform(_dave));
+    _dave_state_port.write(transformMarkers(_dave));
   }
 
   if (_found_krist){
-    _krist_state_port.write(transform(_krist));
+    _krist_state_port.write(transformMarkers(_krist));
   }
 }
 
@@ -1059,55 +1076,202 @@ void HawkEye::drawResults(){
   int circleRadius;
   cv::Point2i circleCenter;
   // obstacles
-  std::cout << _obstacles.size() << std::endl;
   for (uint k = 0 ; k < _obstacles.size(); k++){
     if(_obstacles[k]->getShape() == CIRCLE){
       circleRadius = static_cast<Circle*>(_obstacles[k])->getRadius();
       circleCenter.x = _obstacles[k]->getPos()[0];
       circleCenter.y = _obstacles[k]->getPos()[1];
-      cv::circle(_captured_frame, circleCenter, circleRadius, cv::Scalar(0,0,255), 2);
+      cv::circle(_captured_frame, circleCenter, circleRadius, cv::Scalar(77, 76, 75), 2);
     }
     if(_obstacles[k]->getShape() == RECTANGLE){
       cv::RotatedRect rRect = cv::RotatedRect(cv::Point2f(_obstacles[k]->getPos()[0],_obstacles[k]->getPos()[1]), cv::Size2f(static_cast<Rectangle*>(_obstacles[k])->getWidth(),static_cast<Rectangle*>(_obstacles[k])->getLength()), static_cast<Rectangle*>(_obstacles[k])->getTheta());
       cv::Point2f vertices[4];
       rRect.points(vertices);
       for (int k = 0; k < 4; k++){
-        cv::line(_captured_frame, vertices[k], vertices[(k+1)%4], cv::Scalar(0,0,255), 2);
+        cv::line(_captured_frame, vertices[k], vertices[(k+1)%4], cv::Scalar(77, 76, 75), 2);
       }
     }
   }
   // robots
   circleRadius = 10;
+  cv::Point2f vertices[4];
+  std::vector<cv::Point2i > curve;
   if (_found_kurt){
+    // markers
     for (int i=0; i<3; i++){
       circleCenter.x = _kurt[2*i];
       circleCenter.y = _kurt[2*i+1];
-      cv::circle(_captured_frame, circleCenter, circleRadius, cv::Scalar(255,0,0), 2);
+      cv::circle(_captured_frame, circleCenter, circleRadius, cv::Scalar(_color_kurt[2],_color_kurt[1],_color_kurt[0]), 2);
+    }
+    // robot contour
+    _roboboxes[_kurt_index].points(vertices);
+    for (int k=0; k<4; k++){
+      cv::line(_captured_frame, vertices[k], vertices[(k+1)%4], cv::Scalar(_color_kurt[2],_color_kurt[1],_color_kurt[0]), 2);
+    }
+    // estimated pose
+    _est_pose_kurt_port.read(_est_pose_kurt);
+    std::vector<double> position(2);
+    std::vector<double> pos_or(2);
+    position[0] = _est_pose_kurt[0];
+    position[1] = _est_pose_kurt[1];
+    double orientation = _est_pose_kurt[2];
+    pos_or[0] = position[0]+0.1*cos(orientation);
+    pos_or[1] = position[1]+0.1*sin(orientation);
+    position = invtransform(position);
+    pos_or = invtransform(pos_or);
+    cv::circle(_captured_frame, cv::Point2i(position[0], position[1]), 5, cv::Scalar(_color_kurt[2],_color_kurt[1],_color_kurt[0]), -3);
+    cv::line(_captured_frame, cv::Point2i(position[0], position[1]), cv::Point2i(pos_or[0], pos_or[1]), cv::Scalar(_color_kurt[2],_color_kurt[1],_color_kurt[0]), 3);
+    // reference
+    _ref_x_kurt_port.read(_ref_x_kurt);
+    _ref_y_kurt_port.read(_ref_y_kurt);
+    curve.clear();
+    for (uint t=0; t<_ref_x_kurt.size(); t++){
+      position[0] = _ref_x_kurt[t];
+      position[1] = _ref_y_kurt[t];
+      position = invtransform(position);
+      curve.push_back(cv::Point2i(position[0], position[1]));
+    }
+    std::vector<int> color = mixWithWhite(_color_kurt[0], _color_kurt[1], _color_kurt[2], 80.);
+    for (uint t=0; t<curve.size()-1; t++){
+      cv::line(_captured_frame, curve[t], curve[t+1], cv::Scalar(color[2], color[1], color[0]), 2);
     }
   }
   if (_found_krist){
+    // markers
     for (int i=0; i<3; i++){
       circleCenter.x = _krist[2*i];
       circleCenter.y = _krist[2*i+1];
-      cv::circle(_captured_frame, circleCenter, circleRadius, cv::Scalar(255,0,0), 2);
+      cv::circle(_captured_frame, circleCenter, circleRadius, cv::Scalar(_color_krist[2],_color_krist[1],_color_krist[0]), 2);
+    }
+    // robot contour
+    _roboboxes[_krist_index].points(vertices);
+    for (int k=0; k<4; k++){
+      cv::line(_captured_frame, vertices[k], vertices[(k+1)%4], cv::Scalar(_color_krist[2],_color_krist[1],_color_krist[0]), 2);
+    }
+    // estimated pose
+    _est_pose_krist_port.read(_est_pose_krist);
+    std::vector<double> position(2);
+    std::vector<double> pos_or(2);
+    position[0] = _est_pose_krist[0];
+    position[1] = _est_pose_krist[1];
+    double orientation = _est_pose_krist[2];
+    pos_or[0] = position[0]+0.1*cos(orientation);
+    pos_or[1] = position[1]+0.1*sin(orientation);
+    position = invtransform(position);
+    pos_or = invtransform(pos_or);
+    cv::circle(_captured_frame, cv::Point2i(position[0], position[1]), 5, cv::Scalar(_color_krist[2],_color_krist[1],_color_krist[0]), -3);
+    cv::line(_captured_frame, cv::Point2i(position[0], position[1]), cv::Point2i(pos_or[0], pos_or[1]), cv::Scalar(_color_krist[2],_color_krist[1],_color_krist[0]), 3);
+    // reference
+    _ref_x_krist_port.read(_ref_x_krist);
+    _ref_y_krist_port.read(_ref_y_krist);
+    curve.clear();
+    for (uint t=0; t<_ref_x_krist.size(); t++){
+      position[0] = _ref_x_krist[t];
+      position[1] = _ref_y_krist[t];
+      position = invtransform(position);
+      curve.push_back(cv::Point2i(position[0], position[1]));
+    }
+    std::vector<int> color = mixWithWhite(_color_krist[0], _color_krist[1], _color_krist[2], 80.);
+    for (uint t=0; t<curve.size()-1; t++){
+      cv::line(_captured_frame, curve[t], curve[t+1], cv::Scalar(color[2], color[1], color[0]), 2);
     }
   }
   if (_found_dave){
+    // markers
     for (int i=0; i<3; i++){
       circleCenter.x = _dave[2*i];
       circleCenter.y = _dave[2*i+1];
-      cv::circle(_captured_frame, circleCenter, circleRadius, cv::Scalar(255,0,0), 2);
+      cv::circle(_captured_frame, circleCenter, circleRadius, cv::Scalar(_color_dave[2],_color_dave[1],_color_dave[0]), 2);
+    }
+    // robot contour
+    _roboboxes[_dave_index].points(vertices);
+    for (int k=0; k<4; k++){
+      cv::line(_captured_frame, vertices[k], vertices[(k+1)%4], cv::Scalar(_color_dave[2],_color_dave[1],_color_dave[0]), 2);
+    }
+    // estimated pose
+    _est_pose_dave_port.read(_est_pose_dave);
+    std::vector<double> position(2);
+    std::vector<double> pos_or(2);
+    position[0] = _est_pose_dave[0];
+    position[1] = _est_pose_dave[1];
+    double orientation = _est_pose_dave[2];
+    pos_or[0] = position[0]+0.1*cos(orientation);
+    pos_or[1] = position[1]+0.1*sin(orientation);
+    position = invtransform(position);
+    pos_or = invtransform(pos_or);
+    cv::circle(_captured_frame, cv::Point2i(position[0], position[1]), 5, cv::Scalar(_color_dave[2],_color_dave[1],_color_dave[0]), -3);
+    cv::line(_captured_frame, cv::Point2i(position[0], position[1]), cv::Point2i(pos_or[0], pos_or[1]), cv::Scalar(_color_dave[2],_color_dave[1],_color_dave[0]), 3);
+    // reference
+    _ref_x_dave_port.read(_ref_x_dave);
+    _ref_y_dave_port.read(_ref_y_dave);
+    curve.clear();
+    for (uint t=0; t<_ref_x_dave.size(); t++){
+      position[0] = _ref_x_dave[t];
+      position[1] = _ref_y_dave[t];
+      position = invtransform(position);
+      curve.push_back(cv::Point2i(position[0], position[1]));
+    }
+    std::vector<int> color = mixWithWhite(_color_dave[0], _color_dave[1], _color_dave[2], 80.);
+    for (uint t=0; t<curve.size()-1; t++){
+      cv::line(_captured_frame, curve[t], curve[t+1], cv::Scalar(color[2], color[1], color[0]), 2);
     }
   }
+  // coordinate system
+  cv::circle(_captured_frame, cv::Point2i(0.,_captured_frame.size().height), 10, cv::Scalar(77, 76, 75), -3);
+  cv::line(_captured_frame, cv::Point2i(0., _captured_frame.size().height), cv::Point2i(30., _captured_frame.size().height), cv::Scalar(77, 76, 75), 3);
+  cv::line(_captured_frame, cv::Point2i(0., _captured_frame.size().height), cv::Point2i(0., _captured_frame.size().height-30.), cv::Scalar(77, 76, 75), 3);
+  cv::line(_captured_frame, cv::Point2i(_pix2meter, _captured_frame.size().height), cv::Point2i(_pix2meter,_captured_frame.size().height-10.), cv::Scalar(77, 76, 75), 3);
+  cv::line(_captured_frame, cv::Point2i(2*_pix2meter, _captured_frame.size().height), cv::Point2i(2*_pix2meter,_captured_frame.size().height-10.), cv::Scalar(77, 76, 75), 3);
+  cv::line(_captured_frame, cv::Point2i(3*_pix2meter, _captured_frame.size().height), cv::Point2i(3*_pix2meter,_captured_frame.size().height-10.), cv::Scalar(77, 76, 75), 3);
+  cv::line(_captured_frame, cv::Point2i(4*_pix2meter, _captured_frame.size().height), cv::Point2i(4*_pix2meter,_captured_frame.size().height-10.), cv::Scalar(77, 76, 75), 3);
+  cv::line(_captured_frame, cv::Point2i(0.,_captured_frame.size().height-_pix2meter), cv::Point2i(10.,_captured_frame.size().height-_pix2meter), cv::Scalar(77, 76, 75), 3);
+  cv::line(_captured_frame, cv::Point2i(0.,_captured_frame.size().height-2*_pix2meter), cv::Point2i(10.,_captured_frame.size().height-2*_pix2meter), cv::Scalar(77, 76, 75), 3);
 
-  for(uint k=0; k<_roboboxes.size(); k++){
-    cv::Point2f vertices[4];
-    _roboboxes[k].points(vertices);
-    for (int k = 0; k < 4; k++){
-      cv::line(_captured_frame, vertices[k], vertices[(k+1)%4], cv::Scalar(255,0,0), 2);
+  showFrame();
+}
+
+
+
+std::vector<int> HawkEye::mixWithWhite(int r, int g, int b, double perc_white){
+  int r_m = ((100. - perc_white)*r + perc_white)/100.;
+  int g_m = ((100. - perc_white)*g + perc_white)/100.;
+  int b_m = ((100. - perc_white)*b + perc_white)/100.;
+  std::vector<int> ret({r_m, g_m, b_m});
+  return ret;
+}
+
+void HawkEye::setMousePosition(int x, int y){
+  _mouse_position[0] = x;
+  _mouse_position[1] = y;
+}
+
+void HawkEye::setMouseClickPosition(int x, int y){
+  _mouseclick_position[0] = x;
+  _mouseclick_position[1] = y;
+}
+
+void mouseCallBack(int event, int x, int y, int flags, void* data){
+  HawkEye* hawkeye = (HawkEye*) data;
+  if (event == cv::EVENT_LBUTTONDOWN){
+    if (flags == 40){ // ctrl + left mouse button
+      hawkeye->setMouseClickPosition(x, y);
     }
   }
-  showFrame();
+}
+
+void HawkEye::showFrame(){
+  cv::Mat image2;
+  cv::resize(_captured_frame, image2, cv::Size(_plot_image_size[0], _plot_image_size[1]), 0, 0, cv::INTER_NEAREST);
+  // image2 = _captured_frame;
+  cv::namedWindow("Frame", 1);
+  cv::setMouseCallback("Frame", mouseCallBack, (void*)this);
+  cv::circle(image2, cv::Point2i(_mouseclick_position[0], _mouseclick_position[1]), 30, cv::Scalar(77, 76, 75), 2);
+  cv::circle(image2, cv::Point2i(_mouseclick_position[0], _mouseclick_position[1]), 10, cv::Scalar(77, 76, 75), -2);
+  cv::imshow("Frame", image2);
+  cv::waitKey(25);
+  if(_save_images){
+    cv::imwrite(_image_path + "4final-" + std::to_string(_capture_time) + ".png" , _captured_frame);
+  }
 }
 
 
@@ -1531,37 +1695,35 @@ void HawkEye::multiObject(cv::Mat image, cv::Mat templim, float thresh, int *w, 
   }
 }
 
-std::vector<double> HawkEye::transform(const std::vector<double> &values){
-  std::vector<double> values2(7);
-  for (int k = 1 ; k<=5 ; k+=2){ //select y-values
-    values2[k] = -values[k]+_f.size().height; // invert y and shift over height
-    values2[k-1] = values[k-1];  //keep x-values
-    HAWKEYE_DEBUG_PRINT("Values: "<<values[k])
-    HAWKEYE_DEBUG_PRINT("Values2: "<<values2[k])
-    HAWKEYE_DEBUG_PRINT(_f.size().height)
+std::vector<double> HawkEye::transformMarkers(const std::vector<double> &values){
+  std::vector<double> values_tf(7);
+  std::vector<double> point(2);
+  std::vector<double> point_tf(2);
+  for (int k=0; k<3; k++){
+    point[0] = values[2*k];
+    point[1] = values[2*k+1];
+    point_tf = transform(point);
+    values_tf[2*k] = point_tf[0];
+    values_tf[2*k+1] = point_tf[1];
   }
-  // Use inverse of camera matrix to compute coordinates in world frame
-  // camera_matrix = [fx 0 cx ; 0 fy cy ; 0 0 1]
-  // get inverse via wolfram alpha: {{a,0,c },{ 0,b,d },{ 0,0,1}}^(-1)
-  // camera_matrix^(-1) = [1/fx 0 -cx/fx ; 0 1/fy -cy/fy ; 0 0 1]
-  // world_coords = camera_matrix^(-1)*local_coords and z = 1
-  // x_w = (x_l-cx)*1/fx
-  // y_w = (y_l-cy)*1/fy
-  // for (int k = 0 ; k<=4 ; k+=2){
-  //   values2[k] = values[k]/_camera_matrix[0];  //Beware, use values, not values2!
-  //   values2[k+1] = values2[k+1]/_camera_matrix[2]; //Beware, use values2, since y was adapted
-  // }
-
-  // You should also use rotation and translation vectors!
-
-  for (int k = 0 ; k<=6 ; k++){  //scale pixels to meter
-    values2[k] = values2[k]*1.0/_pix2meter;
-  }
-  values2[6] = values[6];
-  HAWKEYE_DEBUG_PRINT("Template positions: "<<values2[0]<<", "<<values2[1]<<", "<<values2[2]<<", "<<values2[3]<<", "<<values2[4]<<", "<<values2[5]<<" time:"<<(unsigned long)values2[6]<<"time2: "<<_capture_time)
-  HAWKEYE_DEBUG_PRINT("Before transform: "<<values[0]<<", "<<values[1]<<", "<<values[2]<<", "<<values[3]<<", "<<values[4]<<", "<<values[5]<<" time:"<<(unsigned long)values[6]<<"time2: "<<_capture_time)
-  return values2;
+  values_tf[6] = values[6];
+  return values_tf;
 }
+
+std::vector<double> HawkEye::transform(const std::vector<double> &point){
+  std::vector<double> point_tf(2);
+  point_tf[0] = (1.0/_pix2meter)*point[0];
+  point_tf[1] = (1.0/_pix2meter)*(-point[1] + _f.size().height); // invert y and shift over height
+  return point_tf;
+}
+
+std::vector<double> HawkEye::invtransform(const std::vector<double> &point){
+  std::vector<double> point_tf(2);
+  point_tf[0] = _pix2meter*point[0];
+  point_tf[1] = -_pix2meter*point[1] + _f.size().height; // invert y and shift over height
+  return point_tf;
+}
+
 /*
  * Using this macro, only one component may live
  * in one library *and* you may *not* link this library

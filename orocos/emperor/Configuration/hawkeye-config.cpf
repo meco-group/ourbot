@@ -28,6 +28,7 @@
     <simple name="image_path" type="string">
         <description>Path to save/find images</description>
         <value>./HawkEye/images/</value>
+        <!-- <value>./images/</value> -->
     </simple>
     <simple name="save_images" type="boolean">
         <description>Save captured images?</description>
@@ -121,4 +122,41 @@
         <description>Threshold for template matching</description>
         <value>0.6</value>
     </simple>
+
+    <struct name="color_kurt" type="ints">
+        <description>RGB for Kurt plotting</description>
+        <simple name="R" type="long">
+          <value>17</value>
+        </simple>
+        <simple name="G" type="long">
+          <value>110</value>
+        </simple>
+        <simple name="B" type="long">
+          <value>138</value>
+        </simple>
+    </struct>
+    <struct name="color_krist" type="ints">
+        <description>RGB for Krist plotting</description>
+        <simple name="R" type="long">
+          <value>138</value>
+        </simple>
+        <simple name="G" type="long">
+          <value>31</value>
+        </simple>
+        <simple name="B" type="long">
+          <value>17</value>
+        </simple>
+    </struct>
+    <struct name="color_dave" type="ints">
+        <description>RGB for Dave plotting</description>
+        <simple name="R" type="long">
+          <value>17</value>
+        </simple>
+        <simple name="G" type="long">
+          <value>138</value>
+        </simple>
+        <simple name="B" type="long">
+          <value>19</value>
+        </simple>
+    </struct>
 </properties>
