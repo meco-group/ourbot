@@ -29,7 +29,7 @@ hosts = col.OrderedDict()
 hosts['kurt'] = '192.168.11.121'
 # hosts['krist'] = '192.168.11.122'
 ignore = []
-exclude = ['build', 'include', 'bin', 'lib', 'obj', '.tb_history']
+exclude = ['build', 'include', 'bin', 'lib', 'obj', '.tb_history', 'Toolbox']
 
 
 def create_component(ssh, component):

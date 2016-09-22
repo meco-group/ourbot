@@ -121,6 +121,22 @@ return rfsm.state {
         -- gamepad
         dp:addPeer('communicator', 'gamepad')
         if not addOutgoing('gamepad', 'cmd_velocity_port', 4002, robots) then rfsm.send_events(fsm,'e_failed') return end
+        -- hawkeye
+        dp:addPeer('communicator', 'hawkeye')
+        if not addOutgoing('hawkeye', 'kurt_state_port', 6050, kurt) then rfsm.send_events(fsm, 'e_failed') return end
+        if not addOutgoing('hawkeye', 'krist_state_port', 6051, kurt) then rfsm.send_events(fsm, 'e_failed') return end
+        if not addOutgoing('hawkeye', 'dave_state_port', 6052, kurt) then rfsm.send_events(fsm, 'e_failed') return end
+        if not addIncoming('hawkeye', 'est_pose_kurt_port', 6000) then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('hawkeye', 'est_pose_krist_port', 6001) then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('hawkeye', 'est_pose_dave_port', 6002) then rfsm.send_events(fsm,'e_failed') return end
+
+        if not addIncoming('hawkeye', 'ref_x_kurt_port', 6010) then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('hawkeye', 'ref_x_krist_port', 6011) then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('hawkeye', 'ref_x_dave_port', 6012) then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('hawkeye', 'ref_7_kurt_port', 6020) then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('hawkeye', 'ref_7_krist_port', 6021) then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('hawkeye', 'ref_7_dave_port', 6022) then rfsm.send_events(fsm,'e_failed') return end
+
         -- deployer (added as last: highest priority)
         dp:addPeer('communicator', 'lua')
         if not addIncoming('lua', 'deployer_fsm_event_port', 4001) then rfsm.send_events(fsm, 'e_failed') return end

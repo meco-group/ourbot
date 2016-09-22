@@ -4,32 +4,67 @@
   <struct name="psd_state" type="array">
     <description>Acceleration-like squared noise levels for x,y,theta (m/s^2)^2</description>
     <simple name="x" type="double">
-      <value>1.</value>
+      <!-- <value>1.</value> -->
+      <value>10000.</value>
     </simple>
     <simple name="y" type="double">
-      <value>1.</value>
+      <!-- <value>1.</value> -->
+      <value>10000.</value>
     </simple>
     <simple name="theta" type="double">
-      <value>0.1</value>
+      <!-- <value>0.1</value> -->
+      <value>10000.</value>
     </simple>
   </struct>
 
   <struct name="sigma_odo" type="array">
     <description>Uncertainty on measured velocity (m/s)^2</description>
     <simple name="x" type="double">
-      <value>1.</value>
+      <!-- <value>1000.</value> -->
+      <value>10.</value>
     </simple>
     <simple name="y" type="double">
-      <value>2.</value>
+      <!-- <value>1000.</value> -->
+      <value>1.</value>
     </simple>
     <simple name="theta" type="double">
-      <value>0.1</value>
+      <value>1.</value>
+      <!-- <value>1000.</value> -->
     </simple>
   </struct>
 
+  <simple name="time_offset" type="double">
+    <value>0.</value>
+  </simple>
+
   <simple name="sigma_markers" type="double">
     <description>Uncertainty on measured markers (m)^2</description>
-    <value>0.1</value>
+    <!-- <value>0.1</value> -->
+    <!-- <value>0.005</value> -->
+    <!-- <value>0.1</value> -->
+    <value>0.01</value>
   </simple>
+
+  <struct name="marker_locations" type="array">
+    <description>Location of markers in local frame [x1, y1, x2, y2, x3, y3] (m)</description>
+    <simple name="x1" type="double">
+      <value>-0.018</value>
+    </simple>
+    <simple name="y1" type="double">
+      <value>-0.0775</value>
+    </simple>
+    <simple name="x2" type="double">
+      <value>-0.018</value>
+    </simple>
+    <simple name="y2" type="double">
+      <value>0.0775</value>
+    </simple>
+    <simple name="x3" type="double">
+      <value>0.093</value>
+    </simple>
+    <simple name="y3" type="double">
+      <value>0.0</value>
+    </simple>
+  </struct>
 
 </properties>

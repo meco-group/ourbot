@@ -26,9 +26,9 @@ username = 'odroid'
 password = 'odroid'
 
 hosts = col.OrderedDict()
-# hosts['dave'] = '192.168.11.120'
 hosts['kurt'] = '192.168.11.121'
 # hosts['krist'] = '192.168.11.122'
+# hosts['dave'] = '192.168.11.120'
 
 
 def send_file(ftp, ssh, loc_file, rem_file):
@@ -165,7 +165,7 @@ def settings(distributed_mp):
         local_files_ad = [lf+'_' for lf in local_files]
         local_files = [lf+'_' for lf in local_files]
         # update deploy scripts
-        for file in ['deploy.lua', 'deploy_fsm.lua']:
+        for file in ['deploy.lua', 'deploy_fsm.lua', 'Configuration/estimator-config.cpf']:
             local_files.append(os.path.join(current_dir+'/orocos/ourbot', file))
             remote_files.append(os.path.join(remote_root, file))
         # send files
@@ -195,6 +195,7 @@ def deploy():
         cd %s
         rm reports.nc
         echo I am emperor
+        sleep 3
         deployer-gnulinux -s run.ops
         '
         ''' % (local_root)

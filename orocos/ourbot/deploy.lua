@@ -62,7 +62,6 @@ function configureHook()
    dave = rtt.Variable("strings")
    kurt = rtt.Variable("strings")
    krist = rtt.Variable("strings")
-   hawkeye = rtt.Variable("strings")
    emperor = rtt.Variable("strings")
    robots = rtt.Variable("strings")
    broadcast = rtt.Variable("strings")
@@ -71,7 +70,6 @@ function configureHook()
    dave:resize(1)
    kurt:resize(1)
    krist:resize(1)
-   hawkeye:resize(1)
    emperor:resize(1)
    robots:resize(3)
    broadcast:resize(5)
@@ -80,8 +78,7 @@ function configureHook()
    dave:fromtab{trusted_hosts[0]}
    kurt:fromtab{trusted_hosts[1]}
    krist:fromtab{trusted_hosts[2]}
-   hawkeye:fromtab{trusted_hosts[3]}
-   emperor:fromtab{trusted_hosts[5]}
+   emperor:fromtab{trusted_hosts[3]}
    robots:fromtab{trusted_hosts[0], trusted_hosts[1], trusted_hosts[2]}
    broadcast = trusted_hosts
    neighbors = _neighbors:get()
@@ -91,6 +88,8 @@ function configureHook()
       neighbor[i]:resize(1)
       neighbor[i]:fromtab{_neighbors:get()[i]}
    end
+
+   print(emperor)
 
    -- create some variables referering to files
    coordinator_file  = 'Coordinator/coordinator.lua'

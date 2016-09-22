@@ -1,14 +1,19 @@
 local tc = rtt.getTC()
 
--- local scanmatcher   = tc:getPeer('scanmatcher')
-local estimator     = tc:getPeer('estimator')
-local reporter      = tc:getPeer('reporter')
-local io            = tc:getPeer('io')
+local controller      = tc:getPeer('controller')
+local estimator       = tc:getPeer('estimator')
+local reference       = tc:getPeer('reference')
+local reporter        = tc:getPeer('reporter')
+local io              = tc:getPeer('io')
 
-local estimatorUpdate           = estimator:getOperation("update")
-local estimatorInRunTimeError   = estimator:getOperation("inRunTimeError")
--- local scanmatcherInRunTimeError = scanmatcher:getOperation("inRunTimeError")
-local snapshot                  = reporter:getOperation("snapshot")
+local loadTrajectory               = reference:getOperation("loadTrajectory")
+local estimatorUpdate              = estimator:getOperation("update")
+local referenceUpdate              = reference:getOperation("update")
+local controllerUpdate             = controller:getOperation("update")
+local estimatorInRunTimeError      = estimator:getOperation("inRunTimeError")
+local controllerInRunTimeError     = controller:getOperation("inRunTimeError")
+local referenceInRunTimeError      = reference:getOperation("inRunTimeError")
+local snapshot                     = reporter:getOperation("snapshot")
 
 -- variables for the timing diagnostics
 local jitter    = 0
@@ -18,7 +23,7 @@ return rfsm.state {
   rfsm.trans{src = 'initial', tgt = 'idle'},
   rfsm.trans{src = 'idle',    tgt = 'init',   events = {'e_init'}},
   rfsm.trans{src = 'init',    tgt = 'run',    events = {'e_run'}},
-  rfsm.trans{src = 'run',     tgt = 'stop',   events = {'e_stop'}},
+  rfsm.trans{src = 'run',     tgt = 'stop',   events = {'e_stop', 'e_failed'}},
   rfsm.trans{src = 'stop',    tgt = 'run',    events = {'e_restart'}},  -- no reinitiliaziation
   rfsm.trans{src = 'stop',    tgt = 'reset',  events = {'e_reset'}},    -- with reinitialization
   rfsm.trans{src = 'reset',   tgt = 'idle',   events = {'e_done'}},
@@ -38,24 +43,24 @@ return rfsm.state {
         rfsm.send_events(fsm,'e_failed')
         return
       end
+      if not loadTrajectory() then
+        rtt.logl("Error","Could not load trajectory in reference component")
+        rfsm.send_events(fsm,'e_failed')
+        return
+      end
       print("Waiting on Run...")
     end
   },
 
   run = rfsm.state{
     entry = function(fsm)
-      -- if not scanmatcher:start() then
-      --   rtt.logl("Error","Could not start scanmatcher component")
-      --   rfsm.send_events(fsm,'e_failed')
-      --   return
-      -- end
       if not reporter:start() then
         rtt.logl("Error","Could not start reporter component")
         rfsm.send_events(fsm,'e_failed')
         return
       end
-      if not estimator:start() then
-        rtt.logl("Error","Could not start estimator component")
+      if not reference:start() or not estimator:start() or not controller:start() then
+        rtt.logl("Error","Could not start reference/estimator/controller component")
         rfsm.send_events(fsm,'e_failed')
         return
       end
@@ -74,8 +79,10 @@ return rfsm.state {
         prev_start_time = start_time
         start_time      = get_sec()
 
-        -- update estimator
+        -- update reference/estimator/controller
+        referenceUpdate()
         estimatorUpdate()
+        controllerUpdate()
 
         -- take snapshot for logger
         if snapshot_cnt > max_cnt then
@@ -85,16 +92,11 @@ return rfsm.state {
           snapshot_cnt = snapshot_cnt + 1
         end
 
-        if estimatorInRunTimeError() then
-          rtt.logl("Error","RunTimeError in estimator component")
+        if controllerInRunTimeError() or estimatorInRunTimeError() or referenceInRunTimeError() then
+          rtt.logl("Error","RunTimeError in controller/estimator/reference component")
           rfsm.send_events(fsm,'e_failed')
           return
         end
-        -- if scanmatcherInRunTimeError() then
-        --   rtt.logl("Error","RunTimeError in scanmatcher component")
-        --   rfsm.send_events(fsm,'e_failed')
-        --   return
-        -- end
 
         -- check timings of previous iteration
         -- ditch the first two calculations due to the initially wrongly calculated prev_start_time
@@ -124,8 +126,9 @@ return rfsm.state {
 
   stop = rfsm.state{
     entry = function(fsm)
-      -- scanmatcher:stop()
       estimator:stop()
+      reference:stop()
+      controller:stop()
       reporter:stop()
       print("System stopped. Waiting on Restart or Reset...")
     end,
@@ -133,11 +136,7 @@ return rfsm.state {
 
   reset = rfsm.state{
     entry = function(fsm)
-      if not io:stop() then
-        rtt.logl("Error","Could not stop io component")
-        rfsm.send_events(fsm,'e_failed')
-        return
-      end
+      io:stop()
     end,
   }
 }

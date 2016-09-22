@@ -73,6 +73,7 @@ local packages_to_import = {
 local system_config_file      = 'Configuration/system-config.cpf'
 local component_config_files  = {
   estimator       = 'Configuration/estimator-config.cpf',
+  reference       = 'Configuration/reference-config.cpf',
   reporter        = 'Configuration/reporter-config.cpf',
   teensy          = 'Configuration/teensy-config.cpf',
   lidar           = 'Configuration/lidar-config.cpf',
@@ -197,6 +198,15 @@ return rfsm.state {
           dp:addPeer('communicator', 'io')
           if not addIncoming('io', 'cmd_velocity_port', 4002) then rfsm.send_events(fsm, 'e_failed') return end
         end
+        -- estimator
+        dp:addPeer('communicator', 'estimator')
+        if not addIncoming('estimator', 'markers_port', 6050 + index) then rfsm.send_events(fsm, 'e_failed') return end
+        if not addOutgoing('estimator', 'est_pose_tx_port', 6000 + index, emperor) then rfsm.send_events(fsm, 'e_failed') return end
+        -- reference
+        dp:addPeer('communicator', 'reference')
+        if not addOutgoing('reference', 'ref_pose_trajectory_x_tx_port', 6010 + index, emperor) then rfsm.send_events(fsm, 'e_failed') return end
+        if not addOutgoing('reference', 'ref_pose_trajectory_y_tx_port', 6020 + index, emperor) then rfsm.send_events(fsm, 'e_failed') return end
+
         -- distributed motion planning
         if distributed_mp then
           dp:addPeer('communicator', 'motionplanning')
