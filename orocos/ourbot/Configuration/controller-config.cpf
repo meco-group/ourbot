@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "cpf.dtd">
+<properties>
+  <simple name="enable_fb" type="bool">
+    <description>Enable feedback action</description>
+    <value>1</value>
+  </simple>
+
+  <simple name="enable_ff" type="bool">
+    <description>Enable feedforward action</description>
+    <value>1</value>
+  </simple>
+
+  <struct name="state_fb_par" type="array">
+    <description>State feedback parameters: kx, ky, kt</description>
+    <simple name="kx" type="double">
+      <value>-0.1</value>
+    </simple>
+    <simple name="ky" type="double">
+      <value>-0.1</value>
+    </simple>
+    <simple name="kt" type="double">
+      <value>-0.1</value>
+    </simple>
+  </struct>
+
+</properties>

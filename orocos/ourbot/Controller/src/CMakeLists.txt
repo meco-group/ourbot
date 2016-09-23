@@ -10,7 +10,7 @@
 # Creates a component library libController-<target>.so
 # and installs in the directory lib/orocos/Controller/
 #
-orocos_component(Controller ControllerInterface/ControllerInterface-component.hpp ControllerInterface/ControllerInterface-component.cpp FfwController/FfwController-component.hpp FfwController/FfwController-component.cpp)
+orocos_component(Controller ControllerInterface/ControllerInterface-component.hpp ControllerInterface/ControllerInterface-component.cpp PoseController/PoseController-component.hpp PoseController/PoseController-component.cpp)
 #
 # You may add multiple orocos_component statements.
 
@@ -19,7 +19,7 @@ orocos_component(Controller ControllerInterface/ControllerInterface-component.hp
 #
 # Installs in the include/orocos/Controller/ directory
 #
-orocos_install_headers(ControllerInterface/ControllerInterface-component.hpp FfwController/FfwController-component.hpp)
+orocos_install_headers(ControllerInterface/ControllerInterface-component.hpp PoseController/PoseController-component.hpp)
 #
 # You may add multiple orocos_install_headers statements.
 

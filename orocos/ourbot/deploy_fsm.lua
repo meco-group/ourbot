@@ -73,6 +73,7 @@ local packages_to_import = {
 local system_config_file      = 'Configuration/system-config.cpf'
 local component_config_files  = {
   estimator       = 'Configuration/estimator-config.cpf',
+  controller      = 'Configuration/controller-config.cpf',
   reference       = 'Configuration/reference-config.cpf',
   reporter        = 'Configuration/reporter-config.cpf',
   teensy          = 'Configuration/teensy-config.cpf',

@@ -18,7 +18,7 @@ class ControllerInterface : public RTT::TaskContext{
     double _control_sample_rate;
 
     std::vector<double> _ref_pose;
-    std::vector<double> _ref_ffw;
+    std::vector<double> _ref_velocity;
     std::vector<double> _est_pose;
     std::vector<double> _cmd_velocity;
 
@@ -28,7 +28,7 @@ class ControllerInterface : public RTT::TaskContext{
 
     double getControlSampleRate();
     std::vector<double> getRefPose();
-    std::vector<double> getRefFfw();
+    std::vector<double> getRefVelocity();
     std::vector<double> getEstPose();
     std::vector<double> getCmdVelocity();
     void setCmdVelocity(std::vector<double> const&);
