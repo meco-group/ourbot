@@ -5,7 +5,7 @@
 #include <chrono>
 
 Kalman::Kalman(std::string const& name) : EstimatorInterface(name),
-_psd_state(3), _sigma_odo(3), _cal_velocity(3), _est_pose(3), _marker_data(7)
+_psd_state(3), _sigma_odo(3), _cal_velocity(3), _est_pose(3), _est_velocity(3), _marker_data(7)
 {
   // add ports
   ports()->addPort("markers_port", _markers_port).doc("Markers + timestamp detected by camera.");
@@ -56,11 +56,16 @@ bool Kalman::estimateUpdate(){
   }
   _time = captureTime();
   _kf->predict(_time, _state, _P);
-  _est_pose[0] = _state[OFF_X];
-  _est_pose[1] = _state[OFF_Y];
-  _est_pose[2] = _state[OFF_THETA];
+  _est_pose[0] = _state[0];
+  _est_pose[1] = _state[1];
+  _est_pose[2] = _state[2];
+
+  _est_velocity[0] = _state[1];
+  _est_velocity[1] = _state[3];
+  _est_velocity[2] = _state[5];
 
   setEstPose(_est_pose);
+  setEstVelocity(_est_velocity);
   return true;
 }
 

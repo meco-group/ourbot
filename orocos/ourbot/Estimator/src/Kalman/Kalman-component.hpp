@@ -33,6 +33,7 @@ class Kalman : public EstimatorInterface{
 
     std::vector<double> _cal_velocity;
     std::vector<double> _est_pose;
+    std::vector<double> _est_velocity;
     std::vector<double> _marker_data;
 
     double captureTime();
