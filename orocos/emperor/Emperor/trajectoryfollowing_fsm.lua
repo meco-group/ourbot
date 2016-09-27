@@ -51,14 +51,14 @@ return rfsm.state {
     end,
 
     doo = function(fsm)
-      snapshot_cnt = 0
       period = tc:getPeriod()
       max_cnt = 1/(reporter_sample_rate*period)
+      snapshot_cnt = max_cnt
       while true do
         -- take snapshot for logger
-        if snapshot_cnt > max_cnt then
+        if snapshot_cnt >= max_cnt then
           snapshot:send()
-          snapshot_cnt = 0
+          snapshot_cnt = 1
         else
           snapshot_cnt = snapshot_cnt + 1
         end
