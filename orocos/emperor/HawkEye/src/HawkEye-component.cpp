@@ -29,6 +29,7 @@ HawkEye::HawkEye(std::string const& name) : TaskContext(name, PreOperational),
 
   // Operation
   addOperation("captureBackground", &HawkEye::captureBackground, this);
+
   // Properties
   addProperty("video_port_name", _video_port_name).doc("Port name for the video device. Full path required.");
   addProperty("resolution", _reso).doc("Resolution");
@@ -56,6 +57,8 @@ HawkEye::HawkEye(std::string const& name) : TaskContext(name, PreOperational),
   addProperty("color_kurt", _color_kurt).doc("RGB for Kurt plotting");
   addProperty("color_krist", _color_krist).doc("RGB for Krist plotting");
   addProperty("color_dave", _color_dave).doc("RGB for Dave plotting");
+
+  addProperty("marker_locations", _marker_loc).doc("Location of markers in local frame [x1, y1, x2, y2, x3, y3]");
 
   HAWKEYE_DEBUG_PRINT("HawkEye constructed!")
 }
@@ -107,6 +110,8 @@ bool HawkEye::configureHook(){
 }
 
 bool HawkEye::startHook(){
+  cvStartWindowThread();
+  cv::namedWindow("Frame", 1);
   // Set-up udp strem
   if (_stream_images){
     if(!connectToServer()){
@@ -198,10 +203,12 @@ void HawkEye::updateHook(){
 }
 
 void HawkEye::stopHook() {
+  std::cout << "in stophook " << std::endl;
   close(_fd); //Stop the camera
   if(_stream_images){
     close(_socket);
   }
+  cvDestroyAllWindows();
   HAWKEYE_DEBUG_PRINT("HawkEye executes stopping!")
 }
 
@@ -762,10 +769,14 @@ int HawkEye::addRoboBox(double *robottocks, double *pattern){
 
   double xmodcen = 0.5*(robottocks[0] + robottocks[2]);
   double ymodcen = 0.5*(robottocks[1] + robottocks[3]);
+  double xmodcen_m = 0.5*(_marker_loc[0] + _marker_loc[1]);
+  double ymodcen_m = 0.5*(_marker_loc[0] + _marker_loc[1]);
   double dist = sqrt(pow(pattern[0]-xmodcen, 2) + pow(pattern[1]-ymodcen, 2));
-  double scale = dist/100.;
-  double xrobcen = xmodcen + 20.*scale*std::cos(M_PI/180 * robdirection);
-  double yrobcen = ymodcen + 20.*scale*std::sin(M_PI/180 * robdirection);
+  double dist_m = sqrt(pow(_marker_loc[4]-xmodcen_m, 2) + pow(_marker_loc[5]-ymodcen_m, 2));
+  double scale = dist/dist_m;
+  double dist_c_m = sqrt(pow(xmodcen_m, 2) + pow(ymodcen_m, 2));
+  double xrobcen = xmodcen + dist_c_m*scale*std::cos(M_PI/180 * robdirection);
+  double yrobcen = ymodcen + dist_c_m*scale*std::sin(M_PI/180 * robdirection);
 
   robdirection += 90; // north should be 0
   if (robdirection < 0){
@@ -785,7 +796,7 @@ int HawkEye::addRoboBox(double *robottocks, double *pattern){
 
   //Gather results
   cv::RotatedRect robobox;
-  robobox = cv::RotatedRect(cv::Point2f(robcen[0],robcen[1]), cv::Size2f(90,130), robdirection); //fixed size of box: [x,y,w,h,theta]
+  robobox = cv::RotatedRect(cv::Point2f(robcen[0], robcen[1]), cv::Size2f(90, 130), robdirection); //fixed size of box: [x,y,w,h,theta]
   _roboboxes.push_back(robobox);
   return _roboboxes.size()-1;
 }
@@ -1060,7 +1071,6 @@ void HawkEye::writeResults(){
   _obstacles_state_port.write(obstacleVec);
   if (_found_kurt){
     _kurt_state_port.write(transformMarkers(_kurt));
-    std::vector<double> kurtValues(7);
   }
 
   if (_found_dave){
@@ -1122,19 +1132,19 @@ void HawkEye::drawResults(){
     cv::circle(_captured_frame, cv::Point2i(position[0], position[1]), 5, cv::Scalar(_color_kurt[2],_color_kurt[1],_color_kurt[0]), -3);
     cv::line(_captured_frame, cv::Point2i(position[0], position[1]), cv::Point2i(pos_or[0], pos_or[1]), cv::Scalar(_color_kurt[2],_color_kurt[1],_color_kurt[0]), 3);
     // reference
-    _ref_x_kurt_port.read(_ref_x_kurt);
-    _ref_y_kurt_port.read(_ref_y_kurt);
-    curve.clear();
-    for (uint t=0; t<_ref_x_kurt.size(); t++){
-      position[0] = _ref_x_kurt[t];
-      position[1] = _ref_y_kurt[t];
-      position = invtransform(position);
-      curve.push_back(cv::Point2i(position[0], position[1]));
-    }
-    std::vector<int> color = mixWithWhite(_color_kurt[0], _color_kurt[1], _color_kurt[2], 80.);
-    for (uint t=0; t<curve.size()-1; t++){
-      cv::line(_captured_frame, curve[t], curve[t+1], cv::Scalar(color[2], color[1], color[0]), 2);
-    }
+    // _ref_x_kurt_port.read(_ref_x_kurt);
+    // _ref_y_kurt_port.read(_ref_y_kurt);
+    // curve.clear();
+    // for (uint t=0; t<_ref_x_kurt.size(); t++){
+    //   position[0] = _ref_x_kurt[t];
+    //   position[1] = _ref_y_kurt[t];
+    //   position = invtransform(position);
+    //   curve.push_back(cv::Point2i(position[0], position[1]));
+    // }
+    // std::vector<int> color = mixWithWhite(_color_kurt[0], _color_kurt[1], _color_kurt[2], 80.);
+    // for (uint t=0; t<curve.size()-1; t++){
+    //   cv::line(_captured_frame, curve[t], curve[t+1], cv::Scalar(color[2], color[1], color[0]), 2);
+    // }
   }
   if (_found_krist){
     // markers
@@ -1162,19 +1172,19 @@ void HawkEye::drawResults(){
     cv::circle(_captured_frame, cv::Point2i(position[0], position[1]), 5, cv::Scalar(_color_krist[2],_color_krist[1],_color_krist[0]), -3);
     cv::line(_captured_frame, cv::Point2i(position[0], position[1]), cv::Point2i(pos_or[0], pos_or[1]), cv::Scalar(_color_krist[2],_color_krist[1],_color_krist[0]), 3);
     // reference
-    _ref_x_krist_port.read(_ref_x_krist);
-    _ref_y_krist_port.read(_ref_y_krist);
-    curve.clear();
-    for (uint t=0; t<_ref_x_krist.size(); t++){
-      position[0] = _ref_x_krist[t];
-      position[1] = _ref_y_krist[t];
-      position = invtransform(position);
-      curve.push_back(cv::Point2i(position[0], position[1]));
-    }
-    std::vector<int> color = mixWithWhite(_color_krist[0], _color_krist[1], _color_krist[2], 80.);
-    for (uint t=0; t<curve.size()-1; t++){
-      cv::line(_captured_frame, curve[t], curve[t+1], cv::Scalar(color[2], color[1], color[0]), 2);
-    }
+    // _ref_x_krist_port.read(_ref_x_krist);
+    // _ref_y_krist_port.read(_ref_y_krist);
+    // curve.clear();
+    // for (uint t=0; t<_ref_x_krist.size(); t++){
+    //   position[0] = _ref_x_krist[t];
+    //   position[1] = _ref_y_krist[t];
+    //   position = invtransform(position);
+    //   curve.push_back(cv::Point2i(position[0], position[1]));
+    // }
+    // std::vector<int> color = mixWithWhite(_color_krist[0], _color_krist[1], _color_krist[2], 80.);
+    // for (uint t=0; t<curve.size()-1; t++){
+    //   cv::line(_captured_frame, curve[t], curve[t+1], cv::Scalar(color[2], color[1], color[0]), 2);
+    // }
   }
   if (_found_dave){
     // markers
@@ -1202,19 +1212,19 @@ void HawkEye::drawResults(){
     cv::circle(_captured_frame, cv::Point2i(position[0], position[1]), 5, cv::Scalar(_color_dave[2],_color_dave[1],_color_dave[0]), -3);
     cv::line(_captured_frame, cv::Point2i(position[0], position[1]), cv::Point2i(pos_or[0], pos_or[1]), cv::Scalar(_color_dave[2],_color_dave[1],_color_dave[0]), 3);
     // reference
-    _ref_x_dave_port.read(_ref_x_dave);
-    _ref_y_dave_port.read(_ref_y_dave);
-    curve.clear();
-    for (uint t=0; t<_ref_x_dave.size(); t++){
-      position[0] = _ref_x_dave[t];
-      position[1] = _ref_y_dave[t];
-      position = invtransform(position);
-      curve.push_back(cv::Point2i(position[0], position[1]));
-    }
-    std::vector<int> color = mixWithWhite(_color_dave[0], _color_dave[1], _color_dave[2], 80.);
-    for (uint t=0; t<curve.size()-1; t++){
-      cv::line(_captured_frame, curve[t], curve[t+1], cv::Scalar(color[2], color[1], color[0]), 2);
-    }
+    // _ref_x_dave_port.read(_ref_x_dave);
+    // _ref_y_dave_port.read(_ref_y_dave);
+    // curve.clear();
+    // for (uint t=0; t<_ref_x_dave.size(); t++){
+    //   position[0] = _ref_x_dave[t];
+    //   position[1] = _ref_y_dave[t];
+    //   position = invtransform(position);
+    //   curve.push_back(cv::Point2i(position[0], position[1]));
+    // }
+    // std::vector<int> color = mixWithWhite(_color_dave[0], _color_dave[1], _color_dave[2], 80.);
+    // for (uint t=0; t<curve.size()-1; t++){
+    //   cv::line(_captured_frame, curve[t], curve[t+1], cv::Scalar(color[2], color[1], color[0]), 2);
+    // }
   }
   // coordinate system
   cv::circle(_captured_frame, cv::Point2i(0.,_captured_frame.size().height), 10, cv::Scalar(77, 76, 75), -3);
@@ -1263,7 +1273,6 @@ void HawkEye::showFrame(){
   cv::Mat image2;
   cv::resize(_captured_frame, image2, cv::Size(_plot_image_size[0], _plot_image_size[1]), 0, 0, cv::INTER_NEAREST);
   // image2 = _captured_frame;
-  cv::namedWindow("Frame", 1);
   cv::setMouseCallback("Frame", mouseCallBack, (void*)this);
   cv::circle(image2, cv::Point2i(_mouseclick_position[0], _mouseclick_position[1]), 30, cv::Scalar(77, 76, 75), 2);
   cv::circle(image2, cv::Point2i(_mouseclick_position[0], _mouseclick_position[1]), 10, cv::Scalar(77, 76, 75), -2);

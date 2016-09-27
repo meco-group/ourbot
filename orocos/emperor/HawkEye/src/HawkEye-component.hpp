@@ -142,6 +142,8 @@ class HawkEye : public RTT::TaskContext{
     std::vector<int> _color_krist;
     std::vector<int> _color_dave;
 
+    std::vector<double> _marker_loc;
+
     // TCP streaming stuff
     int _socket;
     int _port_nr;
