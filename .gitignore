@@ -1,6 +1,7 @@
 info/*
 identify_velcontrol/*
 .test/
+.db
 orocos/*/*/bin/
 orocos/*/*/build/
 orocos/*/*/lib/
@@ -17,7 +18,7 @@ todo
 orocos/setup.bash
 orocos/setup.sh
 orocos/setup.zsh
-*.tb_history
+*.tb_history*
 *.rosinstall
 *.rosinstall.bak
 *_
