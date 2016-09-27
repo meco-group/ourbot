@@ -28,13 +28,16 @@ _I(16,16), _H_lf(3,3), _R_lf(3,3)
   ports()->addPort("scanmatch_pose_port", _scanmatch_pose_port).doc("Estimated position-change of scanmatcher [x,y,orientation]");
   ports()->addPort("scanmatch_covariance_port", _scanmatch_covariance_port).doc("covariance scanmatcher [x,y,orientation]");
   // Output ports (to trigger SM)
-  //ports()->addPort("trigger_scanmatcher_port",_trigger_scanmatcher_port).doc("Output port which triggers scanmatcher");
-  //@@@Michiel: add extra output port with pose at start scan
+  //Michiel
   ports()->addPort("scanstart_pose_port", _scanstart_pose_port).doc("Pose at start of a scan");
   // Properties
   addProperty("accelero_mounting_distance", _accelero_mounting_distance).doc("Distance between the accelerometer and the center of the robot");
   // Set data vector, matrices, ... with initial values
   setInitData();
+
+  std::vector<double> example(3, 0.0);
+  _scanstart_pose_port.setDataSample(example);
+
   std::cout << "KalmanSM constructed !" <<std::endl;
 }
 
@@ -60,9 +63,9 @@ void KalmanSM::gatherMeasurements(){
 
   // when new lidar data: trigger scanmatcher and save current state, covariance and abs pose
   if(_cor_lidar_angle_port.read(_corresponding_lidar_angles) == RTT::NewData){
-    //_trigger_scanmatcher_port.write(true);//ici
+    //_trigger_scanmatcher_port.write(true); //Michiel niet meer nodig o.w.v. eventport
     _state_at_scanstart = _state_prev;
-    // @@@Michiel
+    //Michiel
     std::vector<double> prev_pose(3);
     prev_pose[0] = _state_at_scanstart[10];
     prev_pose[1] = _state_at_scanstart[11];
@@ -122,7 +125,7 @@ void KalmanSM::detectScanMatchInfo(){
     _sensorbuffer2 = _sensorbuffer;
     _state_prev = _state_at_scanstart;
     _P = _P_at_scanstart;
-    _got_scan = true; //ici TODO
+    _got_scan = true;
   }
   else{
     if(_sensorbuffer.size() >= 1){
@@ -210,18 +213,13 @@ void KalmanSM::updateKalman(){
     _H_T_hf = _H_hf.transpose();
 
     if(_got_scan){
-      //std::cout << "bef: x: " << _est_pose[0] << "; y: " << _est_pose[1] << "; t:" << _est_pose[2] << std::endl;
       //std::cout << "Received scanmatch data ... " << std::endl;
       _print_data = true;
       replaceVectorBlock(&_y_hf, &_y, 0, 6);
       // extra measurement equations
       theta = _prev_scan_pose_abs[2];
 
-      //_y(7) = _scan_pose_rel[0] - ( (_state(10)-_prev_scan_pose_abs[0])*cos(theta) + (_state(11)-_prev_scan_pose_abs[1])*sin(theta));
-      //_y(8) = _scan_pose_rel[1] - (-(_state(10)-_prev_scan_pose_abs[0])*sin(theta) + (_state(11)-_prev_scan_pose_abs[1])*cos(theta));
-      //_y(9) = _scan_pose_rel[2] - (_state(12)-_prev_scan_pose_abs[2]);
-
-      // @@@Michiel //ici
+      //Michiel
       _y(7) = _scan_pose_rel[0];
       _y(8) = _scan_pose_rel[1];
       _y(9) = _scan_pose_rel[2];
@@ -229,24 +227,21 @@ void KalmanSM::updateKalman(){
       _scanmatch_covariance_port.read(_cov_scanmatch);
 
       // subblock of measurment noise regarding scanmatch
-      //ici standaard 100 000 000
       _R_lf <<  _cov_scanmatch[0]*100000000, _cov_scanmatch[1]*100000000, _cov_scanmatch[2]*100000000,
                 _cov_scanmatch[3]*100000000, _cov_scanmatch[4]*100000000, _cov_scanmatch[5]*100000000,
                 _cov_scanmatch[6]*100000000, _cov_scanmatch[7]*100000000, _cov_scanmatch[8]*100000000;
       _R.block<3,3>(7,7) = _R_lf;
 
-      // subblock of jacobian regarding extra measurement equations //ici
-      // _H_lf <<   cos(theta), sin(theta), 0,
-      //           -sin(theta), cos(theta), 0,
-      //            0.,      0.,      1.;
 
-      // @@@Michiel
+      //Michiel
       _H_lf << 1., 0., 0.,
                0., 1., 0.,
                0., 0., 1.;
 
       _H.block<3,3>(7,10) = _H_lf;
       _H.block<7,16>(0,0) = _H_hf;
+
+      Eigen::MatrixXf P_prev;
 
       _H_T = _H.transpose();
       _S = _H*_P*_H_T + _R;
@@ -276,14 +271,8 @@ void KalmanSM::updateKalman(){
     _est_pose[0] = _state(10);
     _est_pose[1] = _state(11);
     _est_pose[2] = _state(12);
-
-    if (_print_data == true){
-      //std::cout << "aft: x: " << _est_pose[0] << "; y: " << _est_pose[1] << "; t:" << _est_pose[2] << std::endl;
-      _print_data = false;
-    }
-    
   }
-  //std::cout << "aft: x: " << _est_pose[0] << "; y: " << _est_pose[1] << "; t:" << _est_pose[2] << std::endl;
+  //std::cout << "x: " << _est_pose[0] << "; y: " << _est_pose[1] << "; t:" << _est_pose[2] << std::endl;
   _sensorbuffer2.clear();
 }
 

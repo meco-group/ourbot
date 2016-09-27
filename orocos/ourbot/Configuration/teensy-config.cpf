@@ -10,6 +10,7 @@
     <value>/dev/ttyACM0</value>
   </simple>
 
+<!--
   <simple name="velocity_controller_P" type="double">
     <description>Standard velocity controller proportional gain</description>
     <value>0.2</value>
@@ -21,6 +22,20 @@
   <simple name="velocity_controller_D" type="double">
     <description>Standard velocity controller derivative gain</description>
     <value>0.0</value>
+  </simple>
+-->
+
+  <simple name="velocity_controller_P" type="double">
+    <description>Standard velocity controller proportional gain //Michiel 0.25</description>
+    <value>0.25</value>
+  </simple>
+  <simple name="velocity_controller_I" type="double">
+    <description>Standard velocity controller integral gain //Michiel 2.</description>
+    <value>2.</value>
+  </simple>
+  <simple name="velocity_controller_D" type="double">
+    <description>Standard velocity controller derivative gain //Michiel 0.025</description>
+    <value>0.025</value>
   </simple>
 
 	<!-- Left IMU configuration -->

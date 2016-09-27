@@ -1,4 +1,4 @@
-// #define DEBUG
+//#define DEBUG
 
 #include "Reference-component.hpp"
 #include <rtt/Component.hpp>

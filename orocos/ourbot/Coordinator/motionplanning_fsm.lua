@@ -6,7 +6,7 @@ local estimator       = tc:getPeer('estimator')
 local reference       = tc:getPeer('reference')
 local reporter        = tc:getPeer('reporter')
 local io              = tc:getPeer('io')
-local scanmatcher   = tc:getPeer('scanmatcher')
+local scanmatcher     = tc:getPeer('scanmatcher')
 
 local estimatorUpdate              = estimator:getOperation("update")
 local referenceUpdate              = reference:getOperation("update")

@@ -184,7 +184,6 @@ def deploy():
         command.extend(['--tab', '-e', '''
             bash -c '
             sshpass -p %s ssh %s@%s "
-            ulimit -r 10
             cd %s
             rm reports.nc
             echo I am %s
@@ -196,7 +195,6 @@ def deploy():
         bash -c '
         cd %s
         rm reports.nc
-        ulimit -r 10
         echo I am emperor
         deployer-gnulinux run.ops
         '

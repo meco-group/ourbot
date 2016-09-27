@@ -11,6 +11,20 @@
 #undef FALSE
 #undef TRUE
 
+
+//Michiel Honoursproject
+//Voornaamste aanpassingen: omgeving inlezen, scanstart_pose gebruiken om artificiele kaart
+//    op te bouwen, scanmatch resultaat wordt ongeldig verklaard indien positie buiten kaart is of
+//    de sprong te groot is.
+//Configurations: Scanmatcher: precision       1e-3
+//                system: control_sample_rate  100.
+//                        pathupd_sample_rate  2.
+//                        io_sample_rate       200.
+//                        reporter_sample_rate 10.
+//                teensy: velocity_controller_P 0.25
+//                        velocity_controller_I 2.
+//                        velocity_controller_D 0.025
+
 Scanmatcher::Scanmatcher(std::string const& name) : TaskContext(name),
 _enc_pose(3), _estimated_position_change(3), _covariance(9), _rows(3), _columns(3){
 
@@ -23,14 +37,13 @@ _enc_pose(3), _estimated_position_change(3), _covariance(9), _rows(3), _columns(
 	ports()->addPort( "cor_lidar_distance_port",_cor_lidar_distance_port).doc("Input port for corrected lidar node positions. Holds a vector of 100 distances [m]");
   ports()->addPort( "cor_lidar_angle_port",_cor_lidar_angle_port).doc("Input port for corrected lidar node positions. Holds a vector of 100 angles [rad]");
   ports()->addPort("cal_enc_pose_port",_cal_enc_pose_port).doc("Input port for calibrated encoder values. (x,y,orientation) in [m , m ,rad]");
-  //ports()->addEventPort("trigger_scanmatcher_port", _trigger_scanmatcher_port).doc("Input port which triggers scanmatcher");
-  //@@@Michiel: add extra output port with pose at start scan
+  //Michiel event port to trigger scanmatcher
   ports()->addEventPort("scanstart_pose_port", _scanstart_pose_port).doc("Pose at start of a scan");
 
   // OutputPorts
  	ports()->addPort( "scanmatch_pose_port", _scanmatch_pose_port).doc("Estimated position-change of scanmatcher in encoder-form [x,y,orientation]");
 	ports()->addPort( "scanmatch_covariance_port", _scanmatch_covariance_port).doc("covariance scanmatcher [x,y,orientation]");
-
+  //Michiel
   ports()->addPort( "artificial_lidar_distances_port", _artificial_lidar_distances_port).doc("Calculated artificial lidar distances");
   ports()->addPort( "artificial_lidar_angles_port", _artificial_lidar_angles_port).doc("Calculated artificial lidar angles");
 
@@ -55,6 +68,7 @@ _enc_pose(3), _estimated_position_change(3), _covariance(9), _rows(3), _columns(
   addProperty("lidar_data_length", _lidar_data_length).doc("Length of the lidar data");
   addProperty("precision", _precision).doc("Precision used to compute artificial lidar");
 
+  //Michiel
   loadEnvironment();
 
   std::cout << "Scanmatcher constructed !" <<std::endl;
@@ -64,24 +78,20 @@ bool Scanmatcher::configureHook(){
   _rays = _lidar_data_length - _sensenumber;
 	_available_lidar_distances.resize(_lidar_data_length);
 	_available_lidar_angles.resize(_lidar_data_length);
-  //_prev_lidar_distances.resize((_rays)*_scans);
-  //_prev_lidar_angles.resize((_rays)*_scans);
 	_lidar_distances.resize(_rays);
 	_lidar_angles.resize(_rays);
 
   _start_pose.resize(3);
 
-	//std::fill(_prev_lidar_angles.begin(), _prev_lidar_angles.end(), 0);
-	//std::fill(_prev_lidar_distances.begin(), _prev_lidar_distances.end(), 0);
-
-  //ici
+  //Michiel
   _artificial_lidar_angles.resize(_rays);
   _artificial_lidar_distances.resize(_rays);
   for (int i = 0; i < _rays; i++){
     _artificial_lidar_angles[i] = 2*M_PI*i/(_rays);
   }
-  std::fill(_artificial_lidar_distances.begin(), _artificial_lidar_distances.end(), _max_sense_range+0.1);
+  std::fill(_artificial_lidar_distances.begin(), _artificial_lidar_distances.end(), _max_sense_range);
 
+  //Michiel setDataSample to report
   _scanmatch_pose_port.setDataSample(_estimated_position_change);
   std::vector<double> example(9, 0.0);
   _scanmatch_covariance_port.setDataSample(example);
@@ -145,39 +155,22 @@ void Scanmatcher::updateHook(){
 	ls.laser_sens = ld_alloc_new(rays);
 	ls.laser_ref = ld_alloc_new(rays*_scans);
 
-  if(_use_odometry_guess == 1){
-    _cal_enc_pose_port.read(_enc_pose);
-    ls.first_guess[0] = _enc_pose[0] - _lastX;
-    ls.first_guess[1] = _enc_pose[1] - _lastY;
-    ls.first_guess[2] = _enc_pose[2] - _lastTheta;
-  }
-  else{
-    ls.first_guess[0] = 0;
-    ls.first_guess[1] = 0;
-    ls.first_guess[2] = 0;
-  }
-  _lastX = _enc_pose[0];
-  _lastY = _enc_pose[1];
-  _lastTheta = _enc_pose[2];
 
+  ls.first_guess[0] = 0;
+  ls.first_guess[1] = 0;
+  ls.first_guess[2] = 0;
+  
   // Reading data from ports
   _cor_lidar_distance_port.read(_available_lidar_distances);
   _cor_lidar_angle_port.read(_available_lidar_angles);
 
-  //TODO
   _scanstart_pose_port.read(_start_pose);
-  // estimated position is NaN
-  _correct_scanstart_pose = !((_start_pose[0] != _start_pose[0]) || (_start_pose[1] != _start_pose[1]));
-  if (_correct_scanstart_pose){
-    //correcting startpose:
-    _start_pose[0] = clip(-1.12, 1.12, _start_pose[0]);
-    _start_pose[1] = clip(-1.12, 1.12, _start_pose[1]);
-  }
+  //Michiel testing the start pose can improve robustness
+  _correct_scanstart_pose = 1;
   //_correct_scanstart_pose = (inRange(-1.22, 1.22, _start_pose[0]) && inRange(-1.22, 1.22, _start_pose[1]));
-  
-  //std::cout << std::endl;
-  //std::cout << "x: " << _start_pose[0] << "; y: " << _start_pose[1] << "; theta: " << _start_pose[2] << "; read;"<< std::endl;
-  //std::cout << std::endl;
+  if ((_start_pose[0] != _start_pose[0]) || (_start_pose[1] != _start_pose[1])){
+    std::cout << "nan as startpose" << std::endl;
+  }
 
   // Copying all laser beams that are not used by Slam to use them for positioning with the scanmatcher
   int index = 0;
@@ -226,44 +219,24 @@ void Scanmatcher::updateHook(){
       }
     }
 
-    //TODO waar data gebruiken?
+    //Michiel
     artificialLidar();
 
     //std::cout << "artificial Lidar data created!" <<std::endl;
 
-    // give ref distances and angles to sm-algorithm
+    //Michiel
   	double anglesref[rays*_scans];
     double distancesref[rays*_scans];
     for(int i= 0; i<rays*_scans; i++){
-        //distancesref[i] = _prev_lidar_distances[i];//ici
-        //anglesref[i] = _prev_lidar_angles[i];//ici
         distancesref[i] = _artificial_lidar_distances[i];
         anglesref[i] = _artificial_lidar_angles[i];
     }
-    /*quickSort(anglesref, distancesref, 0, _scans*rays-1);
-    for(int i= 0; i< rays*_scans; i++){
-     	ls.laser_ref->readings[i] = distancesref[i];
-      ls.laser_ref->theta[i] = anglesref[i];
-      if(distancesref[i] > _max_sense_range){//ici
-        ls.laser_ref->valid[i] = 0;
-      }
-      else
-      {
-        ls.laser_ref->valid[i] = 1;
-      }
-    }*/
     for(int i=0; i< rays; i++){
       ls.laser_ref->readings[i] = distancesref[i];
       ls.laser_ref->theta[i] = anglesref[i];
-      //ls.laser_ref->valid[i] = 1;
-      /*if(distancesref[i] > _max_sense_range){
-        ls.laser_ref->valid[i] = 0;
-      }
-      else
-      {
-        ls.laser_ref->valid[i] = 1;
-      }*/
       ls.laser_ref->valid[i] = _correct_scanstart_pose;
+      //Michiel nu wordt gekeken of de startpositie zich in domein bevindt,
+      //Zou aangepast kunnen worden naar startpositie binnen obstakel, ...
     }
 
     // information dependent settings
@@ -283,7 +256,8 @@ void Scanmatcher::updateHook(){
     // Solve scan match problem
     sm_icp(&ls, &result);
 
-    if(result.valid == 1){
+    //Michiel gezorgd dat de uitkomst van de scanmatcher geen al te grote sprongen maakt
+    if((result.valid == 1) && (result.x[0] < 0.35) && (result.x[1] < 0.35)){
       _estimated_position_change[0] = result.x[0];
       _estimated_position_change[1] = result.x[1];
       _estimated_position_change[2] = result.x[2];
@@ -302,24 +276,22 @@ void Scanmatcher::updateHook(){
     	_estimated_position_change[2] = ls.first_guess[2];
     	for(int i=0; i<_rows; i++){
     		for(int j=0;j<_columns;j++){
-    		  _covariance[i*_rows+j] = 0.1;
+    		  _covariance[i*_rows+j] = 0.0001;
+          //Michiel 0.0001 ipv 0.1 otherwise NAN, because of almost singular matrix
     		}
     	}
     }
+    //std::cout << "scanstart: x: " << _start_pose[0] << "; y: " << _start_pose[1] << "; theta: " << _start_pose[2] << "; read;"<< std::endl;
+    //std::cout << result.valid << "; dx: " << _estimated_position_change[0] << "; dy: " << _estimated_position_change[1] << "; dt: " <<_estimated_position_change[2] << std::endl;
 
     // set data on ports
     _scanmatch_covariance_port.write(_covariance);
     _scanmatch_pose_port.write(_estimated_position_change);
 
+    //Michiel
     _artificial_lidar_distances_port.write(_artificial_lidar_distances);
     _artificial_lidar_angles_port.write(_artificial_lidar_angles);
 
-  	//correctInformation(_prev_lidar_distances, _prev_lidar_angles, _estimated_position_change);
-
-  	/*for(int i=rays*(_scans-1); i< rays*_scans; i++){
-      _prev_lidar_distances[i] = _lidar_distances[i-rays*(_scans-1)];
-      _prev_lidar_angles[i] = _lidar_angles[i-rays*(_scans-1)];
-    }*/
     ld_free(ls.laser_ref);
     ld_free(ls.laser_sens);
   }
@@ -386,76 +358,19 @@ void Scanmatcher::quickSort(double angles[], double distances[] ,int low, int hi
   }
 }
 
-void Scanmatcher::correctInformation(std::vector<double> laser_scan_distance, std::vector<double> laser_scan_angle ,std::vector<double> delta_odo_scan)
-{
-  double rotAngle, movAngle;
-  double x_cart;
-  double y_cart;
-  // double theta_cart;
-  double x_old, y_old, x_new, y_new;
-
-  // In de eerste for loop worden cartesiaanse coordinaten berekend in het het robotassenstelsel van op de eerste positie
-
-  // De hoeveelheid van beweging in één richting volgens het assenstelsel van het punt i
-  movAngle = delta_odo_scan[2]/2;
-
-  // De cartesiaanse coordinaten in het robotassenstelsel van de eerste positie, theta_cart is de hoek tussen het assenstelsel
-  // op positie i en de allereerste positie. De veranderingen in beweging moeten dus geprojecteerd (geroteerd) worden t.o.v.
-  // het cartesiaans assenstelsel en opgeteld worden bij de vorige positie.
-  x_cart    = delta_odo_scan[0]*cos(movAngle) - delta_odo_scan[1]*sin(movAngle);
-  y_cart    = delta_odo_scan[1]*cos(movAngle) + delta_odo_scan[0]*sin(movAngle);
-  rotAngle = -delta_odo_scan[2];
-
-  // In de tweede for loop worden de laserstralen eerst geroteerd
-  for(int i = (_rays); i < (_rays)*_scans; i++){
-
-  // eerst wordt geroteerd zodat de coördinaten t.o.v. een assenstelsel zijn op het punt
-  // van de tussenpositie van de robot, maar wel met dezelfde oriëntatie als de allereerste positie
-
-    x_old = laser_scan_distance[i]*cos(laser_scan_angle[i]) - x_cart;
-    y_old = laser_scan_distance[i]*sin(laser_scan_angle[i]) - y_cart;
-
-    // Nu worden de laserstralen opnieuw geroteerd zodat hun coördinaten zoals deze opgemeten zouden worden kunnen berekend worden
-
-    x_new = x_old*cos(rotAngle) - y_old*sin(rotAngle);
-    y_new = x_old*sin(rotAngle) + y_old*cos(rotAngle);
-
-    // Ten laatste worden de x, y van de laserstraal nog omgezet naar een angle en een distance
-
-
-    //TODO: mag dit  weggelaten worden??
-    /*
-    _prev_lidar_angles[i-(_rays)]  = atan2(y_new,x_new);
-
-   	if (_prev_lidar_angles[i-(_rays)] > 2*M_PI)
-      	    _prev_lidar_angles[i-(_rays)] = _prev_lidar_angles[i-(_rays)] - 2*M_PI;
-
-   	else if (_prev_lidar_angles[i-(_rays)] < 0)
-      	    _prev_lidar_angles[i-(_rays)] = _prev_lidar_angles[i-(_rays)] + 2*M_PI;
-
-    _prev_lidar_distances[i-(_rays)]  = sqrt(x_new*x_new + y_new*y_new);
-    */
-  }
-}
-
 void Scanmatcher::artificialLidar(){
-  // @@@TODO wel of geen rekening houden met beperkingen LIDAR?
-  // eventueel cte aatal metingen -> angles wordt const vector.
-  // welke hoek is theta
-
-  //ici
-  //std::vector<double> _laser_distances(_lidar_data_length,_max_sense_range);
-  //std::vector<double> _laser_angles;
-
-  //_laser_angles.reserve(_lidar_data_length);
+  //Michiel
+  //rekening gehouden met beperkingen LIDAR (_max_sense_range, _lidar_data_length)
   double angle;
   double intersect_distance;
 
-  std::fill(_artificial_lidar_distances.begin(), _artificial_lidar_distances.end(), _max_sense_range+0.1);
+  std::fill(_artificial_lidar_distances.begin(), _artificial_lidar_distances.end(), _max_sense_range);
 
+  //Michiel
+  //itereren over alle hoeken en telkens dichtste snijpunt zoeken
+  //geen rekening gehouden met (on)mogelijkheid dat de ourbot zich in een obstakel bevindt
   for(int i = 0; i < _rays; i++){
-    angle = fmod(2*M_PI*i/(_rays) + _start_pose[2],2*M_PI);
-    //_laser_angles[i] = angle;
+    angle = 2*M_PI*i/(_rays) + _start_pose[2];
   
     for (unsigned int c = 0; c < _environment_circles.size(); c++){
 
@@ -480,12 +395,12 @@ void Scanmatcher::artificialLidar(){
         }
       }
     }
-
-    //std::cout << "scan :" << i << "; angle abs:" << angle*180/3.141592 << "; distance :" << _artificial_lidar_distances[i] << "; angle_rel: " << _artificial_lidar_angles[i] <<std::endl;
   }
 };
 
 double Scanmatcher::getIntersectDistanceLine(double x_a, double y_a, double x_b, double y_b, double angle){
+  //Michiel berekent afstand dichtste snijpunt op verbindingslijn tussen twee punten
+  //indien geen snijpunt, _max_sense_range
 	double determinant;
 	double tang;
 	double x_estimate;
@@ -500,7 +415,7 @@ double Scanmatcher::getIntersectDistanceLine(double x_a, double y_a, double x_b,
 	tang = tan ( angle );
 	determinant = (x_a - x_b) * tang - (y_a - y_b);
 
-	if (std::abs(determinant) < _precision){
+	if (std::abs(determinant) < 0.){
 		intersection_found = false;
 	} else{
 		
@@ -526,7 +441,8 @@ double Scanmatcher::getIntersectDistanceLine(double x_a, double y_a, double x_b,
 }
 
 double Scanmatcher::getIntersectDistanceCircle(Circle circle, double angle){
-
+  //Michiel berekent afstand dichtste snijpunt met cirkel
+  //indien geen snijpunt, _max_sense_range
 	double x_estimate;
 	double y_estimate;
 	double x_intersect;
@@ -555,12 +471,12 @@ double Scanmatcher::getIntersectDistanceCircle(Circle circle, double angle){
   C = -radius*radius + x_centre*x_centre + 
             (y_estimate - y_centre - tangens*x_estimate)*(y_estimate - y_centre - tangens*x_estimate);
 
-  discriminant = B*B - 4*A*C;
+  discriminant = B*B - 4.*A*C;
 
-  if (discriminant>0){
+  if (discriminant>0.){
     for (int i=0; i<2; i++){
       x_intersect = (-B + pow(-1,i) * sqrt(discriminant))/(2.*A);
-      y_intersect = tangens*(x_intersect - x_estimate) - y_estimate;
+      y_intersect = tangens*(x_intersect - x_estimate) + y_estimate;
       if (correctIntersection(x_estimate, y_estimate, x_intersect, y_intersect, angle)){
         distance = sqrt((x_intersect - x_estimate) * (x_intersect - x_estimate) +
               (y_intersect - y_estimate) * (y_intersect - y_estimate));
@@ -573,20 +489,23 @@ double Scanmatcher::getIntersectDistanceCircle(Circle circle, double angle){
 }
 
 bool Scanmatcher::inRange(double boundarie_1, double boundarie_2, double value){
-
+//Michiel hulpfunctie, kijkt of value tussen boundaries valt, rekening houdend met precisie (config)
   return (((greaterThan(boundarie_1, value)) && (smallerThan(boundarie_2, value))) ||
           ((smallerThan(boundarie_1, value)) && (greaterThan(boundarie_2, value))));
 }
 
 bool Scanmatcher::greaterThan(double boundarie, double value){
+  //Michiel hulpfunctie, kijkt of value groter is dan boundarie, rekening houdend met precisie (config)
   return (value > boundarie - _precision);
 }
 
 bool Scanmatcher::smallerThan(double boundarie, double value){
+  //Michiel hulpfunctie, kijkt of value kleiner is dan boundarie, rekening houdend met precisie (config)
   return (value < boundarie + _precision);
 }
 
 double Scanmatcher::clip(double boundarie_1, double boundarie_2, double value){
+  //Michiel hulpfunctie, clipt value
   if (value < boundarie_1)
     return boundarie_1;
   else if (value > boundarie_2)
@@ -595,36 +514,33 @@ double Scanmatcher::clip(double boundarie_1, double boundarie_2, double value){
     return value;
 }
 
-bool Scanmatcher::correctIntersection(double x, double y, 
-  double x_intersect, double y_intersect, double angle){
+bool Scanmatcher::correctIntersection(double x, double y, double x_intersect, double y_intersect, double angle){
+  //Michiel checkt of het snijpunt zich in de juiste richting bevindt
+  bool result = false;
 
-  bool result;
+  double corrected_angle = fmod(angle, 2.*M_PI);
 
-  if ((inRange(0., M_PI/2., angle)) && (greaterThan(x, x_intersect)) &&
+  if ((inRange(0., M_PI/2., corrected_angle)) && (greaterThan(x, x_intersect)) &&
          (greaterThan(y, y_intersect)))
     result = true;
-  else if ((inRange(M_PI/2., M_PI, angle)) && (smallerThan(x, x_intersect)) &&
+  if ((inRange(M_PI/2., M_PI, corrected_angle)) && (smallerThan(x, x_intersect)) &&
          (greaterThan(y, y_intersect)))
     result = true;
-  else if ((inRange(M_PI, M_PI*1.5, angle)) && (smallerThan(x, x_intersect)) &&
+  if ((inRange(M_PI, M_PI*1.5, corrected_angle)) && (smallerThan(x, x_intersect)) &&
          (smallerThan(y, y_intersect)))
     result = true;
-  else if ((inRange(M_PI*1.5, M_PI*2., angle)) && (greaterThan(x, x_intersect)) &&
+  if ((inRange(M_PI*1.5, M_PI*2., corrected_angle)) && (greaterThan(x, x_intersect)) &&
          (smallerThan(y, y_intersect)))
     result = true;
-  else
-    result = false;
 
   return result;  
 }
 
 void Scanmatcher::loadEnvironment(){
+  //Michiel loads environment
   //std::cout << "loading environment..." << std::endl;
   rapidxml::xml_document<> doc;
 
-  // Read the xml file into a vector
-  // TODO generate path automatically
-  //std::ifstream myfile("/home/michiel/ourbot/orocos/ourbot/Scanmatcher/src/environment.xml");
   std::ifstream myfile("/home/odroid/orocos/Scanmatcher/src/environment.xml");
   std::vector<char> buffer((std::istreambuf_iterator<char>(myfile)), std::istreambuf_iterator<char>());
   buffer.push_back('\0');

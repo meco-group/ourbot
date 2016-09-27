@@ -27,7 +27,7 @@ local containers_to_fill = {
 
 -- ports to report
 local ports_to_report = {
-  -- [controller]      = {'cmd_velocity_port'},
+  --controller      = {'cmd_velocity_port'},
   estimator         =  {'est_pose_port'},--, 'scanstart_pose_port'},
   -- [reference]       = {'ref_velocity_port'}
   -- [coordinator]     = {'controlloop_duration', 'controlloop_jitter'},
@@ -56,8 +56,8 @@ local ports_to_report = {
 
                     },
   scanmatcher = {   -- 'scanmatch_pose_port',
-                      'artificial_lidar_distances_port',
-                      'artificial_lidar_angles_port'
+                     'artificial_lidar_distances_port',
+                     'artificial_lidar_angles_port'
                     }
   --add here componentname = 'portnames'
 }

@@ -6,7 +6,7 @@
 
 
 MotionPlanningInterface::MotionPlanningInterface(std::string const& name) : TaskContext(name, PreOperational),
-    _predict_shift(0), _est_pose(3), _target_pose(3),
+    _predict_shift(0), _est_pose(3), _target_pose(3), 
     _ref_pose_trajectory(3), _ref_velocity_trajectory(3){
   ports()->addPort("est_pose_port", _est_pose_port).doc("Estimated pose");
   ports()->addPort("target_pose_port", _target_pose_port).doc("Target pose");
@@ -26,6 +26,9 @@ MotionPlanningInterface::MotionPlanningInterface(std::string const& name) : Task
   addProperty("horizon_time", _horizon_time).doc("Horizon to compute motion trajectory");
 
   addOperation("setTargetPose", &MotionPlanningInterface::setTargetPose, this).doc("Set target pose");
+
+  _target_pose[0] = 0.8;
+  _target_pose[1] = -0.8;
 }
 
 void MotionPlanningInterface::setTargetPose(double target_x, double target_y, double target_t){

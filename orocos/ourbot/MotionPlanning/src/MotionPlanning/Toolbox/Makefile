@@ -24,7 +24,7 @@
 CASADILIB = /usr/local/lib/
 CASADIINC = /usr/local/include/casadi/
 CASADIOBJ = /home/odroid/orocos/MotionPlanning/src/MotionPlanning/Toolbox/bin/
-SOURCEFILES = example.cpp Holonomic.cpp
+SOURCEFILES = test_p2p.cpp Holonomic_p2p.cpp
 EXECUTABLE = Point2Point
 #------------------------------------------------------------------------------
 
@@ -37,9 +37,9 @@ CFLAGS = -fPIC -shared -std=c99
 LDFLAGS = -L$(LIBDIR) -lcasadi -lstdc++ -lcasadi -Wl,-rpath $(LIBDIR)
 PROBSOURCES = nlp.c
 PROBOBJECTS = $(PROBSOURCES:.c=.so)
-SOURCES = $(SOURCEFILES) Point2Point.cpp Vehicle.cpp
+SOURCES = $(SOURCEFILES) Point2Point_p2p.cpp Vehicle_p2p.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
-LIB = libomg.so
+LIB = libomg_p2p.so
 SRCDIR = src
 OBJDIR = obj
 OUTDIR = bin
@@ -49,6 +49,9 @@ PROBOBJ = $(patsubst %,$(OUTDIR)/%,$(PROBOBJECTS))
 all: dir $(OUTDIR)/$(EXECUTABLE)
 
 lib: dir $(OUTDIR)/$(LIB)
+
+libdebug: DEBUG = -DDEBUG
+libdebug: lib
 
 debug: DEBUG = -DDEBUG
 debug: all

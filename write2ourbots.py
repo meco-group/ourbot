@@ -127,6 +127,14 @@ def mp_adaptations(ftp, ssh):
     body += 'link_directories('
     body += os.path.join(
         remote_root + '/MotionPlanning/src/DistributedMotionPlanning/Toolbox/bin/') + ')\n'
+    body += 'include_directories('
+    body += os.path.join(
+        remote_root + '/MotionPlanning/src/MotionPlanning/Toolbox/src/') + ')\n'
+    body += 'include_directories('
+    body += os.path.join(
+        remote_root + '/MotionPlanning/src/DistributedMotionPlanning/Toolbox/src/') + ')\n'
+
+
     body += part2
     f2 = open(local_files[-1]+'_', 'w')
     f2.write(body)

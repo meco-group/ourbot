@@ -70,7 +70,7 @@ def plot_nc(file):
         for signal, values in sgnls.items():
             cnt = 1
             if signal == 'est_pose_port':
-                plt.figure()
+                fig = plt.figure()
                 plt.hold(True)
                 legend = []
                 for k, value in enumerate(values):
@@ -85,6 +85,8 @@ def plot_nc(file):
                 plt.ylabel(signal)
                 cnt += 1
                 plt.title('component ' + component)
+                figname = "/home/michiel/ourbot/maps/est_pose.png"
+                fig.savefig(figname)
     #plt.figure()
     #plt.title('measured lidar')
     #plt.xlabel('x')
@@ -94,13 +96,17 @@ def plot_nc(file):
             fig1 = plt.figure()
             plt.plot(x_data, y_data)
             plt.plot([-1.22,-1.22, 1.22, 1.22,-1.22],[-1.22, 1.22, 1.22,-1.22,-1.22])
-            plt.plot([ 0.28, 0.28,-0.28,-0.28, 0.28],[-0.41,-0.75,-0.75,-0.41,-0.41])
-            plt.plot([-0.71,-0.71,-0.81,-0.81,-0.71],[ 0.87,0.715,0.715, 0.87, 0.87])
-            plt.plot([0.5875,0.5875,0.4325,0.4325,0.5875],[0.5,0.4,0.4,0.5,0.5])
-            plt.plot([-0.04,-0.04, 0.04, 0.04,-0.04],[ 0.54, 0.46, 0.46, 0.54, 0.54])
+            #plt.plot([ 0.28, 0.28,-0.28,-0.28, 0.28],[-0.41,-0.75,-0.75,-0.41,-0.41])
+            #plt.plot([-0.71,-0.71,-0.81,-0.81,-0.71],[ 0.87,0.715,0.715, 0.87, 0.87])
+            #plt.plot([0.5875,0.5875,0.4325,0.4325,0.5875],[0.5,0.4,0.4,0.5,0.5])
+            #plt.plot([-0.04,-0.04, 0.04, 0.04,-0.04],[ 0.54, 0.46, 0.46, 0.54, 0.54])
+            plt.plot([ 0.55, 0.55, 0.65, 0.65, 0.55],[-0.2225,-0.3775,-0.3775,-0.2225,-0.2225])
+            plt.plot([-0.5775,-0.5775,-0.4225,-0.4225,-0.5775],[ 0.15, 0.25, 0.25, 0.15, 0.15])
             plt.xlabel('x')
             plt.ylabel('y')
             plt.title('movement')
+            figname = "/home/michiel/ourbot/maps/path.png"
+            fig1.savefig(figname)
     data.close()
 
 def plot_maps(file):

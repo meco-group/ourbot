@@ -1,6 +1,6 @@
 #ifndef POLYGON
 #define POLYGON
-
+//Michiel
 #include <vector>
 
 class Polygon{

@@ -1,5 +1,5 @@
 #include "Polygon.hpp"
-
+//Michiel
 Polygon::Polygon(){}
 
 double Polygon::getXVertex(int number){

@@ -1,6 +1,6 @@
 #ifndef CIRCLE
 #define CIRCLE
-
+//Michiel
 class Circle{
   private:
     double _x;
