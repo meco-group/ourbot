@@ -165,7 +165,7 @@ def settings(distributed_mp):
         local_files_ad = [lf+'_' for lf in local_files]
         local_files = [lf+'_' for lf in local_files]
         # update deploy scripts
-        for file in ['deploy.lua', 'deploy_fsm.lua', 'Configuration/estimator-config.cpf']:
+        for file in ['deploy.lua', 'deploy_fsm.lua', 'Configuration/estimator-config.cpf', 'Configuration/teensy-config.cpf']:
             local_files.append(os.path.join(current_dir+'/orocos/ourbot', file))
             remote_files.append(os.path.join(remote_root, file))
         # send files
