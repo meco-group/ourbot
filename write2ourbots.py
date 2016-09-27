@@ -16,6 +16,8 @@ import paramiko
 import collections as col
 import math
 import errno
+import pickle
+import hashlib
 
 # Default parameters
 current_dir = os.path.dirname(os.path.realpath(__file__))
@@ -29,7 +31,7 @@ hosts = col.OrderedDict()
 hosts['kurt'] = '192.168.11.121'
 # hosts['krist'] = '192.168.11.122'
 ignore = []
-exclude = ['build', 'include', 'bin', 'lib', 'obj', '.tb_history', 'Toolbox']
+exclude = ['build', 'include', 'bin', 'lib', 'obj', '.tb_history']
 
 
 def create_component(ssh, component):
@@ -85,13 +87,17 @@ def send_file(ftp, ssh, loc_file, rem_file):
 
 
 def send_files(ftp, ssh, loc_files, rem_files):
-    n_blocks = 50
+    loc_files, rem_files = detect_changes(loc_files, rem_files)
+    n_blocks = min(50, len(loc_files))
+    if (n_blocks == 0):
+        print 'no files to send'
+        return
     interval = int(math.ceil(len(loc_files)/n_blocks*1.))
     string = '['
     for k in range(len(loc_files)/interval):
         string += ' '
     string += ']'
-    cnt = 0
+    cnt = 1
     for lf, rf in zip(loc_files, rem_files):
         string2 = string
         send_file(ftp, ssh, lf, rf)
@@ -101,6 +107,26 @@ def send_files(ftp, ssh, loc_files, rem_files):
         sys.stdout.write("\r"+string2)
         cnt += 1
     print ''
+
+
+def detect_changes(loc_files, rem_files):
+    _lf, _rf = [], []
+    try:
+        l = pickle.load(open('.db'))
+    except IOError:
+        l = []
+    db = dict(l)
+    for lf, rf in zip(loc_files, rem_files):
+        checksum = hashlib.md5(open(lf).read()).hexdigest()
+        if db.get(lf, None) != checksum:
+            db[lf] = checksum
+            _lf.append(lf)
+            _rf.append(rf)
+    pickle.dump(db.items(), open('.db', 'w'))
+    if options.send_all:
+        return loc_files, rem_files
+    else:
+        return _lf, _rf
 
 
 def mp_adaptations(ftp, ssh):
@@ -174,6 +200,9 @@ if __name__ == "__main__":
     op.add_option("-c", "--createcomponents", action="store_true",
                   dest="createcomponents", default=False,
                   help="create missing components")
+    op.add_option("-a", "--all", action="store_true",
+                  dest="send_all", default=False,
+                  help="send all files")
 
     options, args = op.parse_args()
 
@@ -245,4 +274,4 @@ if __name__ == "__main__":
 
         ftp.close()
         ssh.close()
-    os.system('clear')
+    # os.system('clear')
