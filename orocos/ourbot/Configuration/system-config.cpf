@@ -15,7 +15,7 @@
   </simple>
   <simple name="controller" type="string">
     <description>Controller component to use</description>
-    <value>FfwController</value>
+    <value>PoseController</value>
   </simple>
   <simple name="velocitycmd" type="string">
     <description>VelocityCommand component to use (only for intern velocitycmd)</description>

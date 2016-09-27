@@ -28,10 +28,10 @@ local containers_to_fill = {
 -- ports to report
 local ports_to_report = {
   -- controller      = {'cmd_velocity_port'},
-  estimator       = {'est_pose_port'}
-  -- reference       = {'ref_velocity_port'}
+  -- estimator       = {'est_pose_port'}
+  reference       = {'ref_velocity_port'},
   -- coordinator     = {'controlloop_duration', 'controlloop_jitter'},
-  -- io              = {--'cal_lidar_node_port',
+  io              = {--'cal_lidar_node_port',
   --                     -- 'cal_imul_transacc_port',
   --                     -- 'cal_imul_orientation_3d_port',
   --                     -- 'cal_imul_orientation_port',
@@ -50,8 +50,8 @@ local ports_to_report = {
   --                     -- 'cal_lidar_global_node_port',
   --                     -- 'cal_motor_current_port',
   --                     -- 'cal_motor_voltage_port',
-                      -- 'cal_velocity_port'
-                      -- }
+                      'cal_velocity_port'
+                      }
     --add here componentname = 'portnames'
 }
 
@@ -204,9 +204,9 @@ return rfsm.state {
         if not addIncoming('estimator', 'markers_port', 6050 + index) then rfsm.send_events(fsm, 'e_failed') return end
         if not addOutgoing('estimator', 'est_pose_tx_port', 6000 + index, emperor) then rfsm.send_events(fsm, 'e_failed') return end
         -- reference
-        dp:addPeer('communicator', 'reference')
-        if not addOutgoing('reference', 'ref_pose_trajectory_x_tx_port', 6010 + index, emperor) then rfsm.send_events(fsm, 'e_failed') return end
-        if not addOutgoing('reference', 'ref_pose_trajectory_y_tx_port', 6020 + index, emperor) then rfsm.send_events(fsm, 'e_failed') return end
+        -- dp:addPeer('communicator', 'reference')
+        -- if not addOutgoing('reference', 'ref_pose_trajectory_x_tx_port', 6010 + index, emperor) then rfsm.send_events(fsm, 'e_failed') return end
+        -- if not addOutgoing('reference', 'ref_pose_trajectory_y_tx_port', 6020 + index, emperor) then rfsm.send_events(fsm, 'e_failed') return end
 
         -- distributed motion planning
         if distributed_mp then

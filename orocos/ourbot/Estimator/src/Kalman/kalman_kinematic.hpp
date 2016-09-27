@@ -81,6 +81,7 @@ M<N, N> KinematicQ(const std::vector<int>& orders, const std::vector<double>& ps
     Q(offset_x+n-1, offset_x+n-1) = psd[i];
     offset_x+= orders[i];
   }
+
   return Q;
 }
 

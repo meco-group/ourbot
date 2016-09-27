@@ -15,6 +15,8 @@ _psd_state(3), _sigma_odo(3), _cal_velocity(3), _est_pose(3), _est_velocity(3), 
   addProperty("sigma_odo", _sigma_odo).doc("Uncertainty on measured velocity (m/s)^2");
   addProperty("sigma_markers", _sigma_markers).doc("Uncertainty on measured markers (m)^2");
   addProperty("marker_locations", _marker_loc).doc("Location of markers in local frame [x1, y1, x2, y2, x3, y3]");
+  addProperty("enable_odo", _enable_odo).doc("Enable odometry measurements");
+  addProperty("enable_markers", _enable_markers).doc("Enable marker measurements");
   addProperty("time_offset", _time_offset);
 
   _format = Eigen::IOFormat(5, Eigen::DontAlignCols, " ", "\n", "[", "]", "[", "]");
@@ -40,29 +42,34 @@ double Kalman::captureTime(){
 bool Kalman::estimateUpdate(){
   _time = captureTime();
   // odometry velocity
-  _cal_velocity = getCalVelocity();
-  _kf->observe_odo(_time, _cal_velocity[0], _cal_velocity[1], _cal_velocity[2], _sigma_odo[0], _sigma_odo[1], _sigma_odo[2]);
-
-  // marker measurements
-  if (_markers_port.read(_marker_data) == RTT::NewData){
-    _Mmeas << _marker_data[0], _marker_data[1], _marker_data[2], _marker_data[3], _marker_data[4], _marker_data[5];
-    _marker_time = _marker_data[6]-_start_time - _time_offset;
-    _marker_time = _marker_data[6] - _time_offset;
-    if (_marker_time > _start_time){
-      std::cout << "took frame " << (_time-_marker_time) << " s earlier. at " << _marker_time << "s" << std::endl;
-      _kf->observe_markers(_marker_time, _Mmeas, _Mref, _sigma_markers);
-      _transmit_estimate = true;
+  if (_enable_odo){
+    _cal_velocity = getCalVelocity();
+    _kf->observe_odo(_time, _cal_velocity[0], _cal_velocity[1], _cal_velocity[2], _sigma_odo[0], _sigma_odo[1], _sigma_odo[2]);
+  }
+  if (_enable_markers){
+    // marker measurements
+    if (_markers_port.read(_marker_data) == RTT::NewData){
+      _Mmeas << _marker_data[0], _marker_data[1], _marker_data[2], _marker_data[3], _marker_data[4], _marker_data[5];
+      _marker_time = _marker_data[6]-_start_time - _time_offset;
+      _marker_time = _marker_data[6] - _time_offset;
+      if (_marker_time > _start_time){
+        // std::cout << "took frame " << (_time-_marker_time) << " s earlier. at " << _marker_time << "s" << std::endl;
+        _kf->observe_markers(_marker_time, _Mmeas, _Mref, _sigma_markers);
+        _transmit_estimate = true;
+      }
     }
   }
   _time = captureTime();
   _kf->predict(_time, _state, _P);
   _est_pose[0] = _state[0];
-  _est_pose[1] = _state[1];
-  _est_pose[2] = _state[2];
+  _est_pose[1] = _state[2];
+  _est_pose[2] = _state[4];
 
   _est_velocity[0] = _state[1];
   _est_velocity[1] = _state[3];
   _est_velocity[2] = _state[5];
+
+  // std::cout << "(" << _est_velocity[0] << "," << _est_velocity[1] << "," << _est_velocity[2] << ")" << std::endl;;
 
   setEstPose(_est_pose);
   setEstVelocity(_est_velocity);

@@ -30,6 +30,8 @@ class Kalman : public EstimatorInterface{
     double _control_sample_rate;
     double _time_offset;
     double _marker_time;
+    bool _enable_odo;
+    bool _enable_markers;
 
     std::vector<double> _cal_velocity;
     std::vector<double> _est_pose;
