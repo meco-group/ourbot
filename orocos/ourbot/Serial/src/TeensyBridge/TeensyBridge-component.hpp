@@ -52,9 +52,9 @@ class TeensyBridge : public USBInterface
 		std::vector<double>	_velocity;
 
 		uint8_t _control_mode;
-		double _velocity_controller_P;
-		double _velocity_controller_I;
-		double _velocity_controller_D;
+
+		std::vector<double> _velocity_pid_soft;
+		std::vector<double> _velocity_pid_strong;
 
 		RTT::InputPort<std::vector<double> >  _cmd_velocity_port;
 		RTT::OutputPort<std::vector<double> > _cmd_velocity_passthrough_port;
@@ -101,6 +101,8 @@ class TeensyBridge : public USBInterface
 		void setVelocity(double vx, double vy, double w);
 		void setCurrentController(double P, double I, double D);
 		void setVelocityController(double P, double I, double D);
+		void softVelocityControl();
+		void strongVelocityControl();
 		void showCurrents();
 		void showVelocities();
 		void showEncoders();
@@ -109,8 +111,6 @@ class TeensyBridge : public USBInterface
 		void showDebug();
 		void showThreadTime();
 		void showIMUData(int ID);
-
-
 };
 
 #endif //TEENSYBRIDGE_H

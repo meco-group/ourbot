@@ -4,10 +4,12 @@ local tc = rtt.getTC()
 local estimator     = tc:getPeer('estimator')
 local reporter      = tc:getPeer('reporter')
 local io            = tc:getPeer('io')
+local teensy        = tc:getPeer('teensy')
 
 local estimatorUpdate           = estimator:getOperation("update")
 local estimatorInRunTimeError   = estimator:getOperation("inRunTimeError")
 -- local scanmatcherInRunTimeError = scanmatcher:getOperation("inRunTimeError")
+local softVelocityControl       = teensy:getOperation("softVelocityControl")
 local snapshot                  = reporter:getOperation("snapshot")
 
 -- variables for the timing diagnostics
@@ -38,6 +40,7 @@ return rfsm.state {
         rfsm.send_events(fsm,'e_failed')
         return
       end
+      softVelocityControl()
       print("Waiting on Run...")
     end
   },

@@ -33,12 +33,10 @@ bool ControllerInterface::startHook(){
   // Check if input ports are connected
   bool check = true;
   if (!_est_pose_port.connected()){
-    log(Error) << "est_pose_port not connected !" <<endlog();
-    check = false;
+    log(Warning) << "est_pose_port not connected !" <<endlog();
   }
   if (!_ref_pose_port.connected()){
-    log(Error) << "ref_pose_port not connected !" <<endlog();
-    check = false;
+    log(Warning) << "ref_pose_port not connected !" <<endlog();
   }
   if (!_ref_velocity_port.connected()){
     log(Warning) << "ref_velocity_port not connected !" <<endlog();
@@ -59,18 +57,11 @@ bool ControllerInterface::startHook(){
 
 void ControllerInterface::updateHook(){
   // Read estimated state from estimator
-  if (_est_pose_port.read(_est_pose) == RTT::NoData) {
-    return;
-  }
+  _est_pose_port.read(_est_pose);
   // Read reference
-  if (_ref_pose_port.read(_ref_pose) == RTT::NoData) {
-    return;
-  }
-  if (_ref_velocity_port.connected()){
-    if (_ref_velocity_port.read(_ref_velocity) == RTT::NoData) {
-      return;
-    }
-  }
+  _ref_pose_port.read(_ref_pose);
+  _ref_velocity_port.read(_ref_velocity);
+
   // Apply control law
   controlUpdate();
 

@@ -10,18 +10,31 @@
     <value>/dev/ttyACM0</value>
   </simple>
 
-  <simple name="velocity_controller_P" type="double">
-    <description>Standard velocity controller proportional gain</description>
-    <value>0.2</value>
-  </simple>
-  <simple name="velocity_controller_I" type="double">
-    <description>Standard velocity controller integral gain</description>
-    <value>2.</value>
-  </simple>
-  <simple name="velocity_controller_D" type="double">
-    <description>Standard velocity controller derivative gain</description>
-    <value>0.0</value>
-  </simple>
+  <struct name="velocity_pid_soft" type="array">
+    <description>PID parameters for soft velocity control (gamepad)</description>
+    <simple name="P" type="double">
+      <value>0.2</value>
+    </simple>
+    <simple name="I" type="double">
+      <value>2.0</value>
+    </simple>
+    <simple name="D" type="double">
+      <value>0.0</value>
+    </simple>
+  </struct>
+
+  <struct name="velocity_pid_strong" type="array">
+    <description>PID parameters for strong velocity control (smooth trajectories)</description>
+    <simple name="P" type="double">
+      <value>5.</value>
+    </simple>
+    <simple name="I" type="double">
+      <value>15.</value>
+    </simple>
+    <simple name="D" type="double">
+      <value>0.015</value>
+    </simple>
+  </struct>
 
 	<!-- Left IMU configuration -->
 	<struct name="imul_acc_offset" type="array">

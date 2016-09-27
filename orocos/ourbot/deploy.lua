@@ -89,8 +89,6 @@ function configureHook()
       neighbor[i]:fromtab{_neighbors:get()[i]}
    end
 
-   print(emperor)
-
    -- create some variables referering to files
    coordinator_file  = 'Coordinator/coordinator.lua'
    app_file          = 'app.ops'

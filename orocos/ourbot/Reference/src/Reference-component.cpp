@@ -75,41 +75,44 @@ bool Reference::configureHook(){
 }
 
 bool Reference::loadTrajectory(){
-    for (int k=0; k<66; k++){
-      _cur_ref_pose_trajectory[k].clear();
-      _cur_ref_velocity_trajectory[k].clear();
-    }
-
-    std::ifstream file;
-    file.open(_trajectory_path.c_str());
-    std::string line, str;
-    double value;
-    if (!file.good()){
-      return false;
-    }
-    while(file.good()){
-      std::getline(file, line);
-      std::stringstream iss(line);
-      for (int k=0; k<6; k++){
-        std::getline(iss, str, ',');
-        std::stringstream convertor(str);
-        convertor >> value;
-        if (k < 3){
-          _cur_ref_pose_trajectory[k].push_back(value);
-        } else {
-          _cur_ref_velocity_trajectory[k-3].push_back(value);
-        }
+  std::vector<double> ref_pose_trajectory[3];
+  std::vector<double> ref_velocity_trajectory[3];
+  std::ifstream file;
+  file.open(_trajectory_path.c_str());
+  std::string line, str;
+  double value;
+  if (!file.good()){
+    return false;
+  }
+  while(file.good()){
+    std::getline(file, line);
+    std::stringstream iss(line);
+    for (int k=0; k<6; k++){
+      std::getline(iss, str, ',');
+      std::stringstream convertor(str);
+      convertor >> value;
+      if (k < 3){
+        ref_pose_trajectory[k].push_back(value);
+      } else {
+        ref_velocity_trajectory[k-3].push_back(value);
       }
     }
-    file.close();
-    _trajectory_length = _cur_ref_pose_trajectory[0].size(); // klopt dit?
-    _offline_trajectory =  true;
-    _index1 = 0;
-    _index2 = 0;
-    for (int k=0; k<3; k++){
-      _ref_pose_trajectory_tx_port[k].write(_cur_ref_pose_trajectory[k]);
-    }
-    return true;
+  }
+  for (int k=0; k<3; k++){
+    _cur_ref_pose_trajectory[k].resize(ref_pose_trajectory[k].size());
+    _cur_ref_pose_trajectory[k] = ref_pose_trajectory[k];
+    _cur_ref_velocity_trajectory[k].resize(ref_velocity_trajectory[k].size());
+    _cur_ref_velocity_trajectory[k] = ref_velocity_trajectory[k];
+  }
+  file.close();
+  _trajectory_length = _cur_ref_pose_trajectory[0].size(); // klopt dit?
+  _offline_trajectory =  true;
+  _index1 = 0;
+  _index2 = 0;
+  for (int k=0; k<3; k++){
+    _ref_pose_trajectory_tx_port[k].write(_cur_ref_pose_trajectory[k]);
+  }
+  return true;
 }
 
 bool Reference::startHook(){

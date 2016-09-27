@@ -5,6 +5,7 @@ local estimator       = tc:getPeer('estimator')
 local reference       = tc:getPeer('reference')
 local reporter        = tc:getPeer('reporter')
 local io              = tc:getPeer('io')
+local teensy          = tc:getPeer('teensy')
 
 local loadTrajectory               = reference:getOperation("loadTrajectory")
 local estimatorUpdate              = estimator:getOperation("update")
@@ -13,6 +14,7 @@ local controllerUpdate             = controller:getOperation("update")
 local estimatorInRunTimeError      = estimator:getOperation("inRunTimeError")
 local controllerInRunTimeError     = controller:getOperation("inRunTimeError")
 local referenceInRunTimeError      = reference:getOperation("inRunTimeError")
+local strongVelocityControl        = teensy:getOperation("strongVelocityControl")
 local snapshot                     = reporter:getOperation("snapshot")
 
 -- variables for the timing diagnostics
@@ -48,6 +50,7 @@ return rfsm.state {
         rfsm.send_events(fsm,'e_failed')
         return
       end
+      strongVelocityControl()
       print("Waiting on Run...")
     end
   },

@@ -1,13 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE properties SYSTEM "cpf.dtd">
 <properties>
-  <simple name="enable_fb" type="bool">
+  <simple name="enable_fb" type="boolean">
     <description>Enable feedback action</description>
+    <value>0</value>
+  </simple>
+
+  <simple name="enable_ff" type="boolean">
+    <description>Enable feedforward action</description>
     <value>1</value>
   </simple>
 
-  <simple name="enable_ff" type="bool">
-    <description>Enable feedforward action</description>
+  <simple name="correct_orientation" type="boolean">
+    <description>Transform velocity ff reference to local frame</description>
     <value>1</value>
   </simple>
 

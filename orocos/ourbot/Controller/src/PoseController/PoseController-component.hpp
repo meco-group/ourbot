@@ -7,6 +7,7 @@ class PoseController : public ControllerInterface{
   private:
     bool _enable_fb;
     bool _enable_ff;
+    bool _correct_orientation;
     std::vector<double> _state_fb_par;
 
     std::vector<double> _cmd_vel;

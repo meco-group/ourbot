@@ -9,10 +9,10 @@ local fqn_out, events_in
 local start_time
 state = ''
 main_state = ''
-local menu_options         = {'VelocityControl','MotionPlanning'}
-local main_states          = {'velocitycmd', 'motionplanning'}
+local menu_options         = {'VelocityControl','MotionPlanning', 'TrajectoryFollowing'}
+local main_states          = {'velocitycmd', 'motionplanning', 'trajectoryfollowing'}
 local sub_states           = {'idle', 'init', 'run', 'stop'}
-local menu_option_ind = 1
+local menu_option_ind      = 1
 
 --Create properties
 _print_level            = rtt.Property("int","print_level","Level of output printing")

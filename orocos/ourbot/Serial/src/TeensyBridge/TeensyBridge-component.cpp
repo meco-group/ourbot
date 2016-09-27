@@ -9,7 +9,7 @@ TeensyBridge::TeensyBridge(std::string const& name) :
 	USBInterface(name), _platform_length(0.3), _platform_width(0.265), _wheel_radius(0.05), _encoder_ticks_per_revolution(35840),
 	_current_sensor_gain(1.0), _current_sensor_offset(0.0),
 	_kinematic_conversion_position(0.0), _kinematic_conversion_orientation(0.0), _kinematic_conversion_wheel(0.0), _pose(3,0.0), _velocity(3,0.0),
-	_control_mode(TEENSYBRIDGE_CONTROL_MODE_SIMPLE), _velocity_controller_P(0.0f), _velocity_controller_I(0.0f), _velocity_controller_D(0.0f),
+	_control_mode(TEENSYBRIDGE_CONTROL_MODE_SIMPLE), _velocity_pid_soft(3, 0.0), _velocity_pid_strong(3, 0.0),
 	_imus{new IMU(std::string("left_imu")), new IMU(std::string("right_imu"))}
 {
 	// SETUP KINEMATICS
@@ -18,9 +18,8 @@ TeensyBridge::TeensyBridge(std::string const& name) :
 	this->addProperty("wheel_radius",_wheel_radius).doc("Property containing the wheel radius in [m].");
 	this->addProperty("encoder_ticks_per_revolution",_encoder_ticks_per_revolution).doc("Property containing the encoder ticks per revolution in [-].");
 	this->addProperty("current_sensor_gain",_current_sensor_gain).doc("Gain of current sensor to get proper scaling");
-	this->addProperty("velocity_controller_P",_velocity_controller_P).doc("Proportional gain for the velocity controller.");
-	this->addProperty("velocity_controller_I",_velocity_controller_I).doc("Integral gain for the velocity controller.");
-	this->addProperty("velocity_controller_D",_velocity_controller_D).doc("Derivative gain for the velocity controller.");
+	this->addProperty("velocity_pid_soft", _velocity_pid_soft).doc("PID parameters for soft velocity control (gamepad).");
+	this->addProperty("velocity_pid_strong", _velocity_pid_strong).doc("PID parameters for strong velocity control (smooth trajectories).");
 
 	this->ports()->addPort( "cmd_velocity_port", _cmd_velocity_port ).doc("Input port for low level velocity controller. Vector contains [vx,vy,w]");
 	this->ports()->addPort( "cmd_velocity_passthrough_port", _cmd_velocity_passthrough_port ).doc("Passthrough for cmd velocity port.");
@@ -43,6 +42,8 @@ TeensyBridge::TeensyBridge(std::string const& name) :
 	addOperation("setVelocity", &TeensyBridge::setVelocity, this).doc("Set the velocity of the ourbot, vx, vy in m/s, w in rad/s").arg("vx","vx [m/s]").arg("vy","vy [m/s]").arg("w","w [rad/s]");
 	addOperation("setCurrentController", &TeensyBridge::setCurrentController, this).doc("Set the pid parameters for the motor current controller.").arg("P","P").arg("I","I").arg("D","D");
 	addOperation("setVelocityController", &TeensyBridge::setVelocityController, this).doc("Set the pid parameters for the motor velocity controller.").arg("P","P").arg("I","I").arg("D","D");
+	addOperation("softVelocityControl", &TeensyBridge::softVelocityControl, this).doc("Set soft pid velocity controller.");
+	addOperation("strongVelocityControl", &TeensyBridge::strongVelocityControl, this).doc("Set strong pid velocity controller.");
 	addOperation("showCurrents", &TeensyBridge::showCurrents, this).doc("Displays the motor currents.");
 	addOperation("showVelocities", &TeensyBridge::showVelocities, this).doc("Displays the motor velocity.");
 	addOperation("showEncoders", &TeensyBridge::showEncoders, this).doc("Displays the motor encoder ticks.");
@@ -213,7 +214,7 @@ bool TeensyBridge::configureHook()
 bool TeensyBridge::startHook()
 {
 	if(USBInterface::startHook()){
-		setVelocityController(_velocity_controller_P, _velocity_controller_I, _velocity_controller_D);
+		softVelocityControl();
 		_imus[0]->start();
 		_imus[1]->start();
 	}else{
@@ -367,6 +368,14 @@ void TeensyBridge::setCurrentController(double P, double I, double D)
 void TeensyBridge::setVelocityController(double P, double I, double D)
 {
 	setController(3, P, I, D);
+}
+
+void TeensyBridge::softVelocityControl(){
+	setVelocityController(_velocity_pid_soft[0], _velocity_pid_soft[1], _velocity_pid_soft[2]);
+}
+
+void TeensyBridge::strongVelocityControl(){
+	setVelocityController(_velocity_pid_strong[0], _velocity_pid_strong[1], _velocity_pid_strong[2]);
 }
 
 // IMU RELATED FUNCTIONS
