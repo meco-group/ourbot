@@ -10,7 +10,7 @@
 # Creates a component library libHawkEye-<target>.so
 # and installs in the directory lib/orocos/HawkEye/
 #
-orocos_component(HawkEye HawkEye-component.hpp HawkEye-component.cpp Obstacle.hpp Obstacle.cpp Circle.hpp Circle.cpp Rectangle.hpp Rectangle.cpp) # ...you may add multiple source files
+orocos_component(HawkEye HawkEye-component.hpp HawkEye-component.cpp Robot.hpp Robot.cpp Camera.hpp Camera.cpp Gui.hpp Gui.cpp) # ...you may add multiple source files
 target_link_libraries(HawkEye ${OpenCV_LIBRARIES}) # Link libraries to Orocos component here
 
 #
@@ -21,7 +21,7 @@ target_link_libraries(HawkEye ${OpenCV_LIBRARIES}) # Link libraries to Orocos co
 #
 # Installs in the include/orocos/HawkEye/ directory
 #
-orocos_install_headers(HawkEye-component.hpp Obstacle.hpp Circle.hpp Rectangle.hpp) # ...you may add multiple header files
+orocos_install_headers(HawkEye-component.hpp Robot.hpp Camera.hpp Gui.hpp) # ...you may add multiple header files
 #
 # You may add multiple orocos_install_headers statements.
 

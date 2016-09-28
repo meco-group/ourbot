@@ -116,10 +116,10 @@ return rfsm.state {
 
   deploy = rfsm.state {
     rfsm.transition {src = 'initial',                   tgt = 'load_components'},
-    rfsm.transition {src = 'load_components',           tgt = 'connect_components',         events = {'e_done'}},
+    rfsm.transition {src = 'load_components',           tgt = 'configure_components',       events = {'e_done'}},
+    rfsm.transition {src = 'configure_components',      tgt = 'connect_components',         events = {'e_done'}},
     rfsm.transition {src = 'connect_components',        tgt = 'connect_remote_components',  events = {'e_done'}},
-    rfsm.transition {src = 'connect_remote_components', tgt = 'configure_components',       events = {'e_done'}},
-    rfsm.transition {src = 'configure_components',      tgt = 'set_activities',             events = {'e_done'}},
+    rfsm.transition {src = 'connect_remote_components', tgt = 'set_activities',             events = {'e_done'}},
     rfsm.transition {src = 'set_activities',            tgt = 'prepare_reporter',           events = {'e_done'}},
     rfsm.transition {src = 'prepare_reporter',          tgt = 'load_coordinator',           events = {'e_done'}},
 
@@ -154,6 +154,23 @@ return rfsm.state {
       end
     },
 
+    configure_components = rfsm.state {
+      entry = function(fsm)
+        for name, comp in pairs(components) do
+          if (name ~= 'reporter' and name ~= 'coordinator') then -- reporter and coordinator configured in later stage
+            comp:loadService('marshalling')
+            -- every component loads system configurations
+            if not comp:provides('marshalling'):updateProperties(system_config_file) then rfsm.send_events(fsm,'e_failed') return end
+            -- if available, a component loads its specific configurations
+            if(component_config_files[name]) then
+              if not comp:provides('marshalling'):updateProperties(component_config_files[name]) then rfsm.send_events(fsm,'e_failed') return end
+            end
+            -- configure the component
+            if not comp:configure() then rfsm.send_events(fsm,'e_failed') return end
+          end
+        end
+      end
+    },
 
     connect_components = rfsm.state {
       entry = function(fsm)
@@ -225,24 +242,6 @@ return rfsm.state {
       end
     },
 
-    configure_components = rfsm.state {
-      entry = function(fsm)
-        for name, comp in pairs(components) do
-          if (name ~= 'reporter') then -- reporter configured in later stage
-            comp:loadService('marshalling')
-            -- every component loads system configurations
-            if not comp:provides('marshalling'):updateProperties(system_config_file) then rfsm.send_events(fsm,'e_failed') return end
-            -- if available, a component loads its specific configurations
-            if(component_config_files[name]) then
-              if not comp:provides('marshalling'):updateProperties(component_config_files[name]) then rfsm.send_events(fsm,'e_failed') return end
-            end
-            -- configure the component
-            if not comp:configure() then rfsm.send_events(fsm,'e_failed') return end
-          end
-        end
-      end
-    },
-
     set_activities = rfsm.state {
       entry = function(fsm)
         dp:setActivity('motionplanning', 0, 0, rtt.globals.ORO_SCHED_OTHER)
@@ -288,6 +287,11 @@ return rfsm.state {
 
     load_coordinator = rfsm.state {
       entry = function(fsm)
+        -- coordinator loads system configurations
+        components.coordinator:loadService('marshalling')
+        if not components.coordinator:provides('marshalling'):updateProperties(system_config_file) then rfsm.send_events(fsm,'e_failed') return end
+        -- configure the coordinator
+        if not components.coordinator:configure() then rfsm.send_events(fsm,'e_failed') return end
         -- load the local application script
         components.coordinator:loadService("scripting")
         if not components.coordinator:provides("scripting"):loadPrograms(app_file) then rfsm.send_events(fsm,'e_failed') return end

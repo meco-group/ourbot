@@ -69,10 +69,10 @@ return rfsm.state {
 
   deploy = rfsm.state {
     rfsm.transition {src = 'initial',                   tgt = 'load_components'},
-    rfsm.transition {src = 'load_components',           tgt = 'connect_components',         events = {'e_done'}},
+    rfsm.transition {src = 'load_components',           tgt = 'configure_components',       events = {'e_done'}},
+    rfsm.transition {src = 'configure_components',      tgt = 'connect_components',         events = {'e_done'}},
     rfsm.transition {src = 'connect_components',        tgt = 'connect_remote_components',  events = {'e_done'}},
-    rfsm.transition {src = 'connect_remote_components', tgt = 'configure_components',       events = {'e_done'}},
-    rfsm.transition {src = 'configure_components',      tgt = 'set_activities',             events = {'e_done'}},
+    rfsm.transition {src = 'connect_remote_components', tgt = 'set_activities',             events = {'e_done'}},
     rfsm.transition {src = 'set_activities',            tgt = 'prepare_reporter',           events = {'e_done'}},
     rfsm.transition {src = 'prepare_reporter',          tgt = 'load_emperor',               events = {'e_done'}},
 
@@ -101,6 +101,25 @@ return rfsm.state {
       end
     },
 
+
+    configure_components = rfsm.state {
+      entry = function(fsm)
+        for name, comp in pairs(components) do
+          if (name ~= 'reporter' and name ~= 'emperor') then -- reporter configured in later stage
+            comp:loadService('marshalling')
+            -- every component loads system configurations
+            if not comp:provides('marshalling'):updateProperties(system_config_file) then rfsm.send_events(fsm,'e_failed') return end
+            -- if available, a component loads its specific configurations
+            if(component_config_files[name]) then
+              if not comp:provides('marshalling'):updateProperties(component_config_files[name]) then rfsm.send_events(fsm,'e_failed') return end
+            end
+            -- configure the component
+            if not comp:configure() then rfsm.send_events(fsm,'e_failed') return end
+          end
+        end
+      end,
+    },
+
     connect_components = rfsm.state {
       entry = function(fsm)
         -- connect the deployer to emperor (for communicating failure events)
@@ -123,12 +142,12 @@ return rfsm.state {
         if not addOutgoing('gamepad', 'cmd_velocity_port', 4002, robots) then rfsm.send_events(fsm,'e_failed') return end
         -- hawkeye
         dp:addPeer('communicator', 'hawkeye')
-        if not addOutgoing('hawkeye', 'kurt_state_port', 6050, kurt) then rfsm.send_events(fsm, 'e_failed') return end
-        if not addOutgoing('hawkeye', 'krist_state_port', 6051, kurt) then rfsm.send_events(fsm, 'e_failed') return end
-        if not addOutgoing('hawkeye', 'dave_state_port', 6052, kurt) then rfsm.send_events(fsm, 'e_failed') return end
-        if not addIncoming('hawkeye', 'est_pose_kurt_port', 6000) then rfsm.send_events(fsm,'e_failed') return end
-        if not addIncoming('hawkeye', 'est_pose_krist_port', 6001) then rfsm.send_events(fsm,'e_failed') return end
-        if not addIncoming('hawkeye', 'est_pose_dave_port', 6002) then rfsm.send_events(fsm,'e_failed') return end
+        if not addOutgoing('hawkeye', 'kurt_pose_port', 6050, kurt) then rfsm.send_events(fsm, 'e_failed') return end
+        if not addOutgoing('hawkeye', 'krist_pose_port', 6051, kurt) then rfsm.send_events(fsm, 'e_failed') return end
+        if not addOutgoing('hawkeye', 'dave_pose_port', 6052, kurt) then rfsm.send_events(fsm, 'e_failed') return end
+        if not addIncoming('hawkeye', 'kurt_est_pose_port', 6000) then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('hawkeye', 'krist_est_pose_port', 6001) then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('hawkeye', 'dave_est_pose_port', 6002) then rfsm.send_events(fsm,'e_failed') return end
 
         -- if not addIncoming('hawkeye', 'ref_x_kurt_port', 6010) then rfsm.send_events(fsm,'e_failed') return end
         -- if not addIncoming('hawkeye', 'ref_x_krist_port', 6011) then rfsm.send_events(fsm,'e_failed') return end
@@ -141,24 +160,6 @@ return rfsm.state {
         dp:addPeer('communicator', 'lua')
         if not addIncoming('lua', 'deployer_fsm_event_port', 4001) then rfsm.send_events(fsm, 'e_failed') return end
         if not addOutgoing('lua', 'deployer_failure_event_port', 4001, broadcast) then rfsm.send_events(fsm,'e_failed') return end
-      end,
-    },
-
-    configure_components = rfsm.state {
-      entry = function(fsm)
-        for name, comp in pairs(components) do
-          if (name ~= 'reporter') then -- reporter configured in later stage
-            comp:loadService('marshalling')
-            -- every component loads system configurations
-            if not comp:provides('marshalling'):updateProperties(system_config_file) then rfsm.send_events(fsm,'e_failed') return end
-            -- if available, a component loads its specific configurations
-            if(component_config_files[name]) then
-              if not comp:provides('marshalling'):updateProperties(component_config_files[name]) then rfsm.send_events(fsm,'e_failed') return end
-            end
-            -- configure the component
-            if not comp:configure() then rfsm.send_events(fsm,'e_failed') return end
-          end
-        end
       end,
     },
 
@@ -192,6 +193,11 @@ return rfsm.state {
 
     load_emperor = rfsm.state {
       entry = function(fsm)
+        -- emperor loads system configurations
+        components.emperor:loadService('marshalling')
+        if not components.emperor:provides('marshalling'):updateProperties(system_config_file) then rfsm.send_events(fsm,'e_failed') return end
+        -- configure the emperor
+        if not components.emperor:configure() then rfsm.send_events(fsm,'e_failed') return end
         -- load the local application script
         components.emperor:loadService("scripting")
         if not components.emperor:provides("scripting"):loadPrograms(app_file) then rfsm.send_events(fsm,'e_failed') return end
