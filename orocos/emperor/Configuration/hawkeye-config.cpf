@@ -175,7 +175,7 @@
 
     <simple name="brightness" type="long">
         <description>Camera brightness (0-40)</description>
-        <value>7</value>
+        <value>8</value>
     </simple>
 
     <simple name="exposure" type="long">
@@ -225,7 +225,7 @@
 
     <simple name="max_detectable_obstacles" type="long">
         <description>Maximum number of detectable obstacles</description>
-        <value>10</value>
+        <value>2</value>
     </simple>
 
     <simple name="image_path" type="string">
@@ -246,7 +246,7 @@
 
     <simple name="threshold_bgst" type="long">
         <description>Threshold for background subtraction [0-255]</description>
-        <value>35</value>
+        <value>30</value>
     </simple>
 
     <simple name="threshold_match" type="double">
@@ -277,6 +277,16 @@
     <simple name="number_of_bg_samples" type="long">
         <description>Number of samples taken to determine the background</description>
         <value>50</value>
+    </simple>
+
+    <simple name="show_prev_frame" type="boolean">
+        <description>Show previous frame (conform with the current received estimation)</description>
+        <value>0</value>
+    </simple>
+
+    <simple name="capture_time_mod" type="double">
+        <description>At what fracture of total frame capture procedure does the capture happens</description>
+        <value>0.</value>
     </simple>
 
 </properties>

@@ -22,4 +22,8 @@
   <description>Penalty factor for ADMM</description>
   <value>2.</value>
 </simple>
+<simple name="ideal_prediction" type="boolean">
+  <description>Use prediction based on computed trajectories and not on state estimation</description>
+  <value>0</value>
+</simple>
 </properties>
