@@ -3,7 +3,7 @@
 <properties>
   <simple name="trajectory_path" type="string">
     <description>Path of offline trajectory</description>
-    <value>/home/odroid/orocos/Reference/trajectories_xyt.csv</value>
+    <value>/home/odroid/orocos/Reference/trajectories_x.csv</value>
   </simple>
 
   <simple name="repeat_offline_trajectory" type="boolean">

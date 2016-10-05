@@ -9,6 +9,7 @@ orocos/emperor/HawkEye/images/*
 !orocos/emperor/HawkEye/images/templates
 orocos/ourbot/MotionPlanning/src/*/Toolbox/bin/
 orocos/ourbot/MotionPlanning/src/*/Toolbox/obj/
+orocos/ourbot/MotionPlanning/src/*/Toolbox/test/
 todo
 *.nc
 *.log
@@ -22,3 +23,4 @@ orocos/setup.zsh
 *.rosinstall
 *.rosinstall.bak
 *_
+orocos/ourbot/Estimator/src/Kalman/const_*
