@@ -62,10 +62,13 @@
 namespace omgf{
 
 typedef struct obstacle {
-    double position[N_DIM];
-    double velocity[N_DIM];
-    double acceleration[N_DIM];
-} __attribute__((packed)) obstacle_t;
+    std::vector<double> position;
+    std::vector<double> velocity;
+    std::vector<double> acceleration;
+    std::vector<double> radii;
+    std::vector<double> checkpoints;
+    bool avoid;
+} obstacle_t;
 
 
 class Point2Point{

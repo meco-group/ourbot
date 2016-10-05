@@ -36,8 +36,10 @@ void DistributedMotionPlanning::writeSample(){
 }
 
 bool DistributedMotionPlanning::config(){
-  omgf::Holonomic* vehicle = new omgf::Holonomic();
-  vehicle->setIdealPrediction(true);// because we do not have an update from our state yet
+  omgf::Vehicle* vehicle = new omgf::Holonomic();
+  if (_ideal_prediction){
+    vehicle->setIdealPrediction(true);
+  }
   _problem = new omgf::FormationPoint2Point(vehicle, _update_time, _sample_time, _horizon_time, _trajectory_length, _init_iter, _rho);
   _obstacles.resize(_problem->n_obs);
   _ref_pose.resize(_trajectory_length);
@@ -79,19 +81,6 @@ bool DistributedMotionPlanning::config(){
 
 bool DistributedMotionPlanning::initialize(){
   _problem->reset();
-  _obstacles[0].position[0] = -0.6;
-  _obstacles[0].position[1] = 1.0;
-  _obstacles[0].velocity[0] = 0.0;
-  _obstacles[0].velocity[1] = 0.0;
-  _obstacles[0].acceleration[0] = 0.0;
-  _obstacles[0].acceleration[1] = 0.0;
-  _obstacles[1].position[0] = 3.2;
-  _obstacles[1].position[1] = 1.0;
-  _obstacles[1].velocity[0] = 0.0;
-  _obstacles[1].velocity[1] = 0.0;
-  _obstacles[1].acceleration[0] = 0.0;
-  _obstacles[1].acceleration[1] = 0.0;
-
   //debug data
   _target_pose[0] = 3.5 - _rel_pos_c[0];
   _target_pose[1] = 3.5 - _rel_pos_c[1];
@@ -114,8 +103,11 @@ bool DistributedMotionPlanning::admmIteration(){
   #ifdef DEBUG
   _timestamp = TimeService::Instance()->getTicks();
   #endif
+  // get obstacles
+  std::vector<omgf::obstacle_t> obstacles(_n_obs);
+  getObstacles(obstacles);
   // update1: determine x_var
-  bool check = _problem->update1(_est_pose, _target_pose, _ref_pose, _ref_velocity, _x_var, _z_ji_var, _l_ji_var, _obstacles, _rel_pos_c, _predict_shift);
+  bool check = _problem->update1(_est_pose, _target_pose, _ref_pose, _ref_velocity, _x_var, _z_ji_var, _l_ji_var, obstacles, _rel_pos_c, _predict_shift);
   #ifdef DEBUG
   Seconds time_elapsed = TimeService::Instance()->secondsSince(_timestamp);
   cout << "update1: " << time_elapsed << " s" << endl;
@@ -223,6 +215,17 @@ void DistributedMotionPlanning::setRelPoseC(vector<double> rel_pos_c){
   }
   else {
     log(Error)<<"Wrong size of rel_pos_c set!"<<endlog();
+  }
+}
+
+void DistributedMotionPlanning::getObstacles(std::vector<omgf::obstacle_t>& obstacles){
+  for (int k=0; k<_n_obs; k++){
+    obstacles[k].position = _obstacles[k].position;
+    obstacles[k].velocity = _obstacles[k].velocity;
+    obstacles[k].acceleration = _obstacles[k].acceleration;
+    obstacles[k].checkpoints = _obstacles[k].checkpoints;
+    obstacles[k].radii = _obstacles[k].radii;
+    obstacles[k].avoid = _obstacles[k].avoid;
   }
 }
 

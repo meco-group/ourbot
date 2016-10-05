@@ -23,7 +23,7 @@
 #------------------------------------------------------------------------------
 CASADILIB = /home/ruben/Documents/Work/Repositories/casadi_binary/casadi/
 CASADIINC = /home/ruben/Documents/Work/Repositories/casadi_binary/include/
-CASADIOBJ = /home/ruben/Documents/Work/Programs/motionplanningtoolbox/examples/export/bin/
+CASADIOBJ = /home/ruben/ourbot/orocos/ourbot/MotionPlanning/src/MotionPlanning/Toolbox/bin/
 SOURCEFILES = test_p2p.cpp Holonomic_p2p.cpp
 EXECUTABLE = Point2Point
 #------------------------------------------------------------------------------

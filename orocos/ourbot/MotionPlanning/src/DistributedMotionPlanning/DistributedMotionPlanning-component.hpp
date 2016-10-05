@@ -26,7 +26,6 @@ class DistributedMotionPlanning : public MotionPlanningInterface{
     const int _cnt_max = 5;
     std::vector<double> _state0;
     std::vector<double> _stateT;
-    std::vector<omgf::obstacle_t> _obstacles;
 
     std::vector<std::vector<double> > _ref_pose;
     std::vector<std::vector<double> > _ref_velocity;
@@ -56,6 +55,7 @@ class DistributedMotionPlanning : public MotionPlanningInterface{
     #endif
 
     bool admmIteration();
+    void getObstacles(std::vector<omgf::obstacle_t>& obstacles);
 
   public:
     DistributedMotionPlanning(std::string const& name);

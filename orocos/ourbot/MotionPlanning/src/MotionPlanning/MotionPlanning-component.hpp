@@ -16,7 +16,8 @@ class MotionPlanning : public MotionPlanningInterface{
 
     std::vector<std::vector<double> > _ref_pose;
     std::vector<std::vector<double> > _ref_velocity;
-    std::vector<omg::obstacle_t> _obstacles;
+
+    void getObstacles(std::vector<omg::obstacle_t>& obstacles);
 
   public:
     MotionPlanning(std::string const& name);

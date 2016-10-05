@@ -8,8 +8,10 @@ MotionPlanning::MotionPlanning(std::string const& name) : MotionPlanningInterfac
 }
 
 bool MotionPlanning::config(){
-  omg::Holonomic* vehicle = new omg::Holonomic();
-  vehicle->setIdealPrediction(true);// because we do not have an update from our state yet
+  omg::Vehicle* vehicle = new omg::Holonomic();
+  if (_ideal_prediction){
+    vehicle->setIdealPrediction(true);
+  }
   _p2p = new omg::Point2Point(vehicle, _update_time, _sample_time, _horizon_time, _trajectory_length);
   _obstacles.resize(_p2p->n_obs);
   _ref_pose.resize(_trajectory_length);
@@ -18,38 +20,22 @@ bool MotionPlanning::config(){
     _ref_pose[k].resize(2);
     _ref_velocity[k].resize(2);
   }
+  _n_obs = _p2p->n_obs;
   return true;
 }
 
 bool MotionPlanning::initialize(){
   _p2p->reset();
-  _obstacles[0].position[0] = -0.6;
-  _obstacles[0].position[1] = 1.0;
-  _obstacles[0].velocity[0] = 0.0;
-  _obstacles[0].velocity[1] = 0.0;
-  _obstacles[0].acceleration[0] = 0.0;
-  _obstacles[0].acceleration[1] = 0.0;
-  _obstacles[1].position[0] = 3.2;
-  _obstacles[1].position[1] = 1.0;
-  _obstacles[1].velocity[0] = 0.0;
-  _obstacles[1].velocity[1] = 0.0;
-  _obstacles[1].acceleration[0] = 0.0;
-  _obstacles[1].acceleration[1] = 0.0;
-
-  //debug data
-  _target_pose[0] = 3.5;
-  _target_pose[1] = 3.5;
-  _target_pose[2] = 0.;
   return true;
 }
 
 bool MotionPlanning::trajectoryUpdate(){
-  //debug data
-  _est_pose[0] = 0.;
-  _est_pose[1] = 0.;
-  _est_pose[2] = 0.;
+  std::cout << "est_pose: " << _est_pose[0] << "," << _est_pose[1] << "," << _est_pose[2] << std::endl;
+  // get obstacles
+  std::vector<omg::obstacle_t> obstacles(_n_obs);
+  getObstacles(obstacles);
   // update motion planning algorithm
-  bool check = _p2p->update(_est_pose, _target_pose, _ref_pose, _ref_velocity, _obstacles, _predict_shift);
+  bool check = _p2p->update(_est_pose, _target_pose, _ref_pose, _ref_velocity, obstacles, _predict_shift);
   for (int k=0; k<_trajectory_length; k++){
     for (int j=0; j<2; j++){
       _ref_velocity_trajectory[j][k] = _ref_velocity[k][j];
@@ -63,6 +49,25 @@ bool MotionPlanning::trajectoryUpdate(){
     return false;
   }
   return true;
+}
+
+void MotionPlanning::getObstacles(std::vector<omg::obstacle_t>& obstacles){
+  for (int k=0; k<_n_obs; k++){
+    obstacles[k].position = _obstacles[k].position;
+    obstacles[k].velocity = _obstacles[k].velocity;
+    obstacles[k].acceleration = _obstacles[k].acceleration;
+    obstacles[k].checkpoints = _obstacles[k].checkpoints;
+    obstacles[k].radii = _obstacles[k].radii;
+    obstacles[k].avoid = _obstacles[k].avoid;
+    // std::cout << "obstacle " << k << ":" << std::endl;
+    // std::cout << "----------" << std::endl;
+    // std::cout << "pos: " << obstacles[k].position << std::endl;
+    // std::cout << "vel: " << obstacles[k].velocity << std::endl;
+    // std::cout << "acc: " << obstacles[k].acceleration << std::endl;
+    // std::cout << "chckp: " << obstacles[k].checkpoints << std::endl;
+    // std::cout << "radii: " << obstacles[k].radii << std::endl;
+    // std::cout << "avoid: " << obstacles[k].avoid << std::endl;
+  }
 }
 
 ORO_LIST_COMPONENT_TYPE(MotionPlanning);
