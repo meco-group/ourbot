@@ -44,6 +44,7 @@ EstimatorInterface::EstimatorInterface(std::string const& name) : TaskContext(na
   addProperty("lidar_data_length", _lidar_data_length).doc("Length of lidar data");
 
   addOperation("writeSample",&EstimatorInterface::writeSample, this).doc("Set data sample on output ports");
+  addOperation("validEstimation",&EstimatorInterface::validEstimation, this).doc("Is the last estimation valid?");
 }
 
 void EstimatorInterface::writeSample(){
@@ -51,6 +52,14 @@ void EstimatorInterface::writeSample(){
   _est_pose_port.write(example);
   _est_velocity_port.write(example);
   _est_acceleration_port.write(example);
+}
+
+bool EstimatorInterface::validEstimation(){
+  return _valid_estimation;
+}
+
+void EstimatorInterface::setValidEstimation(bool valid_estimation){
+  _valid_estimation = valid_estimation;
 }
 
 bool EstimatorInterface::configureHook(){
@@ -68,13 +77,6 @@ bool EstimatorInterface::configureHook(){
 }
 
 bool EstimatorInterface::startHook(){
-  // Check if input ports are connected
-  Ports ports = this->ports()->getPorts();
-  // for (Ports::iterator port = ports.begin(); port != ports.end() ; ++port) {
-  //   if (!(*port)->connected()){
-  //     log(Warning) << (*port)->getName() << " is not connected!" <<endlog();
-  //   }
-  // }
   if (!initialize()){
     log(Error) << "Error occured in initialize() !" <<endlog();
     return false;

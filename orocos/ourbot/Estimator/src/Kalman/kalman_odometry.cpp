@@ -1,4 +1,4 @@
-/*
+  /*
  *    This file is part of async_kalman.
  *
  *    async_kalman -- an synchronous kalman filter implementation
@@ -32,31 +32,19 @@ void OdometryGenericObservation::transform_R_dR(double theta, M<2, 2>& A, M<2, 2
   B << -st, -ct, ct, -st;
 }
 
-void OdometryObservation::observe(const M<6, 1>& x, const M<6, 6>& S, const M<0, 1>& u,
-    M<6, 1>& xp, M<6, 6>& Sp) {
+void OdometryObservation::observe(const M<3, 1>& x, const M<3, 3>& S, const M<3, 1>& u,
+    M<3, 1>& xp, M<3, 3>& Sp, M<3, 1>& up) {
+  xp = x;
+  Sp = Sp;
+
   M<2, 2> R, dR;
 
   transform_R_dR(x(OFF_THETA), R, dR);
 
-  M<2, 1> v;
-  v << x(OFF_X+1), x(OFF_Y+1);
-
-  M<3, 6> H;
-  H.setConstant(0);
-  H(2, OFF_THETA+1) = 1;
-  H.block(0, OFF_X+1, 2, 1) = R.transpose().block(0, 0, 2, 1);
-  H.block(0, OFF_Y+1, 2, 1) = R.transpose().block(0, 1, 2, 1);
-  H.block(0, OFF_THETA, 2, 1) = dR*v;
-
-  M<2, 1> h = R.transpose()*v;
-  M<3, 1> r;
-  r << h-H.block(0, 0, 2, 6)*x, 0;
-
-  ko.observe(x, S, xp, Sp, H, Sigma, V-r);
+  up << R*V, Omega;
 }
 
-void OdometryObservation::set(double V_X, double V_Y, double omega,
-    double sigma_X, double sigma_Y, double sigma_omega) {
-  V << V_X, V_Y, omega;
-  Sigma << sigma_X, 0, 0,   0, sigma_Y, 0,  0, 0, sigma_omega;
+void OdometryObservation::set(double V_X, double V_Y, double omega) {
+  V << V_X, V_Y;
+  Omega << omega;
 }

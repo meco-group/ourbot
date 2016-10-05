@@ -64,6 +64,7 @@ class EstimatorInterface : public RTT::TaskContext{
 
     double _control_sample_rate;
     int _lidar_data_length;
+    bool _valid_estimation;
 
   protected:
     virtual bool estimateUpdate() = 0;
@@ -90,9 +91,11 @@ class EstimatorInterface : public RTT::TaskContext{
     std::vector<double> getCalVelocity();
     std::vector<double> getCmdVelocity();
 
+    std::vector<double> _est_pose_tx;
     void setEstPose(std::vector<double> const&);
     void setEstVelocity(std::vector<double> const&);
     void setEstAcceleration(std::vector<double> const&);
+    void setValidEstimation(bool valid_estimation);
 
   public:
     EstimatorInterface(std::string const& name);
@@ -101,5 +104,6 @@ class EstimatorInterface : public RTT::TaskContext{
     virtual void updateHook();
     virtual void stopHook();
     void writeSample();
+    bool validEstimation();
 };
 #endif

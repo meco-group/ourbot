@@ -31,7 +31,7 @@ template <int N, int Nu>
 class KalmanObservation {
   public:
   virtual void observe(const M<N, 1>& x, const M<N, N>& S, const M<Nu, 1>& u,
-    M<N, 1>& xp, M<N, N>& Sp) = 0;
+    M<N, 1>& xp, M<N, N>& Sp, M<Nu, 1>& up) = 0;
 };
 
 /** \brief Observation consisting of constant C,D matrices */
@@ -39,7 +39,7 @@ template <int N, int Nu, int Ny>
 class SimpleObservation : public KalmanObservation<N, Nu> {
 public:
   virtual void observe(const M<N, 1>& x, const M<N, N>& S, const M<Nu, 1>& u,
-      M<N, 1>& xp, M<N, N>& Sp) {
+      M<N, 1>& xp, M<N, N>& Sp, M<Nu, 1>& up) {
     ko.observe(x, S, xp, Sp, C_, D_, R_, z_, u);
   }
   void set(const M<Ny, N>&C, const M<Ny, Nu> &D, const M<Ny, Ny>&R, const M<Ny, 1>&z) {
@@ -187,21 +187,23 @@ public:
     // Obtain previous starting value
     const M<N, 1>* x_ref = &it_ref->second->x_cache;
     const M<N, N>* S_ref = &it_ref->second->S_cache;
-    M<Nu, 1> u_ref;
+    const M<Nu, 1>* u_ref = &it_ref->second->u_cache;
     double t_ref =  it_ref->first;
 
     for (auto it=it_insert;it!=buffer_.end();++it) {
       if (it->second->active_observation) {
         // Propagate from starting value to current
         kp.propagate(*x_ref, *S_ref, it->first-t_ref, it->second->x_cache, it->second->S_cache,
-          A_, B_, Q_, u_ref);
+          A_, B_, Q_, *u_ref);
         // Measurement update
-        it->second->active_observation->observe(it->second->x_cache, it->second->S_cache, u_ref,
-          it->second->x_cache, it->second->S_cache);
+        it->second->active_observation->observe(
+          it->second->x_cache, it->second->S_cache, *u_ref,
+          it->second->x_cache, it->second->S_cache, it->second->u_cache);
       }
       // Current value becomes new starting value
       x_ref = &it->second->x_cache;
       S_ref = &it->second->S_cache;
+      u_ref = &it->second->u_cache;
       t_ref =  it->first;
     }
     // Nothing to do
