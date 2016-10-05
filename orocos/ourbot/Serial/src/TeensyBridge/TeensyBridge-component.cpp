@@ -128,8 +128,7 @@ void TeensyBridge::recalculatePose()
 	_pose[1] =  (-_motor_states[0].position + _motor_states[2].position)*_kinematic_conversion_position;
 	// UPDATE 5/11/2015: Average over all wheels so that the rotation is more accurate
 	//_pose[2] = (_motor_states[1].position - _motor_states[2].position)*_kinematic_conversion_orientation;
-  _pose[2] = 0.5*((_motor_states[1].position - _motor_states[2].position) + (_motor_states[3].position - _motor_states[0].position))*_kinematic_conversion_orientation;
-
+  	_pose[2] = 0.5*((_motor_states[1].position - _motor_states[2].position) + (_motor_states[3].position - _motor_states[0].position))*_kinematic_conversion_orientation;
 	_cal_enc_pose_port.write(_pose);
 }
 

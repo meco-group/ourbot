@@ -26,6 +26,7 @@ bool PoseController::controlUpdate(){
         for (int k=0; k<3; k++){
             _error_gl[k] = _ref_pose[k] - _est_pose[k];
         }
+        std::cout << "err: " << _error_gl[0] << ", " << _error_gl[1] << ", " << _error_gl[2] << std::endl;
         _error_loc = global2local(_error_gl, _est_pose[2]);
         for (int k=0; k<3; k++){
             _cmd_vel[k] = _state_fb_par[k]*_error_loc[k];

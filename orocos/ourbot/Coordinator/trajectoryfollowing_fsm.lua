@@ -10,6 +10,7 @@ local teensy          = tc:getPeer('teensy')
 local loadTrajectory               = reference:getOperation("loadTrajectory")
 local estimatorUpdate              = estimator:getOperation("update")
 local referenceUpdate              = reference:getOperation("update")
+local validEstimation              = estimator:getOperation("validEstimation")
 local controllerUpdate             = controller:getOperation("update")
 local estimatorInRunTimeError      = estimator:getOperation("inRunTimeError")
 local controllerInRunTimeError     = controller:getOperation("inRunTimeError")
@@ -52,7 +53,7 @@ return rfsm.state {
       end
       strongVelocityControl()
       print("Waiting on Run...")
-    end
+    end,
   },
 
   run = rfsm.state{
@@ -83,9 +84,13 @@ return rfsm.state {
         start_time      = get_sec()
 
         -- update reference/estimator/controller
-        referenceUpdate()
         estimatorUpdate()
-        controllerUpdate()
+        if validEstimation() then
+          referenceUpdate()
+          controllerUpdate()
+        else
+          print "Estimate not valid!"
+        end
 
         -- take snapshot for logger
         if snapshot_cnt >= max_cnt then
@@ -129,9 +134,9 @@ return rfsm.state {
 
   stop = rfsm.state{
     entry = function(fsm)
-      estimator:stop()
       reference:stop()
       controller:stop()
+      estimator:stop()
       reporter:stop()
       print("System stopped. Waiting on Restart or Reset...")
     end,

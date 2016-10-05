@@ -11,6 +11,10 @@ local teensy          = tc:getPeer('teensy')
 local estimatorUpdate              = estimator:getOperation("update")
 local referenceUpdate              = reference:getOperation("update")
 local controllerUpdate             = controller:getOperation("update")
+local validEstimation              = estimator:getOperation("validEstimation")
+local validReference               = reference:getOperation("ready")
+local gotTarget                    = motionplanning:getOperation("gotTarget")
+local enableMotionPlanning         = motionplanning:getOperation("enable")
 local estimatorInRunTimeError      = estimator:getOperation("inRunTimeError")
 local controllerInRunTimeError     = controller:getOperation("inRunTimeError")
 local referenceInRunTimeError      = reference:getOperation("inRunTimeError")
@@ -84,9 +88,19 @@ return rfsm.state {
         start_time      = get_sec()
 
         -- update reference/estimator/controller
-        referenceUpdate()
         estimatorUpdate()
-        controllerUpdate()
+        if validEstimation() and gotTarget() then
+          enableMotionPlanning()
+          referenceUpdate()
+          if validReference() then
+            print 'controllll'
+            -- controllerUpdate()
+          end
+        else
+          if not validEstimation() then
+            print "Estimate not valid!"
+          end
+        end
 
         -- take snapshot for logger
         if snapshot_cnt >= max_cnt then
