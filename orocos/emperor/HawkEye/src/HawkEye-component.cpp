@@ -1,12 +1,16 @@
 #include "HawkEye-component.hpp"
 #include <unistd.h>
+#include <rtt/os/TimeService.hpp>
+#include <rtt/Time.hpp>
 
 using namespace RTT;
+using namespace RTT::os;
 
-HawkEye::HawkEye(std::string const& name) : TaskContext(name, PreOperational)
+HawkEye::HawkEye(std::string const& name) : TaskContext(name, PreOperational), _target_pose(3)
 {
   // ports
   ports()->addPort("obstacle_port", _obstacle_port).doc("Detected obstacles");
+  ports()->addPort("target_pose_port", _target_pose_port).doc("Target pose");
 
   // properties
   addProperty("robot_names", _robot_names).doc("Name of robots to detect");
@@ -32,6 +36,8 @@ HawkEye::HawkEye(std::string const& name) : TaskContext(name, PreOperational)
   addProperty("pixelspermeter", _pixelspermeter).doc("Pixels per meter");
   addProperty("capture_bg_at_start", _capture_bg_at_start).doc("Capture background at start");
   addProperty("number_of_bg_samples", _number_of_bg_samples).doc("Number of samples taken to determine the background");
+  addProperty("show_prev_frame", _show_prev_frame).doc("Show previous frame (conform with the current received estimation)");
+  addProperty("capture_time_mod", _capture_time_mod).doc("At what fracture of total frame capture procedure does the capture happens");
 
   // operations
   addOperation("captureBackground", &HawkEye::captureBackground, this);
@@ -55,14 +61,16 @@ bool HawkEye::configureHook(){
   // show example data sample to output ports to make data flow real-time
   std::vector<double> example_markers(7, 0.0);
   std::vector<double> example_obstacles(5*_max_detectable_obstacles, 0.0);
+  std::vector<double> example_pose(3, 0.0);
   _obstacle_port.setDataSample(example_obstacles);
+  _target_pose_port.setDataSample(example_pose);
   for (uint k=0; k<_robot_markers_port.size(); k++){
     _robot_markers_port[k]->setDataSample(example_markers);
   }
   // create gui, camera and robots
   _gui = new Gui(_gui_resolution);
   _gui->setPixelsPerMeter(_pixelspermeter);
-  _camera = new Camera(_video_port_name, {1920, 1080}, _brightness, _exposure, _iso, _camera_cfs, _distortion_cfs);
+  _camera = new Camera(_video_port_name, {1920, 1080}, _brightness, _exposure, _iso, _camera_cfs, _distortion_cfs, _capture_time_mod);
   createRobots();
   return true;
 }
@@ -80,12 +88,16 @@ bool HawkEye::startHook(){
   if (!getBackground()){
     return false;
   }
+  // put something useful in _prev_frame
+  if (!_camera->capture(_prev_frame, _capture_time)){
+    log(Error) << "Could not capture frame!" << endlog();
+  }
   return true;
 }
 
 void HawkEye::updateHook(){
   #ifdef DEBUG
-  clock_t begin = clock();
+  TimeService::ticks _timestamp = TimeService::Instance()->getTicks();
   #endif
   // capture frame
   if (!_camera->capture(_frame, _capture_time)){
@@ -98,11 +110,20 @@ void HawkEye::updateHook(){
   // write results
   writeResults();
   // draw
-  drawResults();
+  if (_show_prev_frame){
+    drawResults(_prev_frame);
+
+  } else {
+    drawResults(_frame);
+  }
+  // save frame
+  _frame.copyTo(_prev_frame);
+  // set target pose
+  setTargetPose();
   #ifdef DEBUG
-  clock_t end = clock();
+  Seconds time_elapsed = TimeService::Instance()->secondsSince(_timestamp);
   #endif
-  DEBUG_PRINT("update took " << double(end-begin)/CLOCKS_PER_SEC << "s")
+  DEBUG_PRINT("update took " << time_elapsed << "s")
 }
 
 void HawkEye::stopHook(){
@@ -226,7 +247,7 @@ void HawkEye::writeResults(){
   _obstacle_port.write(_obstacles);
 }
 
-void HawkEye::drawResults(){
+void HawkEye::drawResults(cv::Mat& frame){
   for (uint k=0; k<_robots.size(); k++){
     if (_robots[k]->detected()){
       std::vector<double> pose(3, 0.0);
@@ -234,7 +255,31 @@ void HawkEye::drawResults(){
       _robots[k]->setPose(pose);
     }
   }
-  _gui->draw(_frame, _obstacles, _robots, _robot_colors);
+  _gui->draw(frame, _obstacles, _robots, _robot_colors);
+}
+
+void HawkEye::setTargetPose(){
+  std::vector<double> target_pose(3);
+  _gui->getClickPose(target_pose);
+  bool send = false;
+  for (int i=0; i<3; i++){
+    if (target_pose[i] != _target_pose[i]){
+      send = true;
+      break;
+    }
+  }
+  if (send){
+    for (int i=0; i<3; i++){
+      if (target_pose[i] < 0.){
+        send = false;
+        break;
+      }
+    }
+  }
+  if (send){
+    _target_pose_port.write(target_pose);
+    _target_pose = target_pose;
+  }
 }
 
 void HawkEye::backgroundSubtraction(const cv::Mat& frame, std::vector<std::vector<cv::Point> >& contours,
@@ -319,6 +364,8 @@ void HawkEye::filterObstacles(const std::vector<cv::RotatedRect>& rectangles, co
   bool add;
   cv::Point2f vertices[4];
   std::vector<cv::Point> other_contour(4);
+  std::vector<std::vector<double> > obstacles;
+  std::vector<double> areas;
   for (uint i=0; i<rectangles.size(); i++){
     add = true;
     for (uint k=0; k<_robots.size(); k++){
@@ -344,42 +391,86 @@ void HawkEye::filterObstacles(const std::vector<cv::RotatedRect>& rectangles, co
       }
     }
     if (add){
-      addObstacle(rectangles[i], circles[i]);
+      addObstacle(rectangles[i], circles[i], obstacles, areas);
     }
   }
-  if (_obstacles.size() > 5*_max_detectable_obstacles){
+
+  // sort obstacles on area size
+  sortObstacles(obstacles, areas);
+
+  // keep largest obstacles
+  if (obstacles.size() > _max_detectable_obstacles){
     log(Warning) << "More obstacles detected than allowed!" << endlog();
-    while(_obstacles.size() > 5*_max_detectable_obstacles){
-      _obstacles.pop_back();
+    for (int k=0; k<_max_detectable_obstacles; k++){
+      for (int i=0; i<5; i++){
+        _obstacles.push_back(obstacles[k][i]);
+      }
     }
-  }
-  if (_obstacles.size() < 5*_max_detectable_obstacles){
-    while(_obstacles.size() < 5*_max_detectable_obstacles){
-      _obstacles.push_back(-100);
+  } else {
+    for (int k=0; k<obstacles.size(); k++){
+      for (int i=0; i<5; i++){
+        _obstacles.push_back(obstacles[k][i]);
+      }
+    }
+    for (int k=obstacles.size(); k<_max_detectable_obstacles; k++){
+      for (int i=0; i<5; i++){
+        _obstacles.push_back(-100);
+      }
     }
   }
 }
 
-void HawkEye::addObstacle(const cv::RotatedRect& rectangle, const std::vector<double>& circle){
+void HawkEye::addObstacle(const cv::RotatedRect& rectangle, const std::vector<double>& circle,
+  std::vector<std::vector<double>>& obstacles, std::vector<double>& areas){
   double circle_area = M_PI*circle[2]*circle[2];
   double rectangle_area = rectangle.size.width * rectangle.size.height;
-  std::vector<double> obstacle(4);
+  std::vector<double> obstacle(5);
   if (rectangle_area < circle_area){
-    obstacle[0] = rectangle.center.x;
-    obstacle[1] = rectangle.center.y;
-    obstacle[2] = rectangle.angle;
-    obstacle[3] = rectangle.size.width;
-    obstacle[4] = rectangle.size.height;
+    obstacle[0] = rectangle.center.x*1.0/_pixelspermeter;
+    obstacle[1] = (_frame.size().height-rectangle.center.y)*1.0/_pixelspermeter;
+    obstacle[2] = -rectangle.angle;
+    obstacle[3] = rectangle.size.width*1.0/_pixelspermeter;
+    obstacle[4] = rectangle.size.height*1.0/_pixelspermeter;
+    areas.push_back(rectangle_area);
   } else {
-    obstacle[0] = circle[0];
-    obstacle[1] = circle[1];
-    obstacle[2] = circle[2];
+    obstacle[0] = circle[0]*1.0/_pixelspermeter;
+    obstacle[1] = (_frame.size().height-circle[1])*1.0/_pixelspermeter;
+    obstacle[2] = circle[2]*1.0/_pixelspermeter;
     obstacle[3] = -100;
     obstacle[4] = -100;
+    areas.push_back(circle_area);
   }
-  for (int i=0; i<5; i++){
-    _obstacles.push_back(obstacle[i]);
+  obstacles.push_back(obstacle);
+}
+
+void HawkEye::sortObstacles(std::vector<std::vector<double> >& obstacles, std::vector<double>& areas){
+  int n = areas.size();
+  std::vector<int> indices(n);
+  for (int i=0; i<n; i++){
+    indices[i] = i;
   }
+  int j, index;
+  double area;
+  // basic insertion sort
+  for (int i=1; i<n; i++){
+    j = i;
+    while (j > 0 && areas[j-1] < areas[j]){
+      // swap area
+      area = areas[j];
+      areas[j] = areas[j-1];
+      areas[j-1] = area;
+      // swap index
+      index = indices[j];
+      indices[j] = indices[j-1];
+      indices[j-1] = index;
+      j--;
+    }
+  }
+  std::vector<std::vector<double> > obstacles_out(n);
+  for (int i=0; i<n; i++){
+    obstacles_out[i] = obstacles[indices[i]];
+  }
+  obstacles = obstacles_out;
 }
 
 bool HawkEye::matchMarkers(cv::Mat& roi, const std::vector<int>& roi_location, std::vector<int>& marker_locations, std::vector<int>& robot_indices){
