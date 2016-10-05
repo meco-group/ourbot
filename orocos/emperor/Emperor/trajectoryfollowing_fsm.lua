@@ -1,11 +1,13 @@
 local tc        = rtt.getTC()
 
-local gamepad       = tc:getPeer('gamepad')
-local hawkeye       = tc:getPeer('hawkeye')
-local reporter      = tc:getPeer('reporter')
-local snapshot      = reporter:getOperation("snapshot")
-local enablevelcmd  = gamepad:getOperation("enableVelocityCmd")
-local disablevelcmd = gamepad:getOperation("disableVelocityCmd")
+local gamepad               = tc:getPeer('gamepad')
+local hawkeye               = tc:getPeer('hawkeye')
+local reporter              = tc:getPeer('reporter')
+local snapshot              = reporter:getOperation("snapshot")
+local enablevelcmd          = gamepad:getOperation("enableVelocityCmd")
+local disablevelcmd         = gamepad:getOperation("disableVelocityCmd")
+local gamepadInRunTimeError = gamepad:getOperation("inRunTimeError")
+local hawkeyeInRunTimeError = hawkeye:getOperation("inRunTimeError")
 
 return rfsm.state {
   rfsm.trans{src = 'initial', tgt = 'idle'},
@@ -62,6 +64,18 @@ return rfsm.state {
         else
           snapshot_cnt = snapshot_cnt + 1
         end
+
+        if gamepadInRunTimeError() then
+          rtt.logl("Error","RunTimeError in gamepad component")
+          rfsm.send_events(fsm,'e_failed')
+          return
+        end
+        if hawkeyeInRunTimeError() then
+          rtt.logl("Error","RunTimeError in hawkeye component")
+          rfsm.send_events(fsm,'e_failed')
+          return
+        end
+
         rfsm.yield(true)
       end
     end,
