@@ -1,6 +1,8 @@
 #ifndef OROCOS_REFERENCE_COMPONENT_HPP
 #define OROCOS_REFERENCE_COMPONENT_HPP
 
+// #define DEBUG
+
 #include <rtt/RTT.hpp>
 #include <rtt/Port.hpp>
 
@@ -41,9 +43,11 @@ class Reference : public RTT::TaskContext{
     bool _got_ref_velocity_trajectory[3];
 
     bool _just_started;
+    bool _first_time;
 
     double _control_sample_rate;
     double _pathupd_sample_rate;
+    bool _repeat_offline_trajectory;
 
     std::string _trajectory_path;
 
@@ -64,5 +68,6 @@ class Reference : public RTT::TaskContext{
     virtual void stopHook();
     void writeSample();
     bool loadTrajectory();
+    bool ready();
 };
 #endif

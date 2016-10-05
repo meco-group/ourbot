@@ -28,11 +28,12 @@ Reference::Reference(std::string const& name) : TaskContext(name, PreOperational
 
   addProperty("control_sample_rate", _control_sample_rate).doc("Frequency to update the control loop");
   addProperty("pathupd_sample_rate", _pathupd_sample_rate).doc("Frequency to update the path");
-
   addProperty("trajectory_path", _trajectory_path).doc("Path of offline trajectory");
+  addProperty("repeat_offline_trajectory", _repeat_offline_trajectory).doc("Repeat offline trajectory");
 
   addOperation("writeSample",&Reference::writeSample, this).doc("Set data sample on output ports");
   addOperation("loadTrajectory",&Reference::loadTrajectory, this).doc("Load offline trajectory");
+  addOperation("ready",&Reference::ready, this).doc("Is the reference ready?");
 
   _cur_ref_pose_trajectory = _ref_pose_trajectory_1;
   _cur_ref_velocity_trajectory = _ref_velocity_trajectory_1;
@@ -98,14 +99,20 @@ bool Reference::loadTrajectory(){
       }
     }
   }
+  file.close();
+  // last value is rubbish
+  for (int k=0; k<3; k++){
+    ref_pose_trajectory[k].pop_back();
+    ref_velocity_trajectory[k].pop_back();
+  }
+
   for (int k=0; k<3; k++){
     _cur_ref_pose_trajectory[k].resize(ref_pose_trajectory[k].size());
     _cur_ref_pose_trajectory[k] = ref_pose_trajectory[k];
     _cur_ref_velocity_trajectory[k].resize(ref_velocity_trajectory[k].size());
     _cur_ref_velocity_trajectory[k] = ref_velocity_trajectory[k];
   }
-  file.close();
-  _trajectory_length = _cur_ref_pose_trajectory[0].size(); // klopt dit?
+  _trajectory_length = ref_pose_trajectory[0].size();
   _offline_trajectory =  true;
   _index1 = 0;
   _index2 = 0;
@@ -113,6 +120,10 @@ bool Reference::loadTrajectory(){
     _ref_pose_trajectory_tx_port[k].write(_cur_ref_pose_trajectory[k]);
   }
   return true;
+}
+
+bool Reference::ready(){
+  return !_just_started;
 }
 
 bool Reference::startHook(){
@@ -128,6 +139,7 @@ bool Reference::startHook(){
     }
   }
   _just_started = true;
+  _first_time = true;
   // std::cout << "Reference started !" <<std::endl;
   return true;
 }
@@ -137,7 +149,13 @@ void Reference::updateHook(){
     // Check for new data and read ports
     readPorts();
     // If not retrieved first trajectory yet: do nothing
+    std::cout << "just started: " << _just_started << ", new data: " << _new_data << std::endl;
     if (_just_started){
+      if (_first_time){
+        // trigger motion planning for first time
+        _predict_shift_port.write(0);
+        _first_time = false;
+      }
       return;
     }
     // Update index/trajectory vector
@@ -146,7 +164,7 @@ void Reference::updateHook(){
       error();
     }
     if(_index1 >= _update_length){
-      if( _new_data){
+      if(_new_data){
         // Swap current and next pointers
         std::vector<double>* swap_pose = _cur_ref_pose_trajectory;
         std::vector<double>* swap_velocity = _cur_ref_velocity_trajectory;
@@ -177,7 +195,14 @@ void Reference::updateHook(){
     }
   } else {
     if (_index2 >= _trajectory_length){
-      return;
+      if (_repeat_offline_trajectory){
+      _index1 = 0;
+      _index2 = 0;
+
+      } else {
+      _index1--;
+      _index2--;
+      }
     }
   }
   // Get next sample
@@ -197,8 +222,8 @@ void Reference::updateHook(){
   _ref_velocity_port.write(_ref_velocity_sample);
   #ifdef DEBUG
     std::cout << "index1: " << _index1 << ", index2: " << _index2 << std::endl;
-    std::cout << "(" << _ref_velocity_sample[0] <<","<<_ref_velocity_sample[1]<<")" <<std::endl;
-    std::cout << "next: " << _cur_ref_velocity_trajectory[0].at(_index2+1) <<","<<_cur_ref_velocity_trajectory[1].at(_index2+1)<<")" <<std::endl;
+    std::cout << "vel: (" << _ref_velocity_sample[0] <<","<<_ref_velocity_sample[1]<<","<<_ref_velocity_sample[2]<<")" <<std::endl;
+    std::cout << "pos: (" << _ref_pose_sample[0] <<","<<_ref_pose_sample[1]<<_ref_pose_sample[2]<<")" <<std::endl;
   #endif
   // Update indices
   _index1++;
