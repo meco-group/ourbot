@@ -9,8 +9,9 @@ void mouseCallBack(int event, int x, int y, int flags, void* data){
     }
 }
 
-Gui::Gui(const std::vector<int>& resolution): _resolution(resolution),
-    _mouseclick_position(2, -100), _black(cv::Scalar(77, 76, 75)), _pixelspermeter(1){
+Gui::Gui(const std::vector<int>& resolution): _resolution(resolution), _resolution_orig(2),
+    _mouseclick_position(2, -100),
+    _black(cv::Scalar(77, 76, 75)), _pixelspermeter(1){
 }
 
 
@@ -32,12 +33,14 @@ void Gui::setPixelsPerMeter(int pixelspermeter){
 void Gui::draw(cv::Mat& frame, const std::vector<double>& obstacles, const std::vector<Robot*>& robots, const std::vector<int>& robot_colors){
     int height = frame.size().height;
     int width = frame.size().width;
+    _resolution_orig[0] = width;
+    _resolution_orig[1] = height;
     // draw coordinate system
     cv::circle(frame, cv::Point2i(0, height), 10, _black, -3);
     cv::line(frame, cv::Point2i(0, height), cv::Point2i(30, height), _black, 3);
     cv::line(frame, cv::Point2i(0, height), cv::Point2i(0, height-30), _black, 3);
     for (int i=0; i<(height/_pixelspermeter); i++){
-        cv::line(frame, cv::Point2i(0, (i+1)*_pixelspermeter), cv::Point2i(10, (i+1)*_pixelspermeter), _black, 3);
+        cv::line(frame, cv::Point2i(0, height-(i+1)*_pixelspermeter), cv::Point2i(10, height-(i+1)*_pixelspermeter), _black, 3);
     }
     for (int i=0; i<(width/_pixelspermeter); i++){
         cv::line(frame, cv::Point2i((i+1)*_pixelspermeter, height), cv::Point2i((i+1)*_pixelspermeter, height-10), _black, 3);
@@ -49,10 +52,10 @@ void Gui::draw(cv::Mat& frame, const std::vector<double>& obstacles, const std::
         }
         if (obstacles[k+3] < 0){
             // circle
-            cv::circle(frame, cv::Point2f(obstacles[k], obstacles[k+1]), obstacles[k+2], _black, 2);
+            cv::circle(frame, cv::Point2f(obstacles[k]*_pixelspermeter, height-obstacles[k+1]*_pixelspermeter), obstacles[k+2]*_pixelspermeter, _black, 2);
         } else {
             // rectangle
-            cv::RotatedRect rectangle = cv::RotatedRect(cv::Point2f(obstacles[k], obstacles[k+1]), cv::Size2f(obstacles[k+3], obstacles[k+4]), obstacles[k+2]);
+            cv::RotatedRect rectangle = cv::RotatedRect(cv::Point2f(obstacles[k]*_pixelspermeter, height-obstacles[k+1]*_pixelspermeter), cv::Size2f(obstacles[k+3]*_pixelspermeter, obstacles[k+4]*_pixelspermeter), -obstacles[k+2]);
             cv::Point2f vertices[4];
             rectangle.points(vertices);
             for (int i=0; i<4; i++){
@@ -81,4 +84,9 @@ void Gui::setMouseClickPosition(int x, int y){
     _mouseclick_position[1] = y;
 }
 
+void Gui::getClickPose(std::vector<double>& pose){
+    pose[0] = (_resolution_orig[0]*1.0/_resolution[0])*_mouseclick_position[0]*1.0/_pixelspermeter;
+    pose[1] = (_resolution_orig[1]*1.0/_resolution[1])*(_resolution[1] - _mouseclick_position[1])*1.0/_pixelspermeter;
+    pose[2] = 0.0;
+}
 

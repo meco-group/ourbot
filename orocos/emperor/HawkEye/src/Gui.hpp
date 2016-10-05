@@ -17,6 +17,7 @@
 class Gui {
     private:
         std::vector<int> _resolution;
+        std::vector<int> _resolution_orig;
         std::vector<int> _mouseclick_position;
         cv::Scalar _black;
         int _pixelspermeter;
@@ -28,6 +29,7 @@ class Gui {
         void stop();
         void draw(cv::Mat& frame, const std::vector<double>& obstacles, const std::vector<Robot*>& robots, const std::vector<int>& robot_colors);
         void setMouseClickPosition(int x, int y);
+        void getClickPose(std::vector<double>& pose);
 };
 
 
