@@ -33,6 +33,7 @@ class Camera {
         cv::Mat _camera_matrix;
         cv::Mat _distortion_vector;
         uint8_t* _cam_buffer;
+        double _capture_time_mod;
 
 
         void buildMatrices(const std::vector<double>& camera_cfs, const std::vector<double>& distortion_cfs);
@@ -40,17 +41,17 @@ class Camera {
         bool printInfo();
         bool initBuffers();
         void convertToRGB(uint16_t* bayer, uint8_t* rgb, int width, int height);
-        double captureTime();
 
     public:
         Camera(const std::string& video_port_name, const std::vector<int>& resolution, int brightness, int exposure, int iso,
-                const std::vector<double>& camera_cfs, const std::vector<double>& distortion_cfs);
+                const std::vector<double>& camera_cfs, const std::vector<double>& distortion_cfs, double capture_time_mod);
         bool start(bool print_info);
         bool setResolution(const std::vector<int>& resolution);
         bool setBrightness(int brightness);
         bool setExposure(int exposure);
         bool setISO(int iso);
         bool capture(cv::Mat& frame, double& capture_time);
+        double captureTime();
         void stop();
 };
 

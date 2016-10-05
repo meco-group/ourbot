@@ -3,9 +3,9 @@
 using namespace RTT;
 
 Camera::Camera(const std::string& video_port_name, const std::vector<int>& resolution, int brightness, int exposure, int iso,
-    const std::vector<double>& camera_cfs, const std::vector<double>& distortion_cfs):
+    const std::vector<double>& camera_cfs, const std::vector<double>& distortion_cfs, double capture_time_mod):
     _video_port_name(video_port_name), _resolution(resolution),
-    _brightness(brightness), _exposure(exposure), _iso(iso){
+    _brightness(brightness), _exposure(exposure), _iso(iso), _capture_time_mod(capture_time_mod){
     buildMatrices(camera_cfs, distortion_cfs);
 }
 
@@ -231,7 +231,7 @@ bool Camera::capture(cv::Mat& frame, double& capture_time){
     FD_SET(_fd_cam, &fds);
     struct timeval tv = {0};
     tv.tv_sec = 2;  //wait 2 seconds before giving up
-    capture_time = captureTime();
+    double t0 = captureTime();
     if (select(_fd_cam+1, &fds, NULL, NULL, &tv) == -1){
         log(Error) << "Error while waiting for frame!" << endlog();
         return false;
@@ -240,6 +240,8 @@ bool Camera::capture(cv::Mat& frame, double& capture_time){
         log(Error) << "Error while retrieving frame!" << endlog();
         return false;
     }
+    double t1 = captureTime();
+    capture_time = t0 + _capture_time_mod*(t1-t0);
     cv::Mat frame_rgb(cv::Size(_resolution[0]/2, _resolution[1]/2), CV_8UC3);
     convertToRGB(reinterpret_cast<uint16_t*>(_cam_buffer), frame_rgb.data, _resolution[0], _resolution[1]);
     // undistort image

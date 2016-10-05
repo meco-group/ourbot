@@ -21,6 +21,7 @@
 #include <rtt/RTT.hpp>
 #include <rtt/Port.hpp>
 
+
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include "opencv2/imgproc/imgproc.hpp"
@@ -37,6 +38,7 @@ class HawkEye : public RTT::TaskContext{
         // ports
         std::vector<OutputPort<std::vector<double> >* > _robot_markers_port;
         OutputPort<std::vector<double> > _obstacle_port;
+        OutputPort<std::vector<double> > _target_pose_port;
 
         std::vector<InputPort<std::vector<double> >* > _robot_est_pose_port;
 
@@ -64,10 +66,13 @@ class HawkEye : public RTT::TaskContext{
         int _pixelspermeter;
         bool _capture_bg_at_start;
         int _number_of_bg_samples;
+        bool _show_prev_frame;
+        double _capture_time_mod;
 
         std::vector<cv::Mat> _top_markers;
         cv::Mat _bottom_marker;
         cv::Mat _frame;
+        cv::Mat _prev_frame;
         cv::Mat _background;
         cv::Mat _mask;
 
@@ -75,6 +80,7 @@ class HawkEye : public RTT::TaskContext{
         Camera* _camera;
         std::vector<Robot*> _robots;
         std::vector<double> _obstacles;
+        std::vector<double> _target_pose;
 
         double _capture_time;
 
@@ -91,12 +97,13 @@ class HawkEye : public RTT::TaskContext{
         void subtractRobots(std::vector<std::vector<cv::Point> >& contours, std::vector<cv::Vec4i>& hierarchy);
         void detectObstacles(const cv::Mat& frame, const std::vector<std::vector<cv::Point> >& contours);
         void filterObstacles(const std::vector<cv::RotatedRect>& rectangles, const std::vector<std::vector<double> >& circles);
-        void addObstacle(const cv::RotatedRect& rectangle, const std::vector<double>& circle);
+        void addObstacle(const cv::RotatedRect& rectangle, const std::vector<double>& circle, std::vector<std::vector<double>>& obstacles, std::vector<double>& areas);
+        void sortObstacles(std::vector<std::vector<double> >& obstacles, std::vector<double>& areas);
         bool matchMarkers(cv::Mat& roi, const std::vector<int>& roi_location, std::vector<int>& marker_locations, std::vector<int>& robot_indices);
         void matchTemplates(cv::Mat& frame, const cv::Mat& marker, double threshold, std::vector<int>& marker_locations, std::vector<double>& marker_scores);
         void blank(cv::Mat& frame, const cv::Point& location, int width, int height);
         void writeResults();
-        void drawResults();
+        void drawResults(cv::Mat& frame);
 
     public:
         HawkEye(std::string const& name);
@@ -105,6 +112,6 @@ class HawkEye : public RTT::TaskContext{
         void updateHook();
         void stopHook();
         bool captureBackground();
-
+        void setTargetPose();
 };
 #endif
