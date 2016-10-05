@@ -165,7 +165,7 @@ def settings(distributed_mp):
         local_files_ad = [lf+'_' for lf in local_files]
         local_files = [lf+'_' for lf in local_files]
         # update deploy scripts
-        for file in ['deploy.lua', 'deploy_fsm.lua', 'Configuration/estimator-config.cpf', 'Configuration/teensy-config.cpf']:
+        for file in ['deploy.lua', 'deploy_fsm.lua', 'Configuration/estimator-config.cpf', 'Configuration/teensy-config.cpf', 'Configuration/controller-config.cpf']:
             local_files.append(os.path.join(current_dir+'/orocos/ourbot', file))
             remote_files.append(os.path.join(remote_root, file))
         # send files
@@ -177,7 +177,9 @@ def settings(distributed_mp):
             os.remove(lfa)
 
 
-def deploy():
+def deploy(hosts):
+    distributed_mp = False if (len(hosts) == 1) else True
+    settings(distributed_mp)
     command = ['gnome-terminal']
     for host, address in hosts.items():
         command.extend(['--tab', '-e', '''
@@ -202,12 +204,7 @@ def deploy():
     ])
     subprocess.call(command)
 
-        # ./occ.py &
-
 if __name__ == "__main__":
     usage = ("Usage: %prog [options]")
     op = optparse.OptionParser(usage=usage)
-    distributed_mp = False if (len(hosts) == 1) else True
-    settings(distributed_mp)
-    # deploy
-    deploy()
+    deploy(hosts)
