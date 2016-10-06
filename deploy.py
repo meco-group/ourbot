@@ -197,7 +197,6 @@ def deploy(hosts):
         cd %s
         rm reports.nc
         echo I am emperor
-        sleep 3
         deployer-gnulinux -s run.ops
         '
         ''' % (local_root)
