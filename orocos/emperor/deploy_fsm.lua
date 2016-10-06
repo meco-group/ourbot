@@ -147,9 +147,9 @@ return rfsm.state {
         if not addOutgoing('hawkeye', 'dave_pose_port', 6052, kurt) then rfsm.send_events(fsm, 'e_failed') return end
         if not addOutgoing('hawkeye', 'obstacle_port', 6070, robots) then rfsm.send_events(fsm, 'e_failed') return end
         if not addOutgoing('hawkeye', 'target_pose_port', 6071, robots) then rfsm.send_events(fsm, 'e_failed') return end
-        if not addIncoming('hawkeye', 'kurt_est_pose_port', 6000) then rfsm.send_events(fsm,'e_failed') return end
-        if not addIncoming('hawkeye', 'krist_est_pose_port', 6001) then rfsm.send_events(fsm,'e_failed') return end
-        if not addIncoming('hawkeye', 'dave_est_pose_port', 6002) then rfsm.send_events(fsm,'e_failed') return end
+        -- if not addIncoming('hawkeye', 'kurt_est_pose_port', 6000) then rfsm.send_events(fsm,'e_failed') return end
+        -- if not addIncoming('hawkeye', 'krist_est_pose_port', 6001) then rfsm.send_events(fsm,'e_failed') return end
+        -- if not addIncoming('hawkeye', 'dave_est_pose_port', 6002) then rfsm.send_events(fsm,'e_failed') return end
 
         -- if not addIncoming('hawkeye', 'ref_x_kurt_port', 6010) then rfsm.send_events(fsm,'e_failed') return end
         -- if not addIncoming('hawkeye', 'ref_x_krist_port', 6011) then rfsm.send_events(fsm,'e_failed') return end
