@@ -6,3 +6,8 @@ More information on the setup can be found on our [ourbot wiki](https://gitlab.m
 Any questions can be asked to the developers: Ruben, Maarten and Tim or can be posted on our mailinglist ourBot@ls.kuleuven.be.
 
 We would like to thank some people who contributed to this project in some sense (ideas, testing, coding, construction, fablab support, nailpolish, ...): Goele, Jan, Joris, Erik, Eline, Eddy, Bertram, Jean-Pierre, Jens, Simon, Michiel.
+
+
+<div align="center">
+<img src="https://gitlab.mech.kuleuven.be/meco-setups/ourbot/wikis/figures/ourbot.jpg" align="middle" width="30%" alt="Ourbot"/>
+</div>
