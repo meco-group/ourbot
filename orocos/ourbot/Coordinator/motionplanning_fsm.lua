@@ -15,6 +15,7 @@ local validEstimation              = estimator:getOperation("validEstimation")
 local validReference               = reference:getOperation("ready")
 local gotTarget                    = motionplanning:getOperation("gotTarget")
 local enableMotionPlanning         = motionplanning:getOperation("enable")
+local disableReference             = reference:getOperation("disable")
 local estimatorInRunTimeError      = estimator:getOperation("inRunTimeError")
 local controllerInRunTimeError     = controller:getOperation("inRunTimeError")
 local referenceInRunTimeError      = reference:getOperation("inRunTimeError")
@@ -92,14 +93,14 @@ return rfsm.state {
         if validEstimation() and gotTarget() then
           enableMotionPlanning()
           referenceUpdate()
-          if validReference() then
-            print 'controllll'
-            -- controllerUpdate()
-          end
         else
+          disableReference()
           if not validEstimation() then
             print "Estimate not valid!"
           end
+        end
+        if validReference() then -- do not shut down controller always!
+          controllerUpdate()
         end
 
         -- take snapshot for logger

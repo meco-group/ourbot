@@ -21,17 +21,23 @@ typedef struct obstacle {
 
 class MotionPlanningInterface : public RTT::TaskContext{
   private:
-    InputPort<std::vector<double> > _est_pose_port;
     InputPort<std::vector<double> > _target_pose_port;
-    InputPort<int> _predict_shift_port;
+    InputPort<std::vector<double> > _prediction_port;
     InputPort<std::vector<double> > _obstacle_port;
     OutputPort<std::vector<double> > _ref_pose_trajectory_port[3];
     OutputPort<std::vector<double> > _ref_velocity_trajectory_port[3];
+    OutputPort<bool> _valid_trajectories_port;
+
     TimeService::ticks _timestamp;
     void initObstacles();
     void computeObstacles();
+    double getTargetDistance();
     bool _got_target;
     bool _enable;
+    std::vector<double> _prediction_data;
+    int _max_computation_periods;
+    int _maximum_failures;
+    int _failure_cnt;
 
   protected:
     virtual bool trajectoryUpdate() = 0;
@@ -48,6 +54,7 @@ class MotionPlanningInterface : public RTT::TaskContext{
     double _update_time;
     int _predict_shift;
     std::vector<double> _est_pose;
+    std::vector<double> _predicted_pose;
     std::vector<double> _target_pose;
     std::vector<double> _obstacle_data;
     std::vector<std::vector<double> > _ref_pose_trajectory;

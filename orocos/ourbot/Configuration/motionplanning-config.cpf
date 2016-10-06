@@ -26,4 +26,8 @@
   <description>Use prediction based on computed trajectories and not on state estimation</description>
   <value>0</value>
 </simple>
+<simple name="maximum_failures" type="long">
+  <description>Maximum allowed consecutive failures</description>
+  <value>5</value>
+</simple>
 </properties>

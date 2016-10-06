@@ -26,6 +26,7 @@ bool MotionPlanning::config(){
 
 bool MotionPlanning::initialize(){
   _p2p->reset();
+  _p2p->resetTime();
   return true;
 }
 
@@ -42,13 +43,7 @@ bool MotionPlanning::trajectoryUpdate(){
       _ref_pose_trajectory[j][k] = _ref_pose[k][j];
     }
   }
-  if (!check){
-    _cnt++;
-  }
-  if (_cnt >= _cnt_max){
-    return false;
-  }
-  return true;
+  return check;
 }
 
 void MotionPlanning::getObstacles(std::vector<omg::obstacle_t>& obstacles){
@@ -59,14 +54,6 @@ void MotionPlanning::getObstacles(std::vector<omg::obstacle_t>& obstacles){
     obstacles[k].checkpoints = _obstacles[k].checkpoints;
     obstacles[k].radii = _obstacles[k].radii;
     obstacles[k].avoid = _obstacles[k].avoid;
-    // std::cout << "obstacle " << k << ":" << std::endl;
-    // std::cout << "----------" << std::endl;
-    // std::cout << "pos: " << obstacles[k].position << std::endl;
-    // std::cout << "vel: " << obstacles[k].velocity << std::endl;
-    // std::cout << "acc: " << obstacles[k].acceleration << std::endl;
-    // std::cout << "chckp: " << obstacles[k].checkpoints << std::endl;
-    // std::cout << "radii: " << obstacles[k].radii << std::endl;
-    // std::cout << "avoid: " << obstacles[k].avoid << std::endl;
   }
 }
 

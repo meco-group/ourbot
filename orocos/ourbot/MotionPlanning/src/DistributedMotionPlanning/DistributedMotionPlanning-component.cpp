@@ -81,6 +81,7 @@ bool DistributedMotionPlanning::config(){
 
 bool DistributedMotionPlanning::initialize(){
   _problem->reset();
+  _problem->resetTime();
   //debug data
   _target_pose[0] = 3.5 - _rel_pos_c[0];
   _target_pose[1] = 3.5 - _rel_pos_c[1];
@@ -125,12 +126,6 @@ bool DistributedMotionPlanning::admmIteration(){
       _ref_velocity_trajectory[j][k] = _ref_velocity[k][j];
       _ref_pose_trajectory[j][k] = _ref_pose[k][j];
     }
-  }
-  if (!check){
-    _cnt++;
-  }
-  if (_cnt >= _cnt_max){
-    return false;
   }
   #ifdef DEBUG
   time_elapsed = TimeService::Instance()->secondsSince(_timestamp);
@@ -206,7 +201,7 @@ bool DistributedMotionPlanning::admmIteration(){
   time_elapsed = TimeService::Instance()->secondsSince(_timestamp);
   cout << "checking2: " << time_elapsed << " s" << endl;
   #endif
-  return true;
+  return check;
 }
 
 void DistributedMotionPlanning::setRelPoseC(vector<double> rel_pos_c){

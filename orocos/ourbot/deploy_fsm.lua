@@ -188,9 +188,9 @@ return rfsm.state {
         if not dp:connectPorts('estimator', 'io')              then rfsm.send_events(fsm,'e_failed') return end
         if not dp:connectPorts('estimator', 'controller')      then rfsm.send_events(fsm,'e_failed') return end
         if not dp:connectPorts('reference', 'controller')      then rfsm.send_events(fsm,'e_failed') return end
+        if not dp:connectPorts('estimator', 'reference')       then rfsm.send_events(fsm,'e_failed') return end
         if not dp:connectPorts('io', 'controller')             then rfsm.send_events(fsm,'e_failed') return end
         if not dp:connectPorts('reference', 'motionplanning')  then rfsm.send_events(fsm,'e_failed') return end
-        if not dp:connectPorts('estimator', 'motionplanning')  then rfsm.send_events(fsm,'e_failed') return end
           --add more connections here
 
         -- connect the deployer to coordinator (for communicating failure events)

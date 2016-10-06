@@ -116,6 +116,7 @@ void Point2Point::reset(){
 
 void Point2Point::resetTime(){
     current_time = 0.0;
+    current_time_prev = 0.0;
 }
 
 bool Point2Point::update(vector<double>& condition0, vector<double>& conditionT,
@@ -131,11 +132,13 @@ bool Point2Point::update(vector<double>& condition0, vector<double>& conditionT,
     clock_t begin;
     clock_t end;
     #endif
+    // correct current_time with predict_shift:
+    current_time += predict_shift*sample_time;
     // transform splines: good init guess for this update
     #ifdef DEBUG
     begin = clock();
     #endif
-    transformSplines(current_time);
+    transformSplines(current_time, current_time_prev);
     #ifdef DEBUG
     end = clock();
     tmeas = double(end-begin)/CLOCKS_PER_SEC;
@@ -175,6 +178,9 @@ bool Point2Point::update(vector<double>& condition0, vector<double>& conditionT,
     tmeas = double(end-begin)/CLOCKS_PER_SEC;
     cout << "time in solve: " << tmeas << "s" << endl;
     #endif
+    if (!check){
+        return false; // user should retry
+    }
     // retrieve splines
     #ifdef DEBUG
     begin = clock();
@@ -194,10 +200,13 @@ bool Point2Point::update(vector<double>& condition0, vector<double>& conditionT,
             input_trajectory[k][j] = this->input_trajectory[k][j];
         }
     }
+    #ifdef DEBUG
+    dumpData();
+    #endif
     // update current time
+    current_time_prev = current_time;
     current_time += update_time;
-
-    return check;
+    return true;
 }
 
 bool Point2Point::solve(double current_time, vector<obstacle_t>& obstacles){
@@ -213,14 +222,14 @@ bool Point2Point::solve(double current_time, vector<obstacle_t>& obstacles){
     args["ubg"] = ubg;
     sol = problem(args);
     solver_output = string(problem.stats().at("return_status"));
-    vector<double> var(sol.at("x"));
-    for (int k=0; k<n_var; k++){
-        variables[k] = var[k];
-    }
     if (solver_output.compare("Solve_Succeeded") != 0){
         cout << solver_output << endl;
         return false;
     } else{
+        vector<double> var(sol.at("x"));
+        for (int k=0; k<n_var; k++){
+            variables[k] = var[k];
+        }
         return true;
     }
 }
@@ -1433,8 +1442,10 @@ void Point2Point::updateBounds(double current_time, vector<obstacle_t>& obstacle
 
 }
 
-void Point2Point::transformSplines(double current_time){
-	if(((current_time > 0) and fabs(fmod(round(current_time*1000.)/1000., horizon_time/10)) <1.e-6)){
+void Point2Point::transformSplines(double current_time, double current_time_prev){
+	int interval_prev = (int)(current_time_prev*(vehicle->getKnotIntervals())/horizon_time);
+	int interval_now = (int)(current_time*(vehicle->getKnotIntervals())/horizon_time);
+	if(interval_now > interval_prev){
 		vector<double> spline_tf(13);
 		for(int k=0; k<2; k++){
 			for(int i=0; i<13; i++){

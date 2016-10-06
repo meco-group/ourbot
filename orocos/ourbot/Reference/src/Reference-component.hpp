@@ -13,9 +13,12 @@ class Reference : public RTT::TaskContext{
     // Input & output ports
     InputPort<std::vector<double> > _ref_pose_trajectory_port[3];
     InputPort<std::vector<double> > _ref_velocity_trajectory_port[3];
+    InputPort<bool> _valid_trajectories_port;
+
+    InputPort<std::vector<double> > _est_pose_port;
     OutputPort<std::vector<double> > _ref_pose_port;
     OutputPort<std::vector<double> > _ref_velocity_port;
-    OutputPort<int> _predict_shift_port;
+    OutputPort<std::vector<double> > _prediction_port;
     OutputPort<std::vector<double> > _ref_pose_trajectory_tx_port[3];
 
     // Define 2 containers of memory to store 2 trajectories
@@ -30,9 +33,15 @@ class Reference : public RTT::TaskContext{
     std::vector<double>* _nxt_ref_pose_trajectory;
     std::vector<double>* _nxt_ref_velocity_trajectory;
 
+    bool _valid_trajectories;
+
     // Current sample
     std::vector<double> _ref_pose_sample;
     std::vector<double> _ref_velocity_sample;
+
+    // Estimated pose and prediction data
+    std::vector<double> _est_pose;
+    std::vector<double> _prediction_data;
 
     // Which input ports are connected?
     bool _con_ref_pose_trajectory[3];
@@ -47,6 +56,7 @@ class Reference : public RTT::TaskContext{
 
     double _control_sample_rate;
     double _pathupd_sample_rate;
+    int _max_computation_periods;
     bool _repeat_offline_trajectory;
 
     std::string _trajectory_path;
@@ -56,6 +66,7 @@ class Reference : public RTT::TaskContext{
     int _trajectory_length;
     int _update_length;
     bool _new_data;
+    bool _ready;
     bool _offline_trajectory;
 
     void readPorts();
@@ -65,9 +76,9 @@ class Reference : public RTT::TaskContext{
     virtual bool configureHook();
     virtual bool startHook();
     virtual void updateHook();
-    virtual void stopHook();
     void writeSample();
     bool loadTrajectory();
     bool ready();
+    void disable();
 };
 #endif

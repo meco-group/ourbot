@@ -40,7 +40,7 @@ environment.add_obstacle(Obstacle({'position': [2.5, 1.5]}, shape=rectangle))
 problem = Point2point(vehicle, environment, freeT=False)
 problem.set_options({'solver_options': {'ipopt': {'ipopt.linear_solver': 'ma57'}}})
 problem.set_options({'horizon_time': 10.})
-problem.set_options({'hard_term_con': True})
+# problem.set_options({'hard_term_con': True})
 problem.init()
 
 options = {}

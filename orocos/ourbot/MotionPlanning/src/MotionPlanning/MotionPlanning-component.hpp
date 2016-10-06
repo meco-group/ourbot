@@ -9,8 +9,6 @@
 class MotionPlanning : public MotionPlanningInterface{
   private:
     omg::Point2Point* _p2p;
-    int _cnt = 0;
-    const int _cnt_max = 5;
     std::vector<double> _state0;
     std::vector<double> _stateT;
 

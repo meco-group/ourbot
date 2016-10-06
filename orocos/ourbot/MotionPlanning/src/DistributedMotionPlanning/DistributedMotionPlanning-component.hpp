@@ -22,8 +22,6 @@ class DistributedMotionPlanning : public MotionPlanningInterface{
     InputPort<std::vector<double> > _zl_ji_var_port[2];
 
     omgf::FormationPoint2Point* _problem;
-    int _cnt = 0;
-    const int _cnt_max = 5;
     std::vector<double> _state0;
     std::vector<double> _stateT;
 
