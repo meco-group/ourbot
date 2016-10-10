@@ -28,7 +28,7 @@ local containers_to_fill = {
 -- ports to report
 local ports_to_report = {
   -- controller      = {'cmd_velocity_port'},
-  -- estimator       = {'est_pose_port'},
+  estimator       = {'est_pose_port'},
   reference       = {'ref_pose_port', 'ref_velocity_port'}
   -- coordinator     = {'controlloop_duration', 'controlloop_jitter'},
   -- io              = {--'cal_lidar_node_port',

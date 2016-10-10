@@ -14,6 +14,8 @@
 class Robot {
     private:
         std::vector<double> _pose;
+        std::vector<double> _ref_x;
+        std::vector<double> _ref_y;
         std::string _name;
         std::vector<cv::Mat> _top_markers;
         std::vector<double> _local_marker_locations_m;
@@ -26,6 +28,7 @@ class Robot {
         void createBox();
         std::vector<double> transform(const std::vector<double>& point, int pixelspermeter, int height);
         std::vector<double> invtransform(const std::vector<double>& point, int pixelspermeter, int height);
+        void mixWithWhite(const cv::Scalar& color, cv::Scalar& color_w, double perc_white);
 
     public:
         Robot(const std::string& name, const std::vector<cv::Mat>& top_markers,
@@ -38,6 +41,7 @@ class Robot {
         double getBottomTopDistance();
         void getMarkers(std::vector<double>& marker_vector, int pixelspermeter, int height);
         void setPose(const std::vector<double>& pose);
+        void setRef(const std::vector<double>& ref_x, const std::vector<double>& ref_y);
         void getTopMarkers(std::vector<cv::Mat>& top_markers);
         void draw(cv::Mat& frame, const cv::Scalar& color, int pixelspermeter);
 };

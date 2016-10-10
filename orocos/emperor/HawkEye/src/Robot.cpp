@@ -85,7 +85,12 @@ void Robot::getMarkers(std::vector<double>& marker_vector, int pixelspermeter, i
 }
 
 void Robot::setPose(const std::vector<double>& pose){
-    _pose = pose;
+  _pose = pose;
+}
+
+void Robot::setRef(const std::vector<double>& ref_x, const std::vector<double>& ref_y){
+  _ref_x = ref_x;
+  _ref_y = ref_y;
 }
 
 void Robot::draw(cv::Mat& frame, const cv::Scalar& color, int pixelspermeter){
@@ -111,6 +116,24 @@ void Robot::draw(cv::Mat& frame, const cv::Scalar& color, int pixelspermeter){
   // point2 = invtransform(point2, pixelspermeter, frame.size().height);
   // cv::circle(frame, cv::Point2f(point1[0], point1[1]), 5, color, -3);
   // cv::line(frame, cv::Point2f(point1[0], point1[1]), cv::Point2f(point2[0], point2[1]), color, 3);
+  // reference
+  cv::Scalar color_w;
+  mixWithWhite(color, color_w, 80);
+  std::vector<std::vector<double> > points(_ref_x.size(), std::vector<double>(2));
+  for (int i=0; i<points.size(); i++){
+    points[i][0] = _ref_x[i];
+    points[i][1] = _ref_y[i];
+    points[i] = invtransform(points[i], pixelspermeter, frame.size().height);
+  }
+  for (int i=0; i<points.size()-1; i++){
+    cv::line(frame, cv::Point2f(points[i][0], points[i][1]), cv::Point2f(points[i+1][0], points[i+1][1]), color_w, 2);
+  }
+}
+
+void Robot::mixWithWhite(const cv::Scalar& color, cv::Scalar& color_w, double perc_white){
+  color_w[0] = ((100. - perc_white)*color[0] + perc_white)/100.;
+  color_w[1] = ((100. - perc_white)*color[1] + perc_white)/100.;
+  color_w[2] = ((100. - perc_white)*color[2] + perc_white)/100.;
 }
 
 std::vector<double> Robot::transform(const std::vector<double>& point, int pixelspermeter, int height){

@@ -151,12 +151,12 @@ return rfsm.state {
         -- if not addIncoming('hawkeye', 'krist_est_pose_port', 6001) then rfsm.send_events(fsm,'e_failed') return end
         -- if not addIncoming('hawkeye', 'dave_est_pose_port', 6002) then rfsm.send_events(fsm,'e_failed') return end
 
-        -- if not addIncoming('hawkeye', 'ref_x_kurt_port', 6010) then rfsm.send_events(fsm,'e_failed') return end
-        -- if not addIncoming('hawkeye', 'ref_x_krist_port', 6011) then rfsm.send_events(fsm,'e_failed') return end
-        -- if not addIncoming('hawkeye', 'ref_x_dave_port', 6012) then rfsm.send_events(fsm,'e_failed') return end
-        -- if not addIncoming('hawkeye', 'ref_y_kurt_port', 6020) then rfsm.send_events(fsm,'e_failed') return end
-        -- if not addIncoming('hawkeye', 'ref_y_krist_port', 6021) then rfsm.send_events(fsm,'e_failed') return end
-        -- if not addIncoming('hawkeye', 'ref_y_dave_port', 6022) then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('hawkeye', 'kurt_ref_x_port', 6010) then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('hawkeye', 'krist_ref_x_port', 6011) then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('hawkeye', 'dave_ref_x_port', 6012) then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('hawkeye', 'kurt_ref_y_port', 6020) then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('hawkeye', 'krist_ref_y_port', 6021) then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('hawkeye', 'dave_ref_y_port', 6022) then rfsm.send_events(fsm,'e_failed') return end
 
         -- deployer (added as last: highest priority)
         dp:addPeer('communicator', 'lua')

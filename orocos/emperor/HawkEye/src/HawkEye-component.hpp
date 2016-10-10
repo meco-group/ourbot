@@ -41,6 +41,8 @@ class HawkEye : public RTT::TaskContext{
         OutputPort<std::vector<double> > _target_pose_port;
 
         std::vector<InputPort<std::vector<double> >* > _robot_est_pose_port;
+        std::vector<InputPort<std::vector<double> >* > _robot_ref_x_port;
+        std::vector<InputPort<std::vector<double> >* > _robot_ref_y_port;
 
         // properties
         std::vector<std::string> _robot_names;

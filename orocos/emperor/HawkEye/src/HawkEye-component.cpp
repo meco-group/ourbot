@@ -57,6 +57,10 @@ bool HawkEye::configureHook(){
     ports()->addPort(_robot_names[k]+"_pose_port", *_robot_markers_port[k]).doc("Detected markers of " + _robot_names[k]);
     _robot_est_pose_port[k] = new InputPort<std::vector<double> >();
     ports()->addPort(_robot_names[k]+"_est_pose_port", *_robot_est_pose_port[k]).doc("Estimated pose of " +  _robot_names[k]);
+    _robot_ref_x_port[k] = new InputPort<std::vector<double> >();
+    ports()->addPort(_robot_names[k]+"_ref_x_port", *_robot_ref_x_port[k]).doc("Reference x trajectory of " + _robot_names[k]);
+    _robot_ref_y_port[k] = new InputPort<std::vector<double> >();
+    ports()->addPort(_robot_names[k]+"_ref_y_port", *_robot_ref_x_port[k]).doc("Reference y trajectory of " + _robot_names[k]);
   }
   // show example data sample to output ports to make data flow real-time
   std::vector<double> example_markers(7, 0.0);
@@ -253,6 +257,10 @@ void HawkEye::drawResults(cv::Mat& frame){
       std::vector<double> pose(3, 0.0);
       _robot_est_pose_port[k]->read(pose);
       _robots[k]->setPose(pose);
+      std::vector<double> ref_x, ref_y;
+      _robot_ref_x_port[k]->read(ref_x);
+      _robot_ref_y_port[k]->read(ref_y);
+      _robots[k]->setRef(ref_x, ref_y);
     }
   }
   _gui->draw(frame, _obstacles, _robots, _robot_colors);
