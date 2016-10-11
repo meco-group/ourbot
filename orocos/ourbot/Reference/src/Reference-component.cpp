@@ -6,13 +6,11 @@
 #include <fstream>
 
 Reference::Reference(std::string const& name) : TaskContext(name, PreOperational),
-    _valid_trajectories(false), _ref_pose_sample(3), _ref_velocity_sample(3), _est_pose(3), _prediction_data(4), _just_started(true),
+    _valid_trajectories(false), _ref_pose_sample(3), _ref_velocity_sample(3), _est_pose(3), _mp_trigger_data(4), _just_started(true),
     _index1(0), _index2(0), _new_data(false), _ready(false), _offline_trajectory(false){
   ports()->addPort("ref_pose_trajectory_x_port", _ref_pose_trajectory_port[0]).doc("x reference trajectory");
   ports()->addPort("ref_pose_trajectory_y_port", _ref_pose_trajectory_port[1]).doc("y reference trajectory");
   ports()->addPort("ref_pose_trajectory_t_port", _ref_pose_trajectory_port[2]).doc("theta reference trajectory");
-
-  ports()->addPort("valid_trajectories_port", _valid_trajectories_port).doc("Are the trajectories on the port valid?");
 
   ports()->addPort("ref_pose_trajectory_x_tx_port", _ref_pose_trajectory_tx_port[0]).doc("x reference trajectory for tx over wifi");
   ports()->addPort("ref_pose_trajectory_y_tx_port", _ref_pose_trajectory_tx_port[1]).doc("y reference trajectory for tx over wifi");
@@ -20,7 +18,7 @@ Reference::Reference(std::string const& name) : TaskContext(name, PreOperational
 
   ports()->addPort("est_pose_port", _est_pose_port).doc("Estimated pose.");
 
-  ports()->addPort("prediction_port", _prediction_port).doc("Trigger for motion planning: is composed of current estimated pose and start index of internal reference input vector");
+  ports()->addPort("mp_trigger_port", _mp_trigger_port).doc("Trigger for motion planning: is composed of current estimated pose and start index of internal reference input vector");
 
   ports()->addPort("ref_velocity_trajectory_x_port", _ref_velocity_trajectory_port[0]).doc("x velocity reference trajectory");
   ports()->addPort("ref_velocity_trajectory_y_port", _ref_velocity_trajectory_port[1]).doc("y velocity reference trajectory");
@@ -38,7 +36,6 @@ Reference::Reference(std::string const& name) : TaskContext(name, PreOperational
   addOperation("writeSample",&Reference::writeSample, this).doc("Set data sample on output ports");
   addOperation("loadTrajectory",&Reference::loadTrajectory, this).doc("Load offline trajectory");
   addOperation("ready",&Reference::ready, this).doc("Is the reference ready?");
-  addOperation("disable",&Reference::disable, this).doc("Disable the reference");
 
   _cur_ref_pose_trajectory = _ref_pose_trajectory_1;
   _cur_ref_velocity_trajectory = _ref_velocity_trajectory_1;
@@ -52,14 +49,14 @@ void Reference::writeSample(){
   std::vector<double> example2(4, 0.0);
   _ref_pose_port.write(example);
   _ref_velocity_port.write(example);
-  _prediction_port.write(example2);
+  _mp_trigger_port.write(example2);
 }
 
 bool Reference::configureHook(){
-  // Compute trajectory length
+  // compute trajectory length
   _update_length = int(_control_sample_rate/_pathupd_sample_rate);
   _trajectory_length = (_max_computation_periods+1)*_update_length;
-  // Reserve required memory and initialize with zeros
+  // reserve required memory and initialize with zeros
   for(int i=0;i<3;i++){
     _cur_ref_pose_trajectory[i].resize(_trajectory_length);
     _cur_ref_velocity_trajectory[i].resize(_trajectory_length);
@@ -67,17 +64,43 @@ bool Reference::configureHook(){
     _nxt_ref_pose_trajectory[i].resize(_trajectory_length);
     _nxt_ref_velocity_trajectory[i].resize(_trajectory_length);
   }
-  // Show example data sample to ports to make data flow real-time
+  // show example data sample to ports to make data flow real-time
   std::vector<double> example(3, 0.0);
   _ref_pose_port.setDataSample(example);
   _ref_velocity_port.setDataSample(example);
-  // Reset index & checks
+  // reset index & checks
   _index1 = 0;
   _index2 = 0;
   _new_data = false;
   for (int i=0; i<3; i++){
     _got_ref_pose_trajectory[i] = false;
     _got_ref_velocity_trajectory[i] = false;
+  }
+  // get motion planning component
+  TaskContext* mp = getPeer("motionplanning");
+  if (!mp) {
+    log(Error) << "Could not find motionplanning component!"<<endlog();
+    return false;
+  }
+  mpValid = mp->getOperation("valid");
+  mpEnable = mp->getOperation("enable");
+  mpDisable = mp->getOperation("disable");
+  mpGotTarget = mp->getOperation("gotTarget");
+  if(!mpValid.ready()){
+    log(Error) << "Could not find MotionPlanning.valid operation!" << endlog();
+    return false;
+  }
+  if(!mpEnable.ready()){
+    log(Error) << "Could not find MotionPlanning.enable operation!" << endlog();
+    return false;
+  }
+  if(!mpDisable.ready()){
+    log(Error) << "Could not find MotionPlanning.disable operation!" << endlog();
+    return false;
+  }
+  if(!mpGotTarget.ready()){
+    log(Error) << "Could not find MotionPlanning.gotTarget operation!" << endlog();
+    return false;
   }
   return true;
 }
@@ -133,7 +156,7 @@ bool Reference::ready(){
   return _ready;
 }
 
-void Reference::disable(){
+void Reference::reset(){
   _just_started = true;
   _first_time = true;
   _new_data = false;
@@ -159,82 +182,70 @@ bool Reference::startHook(){
   _just_started = true;
   _first_time = true;
   _ready = false;
+  _index1 = 0;
+  _index2 = 0;
   return true;
 }
 
 void Reference::updateHook(){
   if (!_offline_trajectory){
-    // Check for new data and read ports
+    if (!mpGotTarget()){
+      reset();
+      return;
+    }
+    // check for new data and read ports
     readPorts();
-    // If not retrieved first trajectory yet: do nothing
+    // if first trajectory not received yet: do nothing
     if (_just_started){
       if (_first_time){
-        // trigger motion planning for first time
-        _prediction_data[3] = 0;
-        _prediction_port.write(_prediction_data);
+        // enable motion planning
+        mpEnable();
+        // trigger motion planning if first time
+        triggerMotionPlanning();
         _first_time = false;
       }
       return;
     }
     _ready = true;
-    // Update index/trajectory vector
+    // update index/trajectory vector
     if(_index1 >= _max_computation_periods*_update_length){
-      log(Warning)<<"You are computing for " << _max_computation_periods << "updates! Let's give up."<<endlog();
-      disable();
-      error();
+      log(Error)<<"Trajectory computation takes too long! Giving up..."<<endlog();
+      reset();
+      for (int i=0; i<3; i++){
+        _ref_pose_sample[i] = _est_pose[i];
+        _ref_velocity_sample[i] = 0.;
+      }
+      _ref_pose_port.write(_ref_pose_sample);
+      _ref_velocity_port.write(_ref_velocity_sample);
+      mpDisable();
       return;
     }
     if(_index1 >= _update_length){
       if(_new_data){
-        if (_valid_trajectories){
-          // Swap current and next pointers
-          std::vector<double>* swap_pose = _cur_ref_pose_trajectory;
-          std::vector<double>* swap_velocity = _cur_ref_velocity_trajectory;
-          _cur_ref_pose_trajectory = _nxt_ref_pose_trajectory;
-          _cur_ref_velocity_trajectory = _nxt_ref_velocity_trajectory;
-          _nxt_ref_pose_trajectory = swap_pose;
-          _nxt_ref_velocity_trajectory = swap_velocity;
-          // Reset index & checks
-          _index2 = _index1%_update_length;
-          _index1 = 0;
-          _new_data = false;
-          for (int i=0; i<3; i++){
-            _got_ref_pose_trajectory[i] = false;
-            _got_ref_velocity_trajectory[i] = false;
-          }
+        _new_data = false;
+        if (mpValid()){
+          loadTrajectories();
           // put on tx port
           for (int i=0; i<3; i++){
             _ref_pose_trajectory_tx_port[i].write(_cur_ref_pose_trajectory[i]);
           }
         } else {
           // re-trigger mp to try again
-          _prediction_data[3] = _index2;
-          _prediction_port.write(_prediction_data);
-          _new_data = false;
-          for (int i=0; i<3; i++){
-            _got_ref_pose_trajectory[i] = false;
-            _got_ref_velocity_trajectory[i] = false;
-          }
+          triggerMotionPlanning();
         }
       }
       else{
         for (int k=_max_computation_periods; k>0; k--){
           if (_index1%(k*_update_length) == 0){
-            log(Warning) << "Motion planning computing longer than " << k << " update(s)." << endlog();
+            log(Warning) << "Trajectory computation takes longer than " << k << " update(s)." << endlog();
             break;
           }
         }
       }
     }
-    // Retrigger motion planner and send the estimated pose and predict shift which is stored at _index2
+    // re-trigger motion planner
     if (_index1 == 0){
-      std::cout << "est pose from tb: (" << _cur_ref_pose_trajectory[0].at(_index2) << "," << _cur_ref_pose_trajectory[1].at(_index2) << ")" << std::endl;
-      std::cout << "est pose at apply time: (" << _est_pose[0] << "," << _est_pose[1] << ")" << std::endl;
-      if (_index2 != 0){
-        std::cout << "(note: index2 != 0)" << std::endl;
-      }
-      _prediction_data[3] = _index2;
-      _prediction_port.write(_prediction_data);
+      triggerMotionPlanning();
     }
   } else {
     if (_index2 >= _trajectory_length){
@@ -248,7 +259,24 @@ void Reference::updateHook(){
       }
     }
   }
-  // Get next sample
+  // write next sample
+  writeRefSample();
+  // update indices
+  _index1++;
+  _index2++;
+  #ifdef DEBUG
+    std::cout << "index1: " << _index1 << ", index2: " << _index2 << std::endl;
+    std::cout << "vel: (" << _ref_velocity_sample[0] <<","<<_ref_velocity_sample[1]<<","<<_ref_velocity_sample[2]<<")" <<std::endl;
+    std::cout << "pos: (" << _ref_pose_sample[0] <<","<<_ref_pose_sample[1]<<_ref_pose_sample[2]<<")" <<std::endl;
+  #endif
+}
+
+void Reference::triggerMotionPlanning(){
+  _mp_trigger_data[3] = _index2;
+  _mp_trigger_port.write(_mp_trigger_data);
+}
+
+void Reference::writeRefSample(){
   for (int i=0; i<3; i++){
     if(fabs(_cur_ref_pose_trajectory[i].at(_index2)) > 1.e-3){
       _ref_pose_sample.at(i) = _cur_ref_pose_trajectory[i].at(_index2);
@@ -263,21 +291,26 @@ void Reference::updateHook(){
   }
   _ref_pose_port.write(_ref_pose_sample);
   _ref_velocity_port.write(_ref_velocity_sample);
-  #ifdef DEBUG
-    std::cout << "index1: " << _index1 << ", index2: " << _index2 << std::endl;
-    std::cout << "vel: (" << _ref_velocity_sample[0] <<","<<_ref_velocity_sample[1]<<","<<_ref_velocity_sample[2]<<")" <<std::endl;
-    std::cout << "pos: (" << _ref_pose_sample[0] <<","<<_ref_pose_sample[1]<<_ref_pose_sample[2]<<")" <<std::endl;
-  #endif
-  // Update indices
-  _index1++;
-  _index2++;
+}
+
+void Reference::loadTrajectories(){
+  // swap current and next pointers
+  std::vector<double>* swap_pose = _cur_ref_pose_trajectory;
+  std::vector<double>* swap_velocity = _cur_ref_velocity_trajectory;
+  _cur_ref_pose_trajectory = _nxt_ref_pose_trajectory;
+  _cur_ref_velocity_trajectory = _nxt_ref_velocity_trajectory;
+  _nxt_ref_pose_trajectory = swap_pose;
+  _nxt_ref_velocity_trajectory = swap_velocity;
+  // reset indices
+  _index2 = _index1%_update_length;
+  _index1 = 0;
 }
 
 void Reference::readPorts(){
   // check estimated pose port
   _est_pose_port.read(_est_pose);
   for (int i=0; i<3; i++){
-    _prediction_data[i] = _est_pose[i];
+    _mp_trigger_data[i] = _est_pose[i];
   }
   // check trajectory ports
   for(int i=0; i<3; i++){
@@ -295,25 +328,21 @@ void Reference::readPorts(){
       }
     }
   }
-  _valid_trajectories_port.read(_valid_trajectories);
   _new_data = true;
   for(int i=0; i<3; i++){
     if ( _con_ref_pose_trajectory[i] != _got_ref_pose_trajectory[i]){ _new_data = false; }
     if ( _con_ref_velocity_trajectory[i] != _got_ref_velocity_trajectory[i]){ _new_data = false; }
   }
-  if (_new_data && _just_started){
-    _just_started = false;
-    _new_data = false;
-    // Swap current and next pointers
-    std::vector<double>* swap_pose = _cur_ref_pose_trajectory;
-    std::vector<double>* swap_velocity = _cur_ref_velocity_trajectory;
-    _cur_ref_pose_trajectory = _nxt_ref_pose_trajectory;
-    _cur_ref_velocity_trajectory = _nxt_ref_velocity_trajectory;
-    _nxt_ref_pose_trajectory = swap_pose;
-    _nxt_ref_velocity_trajectory = swap_velocity;
+  // received all trajectories
+  if (_new_data){
     for (int i=0; i<3; i++){
       _got_ref_pose_trajectory[i] = false;
       _got_ref_velocity_trajectory[i] = false;
+    }
+    if (_just_started){
+      loadTrajectories();
+      _just_started = false;
+      _new_data = false;
     }
   }
 }

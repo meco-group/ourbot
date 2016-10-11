@@ -5,6 +5,7 @@
 
 #include <rtt/RTT.hpp>
 #include <rtt/Port.hpp>
+#include <rtt/OperationCaller.hpp>
 
 using namespace RTT;
 
@@ -13,12 +14,11 @@ class Reference : public RTT::TaskContext{
     // Input & output ports
     InputPort<std::vector<double> > _ref_pose_trajectory_port[3];
     InputPort<std::vector<double> > _ref_velocity_trajectory_port[3];
-    InputPort<bool> _valid_trajectories_port;
 
     InputPort<std::vector<double> > _est_pose_port;
     OutputPort<std::vector<double> > _ref_pose_port;
     OutputPort<std::vector<double> > _ref_velocity_port;
-    OutputPort<std::vector<double> > _prediction_port;
+    OutputPort<std::vector<double> > _mp_trigger_port;
     OutputPort<std::vector<double> > _ref_pose_trajectory_tx_port[3];
 
     // Define 2 containers of memory to store 2 trajectories
@@ -39,9 +39,9 @@ class Reference : public RTT::TaskContext{
     std::vector<double> _ref_pose_sample;
     std::vector<double> _ref_velocity_sample;
 
-    // Estimated pose and prediction data
+    // Estimated pose and trigger data
     std::vector<double> _est_pose;
-    std::vector<double> _prediction_data;
+    std::vector<double> _mp_trigger_data;
 
     // Which input ports are connected?
     bool _con_ref_pose_trajectory[3];
@@ -69,6 +69,15 @@ class Reference : public RTT::TaskContext{
     bool _ready;
     bool _offline_trajectory;
 
+    OperationCaller<bool(void)> mpValid;
+    OperationCaller<void(void)> mpEnable;
+    OperationCaller<void(void)> mpDisable;
+    OperationCaller<bool(void)> mpGotTarget;
+
+    void reset();
+    void triggerMotionPlanning();
+    void writeRefSample();
+    void loadTrajectories();
     void readPorts();
 
   public:
@@ -79,6 +88,5 @@ class Reference : public RTT::TaskContext{
     void writeSample();
     bool loadTrajectory();
     bool ready();
-    void disable();
 };
 #endif

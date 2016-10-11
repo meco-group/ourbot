@@ -15,14 +15,14 @@ which can be compiled to a shared library and included in your own project.
 options = {}
 rect = Rectangle(0.55, 0.4)
 rect.radius = 0.02
-vehicle = Holonomic(shapes=rect, options=options, bounds={'amin': -0.5, 'amax': 0.5})
+vehicle = Holonomic(shapes=rect, options=options, bounds={'vmin': -0.8, 'vmax': 0.8, 'amin': -0.5, 'amax': 0.5})
 # vehicle = Holonomic(shapes=Circle(0.5), options=options)
 # vehicle = Holonomic(shapes=Circle(0.3))
 # vehicle.set_options({'1storder_delay': True, 'time_constant': 0.1})
 # vehicle.set_options({'input_disturbance': {'fc': 0.01, 'stdev': 0.05*np.ones(2)}})
 # vehicle.set_options({'stop_tol': 1.e-2})
 # vehicle.set_options({'syslimit': 'norm_inf'})
-
+vehicle.set_options({'safety_distance': 0.05})
 
 vehicle.set_initial_conditions([0.3, 0.3])
 vehicle.set_terminal_conditions([3., 1.5])
@@ -40,7 +40,7 @@ environment.add_obstacle(Obstacle({'position': [2.5, 1.5]}, shape=rectangle))
 problem = Point2point(vehicle, environment, freeT=False)
 problem.set_options({'solver_options': {'ipopt': {'ipopt.linear_solver': 'ma57'}}})
 problem.set_options({'horizon_time': 10.})
-# problem.set_options({'hard_term_con': True})
+problem.set_options({'hard_term_con': True})
 problem.init()
 
 options = {}

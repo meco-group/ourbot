@@ -90,17 +90,13 @@ return rfsm.state {
 
         -- update reference/estimator/controller
         estimatorUpdate()
-        if validEstimation() and gotTarget() then
-          enableMotionPlanning()
+        if validEstimation() then
           referenceUpdate()
-        else
-          disableReference()
-          if not validEstimation() then
-            print "Estimate not valid!"
+          if validReference() then
+            controllerUpdate()
           end
-        end
-        if validReference() then -- do not shut down controller always!
-          controllerUpdate()
+        else
+          print "Estimate not valid!"
         end
 
         -- take snapshot for logger

@@ -31,7 +31,6 @@ bool MotionPlanning::initialize(){
 }
 
 bool MotionPlanning::trajectoryUpdate(){
-  std::cout << "est_pose: " << _est_pose[0] << "," << _est_pose[1] << "," << _est_pose[2] << std::endl;
   // get obstacles
   std::vector<omg::obstacle_t> obstacles(_n_obs);
   getObstacles(obstacles);

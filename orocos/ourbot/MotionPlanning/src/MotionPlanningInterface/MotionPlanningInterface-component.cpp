@@ -1,17 +1,16 @@
-#define DEBUG
+// #define DEBUG
 
 #include "MotionPlanningInterface-component.hpp"
 #include <rtt/Component.hpp>
 #include <iostream>
 
 MotionPlanningInterface::MotionPlanningInterface(std::string const& name) : TaskContext(name, PreOperational),
-    _got_target(false), _enable(false), _prediction_data(4), _failure_cnt(0), _predict_shift(0), _target_pose(3),
-    _ref_pose_trajectory(3), _ref_velocity_trajectory(3), _n_obs(0){
+    _got_target(false), _enable(false), _mp_trigger_data(4), _failure_cnt(0), _first_iteration(true), _valid(false), _predict_shift(0), _est_pose(3),
+    _target_pose(3), _ref_pose_trajectory(3), _ref_velocity_trajectory(3), _n_obs(0){
 
   ports()->addPort("target_pose_port", _target_pose_port).doc("Target pose");
   ports()->addPort("obstacle_port", _obstacle_port).doc("Detected obstacles");
-  ports()->addEventPort("prediction_port", _prediction_port).doc("Trigger for motion planning: is composed of current estimated pose and start index of internal reference input vector");
-  ports()->addPort("valid_trajectories_port", _valid_trajectories_port).doc("Are the trajectories on the port valid?");
+  ports()->addEventPort("mp_trigger_port", _mp_trigger_port).doc("Trigger for motion planning: is composed of current estimated pose and start index of internal reference input vector");
 
   ports()->addPort("ref_pose_trajectory_x_port", _ref_pose_trajectory_port[0]).doc("x reference trajectory");
   ports()->addPort("ref_pose_trajectory_y_port", _ref_pose_trajectory_port[1]).doc("y reference trajectory");
@@ -30,7 +29,9 @@ MotionPlanningInterface::MotionPlanningInterface(std::string const& name) : Task
 
   addOperation("setTargetPose", &MotionPlanningInterface::setTargetPose, this).doc("Set target pose");
   addOperation("gotTarget", &MotionPlanningInterface::gotTarget, this).doc("Do we have a target?");
+  addOperation("valid", &MotionPlanningInterface::valid, this).doc("Valid trajectories computed?");
   addOperation("enable", &MotionPlanningInterface::enable, this).doc("Enable Motion Planning");
+  addOperation("disable", &MotionPlanningInterface::disable, this).doc("Disable Motion Planning");
 }
 
 void MotionPlanningInterface::setTargetPose(double target_x, double target_y, double target_t){
@@ -44,8 +45,7 @@ void MotionPlanningInterface::setTargetPose(double target_x, double target_y, do
 bool MotionPlanningInterface::gotTarget(){
   if (_target_pose_port.connected()){
     if(_target_pose_port.read(_target_pose) == RTT::NewData){
-      std::cout << "got target: (" << _target_pose[0] << "," << _target_pose[1] << "," << _target_pose[2] << ")" << std::endl;
-      _got_target = true;
+      setTargetPose(_target_pose[0], _target_pose[1], _target_pose[2]);
     }
   }
   return _got_target;
@@ -54,23 +54,33 @@ bool MotionPlanningInterface::gotTarget(){
 void MotionPlanningInterface::enable(){
   if (!_enable){
     initialize();
-    std::cout << "re-init" << std::endl;
   }
   _enable = true;
+  _first_iteration = true;
+}
+
+void MotionPlanningInterface::disable(){
+  _enable = false;
+  _got_target = false;
+  _valid = false;
+}
+
+bool MotionPlanningInterface::valid(){
+  return _valid;
 }
 
 bool MotionPlanningInterface::configureHook(){
   _update_time = 1./_pathupd_sample_rate;
   _sample_time = 1./_control_sample_rate;
-  // Compute path length
+  // compute path length
   _update_length = int(_control_sample_rate/_pathupd_sample_rate);
   _trajectory_length = (_max_computation_periods+1)*_update_length; // +1 to make prediction possible
-  // Reserve required memory and initialize with zeros
+  // reserve required memory and initialize with zeros
   for(int i=0;i<3;i++){
     _ref_pose_trajectory[i].resize(_trajectory_length);
     _ref_velocity_trajectory[i].resize(_trajectory_length);
   }
-  // Show example data sample to ports to make data flow real-time
+  // show example data sample to ports to make data flow real-time
   std::vector<double> example(_trajectory_length, 0.0);
   for(int i=0; i<3; i++){
     _ref_pose_trajectory_port[i].setDataSample(example);
@@ -99,12 +109,19 @@ bool MotionPlanningInterface::startHook(){
   return true;
 }
 
-double MotionPlanningInterface::getTargetDistance(){
+bool MotionPlanningInterface::targetReached(){
   double target_dist = 0.;
+  double input_norm = 0.;
   for (int i=0; i<3; i++){
     target_dist += pow(_target_pose[i] - _est_pose[i], 2);
+    input_norm += pow(_ref_velocity_trajectory[i][_predict_shift], 2);
   }
-  return sqrt(target_dist);
+  target_dist = sqrt(target_dist);
+  input_norm = sqrt(input_norm);
+  if (target_dist < 1e-2 && input_norm < 1e-2){
+    return true;
+  }
+  return false;
 }
 
 void MotionPlanningInterface::updateHook(){
@@ -116,11 +133,11 @@ void MotionPlanningInterface::updateHook(){
   #endif
   _timestamp = TimeService::Instance()->getTicks();
   // read data from reference
-  _prediction_port.read(_prediction_data);
+  _mp_trigger_port.read(_mp_trigger_data);
   for (int k=0; k<3; k++){
-    _est_pose[k] = _prediction_data[k];
+    _est_pose[k] = _mp_trigger_data[k];
   }
-  _predict_shift = (int) _prediction_data[3];
+  _predict_shift = static_cast<int>(_mp_trigger_data[3]);
   if (_target_pose_port.connected()){
     _target_pose_port.read(_target_pose);
   }
@@ -129,24 +146,23 @@ void MotionPlanningInterface::updateHook(){
     _obstacle_port.read(_obstacle_data);
   }
   computeObstacles();
-  if (getTargetDistance() < 1e-2){
+  if (targetReached()){
     std::cout << "target reached!" << std::endl;
-    _got_target = false;
-    _enable = false;
+    disable();
     return;
   }
   // update trajectory
-  bool check = trajectoryUpdate();
-  _valid_trajectories_port.write(check);
-  if (!check){
+  _valid = trajectoryUpdate();
+  if (!_valid){
     _failure_cnt++;
-    if (_failure_cnt >= _maximum_failures){
+    if (_failure_cnt >= _maximum_failures || _first_iteration){
       log(Error) << "MotionPlanning could not find a trajectory in " << _maximum_failures << " consecutive updates." << endlog();
-      error();
+      disable();
     }
   } else {
     _failure_cnt = 0;
   }
+  _first_iteration = false;
   // write trajectory
   for (int i=0; i<3; i++){
     _ref_pose_trajectory_port[i].write(_ref_pose_trajectory[i]);
@@ -154,9 +170,9 @@ void MotionPlanningInterface::updateHook(){
   }
   // check timing
   Seconds time_elapsed = TimeService::Instance()->secondsSince(_timestamp);
-  if (time_elapsed > _update_time*0.9){
-    log(Warning) << "MotionPlanning: Duration of calculation exceeded 90% of update_time" <<endlog();
-  }
+  // if (time_elapsed > _update_time*0.9){
+  //   log(Warning) << "MotionPlanning: Duration of calculation exceeded 90% of update_time" <<endlog();
+  // }
   #ifdef DEBUG
   std::cout << "ended mp update in " << time_elapsed << " s" << std::endl;
   #endif
