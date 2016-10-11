@@ -94,11 +94,11 @@ void Robot::setRef(const std::vector<double>& ref_x, const std::vector<double>& 
 }
 
 void Robot::draw(cv::Mat& frame, const cv::Scalar& color, int pixelspermeter){
-  // markers
-  cv::Point2f center;
-  for (int i=0; i<3; i++){
-    cv::circle(frame, cv::Point2f(_global_marker_locations_px[2*i], _global_marker_locations_px[2*i+1]), 10, color, 2);
-  }
+  // // markers
+  // cv::Point2f center;
+  // for (int i=0; i<3; i++){
+  //   cv::circle(frame, cv::Point2f(_global_marker_locations_px[2*i], _global_marker_locations_px[2*i+1]), 10, color, 2);
+  // }
   // box
   cv::Point2f vertices[4];
   _box.points(vertices);
@@ -116,18 +116,20 @@ void Robot::draw(cv::Mat& frame, const cv::Scalar& color, int pixelspermeter){
   // point2 = invtransform(point2, pixelspermeter, frame.size().height);
   // cv::circle(frame, cv::Point2f(point1[0], point1[1]), 5, color, -3);
   // cv::line(frame, cv::Point2f(point1[0], point1[1]), cv::Point2f(point2[0], point2[1]), color, 3);
-  // reference
-  cv::Scalar color_w;
-  mixWithWhite(color, color_w, 80);
-  std::vector<std::vector<double> > points(_ref_x.size(), std::vector<double>(2));
-  for (int i=0; i<points.size(); i++){
-    points[i][0] = _ref_x[i];
-    points[i][1] = _ref_y[i];
-    points[i] = invtransform(points[i], pixelspermeter, frame.size().height);
-  }
-  for (int i=0; i<points.size()-1; i++){
-    cv::line(frame, cv::Point2f(points[i][0], points[i][1]), cv::Point2f(points[i+1][0], points[i+1][1]), color_w, 2);
-  }
+  // // reference
+  // cv::Scalar color_w;
+  // mixWithWhite(color, color_w, 80);
+  // std::vector<std::vector<double> > points(_ref_x.size(), std::vector<double>(2));
+  // for (int i=0; i<points.size(); i++){
+  //   points[i][0] = _ref_x[i];
+  //   points[i][1] = _ref_y[i];
+  //   points[i] = invtransform(points[i], pixelspermeter, frame.size().height);
+  // }
+  // if (points.size() > 0){
+  //   for (int i=0; i<points.size()-1; i++){
+  //     cv::line(frame, cv::Point2f(points[i][0], points[i][1]), cv::Point2f(points[i+1][0], points[i+1][1]), color_w, 2);
+  //   }
+  // }
 }
 
 void Robot::mixWithWhite(const cv::Scalar& color, cv::Scalar& color_w, double perc_white){

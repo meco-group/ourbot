@@ -38,6 +38,8 @@ HawkEye::HawkEye(std::string const& name) : TaskContext(name, PreOperational), _
   addProperty("number_of_bg_samples", _number_of_bg_samples).doc("Number of samples taken to determine the background");
   addProperty("show_prev_frame", _show_prev_frame).doc("Show previous frame (conform with the current received estimation)");
   addProperty("capture_time_mod", _capture_time_mod).doc("At what fracture of total frame capture procedure does the capture happens");
+  addProperty("save_video", _save_video).doc("Save the resulting video");
+  addProperty("hawkeye_sample_rate", _hawkeye_sample_rate).doc("Sample rate of hawkeye");
 
   // operations
   addOperation("captureBackground", &HawkEye::captureBackground, this);
@@ -52,6 +54,8 @@ bool HawkEye::configureHook(){
   // add ports
   _robot_markers_port.resize(_robot_names.size());
   _robot_est_pose_port.resize(_robot_names.size());
+  _robot_ref_x_port.resize(_robot_names.size());
+  _robot_ref_y_port.resize(_robot_names.size());
   for (uint k=0; k<_robot_names.size(); k++){
     _robot_markers_port[k] = new OutputPort<std::vector<double> >();
     ports()->addPort(_robot_names[k]+"_pose_port", *_robot_markers_port[k]).doc("Detected markers of " + _robot_names[k]);
@@ -60,7 +64,7 @@ bool HawkEye::configureHook(){
     _robot_ref_x_port[k] = new InputPort<std::vector<double> >();
     ports()->addPort(_robot_names[k]+"_ref_x_port", *_robot_ref_x_port[k]).doc("Reference x trajectory of " + _robot_names[k]);
     _robot_ref_y_port[k] = new InputPort<std::vector<double> >();
-    ports()->addPort(_robot_names[k]+"_ref_y_port", *_robot_ref_x_port[k]).doc("Reference y trajectory of " + _robot_names[k]);
+    ports()->addPort(_robot_names[k]+"_ref_y_port", *_robot_ref_y_port[k]).doc("Reference y trajectory of " + _robot_names[k]);
   }
   // show example data sample to output ports to make data flow real-time
   std::vector<double> example_markers(7, 0.0);
@@ -72,7 +76,7 @@ bool HawkEye::configureHook(){
     _robot_markers_port[k]->setDataSample(example_markers);
   }
   // create gui, camera and robots
-  _gui = new Gui(_gui_resolution);
+  _gui = new Gui(_gui_resolution, _save_video, _hawkeye_sample_rate);
   _gui->setPixelsPerMeter(_pixelspermeter);
   _camera = new Camera(_video_port_name, {1920, 1080}, _brightness, _exposure, _iso, _camera_cfs, _distortion_cfs, _capture_time_mod);
   createRobots();

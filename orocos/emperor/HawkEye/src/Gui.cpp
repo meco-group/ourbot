@@ -9,11 +9,14 @@ void mouseCallBack(int event, int x, int y, int flags, void* data){
     }
 }
 
-Gui::Gui(const std::vector<int>& resolution): _resolution(resolution), _resolution_orig(2),
+Gui::Gui(const std::vector<int>& resolution, bool save_video, double sample_rate):
+    _resolution(resolution), _resolution_orig(2), _save_video(save_video),
     _mouseclick_position(2, -100),
     _black(cv::Scalar(77, 76, 75)), _pixelspermeter(1){
+    if (save_video){
+        _saved_video.open("movie.avi", CV_FOURCC('F','M','P','4'), sample_rate, cv::Size(_resolution[0], _resolution[1]), true);
+    }
 }
-
 
 bool Gui::start(){
     cvStartWindowThread();
@@ -75,6 +78,10 @@ void Gui::draw(cv::Mat& frame, const std::vector<double>& obstacles, const std::
     // click position
     cv::circle(displayed_frame, cv::Point2i(_mouseclick_position[0], _mouseclick_position[1]), 30, _black, 2);
     cv::circle(displayed_frame, cv::Point2i(_mouseclick_position[0], _mouseclick_position[1]), 10, _black, -2);
+    // save video
+    if (_save_video){
+        _saved_video.write(displayed_frame);
+    }
     cv::imshow("Frame", displayed_frame);
     cv::waitKey(25);
 }

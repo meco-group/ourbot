@@ -237,16 +237,17 @@
     <struct name="gui_resolution" type="ints">
         <description>Width and height of gui window</description>
         <simple name="width" type="long">
-            <value>672</value>
+            <!-- <value>1280</value> -->
+            <value>960</value>
         </simple>
         <simple name="height" type="long">
-            <value>380</value>
+            <value>540</value>
         </simple>
     </struct>
 
     <simple name="threshold_bgst" type="long">
         <description>Threshold for background subtraction [0-255]</description>
-        <value>30</value>
+        <value>31</value>
     </simple>
 
     <simple name="threshold_match" type="double">
@@ -286,7 +287,12 @@
 
     <simple name="capture_time_mod" type="double">
         <description>At what fracture of total frame capture procedure does the capture happens</description>
-        <value>0.</value>
+        <value>1.</value>
+    </simple>
+
+    <simple name="save_video" type="boolean">
+        <description>Save the resulting video</description>
+        <value>1</value>
     </simple>
 
 </properties>

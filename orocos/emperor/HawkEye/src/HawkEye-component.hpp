@@ -70,6 +70,8 @@ class HawkEye : public RTT::TaskContext{
         int _number_of_bg_samples;
         bool _show_prev_frame;
         double _capture_time_mod;
+        bool _save_video;
+        double _hawkeye_sample_rate;
 
         std::vector<cv::Mat> _top_markers;
         cv::Mat _bottom_marker;
