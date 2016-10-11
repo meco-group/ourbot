@@ -34,11 +34,6 @@ return rfsm.state {
         rfsm.send_events(fsm,'e_failed')
         return
       end
-      if (not hawkeye:start()) then
-        rtt.log("Error","Could not start hawkeye component")
-        rfsm.send_events(fsm,'e_failed')
-        return
-      end
     end
   },
 
@@ -87,7 +82,6 @@ return rfsm.state {
   reset = rfsm.state{
     entry = function(fsm)
       reporter:stop()
-      hawkeye:stop()
     end,
   },
 
