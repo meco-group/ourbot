@@ -24,4 +24,5 @@ orocos/setup.zsh
 *.rosinstall
 *.rosinstall.bak
 *_
+*.avi
 orocos/ourbot/Estimator/src/Kalman/const_*
