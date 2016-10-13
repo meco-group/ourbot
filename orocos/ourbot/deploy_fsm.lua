@@ -150,6 +150,8 @@ return rfsm.state {
             end
           end
         end
+        -- add motionplanning as peer of reference
+        if not dp:addPeer('reference', 'motionplanning') then rfsm.send_events(fsm,'e_failed') return end
         -- load execution file in coordinator component
         if not components.coordinator:exec_file(coordinator_file) then rfsm.send_events(fsm,'e_failed') return end
       end

@@ -1,4 +1,4 @@
-// #define DEBUG
+#define DEBUG
 
 #include "MotionPlanningInterface-component.hpp"
 #include <rtt/Component.hpp>
@@ -54,6 +54,7 @@ bool MotionPlanningInterface::gotTarget(){
 void MotionPlanningInterface::enable(){
   if (!_enable){
     initialize();
+    std::cout << "re-init" << std::endl;
   }
   _enable = true;
   _first_iteration = true;
@@ -156,7 +157,7 @@ void MotionPlanningInterface::updateHook(){
   if (!_valid){
     _failure_cnt++;
     if (_failure_cnt >= _maximum_failures || _first_iteration){
-      log(Error) << "MotionPlanning could not find a trajectory in " << _maximum_failures << " consecutive updates." << endlog();
+      log(Error) << "MotionPlanning could not find trajectory." << endlog();
       disable();
     }
   } else {

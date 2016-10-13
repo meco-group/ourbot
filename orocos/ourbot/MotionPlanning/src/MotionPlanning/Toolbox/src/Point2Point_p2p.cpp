@@ -1465,8 +1465,8 @@ void Point2Point::updateBounds(double current_time, vector<obstacle_t>& obstacle
 }
 
 void Point2Point::transformSplines(double current_time, double current_time_prev){
-	int interval_prev = (int)(current_time_prev*(vehicle->getKnotIntervals())/horizon_time);
-	int interval_now = (int)(current_time*(vehicle->getKnotIntervals())/horizon_time);
+	int interval_prev = (int)(round((current_time_prev*(vehicle->getKnotIntervals())/horizon_time)*1.e6)/1.e6);
+	int interval_now = (int)(round((current_time*(vehicle->getKnotIntervals())/horizon_time)*1.e6)/1.e6);
 	if(interval_now > interval_prev){
 		vector<double> spline_tf(13);
 		for(int k=0; k<2; k++){

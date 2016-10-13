@@ -304,6 +304,11 @@ void Reference::loadTrajectories(){
   // reset indices
   _index2 = _index1%_update_length;
   _index1 = 0;
+  // reset checks
+  for (int i=0; i<3; i++){
+    _got_ref_pose_trajectory[i] = false;
+    _got_ref_velocity_trajectory[i] = false;
+  }
 }
 
 void Reference::readPorts(){
@@ -335,14 +340,12 @@ void Reference::readPorts(){
   }
   // received all trajectories
   if (_new_data){
-    for (int i=0; i<3; i++){
-      _got_ref_pose_trajectory[i] = false;
-      _got_ref_velocity_trajectory[i] = false;
-    }
     if (_just_started){
-      loadTrajectories();
-      _just_started = false;
-      _new_data = false;
+      if (mpValid()){
+        loadTrajectories();
+        _just_started = false;
+        _new_data = false;
+      }
     }
   }
 }
