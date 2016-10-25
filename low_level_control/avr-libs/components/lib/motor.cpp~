@@ -1,0 +1,134 @@
+#include "motor.h"
+
+#ifdef MOTOR_PIN_SINGLE
+Motor::Motor(uint8_t pinH1, uint8_t pinPWM, Sensor1D *battery_voltage_sensor, uint8_t ID) :
+	ComponentInterface(ID), _pinH1(pinH1), _pinPWM(pinPWM), _battery_voltage_sensor(battery_voltage_sensor), _Vmot(0), _H1(LOW), _pwm(0)
+{
+	//do nothing
+}
+
+Motor::Motor(uint8_t pinH1, uint8_t pinPWM, int battery_voltage_sensor, uint8_t ID) :
+	ComponentInterface(ID), _pinH1(pinH1), _pinPWM(pinPWM), _battery_voltage_sensor(new Sensor1D()), _Vmot(0), _H1(LOW), _pwm(0)
+{
+	_battery_voltage_sensor->setRawValue(battery_voltage_sensor);
+	_battery_voltage_sensor->setCalibratedValue(battery_voltage_sensor);
+}
+#else
+Motor::Motor(uint8_t pinH1, uint8_t pinH2, uint8_t pinPWM, Sensor1D *battery_voltage_sensor, uint8_t ID) :
+	ComponentInterface(ID), _pinH1(pinH1), _pinH2(pinH2), _pinPWM(pinPWM), _battery_voltage_sensor(battery_voltage_sensor), _Vmot(0), _H1(LOW), _H2(LOW), _pwm(0)
+{
+	//do nothing
+}
+Motor::Motor(uint8_t pinH1, uint8_t pinH2, uint8_t pinPWM, int battery_voltage_sensor, uint8_t ID) :
+	ComponentInterface(ID), _pinH1(pinH1), _pinH2(pinH2), _pinPWM(pinPWM), _battery_voltage_sensor(new Sensor1D()), _Vmot(0), _H1(LOW), _H2(LOW), _pwm(0)
+{
+	_battery_voltage_sensor->setRawValue(battery_voltage_sensor);
+	_battery_voltage_sensor->setCalibratedValue(battery_voltage_sensor);
+}
+#endif
+
+bool Motor::init()
+{	
+	pinMode(_pinH1, OUTPUT);
+	digitalWrite(_pinH1, _H1);
+	
+#ifndef MOTOR_PIN_SINGLE
+	pinMode(_pinH2, OUTPUT);
+	digitalWrite(_pinH2, _H2);
+#endif //MOTOR_PIN_SINGLE
+	
+	//analogWriteFrequency(_pinPWM, F_PWM); //only works when compiling for teensy... TODO: set teensy flag
+	analogWrite(_pinPWM,_pwm);
+	
+	_battery_voltage_sensor->init();
+	
+	return true;
+}
+
+Sensor1D *Motor::batteryVoltageSensor()
+{
+	return _battery_voltage_sensor;
+}
+
+int16_t Motor::Vmot()
+{
+	return _Vmot;
+}
+
+int16_t Motor::PWM()
+{
+	if(_H1){ return _pwm; }
+	else{ return -_pwm; }
+}
+
+void Motor::setVmot(int Vmot)
+{
+	// set direction
+	/*this->setDir(Vmot>=0);
+	if(Vmot>=0){ Vmot = -Vmot; }
+	if(Vmot>(_battery_voltage_sensor->peekCalibratedValue())){
+		_Vmot = (_battery_voltage_sensor->peekCalibratedValue());
+		_pwm = 255;
+	}
+	else{
+		_Vmot = Vmot;
+		_pwm = _Vmot*255/(_battery_voltage_sensor->peekCalibratedValue());
+	}
+	
+	analogWrite(_pinPWM,_pwm);*/
+	
+	int Vbat = _battery_voltage_sensor->peekCalibratedValue();
+	
+	if(Vmot>=0){
+		_H1 = LOW;
+		#ifndef MOTOR_PIN_SINGLE 
+			_H2 = HIGH;
+		#endif //MOTOR_PIN_SINGLE 
+		
+		if(Vmot>Vbat){
+			_Vmot = Vbat;
+			_pwm = 255;
+		}
+		else{
+			_Vmot = Vmot;
+			_pwm = _Vmot*255/Vbat;
+		}
+	}
+	else{ 
+		_H1 = HIGH; 
+		#ifndef MOTOR_PIN_SINGLE 
+			_H2 = LOW;
+		#endif //MOTOR_PIN_SINGLE 
+		
+		if((-Vmot)>Vbat){
+			_Vmot = -Vbat;
+			_pwm = 255;
+		}
+		else{
+			_Vmot = Vmot;
+			_pwm = -_Vmot*255/Vbat;
+		}
+	}
+	
+	digitalWriteFast(_pinH1, _H1);
+	#ifndef MOTOR_PIN_SINGLE
+		digitalWriteFast(_pinH2, _H2);
+	#endif //MOTOR_PIN_SINGLE
+	analogWrite(_pinPWM,_pwm);
+}
+
+void Motor::setDir(bool dir)
+{
+	_H1 = !dir;
+	digitalWrite(_pinH1, _H1);
+#ifndef MOTOR_PIN_SINGLE 
+	_H2 = dir;
+	digitalWrite(_pinH2, _H2);
+#endif //MOTOR_PIN_SINGLE
+}
+
+void Motor::setPWM(uint8_t pwm)
+{
+	_pwm = pwm;
+	analogWrite(_pinPWM,_pwm);
+}

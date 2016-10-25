@@ -1,0 +1,49 @@
+#ifndef MOTOR_H
+#define MOTOR_H
+
+//#define MOTOR_PIN_SINGLE
+
+#include "WProgram.h"
+#include "motor_config.h"
+#include "component_interface.h"
+#include "sensor1D.h"
+
+
+class Motor : public ComponentInterface
+{
+private:
+	/*motor pins*/
+	const uint8_t _pinH1;					//direction pin on H-bridge
+	const uint8_t _pinPWM;					//pwm pin on H-bridge
+	
+	Sensor1D *_battery_voltage_sensor;//reference to motor battery voltage
+	int16_t _Vmot;							//motor pwm-ed armature voltage
+	bool _H1;								//direction pin value
+	uint8_t _pwm;							//pwm value
+	
+#ifndef MOTOR_PIN_SINGLE
+	const uint8_t _pinH2;
+	bool _H2;
+#endif //MOTOR_PIN_SINGLE
+
+public:
+#ifdef MOTOR_PIN_SINGLE
+	Motor(uint8_t pinH1, uint8_t pinPWM, Sensor1D *battery_voltage_sensor, uint8_t ID = 0);
+	Motor(uint8_t pinH1, uint8_t pinPWM, int battery_voltage_sensor, uint8_t ID = 0);
+#else
+	Motor(uint8_t pinH1, uint8_t pinH2, uint8_t pinPWM, Sensor1D *battery_voltage_sensor, uint8_t ID = 0);
+	Motor(uint8_t pinH1, uint8_t pinH2, uint8_t pinPWM, int battery_voltage_sensor, uint8_t ID = 0);
+#endif
+
+	bool init();
+	
+	Sensor1D *batteryVoltageSensor();
+	int16_t Vmot();
+	int16_t PWM();
+	
+	void setVmot(int Vmot);		//High level motor voltage control
+	void setDir(bool dir);		//Low level direction control - set true for a positive armature voltage
+	void setPWM(uint8_t pwm);	//Low level pwm control
+};
+
+#endif //MOTOR_H

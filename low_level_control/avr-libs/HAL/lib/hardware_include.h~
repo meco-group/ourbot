@@ -1,0 +1,18 @@
+#ifndef HARDWARE_INCLUDE_H
+#define HARDWARE_INCLUDE_H
+
+/*#include "/home/maarten/projects/avr_libs/motor/lib/motor.h"
+#include "/home/maarten/projects/avr_libs/stepper/lib/hbridge_stepper.h"
+#include "/home/maarten/projects/avr_libs/stepper/lib/controled_stepper.h"
+#include "/home/maarten/projects/avr_libs/led/lib/led.h"*/
+#include "motor.h"
+#include "pololuMC33926.h"
+#include "pololuMD08A.h"
+#include "hbridge_stepper.h"
+#include "easydriver_stepper.h"
+#include "led.h"
+#include "imu_minimuv3.h"
+#include "analog_sensor.h"
+#include "encoder_sensor.h"
+
+#endif //HARDWARE_INCLUDE_H
