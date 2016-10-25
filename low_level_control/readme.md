@@ -13,7 +13,7 @@ The ./avr-libs contains some libraries such as (an older version of...) MicroOS,
 The ./mavlink folders contains (an older version of...) the mavlink protocol toolchain. This is needed to compile a set of messages transmitted to the pc. If you want to add messages to the protocol, you should change the ./mavlink/message\_definitions/v1.0/ourbot\_messages.xml and recompile everthing using the mavgenerate.
 
 The ./ourbot folder contains the toolchain needed to flash the teensy as well as the ourbot-specific source code. The makefile supports two important commands:
-* make teensy: compiles the code for the teensy
+* make: compiles the code for the teensy (same as make all)
 * make upload: compiles the code and flash it to the teensy
 You can also do a make clean to clean the directory.
 
