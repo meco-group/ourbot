@@ -15,6 +15,7 @@ todo
 *.log
 *.ior
 *~
+**/*~
 *.o
 *.so
 *.pyc
