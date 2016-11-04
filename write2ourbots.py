@@ -28,8 +28,8 @@ username = 'odroid'
 password = 'odroid'
 hosts = col.OrderedDict()
 # hosts['kurt'] = '192.168.11.121'
-# hosts['dave'] = '192.168.11.120'
 hosts['krist'] = '192.168.11.122'
+# hosts['dave'] = '192.168.11.120'
 ignore = []
 exclude = ['build', 'include', 'bin', 'lib', 'obj', '.tb_history']
 
@@ -129,6 +129,28 @@ def detect_changes(loc_files, rem_files):
         return _lf, _rf
 
 
+def get_source_files():
+    loc_files, rem_files = [], []
+    local_files = [f for f in os.listdir(local_root)
+                   if os.path.isfile(os.path.join(local_root, f))]
+    for f in local_files:
+        if f.endswith('.ops') or f.endswith('.lua'):
+            loc_file = os.path.join(local_root, f)
+            rem_file = os.path.join(remote_root, f)
+            loc_files.append(loc_file)
+            rem_files.append(rem_file)
+    for loc_dir in local_folders:
+        rem_dir = loc_dir.replace(os.path.dirname(loc_dir), remote_root)
+        for dirpath, dirnames, filenames in os.walk(loc_dir):
+            if sum(['/'+d in dirpath for d in exclude]) == 0:
+                for f in filenames:
+                    loc_file = os.path.join(dirpath, f)
+                    rem_file = loc_file.replace(loc_dir, rem_dir)
+                    loc_files.append(loc_file)
+                    rem_files.append(rem_file)
+    return detect_changes(loc_files, rem_files)
+
+
 def mp_adaptations(ftp, ssh):
     local_files = []
     remote_files = []
@@ -206,17 +228,18 @@ if __name__ == "__main__":
 
     options, args = op.parse_args()
 
-    # all relevant local folders and files
+    # relevant local folders
     local_folders = [os.path.join(local_root, d) for d in os.listdir(local_root)
                      if (os.path.isdir(os.path.join(local_root, d)) and d not in ignore)] + other_local_dirs
-    local_files = [f for f in os.listdir(local_root)
-                   if os.path.isfile(os.path.join(local_root, f))]
     # split between components and non-components
     comp_dir = [c for c in local_folders if 'src' in os.listdir(c)]
     noncomp_dir = [d for d in local_folders if d not in comp_dir]
 
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+    # get source files to send
+    loc_files, rem_files = get_source_files()
 
     for host, address in hosts.items():
         print 'Host %s' % host
@@ -250,23 +273,6 @@ if __name__ == "__main__":
 
         # sending source files
         print 'Sending source files'
-        loc_files = []
-        rem_files = []
-        for f in local_files:
-            if f.endswith('.ops') or f.endswith('.lua'):
-                loc_file = os.path.join(local_root, f)
-                rem_file = os.path.join(remote_root, f)
-                loc_files.append(loc_file)
-                rem_files.append(rem_file)
-        for loc_dir in local_folders:
-            rem_dir = loc_dir.replace(os.path.dirname(loc_dir), remote_root)
-            for dirpath, dirnames, filenames in os.walk(loc_dir):
-                if sum(['/'+d in dirpath for d in exclude]) == 0:
-                    for f in filenames:
-                        loc_file = os.path.join(dirpath, f)
-                        rem_file = loc_file.replace(loc_dir, rem_dir)
-                        loc_files.append(loc_file)
-                        rem_files.append(rem_file)
         send_files(ftp, ssh, loc_files, rem_files)
 
         # adapt stuff for MotionPlanning component
