@@ -143,8 +143,8 @@ return rfsm.state {
         -- hawkeye
         dp:addPeer('communicator', 'hawkeye')
         if not addOutgoing('hawkeye', 'kurt_pose_port', 6050, kurt) then rfsm.send_events(fsm, 'e_failed') return end
-        if not addOutgoing('hawkeye', 'krist_pose_port', 6051, kurt) then rfsm.send_events(fsm, 'e_failed') return end
-        if not addOutgoing('hawkeye', 'dave_pose_port', 6052, kurt) then rfsm.send_events(fsm, 'e_failed') return end
+        if not addOutgoing('hawkeye', 'krist_pose_port', 6051, krist) then rfsm.send_events(fsm, 'e_failed') return end
+        if not addOutgoing('hawkeye', 'dave_pose_port', 6052, dave) then rfsm.send_events(fsm, 'e_failed') return end
         if not addOutgoing('hawkeye', 'obstacle_port', 6070, robots) then rfsm.send_events(fsm, 'e_failed') return end
         if not addOutgoing('hawkeye', 'target_pose_port', 6071, robots) then rfsm.send_events(fsm, 'e_failed') return end
         -- if not addIncoming('hawkeye', 'kurt_est_pose_port', 6000) then rfsm.send_events(fsm,'e_failed') return end
