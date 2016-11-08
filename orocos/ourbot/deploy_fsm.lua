@@ -235,11 +235,12 @@ return rfsm.state {
         -- distributed motion planning
         if distributed_mp then
           dp:addPeer('communicator', 'motionplanning')
-          if not addOutgoing('motionplanning', 'x_var_port', 5000 + 10*index, neighbors) then rfsm.send_events(fsm, 'e_failed') return end
           for i=0, nghb_index.size-1 do
+            if not addOutgoing('motionplanning', 'x_var_port', 5000 + 10*index + i, neighbor[i]) then rfsm.send_events(fsm, 'e_failed') return end
+            if not addIncoming('motionplanning', 'x_j_var_port_'..tostring(i), 5000 + 10*nghb_index[i] + (2+i-1)%2) then rfsm.send_events(fsm, 'e_failed') return end
+
             if not addOutgoing('motionplanning', 'zl_ij_var_port_'..tostring(i), 5100 + 10*index + i, neighbor[i]) then rfsm.send_events(fsm, 'e_failed') return end
             if not addIncoming('motionplanning', 'zl_ji_var_port_'..tostring(i), 5100 + 10*nghb_index[i] + (2+i-1)%2) then rfsm.send_events(fsm, 'e_failed') return end
-            if not addIncoming('motionplanning', 'x_j_var_port_'..tostring(i), 5000 + 10*nghb_index[i]) then rfsm.send_events(fsm, 'e_failed') return end
           end
         end
         -- deployer (added as last: highest priority)
