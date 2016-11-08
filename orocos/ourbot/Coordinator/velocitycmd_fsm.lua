@@ -1,11 +1,13 @@
 local tc = rtt.getTC()
 
 -- local scanmatcher   = tc:getPeer('scanmatcher')
+local communicator  = tc:getPeer('communicator')
 local estimator     = tc:getPeer('estimator')
 local reporter      = tc:getPeer('reporter')
 local io            = tc:getPeer('io')
 local teensy        = tc:getPeer('teensy')
 
+local enablePort                = communicator:getOperation("enablePort")
 local estimatorUpdate           = estimator:getOperation("update")
 local estimatorInRunTimeError   = estimator:getOperation("inRunTimeError")
 -- local scanmatcherInRunTimeError = scanmatcher:getOperation("inRunTimeError")
@@ -47,6 +49,8 @@ return rfsm.state {
 
   run = rfsm.state{
     entry = function(fsm)
+      enablePort(4002) -- enable velocity command via gamepad
+
       -- if not scanmatcher:start() then
       --   rtt.logl("Error","Could not start scanmatcher component")
       --   rfsm.send_events(fsm,'e_failed')
