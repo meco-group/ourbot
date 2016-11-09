@@ -491,13 +491,10 @@ bool HawkEye::matchMarkers(cv::Mat& roi, const std::vector<int>& roi_location, s
   std::vector<double> marker_scores;
   // search bottom markers
   matchTemplates(roi, _bottom_marker, _threshold_match, marker_loc, marker_scores);
-  if (marker_loc.size() < 4){
+  if (marker_loc.size() < 2){
     return false; // no bottom markers detected
   }
-  int number_of_robots = marker_loc.size()/4; // number of robots in roi
-  robot_indices.resize(number_of_robots);
-  marker_locations.resize(6*number_of_robots, 0);
-  std::vector<int> bottom_marker_locations(4*number_of_robots, 0);
+  std::vector<int> bottom_marker_locations(marker_loc.size(), 0);
   for (int i=0; i<marker_loc.size(); i++){
     bottom_marker_locations[i] = marker_loc[i] + roi_location[i%2];
     if (i%2 == 0){
@@ -506,41 +503,30 @@ bool HawkEye::matchMarkers(cv::Mat& roi, const std::vector<int>& roi_location, s
     }
   }
   // search top markers
-  std::vector<double> max_scores(number_of_robots, 0.0);
   std::vector<cv::Mat> top_markers;
-  std::vector<int> top_marker_locations(2*number_of_robots, 0);
-  double min_max_score = 0.0;
-  int min_max_score_index = 0;
+  std::vector<int> top_marker_locations;
+  double max_score;
+  int number_of_robots = 0;
   for (uint k=0; k<_robots.size(); k++){
     _robots[k]->getTopMarkers(top_markers);
+    max_score = 0.0;
     for (uint i=0; i<top_markers.size(); i++){
       matchTemplates(roi, top_markers[i], _threshold_match, marker_loc, marker_scores);
-      if (marker_loc.size() == 2 && marker_scores[0] > min_max_score){
-        top_marker_locations[2*min_max_score_index] = marker_loc[0] + roi_location[0];
-        top_marker_locations[2*min_max_score_index+1] = marker_loc[1] + roi_location[1];
-        max_scores[min_max_score_index] = marker_scores[0];
-        robot_indices[min_max_score_index] = k;
-        // find new minum of the max_scores
-        min_max_score = 2.0;
-        for (int j=0; j<number_of_robots; j++){
-          if (max_scores[j] < min_max_score){
-            min_max_score = max_scores[j];
-            min_max_score_index = j;
-          }
-        }
+      if (marker_loc.size() == 2 && marker_scores[0] > max_score){
+        top_marker_locations.push_back(marker_loc[0] + roi_location[0]);
+        top_marker_locations.push_back(marker_loc[1] + roi_location[1]);
+        max_score = marker_scores[0];
+        robot_indices.push_back(k);
       }
     }
-  }
-  bool top_markers_detected = false;
-  for (int j=0; j<number_of_robots; j++){
-    if (max_scores[j] > 0.0){
-      top_markers_detected = true;
-      break;
+    if (max_score > 0.0){
+      number_of_robots++;
     }
   }
-  if (!top_markers_detected){
+  if (number_of_robots == 0){
     return false;
   }
+  marker_locations.resize(6*number_of_robots, 0);
   // combine bottom markers with correct robot
   double distance, ref_distance;
   int k;
@@ -558,8 +544,8 @@ bool HawkEye::matchMarkers(cv::Mat& roi, const std::vector<int>& roi_location, s
         }
       }
     }
-    if(k<4){
-      return false;
+    if (k<4){
+      return false; // we did not find 2 matching bottom markers
     }
     marker_locations[6*i+4] = top_marker_locations[2*i];
     marker_locations[6*i+5] = top_marker_locations[2*i+1];
