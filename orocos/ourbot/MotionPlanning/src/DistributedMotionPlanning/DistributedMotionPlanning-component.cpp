@@ -47,6 +47,7 @@ bool DistributedMotionPlanning::config(){
     _ref_pose[k].resize(2);
     _ref_velocity[k].resize(2);
   }
+  _n_obs = _problem->n_obs;
   _n_nghb = _nghb_index.size();
   _n_shared = _problem->n_shared;
   _x_var.resize(_n_shared);
@@ -120,6 +121,20 @@ code_t DistributedMotionPlanning::decode(double number){
   memcpy((char*)(&code), (char*)(&number), sizeof(code));
   return code;
 }
+
+bool DistributedMotionPlanning::watchDog(bool initial, TimeService::ticks t0){
+  if (!initial && TimeService::Instance()->secondsSince(t0) > 2){
+    log(Error) << "Waiting on neighbor took more than 2s" << endlog();
+    return false;
+  }
+  if (TimeService::Instance()->secondsSince(t0) > 10){
+    log(Error) << "Waiting on neighbor took more than 10s" << endlog();
+  }
+  return true;
+}
+
+bool DistributedMotionPlanning::admmIteration(bool initial){
+  std::cout << "admm iteration " << _problem->getIteration() << std::endl;
   #ifdef DEBUG
   _timestamp = TimeService::Instance()->getTicks();
   #endif
@@ -234,8 +249,13 @@ code_t DistributedMotionPlanning::decode(double number){
   _timestamp = TimeService::Instance()->getTicks();
   #endif
   // receive from neighbors (wait until new data)
+  t0 = TimeService::Instance()->getTicks();
   for (int k=0; k<_n_nghb; k++){
-    while ( _zl_ji_var_port[k].read(_zl_ji_p_var[k]) != RTT::NewData );
+    while ( _zl_ji_var_port[k].read(_zl_ji_p_var[k]) != RTT::NewData ){
+      if (!watchDog(initial, t0)){
+        return false;
+      }
+    }
   }
   #ifdef DEBUG
   time_elapsed = TimeService::Instance()->secondsSince(_timestamp);
@@ -302,6 +322,7 @@ void DistributedMotionPlanning::getObstacles(std::vector<omgf::obstacle_t>& obst
     obstacles[k].checkpoints = _obstacles[k].checkpoints;
     obstacles[k].radii = _obstacles[k].radii;
     obstacles[k].avoid = _obstacles[k].avoid;
+    // obstacles[k].avoid = false;
   }
 }
 
