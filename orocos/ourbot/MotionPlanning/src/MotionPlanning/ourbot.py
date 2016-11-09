@@ -2,7 +2,6 @@ import sys, os
 sys.path.insert(0, '/home/ruben/Documents/Work/Programs/motionplanningtoolbox/')
 from omgtools import *
 import os
-import csv
 
 """
 This file demonstrates how to export a point2point problem to c++. It generates
@@ -55,27 +54,11 @@ options['casadilib'] = os.path.join(casadi_path, 'casadi/')
 
 # export the problem
 problem.export(options)
-vehicle.plot('input')
-problem.plot('scene')
-simulator = Simulator(problem, sample_time=0.01, update_time=0.5)
-trajectories, signals = simulator.run()
-problem.plot_movie('scene', number_of_frames=100)
-
-# save results for check in c++
-# veh_lbl = vehicle.label
-# testdir = os.path.join(options['directory'], 'test')
-# if not os.path.isdir(testdir):
-#     os.makedirs(os.path.join(options['directory'], 'test'))
-# with open(os.path.join(testdir, 'data_state.csv'), 'wb') as f:
-#     w = csv.writer(f)
-#     for i in range(0, len(trajectories[veh_lbl]['state']), int(simulator.update_time/simulator.sample_time)):
-#         for k in range(trajectories[veh_lbl]['state'][i].shape[0]):
-#             w.writerow(trajectories[veh_lbl]['state'][i][k, :])
-# with open(os.path.join(testdir, 'data_input.csv'), 'wb') as f:
-#     w = csv.writer(f)
-#     for i in range(0, len(trajectories[veh_lbl]['input']), int(simulator.update_time/simulator.sample_time)):
-#         for k in range(trajectories[veh_lbl]['input'][i].shape[0]):
-#             w.writerow(trajectories[veh_lbl]['input'][i][k, :])
+# vehicle.plot('input')
+# problem.plot('scene')
+# simulator = Simulator(problem, sample_time=0.01, update_time=0.5)
+# trajectories, signals = simulator.run()
+# problem.plot_movie('scene', number_of_frames=100)
 
 # note: you need to implement your vehicle type in c++. Take a look at
 # Holonomic.cpp and Holonomic.hpp which are also exported as an example.
