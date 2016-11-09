@@ -13,6 +13,12 @@
 using namespace RTT;
 using namespace RTT::os;
 
+typedef struct _code_t {
+  uint32_t index;
+  bool valid;
+  bool target_reached;
+} __attribute__((packed)) code_t;
+
 class DistributedMotionPlanning : public MotionPlanningInterface{
   private:
     OutputPort<std::vector<double> > _x_var_port;
@@ -22,8 +28,6 @@ class DistributedMotionPlanning : public MotionPlanningInterface{
     InputPort<std::vector<double> > _zl_ji_var_port[2];
 
     omgf::FormationPoint2Point* _problem;
-    std::vector<double> _state0;
-    std::vector<double> _stateT;
 
     std::vector<std::vector<double> > _ref_pose;
     std::vector<std::vector<double> > _ref_velocity;
@@ -40,6 +44,9 @@ class DistributedMotionPlanning : public MotionPlanningInterface{
     std::vector<std::vector<double> > _zl_ji_p_var;
     std::vector<std::vector<double> > _zl_ij_p_var;
 
+    std::vector<bool> _target_reached_nghb;
+    bool _target_reached;
+
     int _n_shared;
     int _n_nghb;
     std::vector<int> _nghb_index;
@@ -52,8 +59,12 @@ class DistributedMotionPlanning : public MotionPlanningInterface{
     TimeService::ticks _timestamp;
     #endif
 
-    bool admmIteration();
+    bool admmIteration(bool initial);
     void getObstacles(std::vector<omgf::obstacle_t>& obstacles);
+    double encode(int index, bool valid);
+    code_t decode(double number);
+    void emptyPorts();
+    bool watchDog(bool initial, TimeService::ticks t0);
 
   public:
     DistributedMotionPlanning(std::string const& name);
@@ -61,6 +72,7 @@ class DistributedMotionPlanning : public MotionPlanningInterface{
     bool trajectoryUpdate();
     bool initialize();
     bool config();
+    bool targetReached();
     void writeSample();
     void setRelPoseC(std::vector<double>);
 };
