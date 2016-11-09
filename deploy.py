@@ -13,7 +13,6 @@ import os
 import paramiko
 import xml.etree.ElementTree as et
 import collections as col
-import numpy as np
 import errno
 import sys
 import math
@@ -25,9 +24,17 @@ local_root = os.path.join(current_dir, 'orocos/emperor')
 username = 'odroid'
 password = 'odroid'
 
-hosts = ['krist']
+hosts = ['kurt', 'krist', 'dave']
+# hosts = ['kurt', 'krist']
+# hosts = ['kurt']
+# hosts = ['dave']
+coop_hosts = hosts
 
-addresses = col.OrderedDict([('kurt','192.168.11.121'), ('krist','192.168.11.122'), ('dave','192.168.11.120')])
+addresses = col.OrderedDict([('kurt', '192.168.11.121'), ('krist', '192.168.11.122'), ('dave', '192.168.11.120')])
+indices = {key: index for index, key in enumerate(addresses.keys())}
+
+# formation configuration
+configuration = col.OrderedDict([('kurt', [-0.2, -0.2]), ('krist', [-0.2, 0.2]), ('dave', [0.35, 0.0])])
 
 
 def send_file(ftp, ssh, loc_file, rem_file):
@@ -115,33 +122,33 @@ def modify_host_config(host, distributed_mp=False):
         if elem.attrib['name'] == 'index':
             elem.find('value').text = str(index)
     if distributed_mp:
-        N = len(hosts)
+        N = len(coop_hosts)
         for elem in root.findall('simple'):
             if elem.attrib['name'] == 'distributed_mp':
                 elem.find('value').text = 'true'
             if elem.attrib['name'] == 'motionplanning':
                 elem.find('value').text = 'DistributedMotionPlanning'
         # set neighbors
+        neighbors = [coop_hosts[(N+index+1) % N], coop_hosts[(N+index-1) % N]]
         for elem in root.findall('struct'):
             if elem.attrib['name'] == 'neighbors':
                 for e in elem.findall('simple'):
                     if e.attrib['name'] == 'neighbor0':
-                        e.find('value').text = addresses[addresses.keys()[(N+index+1) % N]]
+                        e.find('value').text = addresses[neighbors[0]]
                     if e.attrib['name'] == 'neighbor1':
-                        e.find('value').text = addresses[addresses.keys()[(N+index-1) % N]]
+                        e.find('value').text = addresses[neighbors[1]]
             if elem.attrib['name'] == 'nghb_index':
                 for e in elem.findall('simple'):
                     if e.attrib['name'] == 'neighbor0':
-                        e.find('value').text = str((N+index+1) % N)
+                        e.find('value').text = str(indices[neighbors[0]])
                     if e.attrib['name'] == 'neighbor1':
-                        e.find('value').text = str((N+index-1) % N)
+                        e.find('value').text = str(indices[neighbors[1]])
     file = open(local_files[-1]+'_', 'w')
     file.write('<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE properties SYSTEM "cpf.dtd">\n')
     tree.write(file)
     file.close()
     if distributed_mp:
         # modify motionplanning-config file
-        radius = 0.2
         local_files.append(os.path.join(
             current_dir, 'orocos/ourbot/Configuration/motionplanning-config.cpf'))
         remote_files.append(os.path.join(
@@ -152,9 +159,11 @@ def modify_host_config(host, distributed_mp=False):
             if elem.attrib['name'] == 'rel_pos_c':
                 for e in elem.findall('simple'):
                     if e.attrib['name'] == 'Element0':
-                        e.find('value').text = str(radius*np.cos(index*2*np.pi/N))
+                        e.find('value').text = str(configuration[host][0])
+                        # e.find('value').text = str(radius*np.cos(index*2*np.pi/N))
                     if e.attrib['name'] == 'Element1':
-                        e.find('value').text = str(radius*np.sin(index*2*np.pi/N))
+                        e.find('value').text = str(configuration[host][1])
+                        # e.find('value').text = str(radius*np.sin(index*2*np.pi/N))
         file = open(local_files[-1]+'_', 'w')
         file.write('<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE properties SYSTEM "cpf.dtd">\n')
         tree.write(file)
@@ -191,7 +200,7 @@ def write_settings(distributed_mp):
 
 
 def deploy(hosts):
-    distributed_mp = False if (len(hosts) == 1) else True
+    distributed_mp = False if (len(coop_hosts) == 1) else True
     write_settings(distributed_mp)
     command = ['gnome-terminal']
     for host in hosts:

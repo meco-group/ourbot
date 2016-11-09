@@ -27,9 +27,9 @@ remote_root = '/home/odroid/orocos'
 username = 'odroid'
 password = 'odroid'
 hosts = col.OrderedDict()
-# hosts['kurt'] = '192.168.11.121'
+hosts['kurt'] = '192.168.11.121'
 hosts['krist'] = '192.168.11.122'
-# hosts['dave'] = '192.168.11.120'
+hosts['dave'] = '192.168.11.120'
 ignore = []
 exclude = ['build', 'include', 'bin', 'lib', 'obj', '.tb_history']
 
@@ -87,7 +87,6 @@ def send_file(ftp, ssh, loc_file, rem_file):
 
 
 def send_files(ftp, ssh, loc_files, rem_files):
-    loc_files, rem_files = detect_changes(loc_files, rem_files)
     n_blocks = min(50, len(loc_files))
     if (n_blocks == 0):
         print 'no files to send'
@@ -280,4 +279,4 @@ if __name__ == "__main__":
 
         ftp.close()
         ssh.close()
-    os.system('clear')
+    # os.system('clear')
