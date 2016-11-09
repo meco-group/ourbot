@@ -3,9 +3,11 @@
 void mouseCallBack(int event, int x, int y, int flags, void* data){
     Gui* gui = (Gui*) data;
     if (event == cv::EVENT_LBUTTONDOWN){
-        if (flags == 40){ // ctrl + left mouse button
-            gui->setMouseClickPosition(x, y);
-        }
+        gui->setMouseClickPosition(x, y);
+
+        // if (flags == 40){ // ctrl + left mouse button
+        //     gui->setMouseClickPosition(x, y);
+        // }
     }
 }
 
