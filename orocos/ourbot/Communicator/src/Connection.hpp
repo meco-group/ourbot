@@ -157,19 +157,6 @@ template <class C, typename T=void> class OutgoingConnection : public Connection
             }
             if (_port->read(_data) == RTT::NewData){
                 std::string portname = _port->getName();
-                // if (portname.compare("x_var_port")==0 || portname.compare("zl_ij_var_port_0")==0 || portname.compare("zl_ij_var_port_1")==0){
-                    // std::cout << _port->getName() << ": sending "  << _data.size()*_size << " bytes to ";
-                    // std::cout << readAddress(_rem_addresses[0]) << ":" << _port_nr;
-                    // for (uint k=1; k<_rem_addresses.size(); k++){
-                    //     std::cout << ", " << readAddress(_rem_addresses[k]) << ":" << _port_nr;
-                    // }
-                    // std::cout << std::endl;
-                    // std::cout << "[" << _data[0];
-                    // for (uint k=1; k<_data.size(); k++){
-                    //     std::cout << "," << _data[k];
-                    // }
-                    // std::cout << "]" << std::endl;
-                // }
                 #ifdef DEBUG
                 std::cout << _port->getName() << ": sending "  << _data.size()*_size << " bytes to ";
                 std::cout << readAddress(_rem_addresses[0]);
@@ -261,10 +248,6 @@ template <class C, typename T=void> class IncomingConnection : public Connection
                 memcpy(&_data[0], _buffer, _rcv_len);
                 _port->write(_data);
                 std::string portname = _port->getName();
-                // if (portname.compare("x_j_var_port_0")==    0 || portname.compare("x_j_var_port_1")==   0 || portname.compare("zl_ji_var_port_0")==    0 || portname.compare("zl_ji_var_port_1")== 0){
-                //     std::cout << _port->getName() << ": receiving "  << _rcv_len << " bytes from ";
-                //     std::cout << readAddress(_rcv_address) << ":" << _port_nr << std::endl;
-                // }
                 #ifdef DEBUG
                 std::cout << _port->getName() << ": receiving "  << _rcv_len << " bytes from ";
                 std::cout << readAddress(_rcv_address) << std::endl;
