@@ -46,6 +46,11 @@
     <value>1</value>
   </simple>
 
+  <simple name="transmit_rate" type="long">
+    <description>Frequency to transmit estimate</description>
+    <value>10</value>
+  </simple>
+
   <struct name="marker_locations" type="array">
     <description>Location of markers in local frame [x1, y1, x2, y2, x3, y3] (m)</description>
     <simple name="x1" type="double">

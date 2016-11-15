@@ -8,7 +8,7 @@ EstimatorInterface::EstimatorInterface(std::string const& name) : TaskContext(na
     _cal_imur_transacc(3), _cal_imur_orientation_3d(3), _cal_imur_orientation(0.),
     _cal_imur_dorientation_3d(3), _cal_imur_dorientation(0.),
     _cal_enc_pose(3), _cal_motor_current(4), _cal_motor_voltage(4), _cal_velocity(3),
-    _est_pose(3), _est_velocity(3), _est_acceleration(3), _transmit_estimate(false){
+    _est_pose(3), _est_velocity(3), _est_acceleration(3), _transmit_cnt(0){
 
   _est_pose_port.keepLastWrittenValue(true);
 
@@ -39,9 +39,11 @@ EstimatorInterface::EstimatorInterface(std::string const& name) : TaskContext(na
   ports()->addPort("est_velocity_port", _est_velocity_port).doc("Estimated velocity wrt to initial frame");
   ports()->addPort("est_acceleration_port", _est_acceleration_port).doc("Estimated acceleration wrt to initial frame");
   ports()->addPort("est_pose_tx_port", _est_pose_tx_port).doc("Estimated pose sent over wifi");
+  ports()->addPort("est_velocity_tx_port", _est_velocity_tx_port).doc("Estimated velocity sent over wifi");
 
   addProperty("control_sample_rate", _control_sample_rate).doc("Frequency to update the control loop");
   addProperty("lidar_data_length", _lidar_data_length).doc("Length of lidar data");
+  addProperty("transmit_rate", _transmit_rate).doc("Frequency to transmit estimate");
 
   addOperation("writeSample",&EstimatorInterface::writeSample, this).doc("Set data sample on output ports");
   addOperation("validEstimation",&EstimatorInterface::validEstimation, this).doc("Is the last estimation valid?");
@@ -81,6 +83,7 @@ bool EstimatorInterface::startHook(){
     log(Error) << "Error occured in initialize() !" <<endlog();
     return false;
   }
+  _transmit_cnt = 0;
   return true;
 }
 
@@ -110,9 +113,12 @@ void EstimatorInterface::updateHook(){
   _est_pose_port.write(_est_pose);
   _est_velocity_port.write(_est_velocity);
   _est_acceleration_port.write(_est_acceleration);
-  if (_transmit_estimate){
+
+  _transmit_cnt++;
+  if (_transmit_cnt == int(_control_sample_rate/_transmit_rate)){
     _est_pose_tx_port.write(_est_pose);
-    _transmit_estimate = false;
+    _est_velocity_tx_port.write(_est_velocity);
+    _transmit_cnt = 0;
   }
 }
 
