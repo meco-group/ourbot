@@ -11,6 +11,8 @@ MotionPlanningInterface::MotionPlanningInterface(std::string const& name) : Task
   ports()->addPort("target_pose_port", _target_pose_port).doc("Target pose");
   ports()->addPort("obstacle_port", _obstacle_port).doc("Detected obstacles");
   ports()->addEventPort("mp_trigger_port", _mp_trigger_port).doc("Trigger for motion planning: is composed of current estimated pose and start index of internal reference input vector");
+  ports()->addPort("robobs_pose_port", _robobs_pose_port).doc("Pose information of a robot obstacle");
+  ports()->addPort("robobs_velocity_port", _robobs_velocity_port).doc("Velocity information of a robot obstacle");
 
   ports()->addPort("ref_pose_trajectory_x_port", _ref_pose_trajectory_port[0]).doc("x reference trajectory");
   ports()->addPort("ref_pose_trajectory_y_port", _ref_pose_trajectory_port[1]).doc("y reference trajectory");
@@ -64,6 +66,7 @@ void MotionPlanningInterface::disable(){
   _enable = false;
   _got_target = false;
   _valid = false;
+  std::cout << "disabling...." << std::endl;
 }
 
 bool MotionPlanningInterface::valid(){
@@ -190,6 +193,12 @@ void MotionPlanningInterface::initObstacles(){
 }
 
 void MotionPlanningInterface::computeObstacles(){
+  std::vector<double> obst_pose(3);
+  std::vector<double> obst_velocity(3);
+  bool rob_obstacle = (_robobs_pose_port.read(obst_pose) == RTT::NewData);
+  double dist_rob_min = 1000;
+  double dist_rob;
+  int robot_index = -1;
   for (int k=0; k<_n_obs; k++){
     if (_obstacle_data[5*k] == -100){
       _obstacles[k].avoid = false;
@@ -197,7 +206,27 @@ void MotionPlanningInterface::computeObstacles(){
       _obstacles[k].avoid = true;
       _obstacles[k].position[0] = _obstacle_data[5*k+0];
       _obstacles[k].position[1] = _obstacle_data[5*k+1];
-      if (_obstacle_data[5*k+3] == -100){
+      if (rob_obstacle){
+        dist_rob = sqrt(pow(_obstacles[k].position[0]-obst_pose[0],2) + pow(_obstacles[k].position[1]-obst_pose[1],2));
+        if (dist_rob < dist_rob_min){
+          dist_rob_min = dist_rob;
+          robot_index = k;
+        }
+      }
+    }
+  }
+  // if obstacle is robot -> replace position and velocity
+  if (rob_obstacle){
+    _obstacles[robot_index].position[0] = obst_pose[0];
+    _obstacles[robot_index].position[1] = obst_pose[1];
+    if (_robobs_velocity_port.read(obst_velocity) == RTT::NewData){
+        _obstacles[robot_index].velocity[0] = obst_velocity[0];
+        _obstacles[robot_index].velocity[1] = obst_velocity[1];
+    }
+  }
+  // set checkpoints
+  for (int k=0; k<_n_obs; k++){
+    if (_obstacle_data[5*k+3] == -100){
         // circle
         for (int i=0; i<4; i++){
           _obstacles[k].radii[i] = _obstacle_data[5*k+2];
@@ -205,26 +234,27 @@ void MotionPlanningInterface::computeObstacles(){
             _obstacles[k].checkpoints[2*i+j] = _obstacle_data[5*k+j];
           }
         }
-      } else {
-        // rectangle
-        double orientation = (M_PI/180.)*_obstacle_data[5*k+2];
-        double width = _obstacle_data[5*k+3];
-        double height = _obstacle_data[5*k+4];
-        for (int i=0; i<4; i++){
-          _obstacles[k].radii[i] = 0.001;
-        }
-        _obstacles[k].checkpoints[0] = 0.5*width*cos(orientation) - 0.5*height*sin(orientation);
-        _obstacles[k].checkpoints[1] = 0.5*width*sin(orientation) + 0.5*height*cos(orientation);
-        _obstacles[k].checkpoints[2] = 0.5*width*cos(orientation) + 0.5*height*sin(orientation);
-        _obstacles[k].checkpoints[3] = 0.5*width*sin(orientation) - 0.5*height*cos(orientation);
-        _obstacles[k].checkpoints[4] = -0.5*width*cos(orientation) + 0.5*height*sin(orientation);
-        _obstacles[k].checkpoints[5] = -0.5*width*sin(orientation) - 0.5*height*cos(orientation);
-        _obstacles[k].checkpoints[6] = -0.5*width*cos(orientation) - 0.5*height*sin(orientation);
-        _obstacles[k].checkpoints[7] = -0.5*width*sin(orientation) + 0.5*height*cos(orientation);
+    } else {
+      // rectangle
+      double orientation = (M_PI/180.)*_obstacle_data[5*k+2];
+      if (rob_obstacle and k == robot_index){
+        orientation = obst_pose[2];
       }
+      double width = _obstacle_data[5*k+3];
+      double height = _obstacle_data[5*k+4];
+      for (int i=0; i<4; i++){
+        _obstacles[k].radii[i] = 0.001;
+      }
+      _obstacles[k].checkpoints[0] = 0.5*width*cos(orientation) - 0.5*height*sin(orientation);
+      _obstacles[k].checkpoints[1] = 0.5*width*sin(orientation) + 0.5*height*cos(orientation);
+      _obstacles[k].checkpoints[2] = 0.5*width*cos(orientation) + 0.5*height*sin(orientation);
+      _obstacles[k].checkpoints[3] = 0.5*width*sin(orientation) - 0.5*height*cos(orientation);
+      _obstacles[k].checkpoints[4] = -0.5*width*cos(orientation) + 0.5*height*sin(orientation);
+      _obstacles[k].checkpoints[5] = -0.5*width*sin(orientation) - 0.5*height*cos(orientation);
+      _obstacles[k].checkpoints[6] = -0.5*width*cos(orientation) - 0.5*height*sin(orientation);
+      _obstacles[k].checkpoints[7] = -0.5*width*sin(orientation) + 0.5*height*cos(orientation);
     }
   }
 }
-
 
 ORO_CREATE_COMPONENT_LIBRARY()

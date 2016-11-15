@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE properties SYSTEM "cpf.dtd">
 <properties>
+  <simple name="obstacle_mode" type="boolean">
+    <description>Robot is acting as a moving obstacle</description>
+    <value>0</value>
+  </simple>
+  <simple name="robobs_index" type="long">
+    <description>Index of obstacle-acting robot</description>
+    <value>0</value>
+  </simple>
+
   <simple name="print_level" type="long">
     <description>Level of output printing</description>
     <value>2</value>

@@ -17,7 +17,12 @@ return rfsm.state {
 
   idle = rfsm.state{
     entry=function()
-      print('\nWaiting for command...\nPossibilities: VelocityControl, MotionPlanning, TrajectoryFollowing')
+      if obstacle_mode then
+        print('\nIn obstacle mode (control with gamepad)')
+        _coordinator_send_event_port:write('e_velocitycmd')
+      else
+        print('\nWaiting for command...\nPossibilities: VelocityControl, MotionPlanning, TrajectoryFollowing')
+      end
     end
   },
 

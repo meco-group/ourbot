@@ -194,7 +194,7 @@ return rfsm.state {
         -- io
         if components_to_load['teensy'] then
           dp:addPeer('communicator', 'io')
-          if not addIncoming('io', 'cmd_velocity_port', 4002) then rfsm.send_events(fsm, 'e_failed') return end
+          -- if not addIncoming('io', 'cmd_velocity_port', 4002) then rfsm.send_events(fsm, 'e_failed') return end
         end
         -- estimator
         dp:addPeer('communicator', 'estimator')
@@ -204,10 +204,19 @@ return rfsm.state {
         dp:addPeer('communicator', 'motionplanning')
         if not addIncoming('motionplanning', 'obstacle_port', 6070) then rfsm.send_events(fsm, 'e_failed') return end
         if not addIncoming('motionplanning', 'target_pose_port', 6071) then rfsm.send_events(fsm, 'e_failed') return end
+        if not obstacle_mode then
+          if not addIncoming('motionplanning', 'robobs_pose_port', 6000 + robobs_index) then rfsm.send_events(fsm, 'e_failed') return end
+          if not addIncoming('motionplanning', 'robobs_velocity_port', 6010 + robobs_index) then rfsm.send_events(fsm, 'e_failed') return end
+        end
         -- reference
         -- dp:addPeer('communicator', 'reference')
-        -- if not addOutgoing('reference', 'ref_pose_trajectory_x_tx_port', 6010 + index, emperor) then rfsm.send_events(fsm, 'e_failed') return end
-        -- if not addOutgoing('reference', 'ref_pose_trajectory_y_tx_port', 6020 + index, emperor) then rfsm.send_events(fsm, 'e_failed') return end
+        -- if not addOutgoing('reference', 'ref_pose_trajectory_x_tx_port', 6020 + index, emperor) then rfsm.send_events(fsm, 'e_failed') return end
+        -- if not addOutgoing('reference', 'ref_pose_trajectory_y_tx_port', 6030 + index, emperor) then rfsm.send_events(fsm, 'e_failed') return end
+
+        if obstacle_mode then
+          if not addOutgoing('estimator', 'est_pose_tx_port', 6000 + index, robots) then rfsm.send_events(fsm, 'e_failed') return end
+          if not addOutgoing('estimator', 'est_velocity_tx_port', 6010 + index, robots) then rfsm.send_events(fsm, 'e_failed') return end
+        end
 
         -- distributed motion planning
         if distributed_mp then
