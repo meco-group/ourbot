@@ -4,7 +4,7 @@
 
 using namespace std;
 
-MotionPlanning::MotionPlanning(std::string const& name) : MotionPlanningInterface(name), _state0(2), _stateT(2){
+MotionPlanning::MotionPlanning(std::string const& name) : MotionPlanningInterface(name){
 }
 
 bool MotionPlanning::config(){

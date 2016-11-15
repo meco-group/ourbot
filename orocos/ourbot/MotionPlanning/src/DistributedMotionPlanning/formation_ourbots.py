@@ -20,7 +20,7 @@ fleet = Fleet(vehicles)
 configuration = np.array([[-0.2, -0.2], [-0.2, 0.2], [0.4, 0]])
 # configuration = np.array([[-0.2, -0.2], [-0.2, 0.2]])
 init_positions = [0.8, 0.8] + configuration
-terminal_positions = [3., 1.5] + configuration
+terminal_positions = [3.2, 1.5] + configuration
 
 # init_positions = [0.8, 1.125] + configuration
 # terminal_positions = [3.5, 1.125] + configuration
@@ -37,8 +37,8 @@ height = 2.25
 environment = Environment(room={'shape': Rectangle(width, height), 'position': [0.5*width, 0.5*height]})
 rectangle = Rectangle(width=0.3, height=0.8)
 
-environment.add_obstacle(Obstacle({'position': [0.5*width, 0.5*height]}, shape=rectangle))
-# environment.add_obstacle(Obstacle({'position': [2.5, 1.5]}, shape=rectangle))
+# environment.add_obstacle(Obstacle({'position': [0.5*width, 0.5*height]}, shape=rectangle))
+environment.add_obstacle(Obstacle({'position': [2.5, 2]}, shape=rectangle))
 
 # create a point-to-point problem
 problem = FormationPoint2point(fleet, environment)

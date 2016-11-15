@@ -408,7 +408,6 @@ void ADMMPoint2Point::transformSharedSplines(double current_time, double current
 	int interval_prev = (int)(round((current_time_prev*(vehicle->getKnotIntervals())/horizon_time)*1.e6)/1.e6);
 	int interval_now = (int)(round((current_time*(vehicle->getKnotIntervals())/horizon_time)*1.e6)/1.e6);
 	if(interval_now > interval_prev){
-        std::cout << "!!!transform!!!" << std::endl;
 		vector<double> x_i_tf(variables_admm["x_i"]);
 		vector<double> z_i_tf(variables_admm["z_i"]);
 		vector<double> l_i_tf(variables_admm["l_i"]);

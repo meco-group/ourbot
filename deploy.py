@@ -24,12 +24,15 @@ local_root = os.path.join(current_dir, 'orocos/emperor')
 username = 'odroid'
 password = 'odroid'
 
-hosts = ['kurt', 'krist', 'dave']
+# hosts = ['kurt', 'krist', 'dave']
 # hosts = ['kurt', 'krist']
-# hosts = ['kurt']
+hosts = ['kurt', 'dave']
 # hosts = ['dave']
-coop_hosts = hosts
+# coop_hosts = hosts
 
+obstacle = 'dave'
+
+coop_hosts = [h for h in hosts if h != obstacle]
 addresses = col.OrderedDict([('kurt', '192.168.11.121'), ('krist', '192.168.11.122'), ('dave', '192.168.11.120')])
 indices = {key: index for index, key in enumerate(addresses.keys())}
 
@@ -121,6 +124,12 @@ def modify_host_config(host, distributed_mp=False):
     for elem in root.findall('simple'):
         if elem.attrib['name'] == 'index':
             elem.find('value').text = str(index)
+        if host in obstacles:
+            if elem.attrib['name'] == 'obstacle_mode':
+                elem.find('value').text = str(1)
+        elif obstacle is not None:
+            if elem.attrib['name'] == 'robobs_index':
+                elem.find('value').text = str(addresses.keys().index(obstacle))
     if distributed_mp:
         N = len(coop_hosts)
         for elem in root.findall('simple'):
