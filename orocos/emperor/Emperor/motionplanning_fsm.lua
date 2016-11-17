@@ -4,7 +4,6 @@ local communicator          = tc:getPeer('communicator')
 local gamepad               = tc:getPeer('gamepad')
 local reporter              = tc:getPeer('reporter')
 local hawkeye               = tc:getPeer('hawkeye')
-local enablevelcmd          = gamepad:getOperation("enableVelocityCmd")
 local snapshot              = reporter:getOperation("snapshot")
 local gamepadInRunTimeError = gamepad:getOperation("inRunTimeError")
 local hawkeyeInRunTimeError = hawkeye:getOperation("inRunTimeError")
@@ -40,6 +39,7 @@ return rfsm.state {
   init  = rfsm.state{
     entry = function(fsm)
       connectPorts() -- connect obstacle port
+      sub_state='init'
       print("Waiting on Run (Button A)...")
       if (not reporter:start()) then
         rtt.log("Error","Could not start reporter component")
@@ -52,7 +52,6 @@ return rfsm.state {
   run   = rfsm.state{
     entry = function(fsm)
       sub_state='run'
-      enablevelcmd()
       print("System started. Abort by using Break (Button B).")
     end,
 

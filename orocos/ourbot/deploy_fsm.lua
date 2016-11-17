@@ -209,9 +209,9 @@ return rfsm.state {
           if not addIncoming('motionplanning', 'robobs_velocity_port', 6010 + robobs_index) then rfsm.send_events(fsm, 'e_failed') return end
         end
         -- reference
-        -- dp:addPeer('communicator', 'reference')
-        -- if not addOutgoing('reference', 'ref_pose_trajectory_x_tx_port', 6020 + index, emperor) then rfsm.send_events(fsm, 'e_failed') return end
-        -- if not addOutgoing('reference', 'ref_pose_trajectory_y_tx_port', 6030 + index, emperor) then rfsm.send_events(fsm, 'e_failed') return end
+        dp:addPeer('communicator', 'reference')
+        if not addOutgoing('reference', 'ref_pose_trajectory_x_tx_port', 6020 + index, emperor) then rfsm.send_events(fsm, 'e_failed') return end
+        if not addOutgoing('reference', 'ref_pose_trajectory_y_tx_port', 6030 + index, emperor) then rfsm.send_events(fsm, 'e_failed') return end
 
         if obstacle_mode then
           if not addOutgoing('estimator', 'est_pose_tx_port', 6000 + index, robots) then rfsm.send_events(fsm, 'e_failed') return end
