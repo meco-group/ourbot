@@ -262,9 +262,9 @@ void HawkEye::drawResults(cv::Mat& frame){
       _robot_est_pose_port[k]->read(pose);
       _robots[k]->setPose(pose);
       std::vector<double> ref_x, ref_y;
-      _robot_ref_x_port[k]->read(ref_x);
-      _robot_ref_y_port[k]->read(ref_y);
-      _robots[k]->setRef(ref_x, ref_y);
+      if (_robot_ref_x_port[k]->read(ref_x) == RTT::NewData && _robot_ref_y_port[k]->read(ref_y) == RTT::NewData){
+        _robots[k]->setRef(ref_x, ref_y);
+      }
     }
   }
   _gui->draw(frame, _obstacles, _robots, _robot_colors);

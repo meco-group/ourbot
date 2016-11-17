@@ -14,6 +14,7 @@ class Reference : public RTT::TaskContext{
     // Input & output ports
     InputPort<std::vector<double> > _ref_pose_trajectory_port[3];
     InputPort<std::vector<double> > _ref_velocity_trajectory_port[3];
+    InputPort<std::vector<double> > _ref_pose_trajectory_ss_port[3];
 
     InputPort<std::vector<double> > _est_pose_port;
     OutputPort<std::vector<double> > _ref_pose_port;
@@ -26,6 +27,8 @@ class Reference : public RTT::TaskContext{
     std::vector<double> _ref_velocity_trajectory_1[3];
     std::vector<double> _ref_pose_trajectory_2[3];
     std::vector<double> _ref_velocity_trajectory_2[3];
+
+    std::vector<double> _ref_pose_trajectory_ss[3];
 
     // Define pointers to the memory which stores the current and next trajectory
     std::vector<double>* _cur_ref_velocity_trajectory;
@@ -58,12 +61,14 @@ class Reference : public RTT::TaskContext{
     double _pathupd_sample_rate;
     int _max_computation_periods;
     bool _repeat_offline_trajectory;
-
     std::string _trajectory_path;
 
     int _index1;
     int _index2;
+    double _horizon_time;
     int _trajectory_length;
+    int _trajectory_length_tx;
+    int _tx_subsample;
     int _update_length;
     bool _new_data;
     bool _ready;
@@ -79,6 +84,7 @@ class Reference : public RTT::TaskContext{
     void writeRefSample();
     void loadTrajectories();
     void readPorts();
+    void updateTxTrajectory();
 
   public:
     Reference(std::string const& name);

@@ -40,16 +40,16 @@ void Gui::draw(cv::Mat& frame, const std::vector<double>& obstacles, const std::
     int width = frame.size().width;
     _resolution_orig[0] = width;
     _resolution_orig[1] = height;
-    // draw coordinate system
-    cv::circle(frame, cv::Point2i(0, height), 10, _black, -3);
-    cv::line(frame, cv::Point2i(0, height), cv::Point2i(30, height), _black, 3);
-    cv::line(frame, cv::Point2i(0, height), cv::Point2i(0, height-30), _black, 3);
-    for (int i=0; i<(height/_pixelspermeter); i++){
-        cv::line(frame, cv::Point2i(0, height-(i+1)*_pixelspermeter), cv::Point2i(10, height-(i+1)*_pixelspermeter), _black, 3);
-    }
-    for (int i=0; i<(width/_pixelspermeter); i++){
-        cv::line(frame, cv::Point2i((i+1)*_pixelspermeter, height), cv::Point2i((i+1)*_pixelspermeter, height-10), _black, 3);
-    }
+    // // draw coordinate system
+    // cv::circle(frame, cv::Point2i(0, height), 10, _black, -3);
+    // cv::line(frame, cv::Point2i(0, height), cv::Point2i(30, height), _black, 3);
+    // cv::line(frame, cv::Point2i(0, height), cv::Point2i(0, height-30), _black, 3);
+    // for (int i=0; i<(height/_pixelspermeter); i++){
+    //     cv::line(frame, cv::Point2i(0, height-(i+1)*_pixelspermeter), cv::Point2i(10, height-(i+1)*_pixelspermeter), _black, 3);
+    // }
+    // for (int i=0; i<(width/_pixelspermeter); i++){
+    //     cv::line(frame, cv::Point2i((i+1)*_pixelspermeter, height), cv::Point2i((i+1)*_pixelspermeter, height-10), _black, 3);
+    // }
     // draw obstacles
     for (uint k=0; k<obstacles.size(); k+=5){
         if (obstacles[k] == -100){

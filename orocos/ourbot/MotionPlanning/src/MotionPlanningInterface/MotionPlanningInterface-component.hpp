@@ -28,6 +28,7 @@ class MotionPlanningInterface : public RTT::TaskContext{
     InputPort<std::vector<double> > _robobs_velocity_port;
     OutputPort<std::vector<double> > _ref_pose_trajectory_port[3];
     OutputPort<std::vector<double> > _ref_velocity_trajectory_port[3];
+    OutputPort<std::vector<double> > _ref_pose_trajectory_ss_port[3];
     OutputPort<bool> _valid_trajectories_port;
 
     TimeService::ticks _timestamp;
@@ -38,6 +39,7 @@ class MotionPlanningInterface : public RTT::TaskContext{
     std::vector<double> _mp_trigger_data;
     int _max_computation_periods;
     int _maximum_failures;
+
     int _failure_cnt;
     bool _first_iteration;
     bool _valid;
@@ -50,6 +52,9 @@ class MotionPlanningInterface : public RTT::TaskContext{
     std::vector<obstacle_t> _obstacles;
 
     int _trajectory_length;
+    int _trajectory_length_tx;
+    int _trajectory_length_full;
+    int _tx_subsample;
     int _update_length;
     double _control_sample_rate;
     double _pathupd_sample_rate;
@@ -62,6 +67,7 @@ class MotionPlanningInterface : public RTT::TaskContext{
     std::vector<double> _obstacle_data;
     std::vector<std::vector<double> > _ref_pose_trajectory;
     std::vector<std::vector<double> > _ref_velocity_trajectory;
+    std::vector<std::vector<double> > _ref_pose_trajectory_ss;
     bool _ideal_prediction;
     int _n_obs;
 
