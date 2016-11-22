@@ -25,19 +25,21 @@ username = 'odroid'
 password = 'odroid'
 
 # hosts = ['kurt', 'krist', 'dave']
-# hosts = ['kurt', 'krist']
-hosts = ['kurt', 'dave']
+hosts = ['kurt', 'krist', 'dave']
+# hosts = ['kurt']
 # hosts = ['dave']
 # coop_hosts = hosts
 
 obstacle = 'dave'
+# obstacle = None
 
 coop_hosts = [h for h in hosts if h != obstacle]
 addresses = col.OrderedDict([('kurt', '192.168.11.121'), ('krist', '192.168.11.122'), ('dave', '192.168.11.120')])
 indices = {key: index for index, key in enumerate(addresses.keys())}
 
 # formation configuration
-configuration = col.OrderedDict([('kurt', [-0.2, -0.2]), ('krist', [-0.2, 0.2]), ('dave', [0.35, 0.0])])
+# configuration = col.OrderedDict([('kurt', [-0.2, -0.2]), ('krist', [-0.2, 0.2]), ('dave', [0.35, 0.0])])
+configuration = col.OrderedDict([('kurt', [0., -0.2]), ('krist', [0., 0.2]), ('dave', [0.35, 0.0])])
 
 
 def send_file(ftp, ssh, loc_file, rem_file):
@@ -124,7 +126,7 @@ def modify_host_config(host, distributed_mp=False):
     for elem in root.findall('simple'):
         if elem.attrib['name'] == 'index':
             elem.find('value').text = str(index)
-        if host in obstacles:
+        if host == obstacle:
             if elem.attrib['name'] == 'obstacle_mode':
                 elem.find('value').text = str(1)
         elif obstacle is not None:

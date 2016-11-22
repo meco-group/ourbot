@@ -210,6 +210,7 @@ void MotionPlanningInterface::computeObstacles(){
   std::vector<double> obst_pose(3);
   std::vector<double> obst_velocity(3);
   double orientation, width, height;
+  std::cout << "n_obs: " << _n_obs << std::endl;
   for (int k=0; k<_n_obs; k++){
     if (_obstacle_data[5*k] == -100){
       _obstacles[k].avoid = false;

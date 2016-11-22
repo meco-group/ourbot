@@ -1,7 +1,7 @@
 #ifndef OROCOS_HAWKEYE_COMPONENT_HPP
 #define OROCOS_HAWKEYE_COMPONENT_HPP
 
-#define DEBUG
+// #define DEBUG
 
 #ifdef DEBUG
     #define DEBUG_PRINT(x) std::cout << x << std::endl;
