@@ -6,6 +6,11 @@ export void MotionPlanning(){
   emperor_send_event_port.write("e_motionplanning")
 }
 
+export void TrajectoryFollowing(){
+  emperor_send_event_port.write("e_trajectoryfollowing")
+}
+
+
 export void Idle(){
   emperor_send_event_port.write("e_idle")
 }

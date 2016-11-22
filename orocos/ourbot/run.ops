@@ -5,9 +5,9 @@ loadComponent("lua", "OCL::LuaComponent")
 
 lua.exec_file("deploy.lua")
 addPeer("lua","Deployer")
+setMasterSlaveActivity("lua","Deployer")
 
 loadService("lua", "marshalling")
 lua.marshalling.loadProperties("Configuration/system-config.cpf")
-
 lua.configure()
 lua.start()

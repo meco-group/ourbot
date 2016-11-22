@@ -1,10 +1,11 @@
 local tc        = rtt.getTC()
 
-local gamepad       = tc:getPeer('gamepad')
-local reporter      = tc:getPeer('reporter')
-local snapshot      = reporter:getOperation("snapshot")
-local enablevelcmd  = gamepad:getOperation("enableVelocityCmd")
-local disablevelcmd = gamepad:getOperation("disableVelocityCmd")
+local gamepad               = tc:getPeer('gamepad')
+local hawkeye               = tc:getPeer('hawkeye')
+local reporter              = tc:getPeer('reporter')
+local snapshot              = reporter:getOperation("snapshot")
+local gamepadInRunTimeError = gamepad:getOperation("inRunTimeError")
+local hawkeyeInRunTimeError = hawkeye:getOperation("inRunTimeError")
 
 return rfsm.state {
   rfsm.trans{src = 'initial', tgt = 'idle'},
@@ -40,22 +41,33 @@ return rfsm.state {
   run   = rfsm.state{
     entry = function(fsm)
       sub_state='run'
-      enablevelcmd()
       print("System started. Abort by using Break (Button B).")
     end,
 
     doo = function(fsm)
-      snapshot_cnt = 0
       period = tc:getPeriod()
       max_cnt = 1/(reporter_sample_rate*period)
+      snapshot_cnt = max_cnt
       while true do
         -- take snapshot for logger
-        if snapshot_cnt > max_cnt then
+        if snapshot_cnt >= max_cnt then
           snapshot:send()
-          snapshot_cnt = 0
+          snapshot_cnt = 1
         else
           snapshot_cnt = snapshot_cnt + 1
         end
+
+        if gamepadInRunTimeError() then
+          rtt.logl("Error","RunTimeError in gamepad component")
+          rfsm.send_events(fsm,'e_failed')
+          return
+        end
+        if hawkeyeInRunTimeError() then
+          rtt.logl("Error","RunTimeError in hawkeye component")
+          rfsm.send_events(fsm,'e_failed')
+          return
+        end
+
         rfsm.yield(true)
       end
     end,
@@ -63,7 +75,6 @@ return rfsm.state {
 
   stop = rfsm.state{
     entry = function(fsm)
-      disablevelcmd()
       sub_state='stop'
       print("System stopped. Waiting on Restart (Button A) or Reset (Button B)...")
     end,

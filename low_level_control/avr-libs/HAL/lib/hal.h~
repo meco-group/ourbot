@@ -1,0 +1,74 @@
+#ifndef HAL_H
+#define HAL_H
+
+#include "WProgram.h"
+#include <inttypes.h>
+#include "hal_config.h"
+//#include "eeprom_m.h"
+#include "hardware_include.h"
+//#include "imu_dummy.h"
+//#include "imu_miniimu9v3.h"
+//#include "teensyOS_config.h"
+
+class HALInterface
+{
+private:	
+	#if MOTOR_ENABLE > 0
+		Motor* _motors[MOTOR_ENABLE];
+	#endif	
+	
+	#if STEPPER_ENABLE > 0
+		Stepper* _steppers[STEPPER_ENABLE];
+	#endif
+	
+	#if LED_ENABLE > 0
+		LED* _leds[LED_ENABLE];
+	#endif
+	
+	#ifdef SENSOR1D_ENABLE > 0
+		Sensor1D *_sensors[SENSOR1D_ENABLE];
+	#endif
+	
+	#if IMU_ENABLE > 0
+		IMU* _imus[IMU_ENABLE];
+	#endif
+	
+public:
+	HALInterface();	
+	void start();
+	
+	#if MOTOR_ENABLE > 0
+		Motor* motorID(uint8_t ID);
+		Motor* motorAR(uint8_t AR);
+	#endif
+	
+	#if STEPPER_ENABLE > 0
+		Stepper* stepperID(uint8_t ID);
+		Stepper* stepperAR(uint8_t AR); 
+	#endif
+	
+	#if LED_ENABLE > 0
+		LED* led(uint8_t AR);
+		LED* onboardLed();
+	#endif
+	
+	#if SENSOR1D_ENABLE > 0
+		Sensor1D *_sensorID(uint8_t ID);
+		Sensor1D *_sensorAR(uint8_t AR);
+	#endif
+	
+	#if IMU_ENABLE > 0
+		IMU* imuID(uint8_t ID);
+		IMU* imuAR(uint8_t AR);
+	#endif
+	
+	#ifdef BATTERY_ENABLE
+		Sensor1D *batteryVoltageSensor();
+		int readBatteryVoltage();
+		int peekBatteryVoltage();
+	#endif
+	
+	
+};
+
+#endif //HAL_H

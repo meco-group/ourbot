@@ -1,7 +1,22 @@
 local tc        = rtt.getTC()
 
-local reporter  = tc:getPeer('reporter')
-local snapshot  = reporter:getOperation("snapshot")
+local communicator          = tc:getPeer('communicator')
+local gamepad               = tc:getPeer('gamepad')
+local reporter              = tc:getPeer('reporter')
+local hawkeye               = tc:getPeer('hawkeye')
+local snapshot              = reporter:getOperation("snapshot")
+local gamepadInRunTimeError = gamepad:getOperation("inRunTimeError")
+local hawkeyeInRunTimeError = hawkeye:getOperation("inRunTimeError")
+
+function connectPorts()
+  local addOutgoing = communicator:getOperation("addOutgoing")
+  if not addOutgoing('hawkeye', 'obstacle_port', 6070, robots) then rfsm.send_events(fsm, 'e_failed') return end
+end
+
+function disconnectPorts()
+  local removeConnection = communicator:getOperation("removeConnection")
+  removeConnection(6070)
+end
 
 return rfsm.state {
   rfsm.trans{src = 'initial', tgt = 'idle'},
@@ -23,6 +38,7 @@ return rfsm.state {
 
   init  = rfsm.state{
     entry = function(fsm)
+      connectPorts() -- connect obstacle port
       sub_state='init'
       print("Waiting on Run (Button A)...")
       if (not reporter:start()) then
@@ -40,17 +56,29 @@ return rfsm.state {
     end,
 
     doo = function(fsm)
-      snapshot_cnt = 0
       period = tc:getPeriod()
       max_cnt = 1/(reporter_sample_rate*period)
+      snapshot_cnt = max_cnt
       while true do
         -- take snapshot for logger
-        if snapshot_cnt > max_cnt then
+        if snapshot_cnt >= max_cnt then
           snapshot:send()
-          snapshot_cnt = 0
+          snapshot_cnt = 1
         else
           snapshot_cnt = snapshot_cnt + 1
         end
+
+        if gamepadInRunTimeError() then
+          rtt.logl("Error","RunTimeError in gamepad component")
+          rfsm.send_events(fsm,'e_failed')
+          return
+        end
+        if hawkeyeInRunTimeError() then
+          rtt.logl("Error","RunTimeError in hawkeye component")
+          rfsm.send_events(fsm,'e_failed')
+          return
+        end
+
         rfsm.yield(true)
       end
     end,
@@ -66,6 +94,7 @@ return rfsm.state {
   reset = rfsm.state{
     entry = function(fsm)
       reporter:stop()
+      disconnectPorts()
     end,
   },
 

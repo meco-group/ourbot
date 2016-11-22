@@ -1,0 +1,20 @@
+#include "analog_sensor.h"
+
+AnalogSensor::AnalogSensor(uint8_t pin = 255, uint8_t ID = 0) :
+	Sensor1D(ID), _pin(pin)
+{
+	//do nothing
+}
+
+bool AnalogSensor::init()
+{
+	pinMode(_pin, INPUT);
+	return true;
+}
+
+int AnalogSensor::readRawValue()
+{
+	_raw_value = analogRead(_pin);
+	_current = (_current_raw - _offset)*_scale;
+	return _current;
+}

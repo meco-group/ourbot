@@ -9,14 +9,11 @@
 class MotionPlanning : public MotionPlanningInterface{
   private:
     omg::Point2Point* _p2p;
-    int _cnt = 0;
-    const int _cnt_max = 5;
-    std::vector<double> _state0;
-    std::vector<double> _stateT;
 
     std::vector<std::vector<double> > _ref_pose;
     std::vector<std::vector<double> > _ref_velocity;
-    std::vector<omg::obstacle_t> _obstacles;
+
+    void getObstacles(std::vector<omg::obstacle_t>& obstacles);
 
   public:
     MotionPlanning(std::string const& name);

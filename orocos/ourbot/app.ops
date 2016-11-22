@@ -6,6 +6,10 @@ export void MotionPlanning(){
   coordinator_send_event_port.write("e_motionplanning")
 }
 
+export void TrajectoryFollowing(){
+  coordinator_send_event_port.write("e_trajectoryfollowing")
+}
+
 export void Idle(){
   coordinator_send_event_port.write("e_idle")
 }

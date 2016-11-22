@@ -1,0 +1,17 @@
+/home/maarten/projects/mavlink_new/mavlink/build/CMakeFiles/ardupilotmega.xml-v0.9.dir
+/home/maarten/projects/mavlink_new/mavlink/build/CMakeFiles/ardupilotmega.xml-v1.0.dir
+/home/maarten/projects/mavlink_new/mavlink/build/CMakeFiles/autoquad.xml-v1.0.dir
+/home/maarten/projects/mavlink_new/mavlink/build/CMakeFiles/common.xml-v0.9.dir
+/home/maarten/projects/mavlink_new/mavlink/build/CMakeFiles/common.xml-v1.0.dir
+/home/maarten/projects/mavlink_new/mavlink/build/CMakeFiles/matrixpilot.xml-v1.0.dir
+/home/maarten/projects/mavlink_new/mavlink/build/CMakeFiles/minimal.xml-v0.9.dir
+/home/maarten/projects/mavlink_new/mavlink/build/CMakeFiles/minimal.xml-v1.0.dir
+/home/maarten/projects/mavlink_new/mavlink/build/CMakeFiles/pixhawk.xml-v0.9.dir
+/home/maarten/projects/mavlink_new/mavlink/build/CMakeFiles/pixhawk.xml-v1.0.dir
+/home/maarten/projects/mavlink_new/mavlink/build/CMakeFiles/sensesoar.xml-v1.0.dir
+/home/maarten/projects/mavlink_new/mavlink/build/CMakeFiles/slugs.xml-v0.9.dir
+/home/maarten/projects/mavlink_new/mavlink/build/CMakeFiles/slugs.xml-v1.0.dir
+/home/maarten/projects/mavlink_new/mavlink/build/CMakeFiles/test.xml-v0.9.dir
+/home/maarten/projects/mavlink_new/mavlink/build/CMakeFiles/test.xml-v1.0.dir
+/home/maarten/projects/mavlink_new/mavlink/build/CMakeFiles/ualberta.xml-v0.9.dir
+/home/maarten/projects/mavlink_new/mavlink/build/CMakeFiles/ualberta.xml-v1.0.dir

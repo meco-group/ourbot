@@ -6,15 +6,18 @@ local estimator       = tc:getPeer('estimator')
 local reference       = tc:getPeer('reference')
 local reporter        = tc:getPeer('reporter')
 local io              = tc:getPeer('io')
-local scanmatcher     = tc:getPeer('scanmatcher')
+local teensy          = tc:getPeer('teensy')
 
 local estimatorUpdate              = estimator:getOperation("update")
 local referenceUpdate              = reference:getOperation("update")
 local controllerUpdate             = controller:getOperation("update")
+local validEstimation              = estimator:getOperation("validEstimation")
+local validReference               = reference:getOperation("ready")
 local estimatorInRunTimeError      = estimator:getOperation("inRunTimeError")
 local controllerInRunTimeError     = controller:getOperation("inRunTimeError")
 local referenceInRunTimeError      = reference:getOperation("inRunTimeError")
 local motionplanningInRunTimeError = motionplanning:getOperation("inRunTimeError")
+local strongVelocityControl        = teensy:getOperation("strongVelocityControl")
 local snapshot                     = reporter:getOperation("snapshot")
 local scanmatcherInRunTimeError = scanmatcher:getOperation("inRunTimeError")
 
@@ -46,6 +49,7 @@ return rfsm.state {
         rfsm.send_events(fsm,'e_failed')
         return
       end
+      strongVelocityControl()
       print("Waiting on Run...")
     end
   },
@@ -67,18 +71,13 @@ return rfsm.state {
         rfsm.send_events(fsm,'e_failed')
         return
       end
-      if not scanmatcher:start() then
-        rtt.logl("Error","Could not start scanmatcher component")
-        rfsm.send_events(fsm,'e_failed')
-        return
-      end      
       print("System started. Abort by using Break.")
     end,
 
     doo = function(fsm)
-      snapshot_cnt = 0
       period = tc:getPeriod()
       max_cnt = 1/(reporter_sample_rate*period)
+      snapshot_cnt = max_cnt
       start_time = get_sec()
       prev_start_time = start_time
       end_time   = start_time
@@ -88,14 +87,20 @@ return rfsm.state {
         start_time      = get_sec()
 
         -- update reference/estimator/controller
-        referenceUpdate()
         estimatorUpdate()
-        controllerUpdate()
+        if validEstimation() then
+          referenceUpdate()
+          if validReference() then
+            controllerUpdate()
+          end
+        else
+          print "Estimate not valid!"
+        end
 
         -- take snapshot for logger
-        if snapshot_cnt > max_cnt then
+        if snapshot_cnt >= max_cnt then
           snapshot:send()
-          snapshot_cnt = 0
+          snapshot_cnt = 1
         else
           snapshot_cnt = snapshot_cnt + 1
         end

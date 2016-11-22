@@ -18,6 +18,7 @@ class Communicator : public RTT::TaskContext{
     Connection* getIncomingConnection(Port port, int port_nr);
     Connection* getOutgoingConnection(Port port, int port_nr, const std::vector<std::string>& remote_addresses);
     bool retrieveSocket(Connection* connection, int port_nr);
+    Connection* findConnection(int port_nr);
 
   public:
     Communicator(std::string const& name);
@@ -26,6 +27,9 @@ class Communicator : public RTT::TaskContext{
     void cleanupHook();
     bool addOutgoing(const std::string& component_name, const std::string& port_name, int port_nr, const std::vector<std::string>& remote_address);
     bool addIncoming(const std::string& component_name, const std::string& port_name, int port_nr);
+    void removeConnection(int port_nr);
+    void disablePort(int port_nr);
+    void enablePort(int port_nr);
 };
 
 #endif

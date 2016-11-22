@@ -6,6 +6,7 @@ require 'rfsmpp'
 local components_to_load = {
   gamepad         = 'GamePad',
   communicator    = 'Communicator',
+  hawkeye         = 'HawkEye',
   emperor         = 'OCL::LuaTLSFComponent',
   reporter        = 'OCL::NetcdfReporting'
     --add here componentname = 'componenttype'
@@ -19,7 +20,8 @@ local ports_to_report = {
 
 -- packages to import
 local packages_to_import = {
-  gamepad = 'SerialInterfaceEmperor',
+  gamepad = 'Serial',
+  hawkeye = 'HawkEye',
   communicator = 'Communicator'
     --add here componentname = 'parentcomponenttype'
 }
@@ -28,6 +30,7 @@ local packages_to_import = {
 local system_config_file      = 'Configuration/system-config.cpf'
 local component_config_files  = {
   reporter  = 'Configuration/reporter-config.cpf',
+  hawkeye   = 'Configuration/hawkeye-config.cpf',
   gamepad   = 'Configuration/gamepad-config.cpf'
     --add here componentname = 'Configuration/component-config.cpf'
 }
@@ -66,10 +69,10 @@ return rfsm.state {
 
   deploy = rfsm.state {
     rfsm.transition {src = 'initial',                   tgt = 'load_components'},
-    rfsm.transition {src = 'load_components',           tgt = 'connect_components',         events = {'e_done'}},
+    rfsm.transition {src = 'load_components',           tgt = 'configure_components',       events = {'e_done'}},
+    rfsm.transition {src = 'configure_components',      tgt = 'connect_components',         events = {'e_done'}},
     rfsm.transition {src = 'connect_components',        tgt = 'connect_remote_components',  events = {'e_done'}},
-    rfsm.transition {src = 'connect_remote_components', tgt = 'configure_components',       events = {'e_done'}},
-    rfsm.transition {src = 'configure_components',      tgt = 'set_activities',             events = {'e_done'}},
+    rfsm.transition {src = 'connect_remote_components', tgt = 'set_activities',             events = {'e_done'}},
     rfsm.transition {src = 'set_activities',            tgt = 'prepare_reporter',           events = {'e_done'}},
     rfsm.transition {src = 'prepare_reporter',          tgt = 'load_emperor',               events = {'e_done'}},
 
@@ -98,6 +101,25 @@ return rfsm.state {
       end
     },
 
+
+    configure_components = rfsm.state {
+      entry = function(fsm)
+        for name, comp in pairs(components) do
+          if (name ~= 'reporter' and name ~= 'emperor') then -- reporter configured in later stage
+            comp:loadService('marshalling')
+            -- every component loads system configurations
+            if not comp:provides('marshalling'):updateProperties(system_config_file) then rfsm.send_events(fsm,'e_failed') return end
+            -- if available, a component loads its specific configurations
+            if(component_config_files[name]) then
+              if not comp:provides('marshalling'):updateProperties(component_config_files[name]) then rfsm.send_events(fsm,'e_failed') return end
+            end
+            -- configure the component
+            if not comp:configure() then rfsm.send_events(fsm,'e_failed') return end
+          end
+        end
+      end,
+    },
+
     connect_components = rfsm.state {
       entry = function(fsm)
         -- connect the deployer to emperor (for communicating failure events)
@@ -118,6 +140,24 @@ return rfsm.state {
         -- gamepad
         dp:addPeer('communicator', 'gamepad')
         if not addOutgoing('gamepad', 'cmd_velocity_port', 4002, robots) then rfsm.send_events(fsm,'e_failed') return end
+        -- hawkeye
+        dp:addPeer('communicator', 'hawkeye')
+        if not addOutgoing('hawkeye', 'kurt_pose_port', 6050, kurt) then rfsm.send_events(fsm, 'e_failed') return end
+        if not addOutgoing('hawkeye', 'krist_pose_port', 6051, krist) then rfsm.send_events(fsm, 'e_failed') return end
+        if not addOutgoing('hawkeye', 'dave_pose_port', 6052, dave) then rfsm.send_events(fsm, 'e_failed') return end
+        if not addOutgoing('hawkeye', 'obstacle_port', 6070, robots) then rfsm.send_events(fsm, 'e_failed') return end
+        if not addOutgoing('hawkeye', 'target_pose_port', 6071, robots) then rfsm.send_events(fsm, 'e_failed') return end
+        -- if not addIncoming('hawkeye', 'kurt_est_pose_port', 6000) then rfsm.send_events(fsm,'e_failed') return end
+        -- if not addIncoming('hawkeye', 'krist_est_pose_port', 6001) then rfsm.send_events(fsm,'e_failed') return end
+        -- if not addIncoming('hawkeye', 'dave_est_pose_port', 6002) then rfsm.send_events(fsm,'e_failed') return end
+
+        if not addIncoming('hawkeye', 'kurt_ref_x_port', 6020) then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('hawkeye', 'krist_ref_x_port', 6021) then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('hawkeye', 'dave_ref_x_port', 6022) then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('hawkeye', 'kurt_ref_y_port', 6030) then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('hawkeye', 'krist_ref_y_port', 6031) then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('hawkeye', 'dave_ref_y_port', 6032) then rfsm.send_events(fsm,'e_failed') return end
+
         -- deployer (added as last: highest priority)
         dp:addPeer('communicator', 'lua')
         if not addIncoming('lua', 'deployer_fsm_event_port', 4001) then rfsm.send_events(fsm, 'e_failed') return end
@@ -125,29 +165,12 @@ return rfsm.state {
       end,
     },
 
-    configure_components = rfsm.state {
-      entry = function(fsm)
-        for name, comp in pairs(components) do
-          if (name ~= 'reporter') then -- reporter configured in later stage
-            comp:loadService('marshalling')
-            -- every component loads system configurations
-            if not comp:provides('marshalling'):updateProperties(system_config_file) then rfsm.send_events(fsm,'e_failed') return end
-            -- if available, a component loads its specific configurations
-            if(component_config_files[name]) then
-              if not comp:provides('marshalling'):updateProperties(component_config_files[name]) then rfsm.send_events(fsm,'e_failed') return end
-            end
-            -- configure the component
-            if not comp:configure() then rfsm.send_events(fsm,'e_failed') return end
-          end
-        end
-      end,
-    },
-
     set_activities = rfsm.state {
       entry = function(fsm)
-        dp:setActivity('emperor', 1./emperor_sample_rate, 10, rtt.globals.ORO_SCHED_RT)
-        dp:setActivity('gamepad', 1./velcmd_sample_rate, 10, rtt.globals.ORO_SCHED_RT)
-        dp:setActivity('reporter', 0, 2, rtt.globals.ORO_SCHED_RT)
+        dp:setActivity('emperor', 1./emperor_sample_rate, 0, rtt.globals.ORO_SCHED_OTHER)
+        dp:setActivity('gamepad', 1./velcmd_sample_rate, 0, rtt.globals.ORO_SCHED_OTHER)
+        dp:setActivity('hawkeye', 1./hawkeye_sample_rate, 0, rtt.globals.ORO_SCHED_OTHER)
+        dp:setActivity('reporter', 0, 0, rtt.globals.ORO_SCHED_OTHER)
         dp:setMasterSlaveActivity('emperor', 'communicator')
           --add here extra activities
       end,
@@ -172,13 +195,19 @@ return rfsm.state {
 
     load_emperor = rfsm.state {
       entry = function(fsm)
+        -- emperor loads system configurations
+        components.emperor:loadService('marshalling')
+        if not components.emperor:provides('marshalling'):updateProperties(system_config_file) then rfsm.send_events(fsm,'e_failed') return end
+        -- configure the emperor
+        if not components.emperor:configure() then rfsm.send_events(fsm,'e_failed') return end
         -- load the local application script
         components.emperor:loadService("scripting")
         if not components.emperor:provides("scripting"):loadPrograms(app_file) then rfsm.send_events(fsm,'e_failed') return end
-        -- start the emperor and gamepad
+        -- start the emperor, gamepad and hawkeye
         if not components.emperor:start() then rfsm.send_events(fsm,'e_failed') return end
         if not components.communicator:start() then rfsm.send_events(fsm, 'e_failed') return end
-        components.gamepad:start()
+        if not components.gamepad:start() then rfsm.send_events(fsm, 'e_failed') return end
+        if not components.hawkeye:start() then rfsm.send_events(fsm, 'e_failed') return end
       end,
     },
   },

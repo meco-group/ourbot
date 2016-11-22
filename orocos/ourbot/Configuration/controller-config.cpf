@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "cpf.dtd">
+<properties>
+  <simple name="enable_fb" type="boolean">
+    <description>Enable feedback action</description>
+    <value>1</value>
+  </simple>
+
+  <simple name="enable_ff" type="boolean">
+    <description>Enable feedforward action</description>
+    <value>1</value>
+  </simple>
+
+  <simple name="correct_orientation" type="boolean">
+    <description>Transform velocity ff reference to local frame</description>
+    <value>1</value>
+  </simple>
+
+  <struct name="state_fb_par" type="array">
+    <description>State feedback parameters: kx, ky, kt</description>
+    <simple name="kx" type="double">
+      <value>1</value>
+    </simple>
+    <simple name="ky" type="double">
+      <value>1</value>
+    </simple>
+    <simple name="kt" type="double">
+      <value>1.5</value>
+    </simple>
+  </struct>
+
+</properties>

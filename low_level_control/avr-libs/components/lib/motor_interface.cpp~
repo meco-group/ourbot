@@ -1,0 +1,118 @@
+#include "motor.h"
+
+#ifdef MOTOR_PIN_SINGLE
+Motor::Motor(uint8_t ID, uint8_t pinH1, uint8_t pinPWM, int16_t *Vbat, EncoderInterface *encoder = new EncoderInterface(), CurrentSensorInterface *current_sensor = new CurrentSensorInterface()) :
+	_ID(ID), _pinH1(pinH1), _pinPWM(pinPWM), _Vbat(Vbat), _Vmot(0), _H1(LOW), _pwm(0), _encoder(encoder), _current_sensor(current_sensor)
+{}
+
+Motor::Motor(uint8_t ID, uint8_t pinH1, uint8_t pinPWM, int16_t *Vbat, uint8_t pinCur) :
+	_ID(ID), _pinH1(pinH1), _pinPWM(pinPWM), _Vbat(Vbat), _Vmot(0), _H1(LOW), _pwm(0), _encoder(new EncoderInterface()), _current_sensor(new CurrentSensorAnalog(pinCur))
+{}
+
+Motor::Motor(uint8_t ID, uint8_t pinH1, uint8_t pinPWM, int16_t *Vbat, uint8_t pinA, uint8_t pinB) :
+	_ID(ID), _pinH1(pinH1), _pinPWM(pinPWM), _Vbat(Vbat), _Vmot(0), _H1(LOW), _pwm(0), _encoder(new Encoder(pinA,pinB)), _current_sensor(new CurrentSensorInterface())
+{}
+
+Motor::Motor(uint8_t ID, uint8_t pinH1, uint8_t pinPWM, int16_t *Vbat, uint8_t pinA, uint8_t pinB, uint8_t pinCur) :
+	_ID(ID), _pinH1(pinH1), _pinPWM(pinPWM), _Vbat(Vbat), _Vmot(0), _H1(LOW), _pwm(0), _encoder(new Encoder(pinA,pinB)), _current_sensor(new CurrentSensorAnalog(pinCur))
+{}
+#else
+Motor::Motor(uint8_t ID, uint8_t pinH1, uint8_t pinH2, uint8_t pinPWM, int16_t *Vbat) :
+	_ID(ID), _pinH1(pinH1), _pinH2(pinH2), _pinH2(pinH2), _pinPWM(pinPWM), _Vbat(Vbat), _Vmot(0), _H1(LOW), _H2(LOW), _pwm(0)
+{}
+
+Motor::Motor(uint8_t ID, uint8_t pinH1, uint8_t pinH2, uint8_t pinPWM, int16_t *Vbat, uint8_t pinCur) :
+	_ID(ID), _pinH1(pinH1), _pinH2(pinH2), _pinPWM(pinPWM), _Vbat(Vbat), _Vmot(0), _H1(LOW), _H2(LOW), _pwm(0), _encoder(new EncoderInterface()), _current_sensor(new CurrentSensorAnalog(pinCur))
+{}
+
+Motor::Motor(uint8_t ID, uint8_t pinH1, uint8_t pinH2, uint8_t pinPWM, int16_t *Vbat, uint8_t pinA, uint8_t pinB) :
+	_ID(ID), _pinH1(pinH1), _pinH2(pinH2), _pinPWM(pinPWM), _Vbat(Vbat), _Vmot(0), _H1(LOW), _H2(LOW), _pwm(0), _encoder(new Encoder(pinA,pinB)), _current_sensor(new CurrentSensorInterface())
+{}
+
+Motor::Motor(uint8_t ID, uint8_t pinH1, uint8_t pinH2, uint8_t pinPWM, int16_t *Vbat, uint8_t pinA, uint8_t pinB, uint8_t pinCur) :
+	_ID(ID), _pinH1(pinH1), _pinH2(pinH2), _pinPWM(pinPWM), _Vbat(Vbat), _Vmot(0), _H1(LOW), _H2(LOW), _pwm(0), _encoder(new Encoder(pinA,pinB)), _current_sensor(new CurrentSensorAnalog(pinCur))
+{}
+#endif
+
+void Motor::init()
+{	
+	pinMode(_pinH1, OUTPUT);
+	digitalWrite(_pinH1, _H1);
+	
+#ifndef MOTOR_PIN_SINGLE
+	pinMode(_pinH2, OUTPUT);
+	digitalWrite(_pinH2, _H2);
+#endif //MOTOR_PIN_SINGLE
+	
+	//analogWriteFrequency(_pinPWM, F_PWM); //only works when compiling for teensy... TODO: set teensy flag
+	analogWrite(_pinPWM,_pwm);
+	
+	_encoder->write(0);
+	_current_sensor->init();
+}
+
+int Motor::readEncoder()
+{
+	return _encoder->read();
+}
+
+
+int16_t Motor::readCurrent()
+{
+	return _current_sensor->read();
+}
+
+
+uint8_t Motor::ID()
+{
+	return _ID;
+}
+
+int16_t Motor::Vbat()
+{
+	return _Vbat;
+}
+
+int16_t Motor::Vmot()
+{
+	return _Vmot;
+}
+
+int16_t Motor::PWM()
+{
+	if(_H1){ return _pwm; }
+	else{ return -_pwm; }
+}
+
+void Motor::setVmot(int Vmot)
+{
+	// set direction
+	this->setDir(Vmot>=0);
+	if(Vmot>=0){ Vmot = -Vmot; }
+	if(Vmot>(*_Vbat)){
+		_Vmot = (*_Vbat);
+		_pwm = 255;
+	}
+	else{
+		_Vmot = Vmot;
+		_pwm = _Vmot*255/(*_Vbat);
+	}
+	
+	analogWrite(_pinPWM,_pwm);
+}
+
+void Motor::setDir(bool dir)
+{
+	_H1 = !dir;
+	digitalWrite(_pinH1, _H1);
+#ifndef MOTOR_PIN_SINGLE 
+	_H2 = dir;
+	digitalWrite(_pinH2, _H2);
+#endif //MOTOR_PIN_SINGLE
+}
+
+void Motor::setPWM(uint8_t pwm)
+{
+	_pwm = pwm;
+	analogWrite(_pinPWM,_pwm);
+}

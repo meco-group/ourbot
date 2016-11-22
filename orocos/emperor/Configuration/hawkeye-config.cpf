@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "cpf.dtd">
+<properties>
+    <struct name="robot_names" type="strings">
+        <description>Name of robots to detect</description>
+        <simple name="robot1" type="string">
+            <value>kurt</value>
+        </simple>
+        <simple name="robot2" type="string">
+            <value>krist</value>
+        </simple>
+        <simple name="robot3" type="string">
+            <value>dave</value>
+        </simple>
+    </struct>
+
+    <struct name="top_markers" type="strings">
+        <description>Path of top marker for each robot</description>
+        <simple name="star1" type="string">
+            <value>star.tiff</value>
+        </simple>
+        <simple name="star2" type="string">
+            <value>starrot.tiff</value>
+        </simple>
+        <simple name="circlehollow" type="string">
+            <value>circlehollow.tiff</value>
+        </simple>
+        <simple name="crosscircle1" type="string">
+            <value>crosscircle.tiff</value>
+        </simple>
+        <simple name="crosscircle2" type="string">
+            <value>crosscirclerot.tiff</value>
+        </simple>
+    </struct>
+
+    <simple name="bottom_marker" type="string">
+        <description>Path of bottom marker used by each robot</description>
+        <value>circle.tiff</value>
+    </simple>
+
+    <struct name="top_marker_table" type="ints">
+        <description>Table mapping top marker index on robot index</description>
+        <simple name="star1" type="long">
+            <value>0</value>
+        </simple>
+        <simple name="star2" type="long">
+            <value>0</value>
+        </simple>
+        <simple name="circlehollow" type="long">
+            <value>1</value>
+        </simple>
+        <simple name="crosscircle1" type="long">
+            <value>2</value>
+        </simple>
+        <simple name="crosscircle2" type="long">
+            <value>2</value>
+        </simple>
+    </struct>
+
+    <struct name="marker_locations" type="array">
+        <description>Locations of markers in robot frame [x1_r1, y1_r1, x2_r1, y2_r1, x3_r1, y3_r1, x1_r2, ...] (m)</description>
+        <simple name="x1_robot1" type="double">
+            <value>-0.018</value>
+        </simple>
+        <simple name="y1_robot1" type="double">
+            <value>-0.075</value>
+        </simple>
+        <simple name="x2_robot1" type="double">
+            <value>-0.018</value>
+        </simple>
+        <simple name="y2_robot1" type="double">
+            <value>0.075</value>
+        </simple>
+        <simple name="x3_robot1" type="double">
+            <value>0.078</value>
+        </simple>
+        <simple name="y3_robot1" type="double">
+            <value>0.0</value>
+        </simple>
+        <simple name="x1_robot2" type="double">
+            <value>-0.018</value>
+        </simple>
+        <simple name="y1_robot2" type="double">
+            <value>-0.075</value>
+        </simple>
+        <simple name="x2_robot2" type="double">
+            <value>-0.018</value>
+        </simple>
+        <simple name="y2_robot2" type="double">
+            <value>0.075</value>
+        </simple>
+        <simple name="x3_robot2" type="double">
+            <value>0.078</value>
+        </simple>
+        <simple name="y3_robot2" type="double">
+            <value>0.0</value>
+        </simple>
+        <simple name="x1_robot3" type="double">
+            <value>-0.018</value>
+        </simple>
+        <simple name="y1_robot3" type="double">
+            <value>-0.075</value>
+        </simple>
+        <simple name="x2_robot3" type="double">
+            <value>-0.018</value>
+        </simple>
+        <simple name="y2_robot3" type="double">
+            <value>0.075</value>
+        </simple>
+        <simple name="x3_robot3" type="double">
+            <value>0.078</value>
+        </simple>
+        <simple name="y3_robot3" type="double">
+            <value>0.0</value>
+        </simple>
+    </struct>
+
+    <struct name="robot_sizes" type="array">
+        <description>Width and height of outer rectangle of each robot [w_r1, h_r1, w_r2, ...] (m)</description>
+        <simple name="width_robot1" type="double">
+            <value>0.4</value>
+        </simple>
+        <simple name="height_robot1" type="double">
+            <value>0.55</value>
+        </simple>
+        <simple name="width_robot2" type="double">
+            <value>0.4</value>
+        </simple>
+        <simple name="height_robot2" type="double">
+            <value>0.55</value>
+        </simple>
+        <simple name="width_robot3" type="double">
+            <value>0.4</value>
+        </simple>
+        <simple name="height_robot3" type="double">
+            <value>0.55</value>
+        </simple>
+    </struct>
+
+     <struct name="robot_colors" type="ints">
+        <description>RGB colors of each robot [r_r1, g_r1, b_r1, r_r2, ...]</description>
+        <simple name="red_robot1" type="long">
+            <value>17</value>
+        </simple>
+        <simple name="green_robot1" type="long">
+            <value>110</value>
+        </simple>
+        <simple name="blue_robot1" type="long">
+            <value>138</value>
+        </simple>
+        <simple name="red_robot2" type="long">
+            <value>138</value>
+        </simple>
+        <simple name="green_robot2" type="long">
+            <value>31</value>
+        </simple>
+        <simple name="blue_robot2" type="long">
+            <value>17</value>
+        </simple>
+        <simple name="red_robot3" type="long">
+            <value>17</value>
+        </simple>
+        <simple name="green_robot3" type="long">
+            <value>138</value>
+        </simple>
+        <simple name="blue_robot3" type="long">
+            <value>19</value>
+        </simple>
+    </struct>
+
+    <simple name="video_port_name" type="string">
+        <description>Path to video driver</description>
+        <value>/dev/video1</value>
+    </simple>
+
+    <simple name="brightness" type="long">
+        <description>Camera brightness (0-40)</description>
+        <value>8</value>
+    </simple>
+
+    <simple name="exposure" type="long">
+        <description>Camera exposure (1-10000)</description>
+        <value>80</value>
+    </simple>
+
+    <simple name="iso" type="long">
+        <description>Camera iso</description>
+        <value>200</value>
+    </simple>
+
+    <struct name="camera_cfs" type="array">
+        <description>Coefficients of camera matrix (fx, cx, fy, cy)</description>
+        <simple name="fx" type="double">
+          <value>471.26940306532094</value>
+        </simple>
+        <simple name="cx" type="double">
+          <value>479.5</value>
+        </simple>
+        <simple name="fy" type="double">
+          <value>471.26940306532094</value>
+        </simple>
+        <simple name="cy" type="double">
+          <value>269.5</value>
+        </simple>
+    </struct>
+
+    <struct name="distortion_cfs" type="array">
+        <description>Coefficients of distortion vector (k1, k2, p1, p2, k3)</description>
+        <simple name="k1" type="double">
+          <value>-0.15532428084649783</value>
+        </simple>
+        <simple name="k2" type="double">
+          <value>0.034072764528751832</value>
+        </simple>
+        <simple name="p1" type="double">
+          <value>0</value>
+        </simple>
+        <simple name="p2" type="double">
+          <value>0</value>
+        </simple>
+        <simple name="k3" type="double">
+          <value>-0.0043247578401430509</value>
+        </simple>
+    </struct>
+
+    <simple name="max_detectable_obstacles" type="long">
+        <description>Maximum number of detectable obstacles</description>
+        <value>2</value>
+    </simple>
+
+    <simple name="image_path" type="string">
+        <description>Path where images are stored</description>
+        <value>./HawkEye/images/</value>
+        <!-- <value>./images/</value> -->
+    </simple>
+
+    <struct name="gui_resolution" type="ints">
+        <description>Width and height of gui window</description>
+        <simple name="width" type="long">
+            <!-- <value>1280</value> -->
+            <value>960</value>
+        </simple>
+        <simple name="height" type="long">
+            <value>540</value>
+        </simple>
+    </struct>
+
+    <simple name="threshold_bgst" type="long">
+        <description>Threshold for background subtraction [0-255]</description>
+        <value>31</value>
+    </simple>
+
+    <simple name="threshold_match" type="double">
+        <description>Threshold for template matching [0-1]</description>
+        <value>0.6</value>
+    </simple>
+
+    <simple name="min_robot_area" type="double">
+        <description>Minimum robot area to detect (m2)</description>
+        <value>0.06</value>
+    </simple>
+
+    <simple name="min_obstacle_area" type="double">
+        <description>Minimum obstacle area to detect (m2)</description>
+        <value>0.02</value>
+    </simple>
+
+    <simple name="pixelspermeter" type="long">
+        <description>Pixels per meter</description>
+        <value>240</value>
+    </simple>
+
+    <simple name="capture_bg_at_start" type="boolean">
+        <description>Capture background at start</description>
+        <value>0</value>
+    </simple>
+
+    <simple name="number_of_bg_samples" type="long">
+        <description>Number of samples taken to determine the background</description>
+        <value>50</value>
+    </simple>
+
+    <simple name="show_prev_frame" type="boolean">
+        <description>Show previous frame (conform with the current received estimation)</description>
+        <value>0</value>
+    </simple>
+
+    <simple name="capture_time_mod" type="double">
+        <description>At what fracture of total frame capture procedure does the capture happens</description>
+        <value>1.</value>
+    </simple>
+
+    <simple name="save_video" type="boolean">
+        <description>Save the resulting video</description>
+        <value>1</value>
+    </simple>
+
+</properties>
