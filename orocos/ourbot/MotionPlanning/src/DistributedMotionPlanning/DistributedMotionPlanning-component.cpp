@@ -39,11 +39,11 @@ bool DistributedMotionPlanning::config(){
   if (_ideal_prediction){
     vehicle->setIdealPrediction(true);
   }
-  _problem = new omgf::FormationPoint2Point(vehicle, _update_time, _sample_time, _horizon_time, _trajectory_length, _init_iter, _rho);
+  _problem = new omgf::FormationPoint2Point(vehicle, _update_time, _sample_time, _horizon_time, _trajectory_length_full, _init_iter, _rho);
   _obstacles.resize(_problem->n_obs);
-  _ref_pose.resize(_trajectory_length);
-  _ref_velocity.resize(_trajectory_length);
-  for(int k=0; k<_trajectory_length; k++){
+  _ref_pose.resize(_trajectory_length_full);
+  _ref_velocity.resize(_trajectory_length_full);
+  for(int k=0; k<_trajectory_length_full; k++){
     _ref_pose[k].resize(2);
     _ref_velocity[k].resize(2);
   }
@@ -167,6 +167,11 @@ bool DistributedMotionPlanning::admmIteration(bool initial){
     for (int j=0; j<2; j++){
       _ref_velocity_trajectory[j][k] = _ref_velocity[k][j];
       _ref_pose_trajectory[j][k] = _ref_pose[k][j];
+    }
+  }
+  for (int k=0; k<_trajectory_length_tx; k++){
+    for (int j=0; j<2; j++){
+      _ref_pose_trajectory_ss[j][k] = _ref_pose[k*_tx_subsample][j];
     }
   }
   #ifdef DEBUG
