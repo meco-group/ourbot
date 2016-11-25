@@ -4,32 +4,37 @@
 #include <rtt/RTT.hpp>
 #include <rtt/Port.hpp>
 #include "Connection.hpp"
+#include <zyre.h>
 
 using namespace RTT;
 
 typedef base::PortInterface* Port;
+typedef base::PortInterface* Port;
+typedef base::PortInterface* Port;
 
 class Communicator : public RTT::TaskContext{
   private:
-    std::map<int, int> _sockets;
-    std::vector<Connection*> _connections;
-    std::vector<std::string> _trusted_hosts;
+    std::string _iface;
+    int _portnr;
+    std::string _host;
 
-    Connection* getIncomingConnection(Port port, int port_nr);
-    Connection* getOutgoingConnection(Port port, int port_nr, const std::vector<std::string>& remote_addresses);
-    bool retrieveSocket(Connection* connection, int port_nr);
-    Connection* findConnection(int port_nr);
+    std::vector<Connection*> _connections;
+    zpoller_t* _poller;
+    std::map<std::string, Connection*> _con_map;
+
+    bool isInput(Port port);
+    Connection* getIncomingConnection(Port port, const string& host, const string& id);
+    Connection* getOutgoingConnection(Port port, const string& host, const string& id);
 
   public:
     Communicator(std::string const& name);
     void updateHook();
     bool configureHook();
     void cleanupHook();
-    bool addOutgoing(const std::string& component_name, const std::string& port_name, int port_nr, const std::vector<std::string>& remote_address);
-    bool addIncoming(const std::string& component_name, const std::string& port_name, int port_nr);
-    void removeConnection(int port_nr);
-    void disablePort(int port_nr);
-    void enablePort(int port_nr);
+    bool addConnection(const std::string& component_name, const std::string& port_name, const std::string& identifier);
+    void removeConnection(const std::string& component_name, const std::string& port_name, const std::string& identifier);
+    void enable(const std::string& component_name, const std::string& port_name, const std::string& identifier);
+    void disable(const std::string& component_name, const std::string& port_name, const std::string& identifier);
 };
 
 #endif

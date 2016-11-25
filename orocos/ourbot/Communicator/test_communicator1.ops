@@ -1,0 +1,26 @@
+require("print")
+import("rtt_ros")
+ros.import("Communicator")
+ros.import("Dummy")
+
+loadComponent("communicator", "Communicator")
+loadComponent("dummy", "Dummy")
+
+loadService("communicator", "marshalling")
+communicator.marshalling.loadProperties("../Configuration/system-config.cpf")
+communicator.marshalling.loadProperties("../Configuration/communicator-config.cpf")
+
+communicator.setPeriod(0.1)
+dummy.setPeriod(1)
+
+communicator.configure()
+dummy.configure()
+
+connectPeers("dummy","communicator")
+
+communicator.addConnection("dummy", "dummy_vec_out_port", "dumm")
+communicator.addConnection("dummy", "dummy_out_port", "zot")
+
+communicator.start()
+dummy.start()
+
