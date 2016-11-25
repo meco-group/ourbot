@@ -10,7 +10,7 @@ loadService("communicator", "marshalling")
 communicator.marshalling.loadProperties("../Configuration/system-config.cpf")
 communicator.marshalling.loadProperties("../Configuration/communicator-config.cpf")
 
-communicator.setPeriod(0.1)
+communicator.setPeriod(0.01)
 dummy.setPeriod(1)
 
 communicator.configure()
@@ -18,8 +18,8 @@ dummy.configure()
 
 connectPeers("dummy","communicator")
 
-communicator.addConnection("dummy", "dummy_vec_in_port", "dumm")
-communicator.addConnection("dummy", "dummy_in_port", "zot")
+communicator.addConnection("dummy", "dummy_vec_in_port", "vec")
+communicator.addConnection("dummy", "dummy_in_port", "scalar")
 
 communicator.start()
 dummy.start()

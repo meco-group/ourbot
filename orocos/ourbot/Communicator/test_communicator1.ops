@@ -18,8 +18,8 @@ dummy.configure()
 
 connectPeers("dummy","communicator")
 
-communicator.addConnection("dummy", "dummy_vec_out_port", "dumm")
-communicator.addConnection("dummy", "dummy_out_port", "zot")
+communicator.addConnection("dummy", "dummy_vec_out_port", "vec")
+communicator.addConnection("dummy", "dummy_out_port", "scalar")
 
 communicator.start()
 dummy.start()
