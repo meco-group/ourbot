@@ -39,6 +39,7 @@ class MotionPlanningInterface : public RTT::TaskContext{
     std::vector<double> _mp_trigger_data;
     int _max_computation_periods;
     int _maximum_failures;
+    bool _target_detection;
 
     int _failure_cnt;
     bool _first_iteration;

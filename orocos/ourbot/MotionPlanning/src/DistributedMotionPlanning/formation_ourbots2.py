@@ -37,8 +37,8 @@ height = 2.25
 environment = Environment(room={'shape': Rectangle(width, height), 'position': [0.5*width, 0.5*height]})
 rectangle = Rectangle(width=0.3, height=0.8)
 
-# environment.add_obstacle(Obstacle({'position': [0.5*width, 0.5*height]}, shape=rectangle))
-environment.add_obstacle(Obstacle({'position': [2.5, 2]}, shape=rectangle))
+environment.add_obstacle(Obstacle({'position': [0.5*width, 0.5*height]}, shape=rectangle))
+# environment.add_obstacle(Obstacle({'position': [2.5, 2]}, shape=rectangle))
 
 # create a point-to-point problem
 problem = FormationPoint2point(fleet, environment)

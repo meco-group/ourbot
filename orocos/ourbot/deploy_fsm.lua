@@ -20,9 +20,7 @@ local components_to_load = {
 
 -- containers to fill
 local containers_to_fill = {
-  -- io  = {'teensy', 'lidar'}
   io = {'teensy'}
-  -- io = {}
 }
 
 -- ports to report

@@ -23,6 +23,7 @@ include_directories(/home/ruben/ourbot/orocos/ourbot/MotionPlanning/src/MotionPl
 link_directories(/home/ruben/ourbot/orocos/ourbot/MotionPlanning/src/MotionPlanning/Toolbox/bin/)
 include_directories(/home/ruben/ourbot/orocos/ourbot/MotionPlanning/src/DistributedMotionPlanning/Toolbox/src/)
 link_directories(/home/ruben/ourbot/orocos/ourbot/MotionPlanning/src/DistributedMotionPlanning/Toolbox/bin/)
+
 add_definitions(-std=c++11)
 # nothing should be changed in the Makefile!
 

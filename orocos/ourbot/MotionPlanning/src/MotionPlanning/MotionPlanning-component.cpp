@@ -25,6 +25,7 @@ bool MotionPlanning::config(){
 }
 
 bool MotionPlanning::initialize(){
+  //Michiel load environment
   _p2p->reset();
   _p2p->resetTime();
   return true;

@@ -33,6 +33,7 @@ MotionPlanningInterface::MotionPlanningInterface(std::string const& name) : Task
   addProperty("ideal_prediction", _ideal_prediction).doc("Use prediction based on computed trajectories and not on state estimation");
   addProperty("maximum_failures", _maximum_failures).doc("Maximum allowed consecutive failures");
   addProperty("ref_tx_subsample", _tx_subsample).doc("Subsamples for transmitted reference trajectories");
+  addProperty("target_detection", _target_detection).doc("Target reached detection?");
 
   addOperation("setTargetPose", &MotionPlanningInterface::setTargetPose, this).doc("Set target pose");
   addOperation("gotTarget", &MotionPlanningInterface::gotTarget, this).doc("Do we have a target?");
@@ -163,10 +164,12 @@ void MotionPlanningInterface::updateHook(){
     _obstacle_port.read(_obstacle_data);
   }
   computeObstacles();
-  if (targetReached()){
-    std::cout << "target reached!" << std::endl;
-    disable();
-    return;
+  if (_target_detection){
+    if (targetReached()){
+      std::cout << "target reached!" << std::endl;
+      disable();
+      return;
+    }
   }
   // update trajectory
   _valid = trajectoryUpdate();

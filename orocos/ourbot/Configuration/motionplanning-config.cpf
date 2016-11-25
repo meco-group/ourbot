@@ -27,5 +27,9 @@
   <description>Maximum allowed consecutive failures</description>
   <value>5</value>
 </simple>
+<simple name="target_detection" type="boolean">
+  <description>Target reached detection?</description>
+  <value>1</value>
+</simple>
 
 </properties>
