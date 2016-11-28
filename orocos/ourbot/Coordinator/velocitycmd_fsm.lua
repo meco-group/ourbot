@@ -18,13 +18,13 @@ local jitter    = 0
 local duration  = 0
 
 function connectPorts()
-  local addIncoming = communicator:getOperation("addIncoming")
-  if not addIncoming('io', 'cmd_velocity_port', 4002) then rfsm.send_events(fsm, 'e_failed') return end
+  local addConnection = components.communicator:getOperation("addConnection")
+  if not addConnection('io', 'cmd_velocity_port', 'cmd_velocity') then rfsm.send_events(fsm, 'e_failed') return end
 end
 
 function disconnectPorts()
-  local removeConnection = communicator:getOperation("removeConnection")
-  removeConnection(4002)
+  local removeConnection = components.communicator:getOperation("removeConnection")
+  removeConnection('io', 'cmd_velocity_port', 'cmd_velocity')
 end
 
 return rfsm.state {

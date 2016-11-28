@@ -184,53 +184,44 @@ return rfsm.state {
 
     connect_remote_components = rfsm.state{
       entry = function(fsm)
-        local addOutgoing = components.communicator:getOperation("addOutgoing")
-        local addIncoming = components.communicator:getOperation("addIncoming")
+        local addConnection = components.communicator:getOperation("addConnection")
         -- coordinator
         dp:addPeer('communicator', 'coordinator')
-        if not addIncoming('coordinator', 'coordinator_fsm_event_port', 4000) then rfsm.send_events(fsm, 'e_failed') return end
-        -- io
-        if components_to_load['teensy'] then
-          dp:addPeer('communicator', 'io')
-          -- if not addIncoming('io', 'cmd_velocity_port', 4002) then rfsm.send_events(fsm, 'e_failed') return end
-        end
+        if not addConnection('coordinator', 'coordinator_fsm_event_port', 'fsm_event') then rfsm.send_events(fsm, 'e_failed') return end
         -- estimator
         dp:addPeer('communicator', 'estimator')
-        if not addIncoming('estimator', 'markers_port', 6050 + index) then rfsm.send_events(fsm, 'e_failed') return end
-        -- if not addOutgoing('estimator', 'est_pose_tx_port', 6000 + index, emperor) then rfsm.send_events(fsm, 'e_failed') return end
+        if not addConnection('coordinator', 'markers_port', 'markers_'..host) then rfsm.send_events(fsm, 'e_failed') return end
         -- motion planning
         dp:addPeer('communicator', 'motionplanning')
-        if not addIncoming('motionplanning', 'obstacle_port', 6070) then rfsm.send_events(fsm, 'e_failed') return end
-        if not addIncoming('motionplanning', 'target_pose_port', 6071) then rfsm.send_events(fsm, 'e_failed') return end
+        if not addConnection('motionplanning', 'obstacle_port', 'obstacles') then rfsm.send_events(fsm, 'e_failed') return end
+        if not addConnection('motionplanning', 'target_pose_port', 'target_pose') then rfsm.send_events(fsm, 'e_failed') return end
         if not obstacle_mode then
-          if not addIncoming('motionplanning', 'robobs_pose_port', 6000 + robobs_index) then rfsm.send_events(fsm, 'e_failed') return end
-          if not addIncoming('motionplanning', 'robobs_velocity_port', 6010 + robobs_index) then rfsm.send_events(fsm, 'e_failed') return end
+          if not addConnection('motionplanning', 'robobs_pose_port', 'robobs_pose') then rfsm.send_events(fsm, 'e_failed') return end
+          if not addConnection('motionplanning', 'robobs_velocity_port', 'robobs_pose') then rfsm.send_events(fsm, 'e_failed') return end
         end
         -- reference
         dp:addPeer('communicator', 'reference')
-        if not addOutgoing('reference', 'ref_pose_trajectory_x_tx_port', 6020 + index, emperor) then rfsm.send_events(fsm, 'e_failed') return end
-        if not addOutgoing('reference', 'ref_pose_trajectory_y_tx_port', 6030 + index, emperor) then rfsm.send_events(fsm, 'e_failed') return end
-
+        if not addConnection('reference', 'ref_pose_trajectory_x_tx_port', 'ref_x_'..host) then rfsm.send_events(fsm, 'e_failed') return end
+        if not addConnection('reference', 'ref_pose_trajectory_y_tx_port', 'ref_y_'..host) then rfsm.send_events(fsm, 'e_failed') return end
         if obstacle_mode then
-          if not addOutgoing('estimator', 'est_pose_tx_port', 6000 + index, robots) then rfsm.send_events(fsm, 'e_failed') return end
-          if not addOutgoing('estimator', 'est_velocity_tx_port', 6010 + index, robots) then rfsm.send_events(fsm, 'e_failed') return end
+          if not addConnection('estimator', 'est_pose_tx_port', 'robobs_pose') then rfsm.send_events(fsm, 'e_failed') return end
+          if not addConnection('estimator', 'est_velocity_tx_port', 'robobs_velocity') then rfsm.send_events(fsm, 'e_failed') return end
         end
-
         -- distributed motion planning
         if distributed_mp then
           dp:addPeer('communicator', 'motionplanning')
           for i=0, nghb_index.size-1 do
-            if not addOutgoing('motionplanning', 'x_var_port', 5000 + 10*index + i, neighbor[i]) then rfsm.send_events(fsm, 'e_failed') return end
-            if not addIncoming('motionplanning', 'x_j_var_port_'..tostring(i), 5000 + 10*nghb_index[i] + (2+i-1)%2) then rfsm.send_events(fsm, 'e_failed') return end
+            if not addConnection('motionplanning', 'x_var_port', 5000 + 10*index + i, neighbor[i]) then rfsm.send_events(fsm, 'e_failed') return end
+            if not addConnection('motionplanning', 'x_j_var_port_'..tostring(i), 5000 + 10*nghb_index[i] + (2+i-1)%2) then rfsm.send_events(fsm, 'e_failed') return end
 
-            if not addOutgoing('motionplanning', 'zl_ij_var_port_'..tostring(i), 5100 + 10*index + i, neighbor[i]) then rfsm.send_events(fsm, 'e_failed') return end
-            if not addIncoming('motionplanning', 'zl_ji_var_port_'..tostring(i), 5100 + 10*nghb_index[i] + (2+i-1)%2) then rfsm.send_events(fsm, 'e_failed') return end
+            if not addConnection('motionplanning', 'zl_ij_var_port_'..tostring(i), 5100 + 10*index + i, neighbor[i]) then rfsm.send_events(fsm, 'e_failed') return end
+            if not addConnection('motionplanning', 'zl_ji_var_port_'..tostring(i), 5100 + 10*nghb_index[i] + (2+i-1)%2) then rfsm.send_events(fsm, 'e_failed') return end
           end
         end
-        -- deployer (added as last: highest priority)
+        -- deployer
         dp:addPeer('communicator', 'lua')
-        if not addIncoming('lua', 'deployer_fsm_event_port', 4001) then rfsm.send_events(fsm, 'e_failed') return end
-        if not addOutgoing('lua', 'deployer_failure_event_port', 4001, broadcast) then rfsm.send_events(fsm,'e_failed') return end
+        if not addConnection('lua', 'deployer_fsm_event_port', 'deployer_event') then rfsm.send_events(fsm, 'e_failed') return end
+        if not addConnection('lua', 'deployer_failure_event_port', 'deployer_event') then rfsm.send_events(fsm,'e_failed') return end
       end
     },
 
