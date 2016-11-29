@@ -15,7 +15,7 @@ options = {'safety_distance': 0.05}
 N = 3
 rect = Rectangle(0.55, 0.4)
 rect.radius = 0.02
-vehicles = [Holonomic(shapes=rect, options=options, bounds={'vmin': -0.3, 'vmax': 0.3, 'amin': -0.3, 'amax': 0.3}) for _ in range(N)]
+vehicles = [Holonomic(shapes=rect, options=options, bounds={'vmin': -0.1, 'vmax': 0.1, 'amin': -0.3, 'amax': 0.3}) for _ in range(N)]
 fleet = Fleet(vehicles)
 configuration = np.array([[-0.2, -0.2], [-0.2, 0.2], [0.4, 0]])
 # configuration = np.array([[-0.2, -0.2], [-0.2, 0.2]])

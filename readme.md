@@ -7,7 +7,14 @@ Any questions can be asked to the developers: Ruben, Maarten and Tim or can be p
 
 We would like to thank some people who contributed to this project in some sense (ideas, testing, coding, construction, fablab support, nailpolish, ...): Goele, Jan, Joris, Erik, Eline, Eddy, Bertram, Jean-Pierre, Jens, Simon, Michiel.
 
-
-<div align="center">
+<!-- <div align="center">
 <img src="https://gitlab.mech.kuleuven.be/meco-setups/ourbot/wikis/figures/ourbot.jpg" align="middle" width="30%" alt="Ourbot"/>
-</div>
+</div> -->
+<p align="center">
+<a href="https://www.youtube.com/watch?v=w7tfz2djHqU">
+<img src="https://img.youtube.com/vi/w7tfz2djHqU/0.jpg" alt="Online motion planning"/>
+</a>
+<a href="https://www.youtube.com/watch?v=J_ShOP_VWTg">
+<img src="https://img.youtube.com/vi/J_ShOP_VWTg/0.jpg" alt="Online distributed motion planning"/>
+</a>
+</p>
