@@ -10,9 +10,9 @@ return rfsm.state {
   rfsm.trans{src = 'motionplanning',          tgt = 'failure',            events = {'e_failed'}},
   rfsm.trans{src = 'velocitycmd',             tgt = 'failure',            events = {'e_failed'}},
   rfsm.trans{src = 'trajectoryfollowing',     tgt = 'failure',            events = {'e_failed'}},
-  rfsm.trans{src = 'motionplanning.idle',     tgt = 'idle',               events = {'e_idle'}},
-  rfsm.trans{src = 'velocitycmd.idle',        tgt = 'idle',               events = {'e_idle'}},
-  rfsm.trans{src = 'trajectoryfollowing.idle',tgt = 'idle',               events = {'e_idle'}},
+  rfsm.trans{src = 'motionplanning.idle',     tgt = 'idle',               events = {'e_done'}},
+  rfsm.trans{src = 'velocitycmd.idle',        tgt = 'idle',               events = {'e_done'}},
+  rfsm.trans{src = 'trajectoryfollowing.idle',tgt = 'idle',               events = {'e_done'}},
   rfsm.trans{src = 'failure',                 tgt = 'idle',               events = {'e_recover'}},
     --add more state transitions here
 

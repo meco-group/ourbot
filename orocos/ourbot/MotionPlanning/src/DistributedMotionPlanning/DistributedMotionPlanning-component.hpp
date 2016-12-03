@@ -23,10 +23,14 @@ class DistributedMotionPlanning : public MotionPlanningInterface{
   private:
     OutputPort<std::vector<double> > _x_var_port;
     OutputPort<std::vector<double> > _zl_ij_var_port[2];
+    OutputPort<std::vector<double> > _negotiate_out_port;
 
     InputPort<std::vector<double> > _x_j_var_port[2];
     InputPort<std::vector<double> > _zl_ji_var_port[2];
+    InputPort<std::vector<double> > _negotiate_in_port;
 
+    int _n_st;
+    int _n_in;
     omgf::FormationPoint2Point* _problem;
 
     std::vector<std::vector<double> > _ref_pose;
@@ -49,6 +53,11 @@ class DistributedMotionPlanning : public MotionPlanningInterface{
 
     int _n_shared;
     int _n_nghb;
+    std::vector<std::string> _neighbors;
+
+    std::vector<double> _configuration_x;
+    std::vector<double> _configuration_y;
+
     std::vector<int> _nghb_index;
     std::vector<double> _residuals;
     std::vector<double> _rel_pos_c;
@@ -75,6 +84,7 @@ class DistributedMotionPlanning : public MotionPlanningInterface{
     bool targetReached();
     void writeSample();
     void setRelPoseC(std::vector<double>);
+    std::vector<double> setConfiguration(int number_of_robots);
 };
 
 #endif

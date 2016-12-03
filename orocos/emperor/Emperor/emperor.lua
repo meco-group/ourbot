@@ -53,11 +53,6 @@ function configureHook()
    reporter_sample_rate = _reporter_sample_rate:get()
    trusted_hosts = _trusted_hosts:get()
 
-   -- create host aliases
-   robots = rtt.Variable("strings")
-   robots:resize(3)
-   robots:fromtab{trusted_hosts[0], trusted_hosts[1], trusted_hosts[2]}
-
    -- variables to use in updateHook
    communicator = tc:getPeer('communicator')
    communicatorUpdate = communicator:getOperation("update")
@@ -130,9 +125,6 @@ function switchStates()
    local fs_A, data_A         = _gamepad_A_port:read()
    local fs_B, data_B         = _gamepad_B_port:read()
    if ((fs_A == 'NewData') and data_A) then
-      if sub_state == 'idle' then
-         _emperor_send_event_port:write('e_init')
-      end
       if sub_state == 'init' then
          _emperor_send_event_port:write('e_run')
       end
@@ -140,9 +132,6 @@ function switchStates()
          _emperor_send_event_port:write('e_restart')
       end
    elseif ((fs_B == 'NewData') and data_B) then
-      if sub_state == 'idle' then
-         _emperor_send_event_port:write('e_idle')
-      end
       if sub_state == 'run' then
          _emperor_send_event_port:write('e_stop')
       end

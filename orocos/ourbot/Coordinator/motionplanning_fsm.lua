@@ -1,12 +1,13 @@
 local tc = rtt.getTC()
 
-local motionplanning  = tc:getPeer('motionplanning')
-local controller      = tc:getPeer('controller')
-local estimator       = tc:getPeer('estimator')
-local reference       = tc:getPeer('reference')
-local reporter        = tc:getPeer('reporter')
-local io              = tc:getPeer('io')
-local teensy          = tc:getPeer('teensy')
+local motionplanning      = tc:getPeer('motionplanning')
+local distrmotionplanning = tc:getPeer('distrmotionplanning')
+local controller          = tc:getPeer('controller')
+local estimator           = tc:getPeer('estimator')
+local reference           = tc:getPeer('reference')
+local reporter            = tc:getPeer('reporter')
+local io                  = tc:getPeer('io')
+local teensy              = tc:getPeer('teensy')
 
 local estimatorUpdate              = estimator:getOperation("update")
 local referenceUpdate              = reference:getOperation("update")
@@ -16,8 +17,6 @@ local validReference               = reference:getOperation("ready")
 local estimatorInRunTimeError      = estimator:getOperation("inRunTimeError")
 local controllerInRunTimeError     = controller:getOperation("inRunTimeError")
 local referenceInRunTimeError      = reference:getOperation("inRunTimeError")
-local motionplanningInRunTimeError = motionplanning:getOperation("inRunTimeError")
-local strongVelocityControl        = teensy:getOperation("strongVelocityControl")
 local snapshot                     = reporter:getOperation("snapshot")
 
 -- variables for the timing diagnostics
@@ -25,37 +24,30 @@ local jitter    = 0
 local duration  = 0
 
 return rfsm.state {
-  rfsm.trans{src = 'initial', tgt = 'idle'},
-  rfsm.trans{src = 'idle',    tgt = 'init',   events = {'e_init'}},
-  rfsm.trans{src = 'init',    tgt = 'run',    events = {'e_run'}},
+  rfsm.trans{src = 'initial', tgt = 'init'},
+  rfsm.trans{src = 'init',    tgt = 'home',   events = {'e_done'}},
+  rfsm.trans{src = 'home',    tgt = 'run',    events = {'e_run'}},
   rfsm.trans{src = 'run',     tgt = 'stop',   events = {'e_stop', 'e_failed'}},
-  rfsm.trans{src = 'stop',    tgt = 'run',    events = {'e_restart'}},  -- no reinitiliaziation
-  rfsm.trans{src = 'stop',    tgt = 'reset',  events = {'e_reset'}},    -- with reinitialization
-  rfsm.trans{src = 'reset',   tgt = 'idle',   events = {'e_done'}},
+  rfsm.trans{src = 'stop',    tgt = 'init',   events = {'e_restart'}},
+  rfsm.trans{src = 'stop',    tgt = 'idle',   events = {'e_reset'}},
 
   initial = rfsm.conn{},
 
-  idle = rfsm.state{
-    entry=function()
-      print("Waiting on Initialize...")
-    end
-  },
-
   init = rfsm.state{
     entry = function(fsm)
+      nr_coop_ourbots = communicator:getGroupSize("ourbots") - communicator:getGroupSize("obstacle")
+      print(nr_coop_ourbots)
+      if (nr_coop_ourbots == 1) then
+        mp = motionplanning
+      else
+        mp = distrmotionplanning
+      end
       if not io:start() then
         rtt.logl("Error","Could not start io component")
         rfsm.send_events(fsm,'e_failed')
         return
       end
-      strongVelocityControl()
-      print("Waiting on Run...")
-    end
-  },
-
-  run = rfsm.state{
-    entry = function(fsm)
-      if not motionplanning:start() then
+      if not mp:start() then
         rtt.logl("Error","Could not start motionplanning component")
         rfsm.send_events(fsm,'e_failed')
         return
@@ -70,7 +62,67 @@ return rfsm.state {
         rfsm.send_events(fsm,'e_failed')
         return
       end
-      print("System started. Abort by using Break.")
+      teensy:strongVelocityControl()
+    end,
+
+    doo = function(fsm)
+      -- wait on valid estimate
+      while true do
+        estimatorUpdate()
+        if validEstimation() then
+          break
+        else
+          print "Estimate not valid!"
+        end
+        if estimatorInRunTimeError() then
+          rtt.logl("Error","RunTimeError in estimator component")
+          rfsm.send_events(fsm,'e_failed')
+          return
+        end
+        rfsm.yield(true)
+      end
+      pose0 = mp:setConfiguration(nr_coop_ourbots)
+    end
+  },
+
+  home = rfsm.state{
+    entry = function(fsm)
+      mp:setTargetPose(pose0[0], pose0[1], pose0[2])
+    end,
+
+    doo = function(fsm)
+      while true do
+        if not mp:gotTarget() then
+          break
+        end
+        -- update reference/estimator/controller
+        estimatorUpdate()
+        if validEstimation() then
+          referenceUpdate()
+          if validReference() then
+            controllerUpdate()
+          end
+        else
+          print "Estimate not valid!"
+        end
+        if controllerInRunTimeError() or estimatorInRunTimeError() or referenceInRunTimeError() then
+          rtt.logl("Error","RunTimeError in controller/estimator/reference component")
+          rfsm.send_events(fsm,'e_failed')
+          return
+        end
+        if mp:inRunTimeError() then
+          rtt.logl("Error","RunTimeError in motionplanning")
+          rfsm.send_events(fsm,'e_failed')
+          return
+        end
+        rfsm.yield(true) -- sleep until next sample period
+      end
+    end
+  },
+
+  run = rfsm.state{
+    entry = function(fsm)
+      print "Ready to roll..."
     end,
 
     doo = function(fsm)
@@ -109,7 +161,7 @@ return rfsm.state {
           rfsm.send_events(fsm,'e_failed')
           return
         end
-        if motionplanningInRunTimeError() then
+        if mp:inRunTimeError() then
           rtt.logl("Error","RunTimeError in motionplanning")
           rfsm.send_events(fsm,'e_failed')
           return
@@ -133,9 +185,7 @@ return rfsm.state {
         else
           init = init+1
         end
-
         end_time = get_sec()
-
         rfsm.yield(true) -- sleep until next sample period
       end
     end,
@@ -143,18 +193,15 @@ return rfsm.state {
 
   stop = rfsm.state{
     entry = function(fsm)
-      motionplanning:stop()
+      mp:stop()
       estimator:stop()
       reference:stop()
       controller:stop()
       reporter:stop()
+      io:stop()
       print("System stopped. Waiting on Restart or Reset...")
     end,
   },
 
-  reset = rfsm.state{
-    entry = function(fsm)
-      io:stop()
-    end,
-  }
+  idle = rfsm.state{}
 }

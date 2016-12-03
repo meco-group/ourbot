@@ -8,6 +8,7 @@
 #include <rtt/Port.hpp>
 #include <rtt/Component.hpp>
 #include <string.h>
+#include <queue>
 
 #define BUFFERSIZE 1024
 
@@ -19,216 +20,214 @@ typedef base::PortInterface* Port;
 class Connection {
     protected:
         zyre_t* _node;
-        zyre_event_t* _event;
-        string _host;
         string _id;
         zlist_t* _peers;
-        Port _port;
+        bool _enable;
 
     public:
-        Connection(const string& host, const string& id) : _host(host), _id(id) {
+        Connection(zyre_t* node, const string& id): _id(id), _enable(true){
+            _node = node;
         }
 
-        bool createNode(const string& iface, int portnr, zpoller_t* poller){
-            _node = zyre_new(_host.c_str());
-            // zyre_set_verbose(_node);
-            zyre_set_port(_node, portnr);
-            zyre_set_interface(_node, iface.c_str());
-            if (zyre_start(_node) != 0){
-                return false;
-            }
-            // zclock_sleep(250);
-            if (zyre_join(_node, _id.c_str()) != 0){
-                return false;
-            }
-            zpoller_add(poller, zyre_socket(_node));
-            return true;
+        void disable(){
+            _enable = false;
         }
 
-        void close(){
-            zyre_leave(_node, _id.c_str());
-            zyre_stop(_node);
-            zyre_destroy(&_node);
-        }
-
-        bool disable(){ //??
-            if (zyre_leave(_node, _id.c_str()) != 0){
-                return false;
-            }
-            zyre_stop(_node);
-            return true;
-        }
-
-        bool enable(){ //??
-            if (zyre_start(_node) != 0){
-                return false;
-            }
-            if (zyre_join(_node, _id.c_str()) != 0){
-                return false;
-            }
-            return true;
-        }
-
-        bool listen(void* which){
-            if (which != zyre_socket(_node)){
-                return true;
-            }
-            _event = zyre_event_new(_node);
-            const char* command = zyre_event_type(_event);
-            #ifdef DEBUG
-            if (streq(command, "JOIN") && streq(zyre_event_group(_event), _id.c_str())){
-                std::cout << "[" << _id << "] " << toString() << " connected to " << zyre_event_peer_name(_event) << std::endl;
-            }
-            #endif
-            if (streq(command, "SHOUT") && streq(zyre_event_group(_event), _id.c_str())){
-                if(!receive(_event)){
-                    return false;
-                }
-            }
-            return true;
+        void enable(){
+            _enable = true;
         }
 
         virtual bool speak(){
             return true;
         }
 
-        virtual bool receive(zyre_event_t* event){
+        virtual bool receive(char* header, zframe_t* data_frame, const string& peer){
             return true;
         }
 
-        std::string toString(){
-            return _host + ":" + _port->getName();
+        virtual void addGroup(const std::string& group){
+            return;
         }
 
-        // void check_entering_node(zyre_event_t* event){
-        //     char* id = zyre_event_header(event, "id");
-        //     if (streq(id, _id)){
-        //         _peers.push_back(zyre_event_peer_uuid(event));
-        //         #ifdef DEBUG
-        //         std::cout << _host << ":" << _id << " added peer " << zyre_event_peer_name(event) << ":" << id << std::endl;
-        //         #endif
-        //     }
-        // }
-};
+        virtual std::string toString(){
+            std::string node_name(zyre_name(_node));
+            return zyre_name(_node);
+        }
 
+        virtual std::string getSender(){
+            return NULL;
+        }
+};
 
 template <class C, typename T=void> class OutgoingConnection : public Connection {
     private:
+        InputPort<C>* _port;
         C _data;
-        unsigned char _data_str[BUFFERSIZE];
+        std::vector<string> _groups;
         size_t _type_size;
         size_t _size;
 
     public:
-        OutgoingConnection(Port& port, const string& host, const string& id):Connection(host, id){
-            _port = port;
+        OutgoingConnection(Port& port, zyre_t* node, const string& id, const string& group):Connection(node, id){
+            _port = (InputPort<C>*)port;
             _type_size = sizeof(T);
+            addGroup(group);
+        }
+
+        void addGroup(const std::string& group){
+            if (std::find(_groups.begin(), _groups.end(), group) == _groups.end()){
+                _groups.push_back(group);
+            }
         }
 
         bool speak(){
-            if (((InputPort<C>*)_port)->read(_data) == RTT::NewData){
-                _peers = zyre_peers_by_group(_node, _id.c_str());
-                if (_peers != NULL && zlist_size(_peers) > 0){
-                    _size = _data.size()*_type_size;
-                    zmsg_t* msg = zmsg_new();
-                    zmsg_pushmem(msg, &_data[0], _size);
-                    if (zyre_shout(_node, _id.c_str(), &msg) != 0){
-                        return false;
-                    }
-                    zmsg_destroy(&msg);
-                    #ifdef DEBUG
-                    std::cout << "[" << _id << "] " << toString() << " sending " << _size << " bytes" << std::endl;
-                    #endif
+            if (_port->read(_data) == RTT::NewData){
+                if (!_enable){
+                    return true;
                 }
+                _size = _data.size()*_type_size;
+                zmsg_t* msg = zmsg_new();
+                zmsg_pushmem(msg, &_data[0], _size);
+                const char* header = _id.c_str();
+                zmsg_pushmem(msg, header, strlen(header)+1);
+                for (int k=0; k<_groups.size(); k++){
+                    _peers = zyre_peers_by_group(_node, _groups[k].c_str());
+                    if (_peers != NULL && zlist_size(_peers) > 0){
+                        if (zyre_shout(_node, _groups[k].c_str(), &msg) != 0){
+                            return false;
+                        }
+                        #ifdef DEBUG
+                        std::cout << "[" << _id << "] " << toString() << " sending " << _size << " bytes to " << _groups[k] << std::endl;
+                        #endif
+                    }
+                }
+                zmsg_destroy(&msg);
             }
             return true;
+        }
+
+        std::string toString(){
+            return Connection::toString() + ":" + _port->getName();
         }
 };
 
 template <class C> class OutgoingConnection<C, void> : public Connection {
     private:
+        InputPort<C>* _port;
         C _data;
-        char _data_str[BUFFERSIZE];
+        std::vector<string> _groups;
         size_t _size;
 
     public:
-        OutgoingConnection(Port& port, const string& host, const string& id):Connection(host, id){
-            _port = port;
+        OutgoingConnection(Port& port, zyre_t* node, const string& id, const string& group):Connection(node, id){
+            _port = (InputPort<C>*)port;
             _size = sizeof(C);
+            addGroup(group);
+        }
+
+        void addGroup(const std::string& group){
+            if (std::find(_groups.begin(), _groups.end(), group) == _groups.end()){
+                _groups.push_back(group);
+            }
         }
 
         bool speak(){
-            if (((InputPort<C>*)_port)->read(_data) == RTT::NewData){
-                _peers = zyre_peers_by_group(_node, _id.c_str());
-                if (_peers != NULL && zlist_size(_peers) > 0){
-                    zmsg_t* msg = zmsg_new();
-                    zmsg_pushmem(msg, &_data, _size);
-                    if (zyre_shout(_node, _id.c_str(), &msg) != 0){
-                        return false;
+            if (_port->read(_data) == RTT::NewData){
+                zmsg_t* msg = zmsg_new();
+                zmsg_pushmem(msg, &_data, _size);
+                const char* header = _id.c_str();
+                zmsg_pushmem(msg, header, strlen(header)+1);
+                for (int k=0; k<_groups.size(); k++){
+                    _peers = zyre_peers_by_group(_node, _groups[k].c_str());
+                    if (_peers != NULL && zlist_size(_peers) > 0){
+                        if (zyre_shout(_node, _groups[k].c_str(), &msg) != 0){
+                            return false;
+                        }
+                        #ifdef DEBUG
+                        std::cout << "[" << _id << "] " << toString() << " sending " << _size << " bytes to " << _groups[k] << std::endl;
+                        #endif
                     }
-                    zmsg_destroy(&msg);
-                    #ifdef DEBUG
-                    std::cout << "[" << _id << "] " << toString() << " sending " << _size << " bytes" << std::endl;
-                    #endif
                 }
+                zmsg_destroy(&msg);
             }
             return true;
+        }
+
+        std::string toString(){
+            return Connection::toString() + ":" + _port->getName();
         }
 };
 
 template <class C, typename T=void> class IncomingConnection : public Connection {
     private:
-        // OutputPort<C>* _port;
+        OutputPort<C>* _port;
         C _data;
         size_t _type_size;
         size_t _size;
+        string _sender;
 
     public:
-        IncomingConnection(Port& port, const string& host, const string& id):Connection(host, id){
-            _port = port;
+        IncomingConnection(Port& port, zyre_t* node, const string& id):Connection(node, id){
+            _port = (OutputPort<C>*)port;
             _type_size = sizeof(T);
         }
 
-        bool receive(zyre_event_t* event){
-            zmsg_t* msg = zyre_event_msg(event);
-            if (msg == NULL){
-                return false;
+        bool receive(char* header, zframe_t* data_frame, const string& peer){
+            if (!streq(header, _id.c_str())){
+                return true;
             }
-            _size = zmsg_content_size(msg);
+            _size = zframe_size(data_frame);
             _data.resize(_size/_type_size);
-            memcpy(&_data[0], zmsg_popstr(msg), _size);
-            zmsg_destroy(&msg);
-            ((OutputPort<C>*)_port)->write(_data);
+            memcpy(&_data[0], zframe_data(data_frame), _size);
+            _port->write(_data);
+            _sender = peer;
             #ifdef DEBUG
-            std::cout << "[" << _id << "] " << toString() << " receiving " << _size << " bytes from " << zyre_event_peer_name(event) << std::endl;
+            std::cout << "[" << _id << "] " << toString() << " receiving " << _size << " bytes from " << peer << std::endl;
             #endif
             return true;
+        }
+
+        std::string toString(){
+            return Connection::toString() + ":" + _port->getName();
+        }
+
+        std::string getSender(){
+            return _sender;
         }
 };
 
 template <class C> class IncomingConnection<C, void> : public Connection {
     private:
+        OutputPort<C>* _port;
         C _data;
         size_t _size;
+        string _sender;
 
     public:
-        IncomingConnection(Port& port, const string& host, const string& id):Connection(host, id){
-            _port = port;
+        IncomingConnection(Port& port, zyre_t* node, const string& id):Connection(node, id){
+            _port = (OutputPort<C>*)port;
             _size = sizeof(C);
         }
 
-        bool receive(zyre_event_t* event){
-            zmsg_t* msg = zyre_event_msg(event);
-            if (msg == NULL){
-                return false;
+        bool receive(char* header, zframe_t* data_frame, const string& peer){
+            if (!streq(header, _id.c_str())){
+                return true;
             }
-            memcpy(&_data, zmsg_popstr(msg), _size);
-            zmsg_destroy(&msg);
-            ((OutputPort<C>*)_port)->write(_data);
+            memcpy(&_data, zframe_data(data_frame), _size);
+            _port->write(_data);
+            _sender = peer;
             #ifdef DEBUG
-            std::cout << "[" << _id << "] " << toString() << " receiving " << _size << " bytes from " << zyre_event_peer_name(event) << std::endl;
+            std::cout << "[" << _id << "] " << toString() << " receiving " << _size << " bytes from " << peer << std::endl;
             #endif
             return true;
+        }
+
+        std::string toString(){
+            return Connection::toString() + ":" + _port->getName();
+        }
+
+        std::string getSender(){
+            return _sender;
         }
 };
 

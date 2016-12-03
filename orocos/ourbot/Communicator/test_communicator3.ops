@@ -13,15 +13,15 @@ communicator.marshalling.loadProperties("../Configuration/communicator-config.cp
 communicator.setPeriod(0.01)
 dummy.setPeriod(0.1)
 
-communicator.setHost("kurt")
+communicator.setHost("krist")
 communicator.configure()
 dummy.configure()
 
 connectPeers("dummy","communicator")
 
 
-//communicator.addIncomingConnection("dummy", "dummy_vec_in_port1", "vec1")
-//communicator.addBufferedIncomingConnection("dummy", "dummy_vec_in_port1", "vec1", 5)
+
+communicator.addIncomingConnection("dummy", "dummy_vec_in_port1", "vec1")
 //communicator.addIncomingConnection("dummy", "dummy_vec_in_port2", "vec1")
 //communicator.addIncomingConnection("dummy", "dummy_vec_in_port3", "vec3")
 //communicator.addIncomingConnection("dummy", "dummy_vec_in_port4", "vec4")

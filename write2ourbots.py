@@ -27,9 +27,10 @@ remote_root = '/home/odroid/orocos'
 username = 'odroid'
 password = 'odroid'
 hosts = col.OrderedDict()
+# hosts['hawkeye'] = '192.168.11.123'
 hosts['kurt'] = '192.168.11.121'
-hosts['krist'] = '192.168.11.122'
-hosts['dave'] = '192.168.11.120'
+# hosts['krist'] = '192.168.11.122'
+# hosts['dave'] = '192.168.11.120'
 ignore = []
 exclude = ['build', 'include', 'bin', 'lib', 'obj', '.tb_history']
 
