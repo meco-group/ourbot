@@ -1,5 +1,5 @@
 /** @file
- *	@brief MAVLink comm protocol built from ourbot_messages.xml
+ *	@brief MAVLink comm protocol built from microos_messages.xml
  *	@see http://pixhawk.ethz.ch/software/mavlink
  */
 #ifndef MAVLINK_VERSION_H
