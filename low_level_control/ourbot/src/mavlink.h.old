@@ -1,0 +1,6 @@
+// Include projects mavlink messages
+
+#define MAVLINK_MAX_PAYLOAD_LEN 	128
+#define MAVLINK_COMM_NUM_BUFFERS	1
+
+#include "/media/data/Documents/Academic/PhD/Projects/Ourbot/software/low_level_control/mavlink/build/include/v1.0/ourbot_messages/mavlink.h"
