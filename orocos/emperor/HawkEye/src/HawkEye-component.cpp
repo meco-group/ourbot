@@ -51,6 +51,9 @@ bool HawkEye::configureHook(){
   if (!loadMarkers()){
       return false;
   }
+  // init blob detector
+  initDetector();
+
   // add ports
   _robot_markers_port.resize(_robot_names.size());
   _robot_est_pose_port.resize(_robot_names.size());
@@ -78,7 +81,8 @@ bool HawkEye::configureHook(){
   // create gui, camera and robots
   _gui = new Gui(_gui_resolution, _save_video, _hawkeye_sample_rate);
   _gui->setPixelsPerMeter(_pixelspermeter);
-  _camera = new Camera(_video_port_name, {1920, 1080}, _brightness, _exposure, _iso, _camera_cfs, _distortion_cfs, _capture_time_mod);
+  // _camera = new Camera(_video_port_name, {1920, 1080}, _brightness, _exposure, _iso, _camera_cfs, _distortion_cfs, _capture_time_mod);
+  _camera = new Camera(_video_port_name, {1280, 720}, _brightness, _exposure, _iso, _camera_cfs, _distortion_cfs, _capture_time_mod);
   createRobots();
   return true;
 }
@@ -111,12 +115,12 @@ void HawkEye::updateHook(){
   if (!_camera->capture(_frame, _capture_time)){
     log(Error) << "Could not capture frame!" << endlog();
   }
-  // reset previous stuff
-  reset();
-  // process frame
-  processFrame(_frame);
-  // write results
-  writeResults();
+  // // reset previous stuff
+  // reset();
+  // // process frame
+  // processFrame(_frame);
+  // // write results
+  // writeResults();
   // draw
   if (_show_prev_frame){
     drawResults(_prev_frame);
@@ -137,6 +141,17 @@ void HawkEye::updateHook(){
 void HawkEye::stopHook(){
   _gui->stop();
   _camera->stop();
+}
+
+void HawkEye::initDetector(){
+  cv::SimpleBlobDetector::Params par;
+  par.minThreshold = 10;
+  par.maxThreshold = 200;
+  par.filterByArea = true;
+  par.minArea = 50;
+  par.filterByCircularity = true;
+  par.minCircularity = 0.7;
+  _detector = new cv::SimpleBlobDetector(par);
 }
 
 bool HawkEye::loadMarkers(){
@@ -332,6 +347,37 @@ void HawkEye::detectRobots(const cv::Mat& frame, const std::vector<std::vector<c
   }
 }
 
+void HawkEye::detectRobots2(const cv::Mat& frame, const std::vector<std::vector<cv::Point> >& contours){
+  std::vector<cv::Point> contour;
+  cv::Rect roi_rectangle; //region-of-interest rectangle
+  std::vector<int> roi_location(2);
+  cv::Mat roi;
+  std::vector<int> marker_loc_rob(6);
+  for (uint i=0; i<contours.size(); i++){
+    cv::convexHull(contours[i], contour);
+    if (cv::contourArea(contour) > _min_robot_area*pow(_pixelspermeter, 2)){
+      std::vector<int> marker_locations;
+      std::vector<int> robot_indices;
+      roi_rectangle = cv::boundingRect(contour);
+      roi_location[0] = roi_rectangle.x;
+      roi_location[1] = roi_rectangle.y;
+      frame(roi_rectangle).copyTo(roi);
+
+      if (findMarkers(roi, roi_location, marker_locations, robot_indices)){
+        for (uint k=0; k<robot_indices.size(); k++){
+          DEBUG_PRINT("Detected " << _robots[robot_indices[k]]->getName() << "!")
+          for (uint j=0; j<6; j++){
+            marker_loc_rob[j] = marker_locations[6*k+j];
+          }
+          _robots[robot_indices[k]]->setMarkers(marker_loc_rob);
+        }
+      }
+    }
+  }
+}
+
+
+
 void HawkEye::subtractRobots(std::vector<std::vector<cv::Point> >& contours,
   std::vector<cv::Vec4i>& hierarchy){
   cv::Point2f robot_vertices[4];
@@ -483,6 +529,104 @@ void HawkEye::sortObstacles(std::vector<std::vector<double> >& obstacles, std::v
     obstacles_out[i] = obstacles[indices[i]];
   }
   obstacles = obstacles_out;
+}
+
+bool HawkEye::findMarkers(cv::Mat& roi, const std::vector<int>& roi_location, std::vector<int>& marker_locations, std::vector<int>& robot_indices){
+  // detect blobs
+  cv::cvtColor(roi, roi, CV_RGB2GRAY);
+  std::vector<cv::KeyPoint> keypoints;
+  _detector->detect(roi, keypoints);
+  std::vector<cv::Point2f> points(3);
+
+  if (keypoints.size() < 3){
+    return false;
+  }
+  std::vector<double> robot_markers(6);
+  bool found_robot = false;
+  if (keypoints.size() > 3){
+    std::vector<bool> selector(keypoints.size());
+    std::fill(selector.begin(), selector.begin() + 3, true);
+    do {
+      // get a combination of 3 points
+      int k = 0;
+      for (int i=0; i < keypoints.size(); i++){
+        if (selector[i]){
+          points[k] = keypoints[i].pt;
+          k++;
+        }
+      }
+      // check if combination is a valid robot
+      if (isRobot(roi, points, robot_markers)){
+        found_robot = true;
+      }
+    } while (std::prev_permutation(selector.begin(), selector.end()));
+  } else if (keypoints.size() == 3){
+    if (isRobot(roi, points, robot_markers)){
+      found_robot = true;
+    }
+  }
+  if (found_robot){
+    return true;
+  }
+  return false;
+}
+
+bool HawkEye::isRobot(cv::Mat& roi, const std::vector<cv::Point2f>& points, std::vector<double>& robot_markers){
+  // robot_markers.resize(6);
+  // int top_index = getTopIndex(points);
+  // if (top_index < 0){
+  //   return false;
+  // }
+  // cv::Point2f top = points[top_index];
+  // std::vector<cv::Point2f> bottom(2);
+  // int k=0;
+  // for (int l=0; l<3; l++){
+  //   if (l != top_index){
+  //     bottom[k] = points[l];
+  //     k++;
+  //   }
+  // }
+  // cv::Point2f midbottom = 0.5*(bottom[0]+bottom[1]);
+  // // check if valid triangle
+  // double dist_threshold = 2*1e-2;
+  // double dist_ratio_threshold = 1e-2;
+  // double dist_ratio = 0.833333;
+  // double dist1 = cv::norm(top - bottom[0]);
+  // double dist2 = cv::norm(top - bottom[1]);
+  // double dist_eq = 0.5*(dist1+dist2);
+  // double width = cv::norm(bottom[0] - bottom[1]);
+  // double height = cv::norm(top - midbottom);
+  // // if (abs(height/width - triangle_ration)/triangle_ration > ration_threshold){
+  // //   return false;
+  // // }
+  // if (abs(dist_eq/dist_ineq - dist_ratio)/dist_ratio > dist_ratio_threshold){
+  //     return false;
+  // }
+  // // decode QR tag
+  // cv::Point2f midpoint = 0.5*(midbottom + top);
+  // double step = (1.5/15.)*width;
+  // cv::Mat roi_mask;
+  // cv::GaussianBlur(roi, roi_masrk, cv::Size(5, 5), 1, 1);
+  // cv::threshold(roi, roi, 100, 255, cv::THRESH_BINARY);
+  // cv::Scalar color;
+  // cv::Point2f point;
+  // unsigned int code = 0;
+  // unsigned int bit_selector = 1;
+  // for (int k=0; k<2; k++){
+  //   for (int l=0; l<2; l++){
+  //     point = cv::Point2f(midpoint.x - pow(-1,k)*step, midpoint.y - pow(-1,k)*step);
+  //     color = roi_mask.at<uchar>(point);
+  //     if (color.val[0] == 0){
+  //       code |= (bit_selector << 2*k+l);
+  //     }
+  //   }
+  // }
+  // for (int k=0; k<_robot_codes.size(); k++){
+  //   if (_robot_codes[k] == code){
+  //     std::cout << "robot " << k << std::endl;
+  //   }
+  // }
+  return true;
 }
 
 bool HawkEye::matchMarkers(cv::Mat& roi, const std::vector<int>& roi_location, std::vector<int>& marker_locations, std::vector<int>& robot_indices){

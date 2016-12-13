@@ -21,10 +21,10 @@
 #include <rtt/RTT.hpp>
 #include <rtt/Port.hpp>
 
-
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/opencv.hpp"
 
 #include "Robot.hpp"
 #include "Camera.hpp"
@@ -73,6 +73,8 @@ class HawkEye : public RTT::TaskContext{
         bool _save_video;
         double _hawkeye_sample_rate;
 
+        cv::SimpleBlobDetector* _detector;
+
         std::vector<cv::Mat> _top_markers;
         cv::Mat _bottom_marker;
         cv::Mat _frame;
@@ -89,6 +91,7 @@ class HawkEye : public RTT::TaskContext{
         double _capture_time;
 
         bool loadMarkers();
+        void initDetector();
         void buildMatrices();
         bool startCamera();
         bool getBackground();
@@ -98,12 +101,18 @@ class HawkEye : public RTT::TaskContext{
         void processFrame(const cv::Mat& frame);
         void backgroundSubtraction(const cv::Mat& frame, std::vector<std::vector<cv::Point> >& contours, std::vector<cv::Vec4i>& hierarchy);
         void detectRobots(const cv::Mat& frame, const std::vector<std::vector<cv::Point> >& contours);
+        void detectRobots2(const cv::Mat& frame, const std::vector<std::vector<cv::Point> >& contours);
         void subtractRobots(std::vector<std::vector<cv::Point> >& contours, std::vector<cv::Vec4i>& hierarchy);
         void detectObstacles(const cv::Mat& frame, const std::vector<std::vector<cv::Point> >& contours);
         void filterObstacles(const std::vector<cv::RotatedRect>& rectangles, const std::vector<std::vector<double> >& circles);
         void addObstacle(const cv::RotatedRect& rectangle, const std::vector<double>& circle, std::vector<std::vector<double>>& obstacles, std::vector<double>& areas);
         void sortObstacles(std::vector<std::vector<double> >& obstacles, std::vector<double>& areas);
         bool matchMarkers(cv::Mat& roi, const std::vector<int>& roi_location, std::vector<int>& marker_locations, std::vector<int>& robot_indices);
+        bool findMarkers(cv::Mat& roi, const std::vector<int>& roi_location, std::vector<int>& marker_locations, std::vector<int>& robot_indices);
+
+        bool isRobot(cv::Mat& roi, const std::vector<cv::Point2f>& points, std::vector<double>& robot_markers);
+
+
         void matchTemplates(cv::Mat& frame, const cv::Mat& marker, double threshold, std::vector<int>& marker_locations, std::vector<double>& marker_scores);
         void blank(cv::Mat& frame, const cv::Point& location, int width, int height);
         void writeResults();

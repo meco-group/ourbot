@@ -191,6 +191,22 @@
     <struct name="camera_cfs" type="array">
         <description>Coefficients of camera matrix (fx, cx, fy, cy)</description>
         <simple name="fx" type="double">
+          <value>579.30075311299925e</value>
+        </simple>
+        <simple name="cx" type="double">
+          <value>639.50000000000000e</value>
+        </simple>
+        <simple name="fy" type="double">
+          <value>579.30075311299925e</value>
+        </simple>
+        <simple name="cy" type="double">
+          <value>359.50000000000000e</value>
+        </simple>
+    </struct>
+
+<!--     <struct name="camera_cfs" type="array">
+        <description>Coefficients of camera matrix (fx, cx, fy, cy)</description>
+        <simple name="fx" type="double">
           <value>471.26940306532094</value>
         </simple>
         <simple name="cx" type="double">
@@ -202,9 +218,28 @@
         <simple name="cy" type="double">
           <value>269.5</value>
         </simple>
-    </struct>
+    </struct> -->
 
     <struct name="distortion_cfs" type="array">
+        <description>Coefficients of distortion vector (k1, k2, p1, p2, k3)</description>
+        <simple name="k1" type="double">
+          <value>-0.24578872043193228e</value>
+        </simple>
+        <simple name="k2" type="double">
+          <value>0.10489235619117537e</value>
+        </simple>
+        <simple name="p1" type="double">
+          <value>0</value>
+        </simple>
+        <simple name="p2" type="double">
+          <value>0</value>
+        </simple>
+        <simple name="k3" type="double">
+          <value>-0.0030273284362257961</value>
+        </simple>
+    </struct>
+
+<!--     <struct name="distortion_cfs" type="array">
         <description>Coefficients of distortion vector (k1, k2, p1, p2, k3)</description>
         <simple name="k1" type="double">
           <value>-0.15532428084649783</value>
@@ -221,7 +256,7 @@
         <simple name="k3" type="double">
           <value>-0.0043247578401430509</value>
         </simple>
-    </struct>
+    </struct> -->
 
     <simple name="max_detectable_obstacles" type="long">
         <description>Maximum number of detectable obstacles</description>
@@ -292,7 +327,7 @@
 
     <simple name="save_video" type="boolean">
         <description>Save the resulting video</description>
-        <value>1</value>
+        <value>0</value>
     </simple>
 
 </properties>
