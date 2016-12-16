@@ -27,7 +27,9 @@ return rfsm.state {
   rfsm.trans{src = 'initial', tgt = 'init'},
   rfsm.trans{src = 'init',    tgt = 'home',   events = {'e_done'}},
   rfsm.trans{src = 'home',    tgt = 'run',    events = {'e_run'}},
-  rfsm.trans{src = 'run',     tgt = 'stop',   events = {'e_stop', 'e_failed'}},
+  rfsm.trans{src = 'init',    tgt = 'stop',   events = {'e_stop'}},
+  rfsm.trans{src = 'home',    tgt = 'stop',   events = {'e_stop'}},
+  rfsm.trans{src = 'run',     tgt = 'stop',   events = {'e_stop'}},
   rfsm.trans{src = 'stop',    tgt = 'init',   events = {'e_restart'}},
   rfsm.trans{src = 'stop',    tgt = 'idle',   events = {'e_reset'}},
 
@@ -122,7 +124,7 @@ return rfsm.state {
 
   run = rfsm.state{
     entry = function(fsm)
-      print "Ready to roll..."
+      print "Let's roll..."
     end,
 
     doo = function(fsm)

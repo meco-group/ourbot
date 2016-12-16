@@ -23,6 +23,7 @@ class Communicator : public RTT::TaskContext{
     zyre_t* _node;
     zpoller_t* _poller;
     zyre_event_t* _event;
+    int _verbose;
 
     std::vector<Connection*> _connections;
     std::map<std::string, Connection*> _con_map;
@@ -50,6 +51,7 @@ class Communicator : public RTT::TaskContext{
     void removeConnection(const std::string& component_name, const std::string& port_name, const std::string& id);
     void enable(const std::string& component_name, const std::string& port_name, const std::string& identifier);
     void disable(const std::string& component_name, const std::string& port_name, const std::string& identifier);
+    void wait(int ms);
     bool joinGroup(const std::string& group);
     bool leaveGroup(const std::string& group);
     int getGroupSize(const std::string& group);

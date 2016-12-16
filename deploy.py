@@ -26,7 +26,7 @@ password = 'odroid'
 
 # hosts = ['kurt', 'krist', 'dave']
 # hosts = ['kurt', 'krist', 'dave']
-hosts = ['kurt']
+hosts = ['krist']
 # hosts = ['dave']
 # coop_hosts = hosts
 

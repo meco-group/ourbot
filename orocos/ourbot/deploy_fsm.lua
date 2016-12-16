@@ -14,9 +14,6 @@ local components_to_load = {
   reporter            = 'OCL::NetcdfReporting',
   io                  = 'Container',
   teensy              = 'TeensyBridge'
-  -- lidar               = 'RPLidar',
-  -- scanmatcher         = 'Scanmatcher'
-    --add here componentname = 'ComponentType'
 }
 
 -- containers to fill
@@ -29,7 +26,6 @@ local ports_to_report = {
   estimator       = {'est_pose_port'},
   reference       = {'ref_pose_port', 'ref_velocity_port'},
   io              = {'cal_velocity_port'}
-    --add here componentname = {'portnames'}
 }
 
 -- packages to import
@@ -42,9 +38,6 @@ local packages_to_import = {
   distrmotionplanning = 'MotionPlanning',
   io                  = 'Container',
   teensy              = 'Serial'
-  -- lidar              = 'Serial',
-  -- scanmatcher        = 'Scanmatcher'
-    --add here componentname = 'ParentComponentType'
 }
 
 -- configuration files to load
@@ -60,7 +53,6 @@ local component_config_files  = {
   motionplanning      = 'Configuration/motionplanning-config.cpf',
   distrmotionplanning = 'Configuration/motionplanning-config.cpf',
   scanmatcher         = 'Configuration/scanmatcher-config.cpf'
-    --add here componentname = 'Configuration/component-config.cpf'
 }
 
 local components = {}
@@ -82,6 +74,7 @@ return rfsm.state {
     entry = function()
       _deployer_failure_event_port:write('e_failed')
       components.communicator:update()
+      components.communicator:wait(500)
       for name, comp in pairs(components) do
         comp:stop()
         comp:cleanup()
@@ -228,8 +221,8 @@ return rfsm.state {
           if not addOutgoing('estimator', 'est_velocity_tx_port', 'robobs_velocity', 'ourbots') then rfsm.send_events(fsm, 'e_failed') return end
         end
         -- deployer
-        if not addIncoming('lua', 'deployer_fsm_event_port', 'deployer_event') then rfsm.send_events(fsm, 'e_failed') return end
         if not addOutgoing('lua', 'deployer_failure_event_port', 'deployer_event', 'all') then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('lua', 'deployer_fsm_event_port', 'deployer_event') then rfsm.send_events(fsm, 'e_failed') return end
       end
     },
 

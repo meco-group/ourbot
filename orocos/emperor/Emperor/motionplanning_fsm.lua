@@ -19,8 +19,10 @@ end
 return rfsm.state {
   rfsm.trans{src = 'initial', tgt = 'init'},
   rfsm.trans{src = 'init',    tgt = 'home',   events = {'e_done'}},
-  rfsm.trans{src = 'home',    tgt = 'run',    events = {'e_run'}},
-  rfsm.trans{src = 'run',     tgt = 'stop',   events = {'e_stop', 'e_failed'}},
+  rfsm.trans{src = 'home',    tgt = 'run',    events = {'e_done'}},
+  rfsm.trans{src = 'init',    tgt = 'stop',   events = {'e_done'}},
+  rfsm.trans{src = 'home',    tgt = 'stop',   events = {'e_run'}},
+  rfsm.trans{src = 'run',     tgt = 'stop',   events = {'e_stop'}},
   rfsm.trans{src = 'stop',    tgt = 'init',   events = {'e_restart'}},
   rfsm.trans{src = 'stop',    tgt = 'idle',   events = {'e_reset'}},
 
@@ -28,9 +30,10 @@ return rfsm.state {
 
   init  = rfsm.state{
     entry = function(fsm)
+      main_state = 'motionplanning'
+      sub_state = 'run'
       connectPorts() -- connect obstacle port
-      sub_state = 'init'
-      print("Waiting on Run (Button A)...")
+      print("Initializing...")
       if (not reporter:start()) then
         rtt.log("Error","Could not start reporter component")
         rfsm.send_events(fsm,'e_failed')
@@ -43,7 +46,6 @@ return rfsm.state {
 
   run   = rfsm.state{
     entry = function(fsm)
-      sub_state = 'run'
       print("Let's roll... Abort by using Break (Button B).")
     end,
 
@@ -78,6 +80,7 @@ return rfsm.state {
 
   stop = rfsm.state{
     entry = function(fsm)
+      reporter:stop()
       sub_state = 'stop'
       print("System stopped. Waiting on Restart (Button A) or Reset (Button B)...")
     end,

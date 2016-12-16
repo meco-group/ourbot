@@ -9,13 +9,11 @@ local components_to_load = {
   hawkeye         = 'HawkEye',
   emperor         = 'OCL::LuaTLSFComponent',
   reporter        = 'OCL::NetcdfReporting'
-    --add here componentname = 'ComponentType'
 }
 
 -- ports to report
 local ports_to_report = {
   gamepad         = {'cmd_velocity_port'}
-    --add here componentname = {'portnames'}
 }
 
 -- packages to import
@@ -23,7 +21,6 @@ local packages_to_import = {
   gamepad = 'Serial',
   hawkeye = 'HawkEye',
   communicator = 'Communicator'
-    --add here componentname = 'ParentComponentType'
 }
 
 -- configuration files to load
@@ -33,7 +30,6 @@ local component_config_files  = {
   reporter      = 'Configuration/reporter-config.cpf',
   hawkeye       = 'Configuration/hawkeye-config.cpf',
   gamepad       = 'Configuration/gamepad-config.cpf'
-    --add here componentname = 'Configuration/component-config.cpf'
 }
 
 local components      = {}
@@ -55,6 +51,7 @@ return rfsm.state {
     entry = function()
       _deployer_failure_event_port:write('e_failed')
       components.communicator:update()
+      components.communicator:wait(500)
       for name, comp in pairs(components) do
         comp:stop()
         comp:cleanup()
@@ -146,7 +143,7 @@ return rfsm.state {
         -- emperor
         if not addOutgoing('emperor', 'emperor_send_event_port', 'fsm_event', 'ourbots') then rfsm.send_events(fsm,'e_failed') return end
         -- gamepad
-        if not addOutgoing('gamepad', 'cmd_velocity_port', 'cmd_velocity_port', 'ourbots') then rfsm.send_events(fsm,'e_failed') return end
+        if not addOutgoing('gamepad', 'cmd_velocity_port', 'cmd_velocity', 'ourbots') then rfsm.send_events(fsm,'e_failed') return end
         -- hawkeye
         if not addOutgoing('hawkeye', 'kurt_pose_port', 'markers_kurt', 'kurt') then rfsm.send_events(fsm, 'e_failed') return end
         if not addOutgoing('hawkeye', 'krist_pose_port', 'markers_krist', 'krist') then rfsm.send_events(fsm, 'e_failed') return end
@@ -161,8 +158,8 @@ return rfsm.state {
         if not addIncoming('hawkeye', 'krist_ref_y_port', 'ref_y_krist') then rfsm.send_events(fsm,'e_failed') return end
         if not addIncoming('hawkeye', 'dave_ref_y_port', 'ref_y_dave') then rfsm.send_events(fsm,'e_failed') return end
         -- deployer
-        if not addIncoming('lua', 'deployer_fsm_event_port', 'deployer_event') then rfsm.send_events(fsm, 'e_failed') return end
         if not addOutgoing('lua', 'deployer_failure_event_port', 'deployer_event', 'ourbots') then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('lua', 'deployer_fsm_event_port', 'deployer_event') then rfsm.send_events(fsm, 'e_failed') return end
       end,
     },
 
@@ -208,7 +205,7 @@ return rfsm.state {
         if not components.emperor:start() then rfsm.send_events(fsm,'e_failed') return end
         if not components.communicator:start() then rfsm.send_events(fsm, 'e_failed') return end
         if not components.gamepad:start() then rfsm.send_events(fsm, 'e_failed') return end
-        if not components.hawkeye:start() then rfsm.send_events(fsm, 'e_failed') return end
+        -- if not components.hawkeye:start() then rfsm.send_events(fsm, 'e_failed') return end
       end,
     },
   },

@@ -21,13 +21,14 @@ function connectPorts()
 end
 
 function disconnectPorts()
-  connection:removeConnection('io', 'cmd_velocity_port', 'cmd_velocity')
+  communicator:removeConnection('io', 'cmd_velocity_port', 'cmd_velocity')
 end
 
 return rfsm.state {
   rfsm.trans{src = 'initial', tgt = 'init'},
-  rfsm.trans{src = 'init',    tgt = 'run',    events = {'e_run'}},
-  rfsm.trans{src = 'run',     tgt = 'stop',   events = {'e_stop', 'e_failed'}},
+  rfsm.trans{src = 'init',    tgt = 'run',    events = {'e_done'}},
+  rfsm.trans{src = 'init',    tgt = 'stop',   events = {'e_stop'}},
+  rfsm.trans{src = 'run',     tgt = 'stop',   events = {'e_stop'}},
   rfsm.trans{src = 'stop',    tgt = 'init',   events = {'e_restart'}},
   rfsm.trans{src = 'stop',    tgt = 'idle',   events = {'e_reset'}},
 
@@ -35,6 +36,7 @@ return rfsm.state {
 
   init = rfsm.state{
     entry = function(fsm)
+      print("Initializing...")
       connectPorts() -- connect gamepad velocity command
       if not io:start() then
         rtt.logl("Error","Could not start io component")
@@ -62,7 +64,7 @@ return rfsm.state {
 
   run = rfsm.state{
     entry = function(fsm)
-      print "Ready to roll..."
+      print "Let's roll..."
     end,
 
     doo = function(fsm)

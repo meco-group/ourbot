@@ -14,7 +14,6 @@ return rfsm.state {
   rfsm.trans{src = 'velocitycmd.idle',        tgt = 'idle',               events = {'e_done'}},
   rfsm.trans{src = 'trajectoryfollowing.idle',tgt = 'idle',               events = {'e_done'}},
   rfsm.trans{src = 'failure',                 tgt = 'idle',               events = {'e_recover'}},
-    --add more state transitions here
 
   initial = rfsm.conn{},
 
@@ -36,6 +35,4 @@ return rfsm.state {
   motionplanning      = rfsm.load("Emperor/motionplanning_fsm.lua"),
   velocitycmd         = rfsm.load("Emperor/velocitycmd_fsm.lua"),
   trajectoryfollowing = rfsm.load("Emperor/trajectoryfollowing_fsm.lua")
-    --add more state descriptions here
-
 }

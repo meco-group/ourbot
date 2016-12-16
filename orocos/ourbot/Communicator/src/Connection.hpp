@@ -1,8 +1,6 @@
 #ifndef CONNECTION_HPP
 #define CONNECTION_HPP
 
-#define DEBUG
-
 #include <zyre.h>
 #include <rtt/RTT.hpp>
 #include <rtt/Port.hpp>
@@ -23,10 +21,12 @@ class Connection {
         string _id;
         zlist_t* _peers;
         bool _enable;
+        int _verbose;
 
     public:
         Connection(zyre_t* node, const string& id): _id(id), _enable(true){
             _node = node;
+            _verbose = 0;
         }
 
         void disable(){
@@ -35,6 +35,10 @@ class Connection {
 
         void enable(){
             _enable = true;
+        }
+
+        void setVerbose(int verbose){
+            _verbose = verbose;
         }
 
         virtual bool speak(){
@@ -96,9 +100,21 @@ template <class C, typename T=void> class OutgoingConnection : public Connection
                         if (zyre_shout(_node, _groups[k].c_str(), &msg) != 0){
                             return false;
                         }
-                        #ifdef DEBUG
-                        std::cout << "[" << _id << "] " << toString() << " sending " << _size << " bytes to " << _groups[k] << std::endl;
-                        #endif
+                        if (_verbose >= 1){
+                            std::cout << "[" << _id << "] " << toString() << " sending " << _size << " bytes to " << _groups[k];
+                            if (_verbose >= 2){
+                                std::cout << ": " << std::endl << "(";
+                                for (int l=0; l<_data.size(); l++){
+                                    std::cout << _data[l];
+                                    if (l != _data.size()-1){
+                                        std::cout << ",";
+                                    }
+                                }
+                                std::cout << ")" << std::endl;
+                            } else {
+                                std::cout << std::endl;
+                            }
+                        }
                     }
                 }
                 zmsg_destroy(&msg);
@@ -143,9 +159,14 @@ template <class C> class OutgoingConnection<C, void> : public Connection {
                         if (zyre_shout(_node, _groups[k].c_str(), &msg) != 0){
                             return false;
                         }
-                        #ifdef DEBUG
-                        std::cout << "[" << _id << "] " << toString() << " sending " << _size << " bytes to " << _groups[k] << std::endl;
-                        #endif
+                        if (_verbose >= 1){
+                            std::cout << "[" << _id << "] " << toString() << " sending " << _size << " bytes to " << _groups[k];
+                            if (_verbose >= 2){
+                                std::cout << ": " << _data << std::endl;
+                            } else {
+                                std::cout << std::endl;
+                            }
+                        }
                     }
                 }
                 zmsg_destroy(&msg);
@@ -181,9 +202,21 @@ template <class C, typename T=void> class IncomingConnection : public Connection
             memcpy(&_data[0], zframe_data(data_frame), _size);
             _port->write(_data);
             _sender = peer;
-            #ifdef DEBUG
-            std::cout << "[" << _id << "] " << toString() << " receiving " << _size << " bytes from " << peer << std::endl;
-            #endif
+            if (_verbose >= 1){
+                std::cout << "[" << _id << "] " << toString() << " receiving " << _size << " bytes from " << peer;
+                if (_verbose >= 2){
+                    std::cout << ": " << std::endl << "(";
+                    for (int l=0; l<_data.size(); l++){
+                        std::cout << _data[l];
+                        if (l != _data.size()-1){
+                            std::cout << ",";
+                        }
+                    }
+                    std::cout << ")" << std::endl;
+                } else {
+                    std::cout << std::endl;
+                }
+            }
             return true;
         }
 
@@ -216,9 +249,14 @@ template <class C> class IncomingConnection<C, void> : public Connection {
             memcpy(&_data, zframe_data(data_frame), _size);
             _port->write(_data);
             _sender = peer;
-            #ifdef DEBUG
-            std::cout << "[" << _id << "] " << toString() << " receiving " << _size << " bytes from " << peer << std::endl;
-            #endif
+            if (_verbose >= 1){
+                std::cout << "[" << _id << "] " << toString() << " receiving " << _size << " bytes from " << peer;
+                if (_verbose >= 2){
+                    std::cout << ": " << _data << std::endl;
+                } else {
+                    std::cout << std::endl;
+                }
+            }
             return true;
         }
 

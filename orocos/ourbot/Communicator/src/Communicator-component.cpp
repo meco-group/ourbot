@@ -17,10 +17,12 @@ Communicator::Communicator(std::string const& name) : TaskContext(name, PreOpera
   addOperation("setHost", &Communicator::setHost, this).doc("Set name of this host.");
   addOperation("disable", &Communicator::disable, this).doc("Disable connection.");
   addOperation("enable", &Communicator::enable, this).doc("Enable connection.");
+  addOperation("wait", &Communicator::wait, this).doc("Wait a (milli)sec.");
 
   addProperty("iface", _iface).doc("Interface for communication.");
   addProperty("portnr", _portnr).doc("Port number to send discovery beacons on.");
   addProperty("host", _host).doc("Name of this host.");
+  addProperty("verbose", _verbose).doc("Verbosity of debug info.");
 }
 
 bool Communicator::configureHook(){
@@ -36,10 +38,7 @@ bool Communicator::configureHook(){
 }
 
 void Communicator::updateHook(){
-  #ifdef DEBUG
   TimeService::ticks timestamp = TimeService::Instance()->getTicks();
-  #endif
-  // let each connection speak
   for (uint k=0; k<_connections.size(); k++){
     if (!_connections[k]->speak()){
       log(Error) << "Error in speaking of " << _connections[k]->toString() << endlog();
@@ -50,10 +49,10 @@ void Communicator::updateHook(){
   if (!listen()){
     error();
   }
-  Seconds time_elapsed = TimeService::Instance()->secondsSince(timestamp);
-  // #ifdef DEBUG
-  // std::cout << "Communication update took " << time_elapsed << " s" << std::endl;
-  // #endif
+  if (_verbose >= 4){
+    Seconds time_elapsed = TimeService::Instance()->secondsSince(timestamp);
+    std::cout << "Communication update took " << time_elapsed << " s" << std::endl;
+  }
 }
 
 void Communicator::cleanupHook(){
@@ -74,23 +73,26 @@ bool Communicator::isInput(Port port){
 }
 
 bool Communicator::createNode(){
-    std::cout << _host << std::endl;
-    std::cout << _portnr << std::endl;
-    std::cout << _iface << std::endl;
-    _node = zyre_new(_host.c_str());
+  std::cout << "here1" << std::endl;
+  _node = zyre_new(_host.c_str());
+  std::cout << "here2" << std::endl;
+  if (_verbose >= 3){
     zyre_set_verbose(_node);
-    zyre_set_port(_node, _portnr);
-    zyre_set_interface(_node, _iface.c_str());
-    std::cout << "here1" << std::endl;
-    if (zyre_start(_node) != 0){
-        return false;
-    }
-    std::cout << "here2" << std::endl;
-    zclock_sleep(250);
-    std::cout << "here3" << std::endl;
-    _poller = zpoller_new(zyre_socket(_node));
-    std::cout << "here4" << std::endl;
-    return true;
+  }
+  std::cout << "here3" << std::endl;
+  zyre_set_port(_node, _portnr);
+  std::cout << "here4" << std::endl;
+  zyre_set_interface(_node, _iface.c_str());
+  std::cout << "here5" << std::endl;
+  if (zyre_start(_node) != 0){
+      return false;
+  }
+  std::cout << "here6" << std::endl;
+  zclock_sleep(250);
+  std::cout << "here7" << std::endl;
+  _poller = zpoller_new(zyre_socket(_node));
+  std::cout << "here8" << std::endl;
+  return true;
 }
 
 bool Communicator::joinGroups(){
@@ -258,6 +260,7 @@ bool Communicator::addOutgoingConnection(const string& component_name, const str
     ConnPolicy policy = RTT::ConnPolicy::data();
     Port anti_port = clonePort(component_name, port_name, policy);
     connection = getOutgoingConnection(anti_port, _node, id, group);
+    connection->setVerbose(_verbose);
   }
   if (connection == NULL){
     log(Error) << "Type of port is not known!" << endlog();
@@ -276,6 +279,7 @@ bool Communicator::addIncomingConnection(const string& component_name, const str
     ConnPolicy policy = RTT::ConnPolicy::data();
     Port anti_port = clonePort(component_name, port_name, policy);
     connection = getIncomingConnection(anti_port, _node, id);
+    connection->setVerbose(_verbose);
   }
   if (connection == NULL){
     log(Error) << "Type of port is not known!" << endlog();
@@ -318,6 +322,10 @@ void Communicator::disable(const string& component_name, const string& port_name
 void Communicator::enable(const string& component_name, const string& port_name, const string& id){
   Connection* connection = _con_map[component_name+port_name+id];
   connection->enable();
+}
+
+void Communicator::wait(int ms){
+  zclock_sleep(ms);
 }
 
 Connection* Communicator::getIncomingConnection(Port port, zyre_t* node, const string& id){

@@ -24,7 +24,7 @@ local duration  = 0
 return rfsm.state {
   rfsm.trans{src = 'initial', tgt = 'init'},
   rfsm.trans{src = 'init',    tgt = 'run',    events = {'e_run'}},
-  rfsm.trans{src = 'run',     tgt = 'stop',   events = {'e_stop', 'e_failed'}},
+  rfsm.trans{src = 'run',     tgt = 'stop',   events = {'e_stop'}},
   rfsm.trans{src = 'stop',    tgt = 'init',   events = {'e_restart'}},
   rfsm.trans{src = 'stop',    tgt = 'idle',   events = {'e_reset'}},
 

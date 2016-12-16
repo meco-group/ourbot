@@ -125,7 +125,7 @@ function switchStates()
    local fs_A, data_A         = _gamepad_A_port:read()
    local fs_B, data_B         = _gamepad_B_port:read()
    if ((fs_A == 'NewData') and data_A) then
-      if sub_state == 'init' then
+      if sub_state == 'idle' then
          _emperor_send_event_port:write('e_run')
       end
       if sub_state == 'stop' then

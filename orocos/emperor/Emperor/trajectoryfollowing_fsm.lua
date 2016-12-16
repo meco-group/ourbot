@@ -4,15 +4,13 @@ local gamepad               = tc:getPeer('gamepad')
 local hawkeye               = tc:getPeer('hawkeye')
 local reporter              = tc:getPeer('reporter')
 local snapshot              = reporter:getOperation("snapshot")
-local enablevelcmd          = gamepad:getOperation("enableVelocityCmd")
-local disablevelcmd         = gamepad:getOperation("disableVelocityCmd")
 local gamepadInRunTimeError = gamepad:getOperation("inRunTimeError")
 local hawkeyeInRunTimeError = hawkeye:getOperation("inRunTimeError")
 
 return rfsm.state {
   rfsm.trans{src = 'initial', tgt = 'init'},
   rfsm.trans{src = 'init',    tgt = 'run',    events = {'e_run'}},
-  rfsm.trans{src = 'run',     tgt = 'stop',   events = {'e_stop', 'e_failed'}},
+  rfsm.trans{src = 'run',     tgt = 'stop',   events = {'e_stop'}},
   rfsm.trans{src = 'stop',    tgt = 'init',   events = {'e_restart'}},
   rfsm.trans{src = 'stop',    tgt = 'idle',   events = {'e_reset'}},
 
@@ -20,7 +18,8 @@ return rfsm.state {
 
   init  = rfsm.state{
     entry = function(fsm)
-      sub_state = 'init'
+      main_state = 'trajectoryfollowing'
+      sub_state = 'idle'
       print("Waiting on Run (Button A)...")
       if (not reporter:start()) then
         rtt.log("Error","Could not start reporter component")
@@ -32,8 +31,7 @@ return rfsm.state {
 
   run   = rfsm.state{
     entry = function(fsm)
-      sub_state='run'
-      enablevelcmd()
+      sub_state = 'run'
       print("Let's roll... Abort by using Break (Button B).")
     end,
 
@@ -68,7 +66,7 @@ return rfsm.state {
 
   stop = rfsm.state{
     entry = function(fsm)
-      disablevelcmd()
+      reporter:stop()
       sub_state = 'stop'
       print("System stopped. Waiting on Restart (Button A) or Reset (Button B)...")
     end,
