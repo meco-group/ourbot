@@ -1,7 +1,7 @@
 #include "ourbot_hal.h"
 
-#define HBRIDGE0_ENCA_PIN   1
-#define HBRIDGE0_ENCB_PIN   0
+#define HBRIDGE0_ENCA_PIN   17
+#define HBRIDGE0_ENCB_PIN   16
 #define HBRIDGE0_ENC_ID     10
 #define HBRIDGE1_ENCA_PIN   8 
 #define HBRIDGE1_ENCB_PIN   7
@@ -9,21 +9,21 @@
 #define HBRIDGE2_ENCA_PIN   19
 #define HBRIDGE2_ENCB_PIN   18
 #define HBRIDGE2_ENC_ID     12
-#define HBRIDGE3_ENCA_PIN   17
-#define HBRIDGE3_ENCB_PIN   16
+#define HBRIDGE3_ENCA_PIN   1
+#define HBRIDGE3_ENCB_PIN   0
 #define HBRIDGE3_ENC_ID     13
 
-#define HBRIDGE0_CUR_PIN    A15
+#define HBRIDGE0_CUR_PIN    A18
 #define HBRIDGE0_CUR_ID     20
 #define HBRIDGE1_CUR_PIN    A16
-#define HBRIDGE1_CUR_ID     21
+#define HBRIDGE1_CUR_ID     22
 #define HBRIDGE2_CUR_PIN    A17
-#define HBRIDGE2_CUR_ID     22
-#define HBRIDGE3_CUR_PIN    A18
+#define HBRIDGE2_CUR_ID     21
+#define HBRIDGE3_CUR_PIN    A15
 #define HBRIDGE3_CUR_ID     23
 
-#define HBRIDGE0_IN1_PIN    3
-#define HBRIDGE0_IN2_PIN    4
+#define HBRIDGE0_IN1_PIN    21
+#define HBRIDGE0_IN2_PIN    20
 #define HBRIDGE0_COMP_ID    0
 #define HBRIDGE1_IN1_PIN    5
 #define HBRIDGE1_IN2_PIN    6 
@@ -31,8 +31,8 @@
 #define HBRIDGE2_IN1_PIN    23
 #define HBRIDGE2_IN2_PIN    22
 #define HBRIDGE2_COMP_ID    2
-#define HBRIDGE3_IN1_PIN    21
-#define HBRIDGE3_IN2_PIN    20
+#define HBRIDGE3_IN1_PIN    3
+#define HBRIDGE3_IN2_PIN    4
 #define HBRIDGE3_COMP_ID    3
 
 #define BATTERY_COMP_ID     30
