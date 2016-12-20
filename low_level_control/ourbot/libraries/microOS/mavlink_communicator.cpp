@@ -1,6 +1,7 @@
 #include "mavlink_communicator.h"
 
-MavlinkCommunicator::MavlinkCommunicator(const uint8_t id, HALBase *hal, const uint8_t type) :
+MavlinkCommunicator::MavlinkCommunicator(const uint8_t id, const uint8_t type, HALBase *hal) :
+	_hal(hal),
 	_id(id),
 	_type(type),
 #ifdef SINGLE_CHANNEL
@@ -50,7 +51,7 @@ void MavlinkCommunicator::sendHeartbeat()
 	sendMessage(msg);
 }
 
-void MavlinkCommunicator::sendThreadInfo(uint8_t ID, char* name, uint8_t priority, uint32_t duration, uint32_t latency, uint32_t total_duration, uint32_t total_latency, uint32_t number_of_executions)
+void MavlinkCommunicator::sendThreadInfo(uint8_t ID, uint8_t priority, uint32_t duration, uint32_t latency, uint32_t total_duration, uint32_t total_latency, uint32_t number_of_executions)
 {
 	mavlink_message_t msg;
 	mavlink_msg_thread_info_pack(_id, 0, &msg, millis(), ID, priority, duration, latency, total_duration, total_latency, number_of_executions);
@@ -66,9 +67,9 @@ void MavlinkCommunicator::sendGPIO()
 	unsigned int k;
 	gpio.time = millis();
 	for(k=0;k<4;k++)
-		gpio.gpio_int[k] = System.getGPinInt(k);
+		gpio.gpio_int[k] = System.getGPoutInt(k);
 	for(k=0;k<8;k++)
-		gpio.gpio_float[k] = System.getGPinFloat(k);
+		gpio.gpio_float[k] = System.getGPoutFloat(k);
 	
 	mavlink_msg_gpio_encode(_id, 0, &msg, &gpio);
 
@@ -105,6 +106,11 @@ void MavlinkCommunicator::handleEvent(uint16_t event)
 	}*/
 }
 
+void MavlinkCommunicator::handlePartition(const mavlink_partition_t &partition)
+{
+	//System.println("Partition message decoded.");
+}
+
 void MavlinkCommunicator::sendPrint(const char *text)
 {
 	mavlink_message_t msg;
@@ -138,6 +144,13 @@ bool MavlinkCommunicator::handleMessage(mavlink_message_t &msg)
 
 			handleEvent(event.type);
 			//System.println("Received event message.");
+			break;}
+			
+		case MAVLINK_MSG_ID_PARTITION:{
+			mavlink_partition_t partition;
+			mavlink_msg_partition_decode(&msg,&partition);
+
+			handlePartition(partition);
 			break;}
 
 		/*case INTERESTING_MSG_ID:{
