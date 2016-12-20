@@ -55,6 +55,11 @@ uint8_t Ourbot::ID()
     return _ID;
 }
 
+const uint8_t Ourbot::type()
+{
+	return 10; //the car type
+}
+
 uint32_t Ourbot::mode()
 {
 	return _mode;

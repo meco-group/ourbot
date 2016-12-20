@@ -1,7 +1,7 @@
 #include "communicator.h"
 
 Communicator::Communicator(Ourbot *ourbot, HALBase *hal) :
-    MavlinkCommunicator(ourbot->ID(),hal),
+    MavlinkCommunicator(ourbot->ID(),ourbot->type(),hal),
 	_auto_transmission_message(0),
 	_auto_transmission_messages({MAVLINK_MSG_ID_MOTOR_STATE,MAVLINK_MSG_ID_GPIO,MAVLINK_MSG_ID_RAW_IMU_DATA,MAVLINK_MSG_ID_GPIO}),
 	_ourbot(ourbot)
@@ -58,7 +58,7 @@ bool Communicator::handleMessage(mavlink_message_t &msg)
 					for(uint8_t k=0;k<4;k++){ _ourbot->controledMotorAR(k)->setPositionController(motor_controller.P,motor_controller.I,motor_controller.D); }
 					break;
 			}
-            ret = true;
+            ret = true;            
 			break;}
 		
 		case MAVLINK_MSG_ID_MOTOR_COMMAND:{
@@ -69,7 +69,8 @@ bool Communicator::handleMessage(mavlink_message_t &msg)
 			_ourbot->controledMotorAR(1)->setReference(motor_command.command_right_front, motor_command.command_type);
 			_ourbot->controledMotorAR(2)->setReference(motor_command.command_left_rear, motor_command.command_type);
 			_ourbot->controledMotorAR(3)->setReference(motor_command.command_right_rear, motor_command.command_type);
-			ret = true;
+			
+			ret = true;			
             break;}
         default:{
             ret = MavlinkCommunicator::handleMessage(msg);

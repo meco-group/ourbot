@@ -36,6 +36,7 @@ public:
 	///////
 	/// GET
     uint8_t ID();
+    const uint8_t type();
     uint32_t mode();
     ControledMotor* controledMotorAR(uint8_t n);
     ControledMotor* controledMotorID(uint8_t n);
