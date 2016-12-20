@@ -47,6 +47,9 @@ OurbotHAL::OurbotHAL() :
     //virtual battery
 	_battery.setRawValue(24000);
 	_battery.setCalibratedValue(24000);
+	analogWriteFrequency(3, 20000);
+	analogWriteFrequency(5, 20000);
+	analogWriteResolution(8);
 }
 
 Sensor1D* OurbotHAL::getEncoder(int index)
