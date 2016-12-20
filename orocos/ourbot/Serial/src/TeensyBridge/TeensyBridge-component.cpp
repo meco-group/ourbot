@@ -104,9 +104,9 @@ bool TeensyBridge::action(mavlink_message_t msg)
 			TEENSYBRIDGE_DEBUG_PRINT("Heartbeat message received.")
 			break; }
 
-		case MAVLINK_MSG_ID_DEBUG:{
-			mavlink_msg_debug_decode(&msg, &_debug);
-			TEENSYBRIDGE_DEBUG_PRINT("Debug message received.")
+		case MAVLINK_MSG_ID_GPIO:{
+			mavlink_msg_gpio_decode(&msg, &_gpio);
+			TEENSYBRIDGE_DEBUG_PRINT("GPIO message received.")
 			break;}
 
 		/*case MAVLINK_MSG_ID_MOTOR_COMMAND:{
@@ -161,12 +161,12 @@ void TeensyBridge::writeRawDataToPorts()
 	_cal_motor_current_port.write(cur);
 
 	//debug port
-	debug[0] = _debug.int1;
-	debug[1] = _debug.int2;
-	debug[2] = _debug.int3;
-	debug[3] = _debug.float1;
-	debug[4] = _debug.float2;
-	debug[5] = _debug.float3;
+	debug[0] = _gpio.gpio_int[0];
+	debug[1] = _gpio.gpio_int[1];
+	debug[2] = _gpio.gpio_int[2];
+	debug[3] = _gpio.gpio_float[0];
+	debug[4] = _gpio.gpio_float[1];
+	debug[5] = _gpio.gpio_float[2];
 
 	_debug_port.write(debug);
 }
@@ -443,22 +443,23 @@ void TeensyBridge::showMotorState(int ID)
 
 void TeensyBridge::showDebug()
 {
-	std::cout << "float1 = " << _debug.float1 << std::endl;
-	std::cout << "float2 = " << _debug.float2 << std::endl;
-	std::cout << "float3 = " << _debug.float3 << std::endl;
-	std::cout << "int1 = " << _debug.int1 << std::endl;
-	std::cout << "int2 = " << _debug.int2 << std::endl;
-	std::cout << "int3 = " << _debug.int3 << std::endl;
+	std::cout << "float1 = " << _gpio.gpio_float[0] << std::endl;
+	std::cout << "float2 = " << _gpio.gpio_float[1] << std::endl;
+	std::cout << "float3 = " << _gpio.gpio_float[2] << std::endl;
+	std::cout << "int1 = " << _gpio.gpio_int[0] << std::endl;
+	std::cout << "int2 = " << _gpio.gpio_int[1] << std::endl;
+	std::cout << "int3 = " << _gpio.gpio_int[2] << std::endl;
 }
 
 void TeensyBridge::showThreadTime()
 {
-	std::cout << "thread 1: " << _threadtime.thread1 << " (" << (double)_threadtime.thread1/_threadtime.time << ")" << std::endl;
+	/*std::cout << "thread 1: " << _threadtime.thread1 << " (" << (double)_threadtime.thread1/_threadtime.time << ")" << std::endl;
 	std::cout << "thread 2: " << _threadtime.thread2 << " (" << (double)_threadtime.thread2/_threadtime.time << ")" << std::endl;
 	std::cout << "thread 3: " << _threadtime.thread3 << " (" << (double)_threadtime.thread3/_threadtime.time << ")" << std::endl;
 	std::cout << "thread 4: " << _threadtime.thread4 << " (" << (double)_threadtime.thread4/_threadtime.time << ")" << std::endl;
 	std::cout << "thread 5: " << _threadtime.thread5 << " (" << (double)_threadtime.thread5/_threadtime.time << ")" << std::endl;
-	std::cout << "thread 6: " << _threadtime.thread6 << " (" << (double)_threadtime.thread6/_threadtime.time << ")" << std::endl;
+	std::cout << "thread 6: " << _threadtime.thread6 << " (" << (double)_threadtime.thread6/_threadtime.time << ")" << std::endl;*/
+	std::cout << "Not implemented at the moment.." << std::endl;
 }
 
 void TeensyBridge::showIMUData(int ID)

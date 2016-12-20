@@ -33,7 +33,7 @@ class TeensyBridge : public USBInterface
 		ProtocolMavlink	_protocol;
 		mavlink_motor_state_t	_motor_states[4];
 		mavlink_raw_imu_data_t	_raw_imu_data[2];
-		mavlink_debug_t			_debug;
+		mavlink_gpio_t			_gpio;
 		//mavlink_threadtime_t	_threadtime;
 		void writeRawDataToPorts();
 
