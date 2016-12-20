@@ -75,12 +75,12 @@ void setup()
 		loop200hz_id = System.addThread(ABOVENORMAL, 5000, &loop200hz, false);
 	}
 	
-	System.start();
+	System.start(SEQUENTIAL);
 }
 
 void loop()
 {
-	System.run();
+	System.run(RESCHEDULED);
 }
 
 extern "C" int main(void)
