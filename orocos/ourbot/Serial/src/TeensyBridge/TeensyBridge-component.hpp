@@ -34,7 +34,7 @@ class TeensyBridge : public USBInterface
 		mavlink_motor_state_t	_motor_states[4];
 		mavlink_raw_imu_data_t	_raw_imu_data[2];
 		mavlink_debug_t			_debug;
-		mavlink_threadtime_t	_threadtime;
+		//mavlink_threadtime_t	_threadtime;
 		void writeRawDataToPorts();
 
 		// KINEMATIC HANDLERS

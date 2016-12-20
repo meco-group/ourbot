@@ -95,10 +95,10 @@ bool TeensyBridge::action(mavlink_message_t msg)
 			TEENSYBRIDGE_DEBUG_PRINT("IMU raw data message received.")
 			break;}
 
-		case MAVLINK_MSG_ID_THREADTIME:{
+		/*case MAVLINK_MSG_ID_THREADTIME:{
 			mavlink_msg_threadtime_decode(&msg, &_threadtime);
 			TEENSYBRIDGE_DEBUG_PRINT("Threadtime message received.")
-			break;}
+			break;}*/
 
 		case MAVLINK_MSG_ID_HEARTBEAT:{
 			TEENSYBRIDGE_DEBUG_PRINT("Heartbeat message received.")
@@ -109,9 +109,9 @@ bool TeensyBridge::action(mavlink_message_t msg)
 			TEENSYBRIDGE_DEBUG_PRINT("Debug message received.")
 			break;}
 
-		case MAVLINK_MSG_ID_MOTOR_COMMAND:{
+		/*case MAVLINK_MSG_ID_MOTOR_COMMAND:{
 			TEENSYBRIDGE_DEBUG_PRINT("Motor Command message received.")
-			break;}
+			break;}*/
 
 		default:{
 			message_handled = false;
