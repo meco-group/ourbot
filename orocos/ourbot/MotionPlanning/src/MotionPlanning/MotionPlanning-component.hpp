@@ -9,8 +9,6 @@
 class MotionPlanning : public MotionPlanningInterface{
   private:
     omg::Point2Point* _p2p;
-    std::vector<double> _state0;
-    std::vector<double> _stateT;
 
     std::vector<std::vector<double> > _ref_pose;
     std::vector<std::vector<double> > _ref_velocity;

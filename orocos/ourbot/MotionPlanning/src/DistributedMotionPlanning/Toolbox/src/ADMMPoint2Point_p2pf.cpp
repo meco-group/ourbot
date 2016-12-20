@@ -90,8 +90,18 @@ void ADMMPoint2Point::resetTime(){
     iteration = 0;
 }
 
+void ADMMPoint2Point::stepBack(){
+    iteration--;
+    current_time = current_time_prev;
+    current_time_prev = current_time;
+}
+
 int ADMMPoint2Point::getIteration(){
     return iteration;
+}
+
+double ADMMPoint2Point::getCurrentTime(){
+    return current_time;
 }
 
 bool ADMMPoint2Point::update1(vector<double>& condition0, vector<double>& conditionT,
@@ -119,12 +129,14 @@ bool ADMMPoint2Point::update1(vector<double>& condition0, vector<double>& condit
     clock_t begin;
     clock_t end;
     #endif
+    // correct current_time with predict_shift:
+    current_time += predict_shift*sample_time;
     // transform splines: good init guess for this update + required transformation for ADMM updates
     #ifdef DEBUG
     begin = clock();
     #endif
-    transformSplines(current_time);
-    transformSharedSplines(current_time);
+    transformSplines(current_time, current_time_prev);
+    transformSharedSplines(current_time, current_time_prev);
     #ifdef DEBUG
     end = clock();
     tmeas = double(end-begin)/CLOCKS_PER_SEC;
@@ -158,12 +170,16 @@ bool ADMMPoint2Point::update1(vector<double>& condition0, vector<double>& condit
     #ifdef DEBUG
     begin = clock();
     #endif
-    bool check = solveUpdx(obstacles);
+    bool check = solveUpdx(current_time, obstacles);
     #ifdef DEBUG
     end = clock();
     tmeas = double(end-begin)/CLOCKS_PER_SEC;
     cout << "time in solveUpdx: " << tmeas << "s" << endl;
     #endif
+    if (!check){
+        current_time_prev = current_time; // prevent to transform again after infeasible!
+        return false; // user should retry
+    }
     // extra data
     #ifdef DEBUG
     begin = clock();
@@ -187,10 +203,11 @@ bool ADMMPoint2Point::update1(vector<double>& condition0, vector<double>& condit
     x_var = variables_admm["x_i"];
     // update current time
     if (iteration >= init_iter){
+        current_time_prev = current_time;
         current_time += update_time;
     }
     iteration++;
-    return check;
+    return true;
 }
 
 bool ADMMPoint2Point::update2(vector<vector<double>>& x_j_var,
@@ -247,7 +264,7 @@ bool ADMMPoint2Point::update2(vector<vector<double>>& x_j_var,
     return true;
 }
 
-bool ADMMPoint2Point::solveUpdx(vector<obstacle_t>& obstacles){
+bool ADMMPoint2Point::solveUpdx(double current_time, vector<obstacle_t>& obstacles){
     // first set parameters before initVariablesADMM!
     Point2Point::setParameters(obstacles);
     // init variables if first time
@@ -257,20 +274,21 @@ bool ADMMPoint2Point::solveUpdx(vector<obstacle_t>& obstacles){
         // set parameters again with init admm variables
         Point2Point::setParameters(obstacles);
     }
+    Point2Point::updateBounds(current_time, obstacles);
     args["p"] = parameters;
     args["x0"] = variables;
     args["lbg"] = lbg;
     args["ubg"] = ubg;
     sol = updx_problem(args);
     solver_output = string(updx_problem.stats().at("return_status"));
-    vector<double> var(sol.at("x"));
-    for (int k=0; k<n_var; k++){
-        variables[k] = var[k];
-    }
     if (solver_output.compare("Solve_Succeeded") != 0){
         cout << solver_output << endl;
         return false;
     } else{
+        vector<double> var(sol.at("x"));
+        for (int k=0; k<n_var; k++){
+            variables[k] = var[k];
+        }
         return true;
     }
 }
@@ -386,8 +404,10 @@ void ADMMPoint2Point::retrieveSharedVariables(map<string, map<string, vector<dou
 
 }
 
-void ADMMPoint2Point::transformSharedSplines(double current_time){
-	if(((current_time > 0) and fabs(fmod(round(current_time*1000.)/1000., horizon_time/10)) <1.e-6)){
+void ADMMPoint2Point::transformSharedSplines(double current_time, double current_time_prev){
+	int interval_prev = (int)(round((current_time_prev*(vehicle->getKnotIntervals())/horizon_time)*1.e6)/1.e6);
+	int interval_now = (int)(round((current_time*(vehicle->getKnotIntervals())/horizon_time)*1.e6)/1.e6);
+	if(interval_now > interval_prev){
 		vector<double> x_i_tf(variables_admm["x_i"]);
 		vector<double> z_i_tf(variables_admm["z_i"]);
 		vector<double> l_i_tf(variables_admm["l_i"]);

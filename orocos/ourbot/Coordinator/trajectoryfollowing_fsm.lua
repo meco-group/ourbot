@@ -1,5 +1,6 @@
 local tc = rtt.getTC()
 
+local communicator    = tc:getPeer('communicator')
 local controller      = tc:getPeer('controller')
 local estimator       = tc:getPeer('estimator')
 local reference       = tc:getPeer('reference')
@@ -11,6 +12,7 @@ local loadTrajectory               = reference:getOperation("loadTrajectory")
 local estimatorUpdate              = estimator:getOperation("update")
 local referenceUpdate              = reference:getOperation("update")
 local validEstimation              = estimator:getOperation("validEstimation")
+local disablePort                  = communicator:getOperation("disablePort")
 local controllerUpdate             = controller:getOperation("update")
 local estimatorInRunTimeError      = estimator:getOperation("inRunTimeError")
 local controllerInRunTimeError     = controller:getOperation("inRunTimeError")
@@ -41,6 +43,7 @@ return rfsm.state {
 
   init = rfsm.state{
     entry = function(fsm)
+      disablePort(4002) -- disable velocity command via gamepad
       if not io:start() then
         rtt.logl("Error","Could not start io component")
         rfsm.send_events(fsm,'e_failed')

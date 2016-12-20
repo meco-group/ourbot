@@ -20,39 +20,14 @@ local components_to_load = {
 
 -- containers to fill
 local containers_to_fill = {
-  -- io  = {'teensy', 'lidar'}
   io = {'teensy'}
-  -- io = {}
 }
 
 -- ports to report
 local ports_to_report = {
-  -- controller      = {'cmd_velocity_port'},
   estimator       = {'est_pose_port'},
-  reference       = {'ref_pose_port', 'ref_velocity_port'}
-  -- coordinator     = {'controlloop_duration', 'controlloop_jitter'},
-  -- io              = {--'cal_lidar_node_port',
-  --                     -- 'cal_imul_transacc_port',
-  --                     -- 'cal_imul_orientation_3d_port',
-  --                     -- 'cal_imul_orientation_port',
-  --                     -- 'cal_imul_dorientation_3d_port',
-  --                     -- 'cal_imul_dorientation_port',
-  --                     -- 'cal_imur_transacc_port',
-  --                     -- 'cal_imur_orientation_3d_port',
-  --                     -- 'cal_imur_orientation_port',
-  --                     -- 'cal_imur_dorientation_3d_port',
-  --                     -- 'cal_imur_dorientation_port'
-  --                     -- 'cal_lidar_x_port',
-  --                     -- 'cal_lidar_y_port',
-                      -- 'cal_enc_pose_port'
-  --                     -- 'raw_imul_mag_port',
-  --                     -- 'raw_imur_mag_port',
-  --                     -- 'cal_lidar_global_node_port',
-  --                     -- 'cal_motor_current_port',
-                      -- 'cal_motor_voltage_port'
-                      -- 'cal_velocity_port',
-                      -- 'cmd_velocity_passthrough_port'
-                      -- }
+  reference       = {'ref_pose_port', 'ref_velocity_port'},
+  io              = {'cal_velocity_port'}
     --add here componentname = 'portnames'
 }
 
@@ -217,7 +192,7 @@ return rfsm.state {
         -- io
         if components_to_load['teensy'] then
           dp:addPeer('communicator', 'io')
-          if not addIncoming('io', 'cmd_velocity_port', 4002) then rfsm.send_events(fsm, 'e_failed') return end
+          -- if not addIncoming('io', 'cmd_velocity_port', 4002) then rfsm.send_events(fsm, 'e_failed') return end
         end
         -- estimator
         dp:addPeer('communicator', 'estimator')
@@ -227,19 +202,29 @@ return rfsm.state {
         dp:addPeer('communicator', 'motionplanning')
         if not addIncoming('motionplanning', 'obstacle_port', 6070) then rfsm.send_events(fsm, 'e_failed') return end
         if not addIncoming('motionplanning', 'target_pose_port', 6071) then rfsm.send_events(fsm, 'e_failed') return end
+        if not obstacle_mode then
+          if not addIncoming('motionplanning', 'robobs_pose_port', 6000 + robobs_index) then rfsm.send_events(fsm, 'e_failed') return end
+          if not addIncoming('motionplanning', 'robobs_velocity_port', 6010 + robobs_index) then rfsm.send_events(fsm, 'e_failed') return end
+        end
         -- reference
-        -- dp:addPeer('communicator', 'reference')
-        -- if not addOutgoing('reference', 'ref_pose_trajectory_x_tx_port', 6010 + index, emperor) then rfsm.send_events(fsm, 'e_failed') return end
-        -- if not addOutgoing('reference', 'ref_pose_trajectory_y_tx_port', 6020 + index, emperor) then rfsm.send_events(fsm, 'e_failed') return end
+        dp:addPeer('communicator', 'reference')
+        if not addOutgoing('reference', 'ref_pose_trajectory_x_tx_port', 6020 + index, emperor) then rfsm.send_events(fsm, 'e_failed') return end
+        if not addOutgoing('reference', 'ref_pose_trajectory_y_tx_port', 6030 + index, emperor) then rfsm.send_events(fsm, 'e_failed') return end
+
+        if obstacle_mode then
+          if not addOutgoing('estimator', 'est_pose_tx_port', 6000 + index, robots) then rfsm.send_events(fsm, 'e_failed') return end
+          if not addOutgoing('estimator', 'est_velocity_tx_port', 6010 + index, robots) then rfsm.send_events(fsm, 'e_failed') return end
+        end
 
         -- distributed motion planning
         if distributed_mp then
           dp:addPeer('communicator', 'motionplanning')
-          if not addOutgoing('motionplanning', 'x_var_port', 5000 + 10*index, neighbors) then rfsm.send_events(fsm, 'e_failed') return end
           for i=0, nghb_index.size-1 do
+            if not addOutgoing('motionplanning', 'x_var_port', 5000 + 10*index + i, neighbor[i]) then rfsm.send_events(fsm, 'e_failed') return end
+            if not addIncoming('motionplanning', 'x_j_var_port_'..tostring(i), 5000 + 10*nghb_index[i] + (2+i-1)%2) then rfsm.send_events(fsm, 'e_failed') return end
+
             if not addOutgoing('motionplanning', 'zl_ij_var_port_'..tostring(i), 5100 + 10*index + i, neighbor[i]) then rfsm.send_events(fsm, 'e_failed') return end
             if not addIncoming('motionplanning', 'zl_ji_var_port_'..tostring(i), 5100 + 10*nghb_index[i] + (2+i-1)%2) then rfsm.send_events(fsm, 'e_failed') return end
-            if not addIncoming('motionplanning', 'x_j_var_port_'..tostring(i), 5000 + 10*nghb_index[i]) then rfsm.send_events(fsm, 'e_failed') return end
           end
         end
         -- deployer (added as last: highest priority)

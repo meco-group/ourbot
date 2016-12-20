@@ -7,6 +7,9 @@ using namespace std;
 Communicator::Communicator(std::string const& name) : TaskContext(name, PreOperational){
   addOperation("addOutgoing", &Communicator::addOutgoing, this).doc("Adds an outgoing connection.");
   addOperation("addIncoming", &Communicator::addIncoming, this).doc("Adds an incoming connection.");
+  addOperation("removeConnection", &Communicator::removeConnection, this).doc("Remove connection.");
+  addOperation("disablePort", &Communicator::disablePort, this).doc("Disable sending/listening on port.");
+  addOperation("enablePort", &Communicator::disablePort, this).doc("Enable sending/listening on port.");
   addProperty("trusted_hosts", _trusted_hosts).doc("From which hosts should received packets be interpreted.");
 }
 
@@ -102,6 +105,16 @@ bool Communicator::addIncoming(const string& component_name, const string& port_
   return true;
 }
 
+void Communicator::removeConnection(int port_nr){
+  for (uint k=0; k<_connections.size(); k++){
+    if (port_nr == _connections[k]->getPortNr()){
+      _connections[k]->closeConnection();
+      _connections.erase(_connections.begin()+k);
+    }
+  }
+  _sockets.erase(port_nr);
+}
+
 Connection* Communicator::findConnection(int port_nr){
   for (uint k=0; k<_connections.size(); k++){
     if (port_nr == _connections[k]->getPortNr()){
@@ -109,6 +122,16 @@ Connection* Communicator::findConnection(int port_nr){
     }
   }
   return NULL;
+}
+
+void Communicator::disablePort(int port_nr){
+  Connection* con = findConnection(port_nr);
+  con->disable();
+}
+
+void Communicator::enablePort(int port_nr){
+  Connection* con = findConnection(port_nr);
+  con->enable();
 }
 
 bool Communicator::retrieveSocket(Connection* connection, int port_nr){

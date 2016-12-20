@@ -69,4 +69,8 @@
         <description>Calculate covariance matrix Scan matcher</description>
         <value>1</value>
     </simple>
+    <simple name="precision" type="double">
+        <description>//Michiel Precision used to compute artificial lidar</description>
+        <value>1e-3</value>
+    </simple>
 </properties>

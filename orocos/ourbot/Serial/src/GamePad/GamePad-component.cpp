@@ -4,7 +4,7 @@
 
 GamePad::GamePad(std::string const& name):USBInterface(name),
 _gamepad_laxis(2), _gamepad_raxis(2), _cmd_velocity(3), _cmd_velocity_prev(3),
-_enable_velcmd(false), _filter_state(3, 0.0), _filter_bandwidth(2)
+_enable_velcmd(true), _filter_state(3, 0.0), _filter_bandwidth(2)
 {
   ports()->addPort("gamepad_laxis_port", _gamepad_laxis_port).doc("X and Y value for left axis");
   ports()->addPort("gamepad_raxis_port", _gamepad_raxis_port).doc("X and Y value for right axis");

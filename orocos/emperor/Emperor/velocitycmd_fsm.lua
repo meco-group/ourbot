@@ -4,8 +4,6 @@ local gamepad               = tc:getPeer('gamepad')
 local hawkeye               = tc:getPeer('hawkeye')
 local reporter              = tc:getPeer('reporter')
 local snapshot              = reporter:getOperation("snapshot")
-local enablevelcmd          = gamepad:getOperation("enableVelocityCmd")
-local disablevelcmd         = gamepad:getOperation("disableVelocityCmd")
 local gamepadInRunTimeError = gamepad:getOperation("inRunTimeError")
 local hawkeyeInRunTimeError = hawkeye:getOperation("inRunTimeError")
 
@@ -43,7 +41,6 @@ return rfsm.state {
   run   = rfsm.state{
     entry = function(fsm)
       sub_state='run'
-      enablevelcmd()
       print("System started. Abort by using Break (Button B).")
     end,
 
@@ -78,7 +75,6 @@ return rfsm.state {
 
   stop = rfsm.state{
     entry = function(fsm)
-      disablevelcmd()
       sub_state='stop'
       print("System stopped. Waiting on Restart (Button A) or Reset (Button B)...")
     end,

@@ -27,12 +27,13 @@ class Connection {
     protected:
         int _socket;
         int _port_nr;
+        bool _enabled;
         std::vector<std::string> _trusted_hosts;
         std::vector<sockaddr_in> _rem_addresses;
         socklen_t _rem_address_len;
 
     public:
-        Connection(int port_nr){
+        Connection(int port_nr):_enabled(true){
             _rem_address_len = sizeof(sockaddr);
             _port_nr = port_nr;
         }
@@ -125,6 +126,14 @@ class Connection {
             close(_socket);
         }
 
+        void disable(){
+            _enabled = false;
+        }
+
+        void enable(){
+            _enabled = true;
+        }
+
         virtual bool checkPort()=0;
         virtual std::string toString()=0;
 };
@@ -143,9 +152,13 @@ template <class C, typename T=void> class OutgoingConnection : public Connection
         }
 
         bool checkPort(){
+            if (!_enabled){
+                return true;
+            }
             if (_port->read(_data) == RTT::NewData){
+                std::string portname = _port->getName();
                 #ifdef DEBUG
-                std::cout << "sending "  << _data.size()*_size << " bytes to ";
+                std::cout << _port->getName() << ": sending "  << _data.size()*_size << " bytes to ";
                 std::cout << readAddress(_rem_addresses[0]);
                 for (uint k=1; k<_rem_addresses.size(); k++){
                     std::cout << ", " << readAddress(_rem_addresses[k]);
@@ -183,12 +196,15 @@ template <class C> class OutgoingConnection<C, void> : public Connection {
         }
 
         bool checkPort(){
+            if (!_enabled){
+                return true;
+            }
             if (_port->read(_data) == RTT::NewData){
                 #ifdef DEBUG
-                std::cout << "sending "  << sizeof(_data) << " bytes to ";
-                std::cout << readAddress(_rem_addresses[0]);
+                std::cout << _port->getName() << ": sending "  << sizeof(_data) << " bytes to ";
+                std::cout << readAddress(_rem_addresses[0]) << ":" << _port_nr;
                 for (uint k=1; k<_rem_addresses.size(); k++){
-                    std::cout << ", " << readAddress(_rem_addresses[k]);
+                    std::cout << ", " << readAddress(_rem_addresses[k]) << ":" << _port_nr;
                 }
                 std::cout << std::endl;
                 std::cout << _data << std::endl;
@@ -223,13 +239,17 @@ template <class C, typename T=void> class IncomingConnection : public Connection
         }
 
         bool checkPort(){
+            if (!_enabled){
+                return true;
+            }
             _rcv_len = recvfrom(_socket, _buffer, BUFFERSIZE, 0, (struct sockaddr*)&_rcv_address, &_rem_address_len);
             if (_rcv_len > 0 && checkHost(_rcv_address)) {
                 _data.resize(_rcv_len/_size);
                 memcpy(&_data[0], _buffer, _rcv_len);
                 _port->write(_data);
+                std::string portname = _port->getName();
                 #ifdef DEBUG
-                std::cout << "receiving "<< _rcv_len << " bytes from ";
+                std::cout << _port->getName() << ": receiving "  << _rcv_len << " bytes from ";
                 std::cout << readAddress(_rcv_address) << std::endl;
                  std::cout << "[" << _data[0];
                 for (uint k=1; k<_data.size(); k++){
@@ -261,11 +281,14 @@ template <class C> class IncomingConnection<C, void> : public Connection {
         }
 
         bool checkPort(){
+            if (!_enabled){
+                return true;
+            }
             _rcv_len = recvfrom(_socket, &_data, sizeof(_data), 0, (struct sockaddr *)&_rcv_address, &_rem_address_len);
             if (_rcv_len > 0 && checkHost(_rcv_address)) {
                 _port->write(_data);
                 #ifdef DEBUG
-                std::cout << "receiving " << _rcv_len << " bytes from ";
+                std::cout << _port->getName() << ": receiving "  << _rcv_len << " bytes from ";
                 std::cout << readAddress(_rcv_address) << std::endl;
                 std::cout << _data << std::endl;
                 #endif

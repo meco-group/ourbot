@@ -1,11 +1,22 @@
 local tc        = rtt.getTC()
 
+local communicator          = tc:getPeer('communicator')
 local gamepad               = tc:getPeer('gamepad')
 local reporter              = tc:getPeer('reporter')
 local hawkeye               = tc:getPeer('hawkeye')
 local snapshot              = reporter:getOperation("snapshot")
 local gamepadInRunTimeError = gamepad:getOperation("inRunTimeError")
 local hawkeyeInRunTimeError = hawkeye:getOperation("inRunTimeError")
+
+function connectPorts()
+  local addOutgoing = communicator:getOperation("addOutgoing")
+  if not addOutgoing('hawkeye', 'obstacle_port', 6070, robots) then rfsm.send_events(fsm, 'e_failed') return end
+end
+
+function disconnectPorts()
+  local removeConnection = communicator:getOperation("removeConnection")
+  removeConnection(6070)
+end
 
 return rfsm.state {
   rfsm.trans{src = 'initial', tgt = 'idle'},
@@ -27,6 +38,7 @@ return rfsm.state {
 
   init  = rfsm.state{
     entry = function(fsm)
+      connectPorts() -- connect obstacle port
       sub_state='init'
       print("Waiting on Run (Button A)...")
       if (not reporter:start()) then
@@ -82,6 +94,7 @@ return rfsm.state {
   reset = rfsm.state{
     entry = function(fsm)
       reporter:stop()
+      disconnectPorts()
     end,
   },
 

@@ -34,6 +34,7 @@ class EstimatorInterface : public RTT::TaskContext{
     OutputPort<std::vector<double> > _est_velocity_port;
     OutputPort<std::vector<double> > _est_acceleration_port;
     OutputPort<std::vector<double> > _est_pose_tx_port;
+    OutputPort<std::vector<double> > _est_velocity_tx_port;
 
     std::vector<double> _cal_lidar_x;
     std::vector<double> _cal_lidar_y;
@@ -65,12 +66,12 @@ class EstimatorInterface : public RTT::TaskContext{
     double _control_sample_rate;
     int _lidar_data_length;
     bool _valid_estimation;
+    double _transmit_rate;
 
   protected:
     virtual bool estimateUpdate() = 0;
     virtual bool initialize() = 0;
-    bool _transmit_estimate;
-
+    int _transmit_cnt;
     double getControlSampleRate();
     int getLidarDataLength();
 

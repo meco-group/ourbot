@@ -1,6 +1,7 @@
 local tc = rtt.getTC()
 
 -- local scanmatcher   = tc:getPeer('scanmatcher')
+local communicator  = tc:getPeer('communicator')
 local estimator     = tc:getPeer('estimator')
 local reporter      = tc:getPeer('reporter')
 local io            = tc:getPeer('io')
@@ -15,6 +16,16 @@ local snapshot                  = reporter:getOperation("snapshot")
 -- variables for the timing diagnostics
 local jitter    = 0
 local duration  = 0
+
+function connectPorts()
+  local addIncoming = communicator:getOperation("addIncoming")
+  if not addIncoming('io', 'cmd_velocity_port', 4002) then rfsm.send_events(fsm, 'e_failed') return end
+end
+
+function disconnectPorts()
+  local removeConnection = communicator:getOperation("removeConnection")
+  removeConnection(4002)
+end
 
 return rfsm.state {
   rfsm.trans{src = 'initial', tgt = 'idle'},
@@ -35,6 +46,7 @@ return rfsm.state {
 
   init = rfsm.state{
     entry = function(fsm)
+      connectPorts() -- connect gamepad velocity command
       if not io:start() then
         rtt.logl("Error","Could not start io component")
         rfsm.send_events(fsm,'e_failed')
@@ -141,6 +153,7 @@ return rfsm.state {
         rfsm.send_events(fsm,'e_failed')
         return
       end
+      disconnectPorts()
     end,
   }
 }

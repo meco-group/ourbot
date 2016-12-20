@@ -43,8 +43,8 @@ double Kalman::captureTime(){
 bool Kalman::estimateUpdate(){
   _time = captureTime();
   // odometry velocity
+  _cal_velocity = getCalVelocity();
   if (_enable_odo){
-    _cal_velocity = getCalVelocity();
     _kf->observe_odo(_time, _cal_velocity[0], _cal_velocity[1], _cal_velocity[2]);
   }
   // marker measurements
@@ -55,7 +55,6 @@ bool Kalman::estimateUpdate(){
       if (_enable_markers){
         _kf->observe_markers(_marker_time, _Mmeas, _Mref, _sigma_markers);
       }
-      _transmit_estimate = true;
     }
   }
   // _time = captureTime();
@@ -70,8 +69,8 @@ bool Kalman::estimateUpdate(){
   if (_print_cov_det){
     std::cout << "cov det: " << _P.determinant() << std::endl;
   }
-
   setEstPose(_est_pose);
+  setEstVelocity(_cal_velocity);
   return true;
 }
 

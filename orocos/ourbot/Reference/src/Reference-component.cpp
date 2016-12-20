@@ -12,6 +12,10 @@ Reference::Reference(std::string const& name) : TaskContext(name, PreOperational
   ports()->addPort("ref_pose_trajectory_y_port", _ref_pose_trajectory_port[1]).doc("y reference trajectory");
   ports()->addPort("ref_pose_trajectory_t_port", _ref_pose_trajectory_port[2]).doc("theta reference trajectory");
 
+  ports()->addPort("ref_pose_trajectory_ss_x_port", _ref_pose_trajectory_ss_port[0]).doc("subsampled x reference trajectory for whole horizon");
+  ports()->addPort("ref_pose_trajectory_ss_y_port", _ref_pose_trajectory_ss_port[1]).doc("subsampled y reference trajectory for whole horizon");
+  ports()->addPort("ref_pose_trajectory_ss_t_port", _ref_pose_trajectory_ss_port[2]).doc("subsampled t reference trajectory for whole horizon");
+
   ports()->addPort("ref_pose_trajectory_x_tx_port", _ref_pose_trajectory_tx_port[0]).doc("x reference trajectory for tx over wifi");
   ports()->addPort("ref_pose_trajectory_y_tx_port", _ref_pose_trajectory_tx_port[1]).doc("y reference trajectory for tx over wifi");
   ports()->addPort("ref_pose_trajectory_t_tx_port", _ref_pose_trajectory_tx_port[2]).doc("t reference trajectory for tx over wifi");
@@ -29,9 +33,11 @@ Reference::Reference(std::string const& name) : TaskContext(name, PreOperational
 
   addProperty("control_sample_rate", _control_sample_rate).doc("Frequency to update the control loop");
   addProperty("pathupd_sample_rate", _pathupd_sample_rate).doc("Frequency to update the path");
+  addProperty("horizon_time", _horizon_time).doc("Horizon to compute motion trajectory");
   addProperty("trajectory_path", _trajectory_path).doc("Path of offline trajectory");
   addProperty("max_computation_periods", _max_computation_periods).doc("Maximum allowed number of trajectory update periods to make trajectory computations");
   addProperty("repeat_offline_trajectory", _repeat_offline_trajectory).doc("Repeat offline trajectory");
+  addProperty("ref_tx_subsample", _tx_subsample).doc("Subsamples for transmitted reference trajectories");
 
   addOperation("writeSample",&Reference::writeSample, this).doc("Set data sample on output ports");
   addOperation("loadTrajectory",&Reference::loadTrajectory, this).doc("Load offline trajectory");
@@ -56,6 +62,11 @@ bool Reference::configureHook(){
   // compute trajectory length
   _update_length = int(_control_sample_rate/_pathupd_sample_rate);
   _trajectory_length = (_max_computation_periods+1)*_update_length;
+  _trajectory_length_tx = 0;
+  int trajectory_length_full = int((_horizon_time-1./_pathupd_sample_rate)*_control_sample_rate);
+  for (int i=0; i<trajectory_length_full; i+=_tx_subsample){
+    _trajectory_length_tx++;
+  }
   // reserve required memory and initialize with zeros
   for(int i=0;i<3;i++){
     _cur_ref_pose_trajectory[i].resize(_trajectory_length);
@@ -63,6 +74,8 @@ bool Reference::configureHook(){
 
     _nxt_ref_pose_trajectory[i].resize(_trajectory_length);
     _nxt_ref_velocity_trajectory[i].resize(_trajectory_length);
+
+    _ref_pose_trajectory_ss[i].resize(_trajectory_length_tx);
   }
   // show example data sample to ports to make data flow real-time
   std::vector<double> example(3, 0.0);
@@ -225,10 +238,7 @@ void Reference::updateHook(){
         _new_data = false;
         if (mpValid()){
           loadTrajectories();
-          // put on tx port
-          for (int i=0; i<3; i++){
-            _ref_pose_trajectory_tx_port[i].write(_cur_ref_pose_trajectory[i]);
-          }
+          updateTxTrajectory();
         } else {
           // re-trigger mp to try again
           triggerMotionPlanning();
@@ -274,6 +284,14 @@ void Reference::updateHook(){
 void Reference::triggerMotionPlanning(){
   _mp_trigger_data[3] = _index2;
   _mp_trigger_port.write(_mp_trigger_data);
+}
+
+void Reference::updateTxTrajectory(){
+  for (int i=0; i<3; i++){
+    if (_ref_pose_trajectory_ss_port[i].read(_ref_pose_trajectory_ss[i]) == RTT::NewData){
+      _ref_pose_trajectory_tx_port[i].write(_ref_pose_trajectory_ss[i]);
+    }
+  }
 }
 
 void Reference::writeRefSample(){

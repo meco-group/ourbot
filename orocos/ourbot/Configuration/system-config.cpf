@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE properties SYSTEM "cpf.dtd">
 <properties>
+  <simple name="obstacle_mode" type="boolean">
+    <description>Robot is acting as a moving obstacle</description>
+    <value>0</value>
+  </simple>
+  <simple name="robobs_index" type="long">
+    <description>Index of obstacle-acting robot</description>
+    <value>0</value>
+  </simple>
+
   <simple name="print_level" type="long">
     <description>Level of output printing</description>
     <value>2</value>
@@ -37,6 +46,15 @@
   <simple name="reporter_sample_rate" type="double">
     <description>Frequency to take snapshots for the reporter</description>
     <value>100.</value>
+  </simple>
+
+  <simple name="ref_tx_subsample" type="long">
+    <description>Subsamples for transmitted reference trajectories</description>
+    <value>50</value>
+  </simple>
+  <simple name="horizon_time" type="double">
+    <description>Horizon to compute motion trajectory</description>
+    <value>10.</value>
   </simple>
 
   <simple name="max_computation_periods" type="long">

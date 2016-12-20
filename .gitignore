@@ -7,9 +7,9 @@ orocos/*/*/build/
 orocos/*/*/lib/
 orocos/emperor/HawkEye/images/*
 !orocos/emperor/HawkEye/images/templates
-orocos/ourbot/MotionPlanning/src/*/Toolbox/bin/
-orocos/ourbot/MotionPlanning/src/*/Toolbox/obj/
-orocos/ourbot/MotionPlanning/src/*/Toolbox/test/
+orocos/ourbot/MotionPlanning/src/*/Toolbox/bin
+orocos/ourbot/MotionPlanning/src/*/Toolbox/obj
+orocos/ourbot/MotionPlanning/src/*/Toolbox/test
 todo
 *.nc
 *.log
@@ -17,6 +17,7 @@ todo
 *~
 **/*~
 *.o
+*.so
 *.pyc
 orocos/setup.bash
 orocos/setup.sh
