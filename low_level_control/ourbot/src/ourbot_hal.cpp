@@ -1,10 +1,10 @@
 #include "ourbot_hal.h"
 
-#define HBRIDGE0_ENCA_PIN   0
-#define HBRIDGE0_ENCB_PIN   1
+#define HBRIDGE0_ENCA_PIN   1
+#define HBRIDGE0_ENCB_PIN   0
 #define HBRIDGE0_ENC_ID     10
-#define HBRIDGE1_ENCA_PIN   7 
-#define HBRIDGE1_ENCB_PIN   8
+#define HBRIDGE1_ENCA_PIN   8 
+#define HBRIDGE1_ENCB_PIN   7
 #define HBRIDGE1_ENC_ID     11
 #define HBRIDGE2_ENCA_PIN   19
 #define HBRIDGE2_ENCB_PIN   18
