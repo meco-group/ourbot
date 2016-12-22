@@ -167,6 +167,7 @@ bool Camera::setResolution(const std::vector<int>& resolution){
 }
 
 bool Camera::setBrightness(int brightness){
+    std::cout << "brightness: " << brightness << std::endl;
     if (brightness < 0 || brightness > 40){
         log(Error) << "Brighness should lie between 0 and 40!" << endlog();
         return false;
@@ -241,11 +242,15 @@ bool Camera::capture(cv::Mat& frame, double& capture_time){
         return false;
     }
     double t1 = captureTime();
+    std::cout << "here1" << std::endl;
     capture_time = t0 + _capture_time_mod*(t1-t0);
     cv::Mat frame_rgb(cv::Size(_resolution[0]/2, _resolution[1]/2), CV_8UC3);
+    std::cout << "here2" << std::endl;
     convertToRGB(reinterpret_cast<uint16_t*>(_cam_buffer), frame_rgb.data, _resolution[0], _resolution[1]);
+    std::cout << "here33" << std::endl;
     // undistort image
-    cv::undistort(frame_rgb, frame, _camera_matrix, _distortion_vector);
+    // cv::undistort(frame_rgb, frame, _camera_matrix, _distortion_vector);
+    frame_rgb.copyTo(frame);
     // reset buffer
     buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     buffer.memory = V4L2_MEMORY_MMAP;
@@ -254,24 +259,32 @@ bool Camera::capture(cv::Mat& frame, double& capture_time){
         log(Error) << "Error while querying buffer!" << endlog();
         return false;
     }
+    std::cout << "here3" << std::endl;
     return true;
 }
 
 void Camera::convertToRGB(uint16_t* bayer, uint8_t* rgb, int width, int height){
     // convert 10bit raw to RGB
+    std::cout << "w: " << width << ", h: " << height << std::endl;
     uint16_t blue_16, green_16, red_16;
     uint8_t blue, green, red;
     for (int x=0; x<width; x+=2){
         for (int y=0; y<height; y+=2){
+            std::cout << "x: " << x << ", y: " << y << std::endl;
             // get colors from raw matrix
+            std::cout << "h1" << std::endl;
             blue_16 = bayer[x + width*y];
+            std::cout << "h2" << std::endl;
             green_16 = bayer[x+1 + width*y];
+            std::cout << "h3" << std::endl;
             red_16 = bayer[x+1 + width*(y+1)];
+            std::cout << "h4" << std::endl;
             // clip
             blue = (uint8_t)((blue_16>0xff)?0xff:blue_16);
             green = (uint8_t)((green_16>0xff)?0xff:green_16);
             red = (uint8_t)((red_16>0xff)?0xff:red_16);
             // assign to rgb matrix
+            std::cout << 3*(x/2+width*y/4)+0 << "," << 3*(x/2+width*y/4)+1 << "," << 3*(x/2+width*y/4)+2 << std::endl;
             rgb[3*(x/2+width*y/4)+0] = blue;
             rgb[3*(x/2+width*y/4)+1] = green;
             rgb[3*(x/2+width*y/4)+2] = red;

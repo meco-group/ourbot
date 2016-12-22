@@ -220,7 +220,7 @@
         </simple>
     </struct> -->
 
-    <struct name="distortion_cfs" type="array">
+<!--     <struct name="distortion_cfs" type="array">
         <description>Coefficients of distortion vector (k1, k2, p1, p2, k3)</description>
         <simple name="k1" type="double">
           <value>-0.24578872043193228e</value>
@@ -238,8 +238,8 @@
           <value>-0.0030273284362257961</value>
         </simple>
     </struct>
-
-<!--     <struct name="distortion_cfs" type="array">
+ -->
+    <struct name="distortion_cfs" type="array">
         <description>Coefficients of distortion vector (k1, k2, p1, p2, k3)</description>
         <simple name="k1" type="double">
           <value>-0.15532428084649783</value>
@@ -256,7 +256,7 @@
         <simple name="k3" type="double">
           <value>-0.0043247578401430509</value>
         </simple>
-    </struct> -->
+    </struct>
 
     <simple name="max_detectable_obstacles" type="long">
         <description>Maximum number of detectable obstacles</description>
@@ -265,8 +265,8 @@
 
     <simple name="image_path" type="string">
         <description>Path where images are stored</description>
-        <value>./HawkEye/images/</value>
-        <!-- <value>./images/</value> -->
+        <!-- <value>./HawkEye/images/</value> -->
+        <value>./images/</value>
     </simple>
 
     <struct name="gui_resolution" type="ints">
