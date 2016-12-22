@@ -13,6 +13,3 @@ he.setPeriod(0.2)
 he.configure
 he.start
 
-he.stop
-
-he.start

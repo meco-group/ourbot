@@ -230,8 +230,8 @@
 
     <simple name="image_path" type="string">
         <description>Path where images are stored</description>
-        <value>./HawkEye/images/</value>
-        <!-- <value>./images/</value> -->
+        <!-- <value>./HawkEye/images/</value> -->
+        <value>./images/</value>
     </simple>
 
     <struct name="gui_resolution" type="ints">
