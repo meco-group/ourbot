@@ -28,13 +28,11 @@ class Camera {
         std::string _video_port_name;
         std::vector<int> _resolution;
         int _brightness;
-        int _exposure;
-        int _iso;
         cv::Mat _camera_matrix;
         cv::Mat _distortion_vector;
         uint8_t* _cam_buffer;
         double _capture_time_mod;
-
+        double _crop_ratio;
 
         void buildMatrices(const std::vector<double>& camera_cfs, const std::vector<double>& distortion_cfs);
         int xioctl(int fd, int request, void *arg);
@@ -43,8 +41,8 @@ class Camera {
         void convertToRGB(uint16_t* bayer, uint8_t* rgb, int width, int height);
 
     public:
-        Camera(const std::string& video_port_name, const std::vector<int>& resolution, int brightness, int exposure, int iso,
-                const std::vector<double>& camera_cfs, const std::vector<double>& distortion_cfs, double capture_time_mod);
+        Camera(const std::string& video_port_name, const std::vector<int>& resolution, int brightness,
+                const std::vector<double>& camera_cfs, const std::vector<double>& distortion_cfs, double capture_time_mod, double crop_ratio);
         bool start(bool print_info);
         bool setResolution(const std::vector<int>& resolution);
         bool setBrightness(int brightness);

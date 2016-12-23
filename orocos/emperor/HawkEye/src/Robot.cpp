@@ -1,26 +1,12 @@
 #include "Robot.hpp"
 
-Robot::Robot(const std::string& name, const std::vector<cv::Mat>& top_markers,
-    const std::vector<double>& local_marker_locations_m, int width, int height):
-    _pose(3), _name(name), _top_markers(top_markers),
-    _local_marker_locations_m (local_marker_locations_m), _width(width), _height(height){
+Robot::Robot(int width, int height, std::vector<double>& local_marker_locations_m):
+_width(width), _height(height), _local_marker_locations_m(local_marker_locations_m){
     reset();
 }
 
 void Robot::reset(){
     _detected = false;
-}
-
-std::string Robot::getName(){
-    return _name;
-}
-
-void Robot::getTopMarkers(std::vector<cv::Mat>& top_markers){
-  top_markers = _top_markers;
-}
-
-double Robot::getBottomTopDistance(){
-  return sqrt(pow(_local_marker_locations_m[0]-_local_marker_locations_m[4], 2) + pow(_local_marker_locations_m[1]-_local_marker_locations_m[5], 2));
 }
 
 bool Robot::detected(){
@@ -34,9 +20,9 @@ void Robot::setMarkers(const std::vector<int>& marker_locations_px){
 }
 
 void Robot::createBox(){
-    int x1 = _global_marker_locations_px[4];
+    int x1 = _global_marker_locations_px[4]; // top
     int y1 = _global_marker_locations_px[5];
-    int x2 = _global_marker_locations_px[0];
+    int x2 = _global_marker_locations_px[0]; // bottom
     int y2 = _global_marker_locations_px[1];
     int x3 = _global_marker_locations_px[2];
     int y3 = _global_marker_locations_px[3];
@@ -50,6 +36,11 @@ void Robot::createBox(){
     }
     double x_bottom_px = 0.5*(x2+x3);
     double y_bottom_px = 0.5*(y2+y3);
+
+    // double dist_top_bottom = sqrt(pow(x1-x_bot_mid, 2) + pow(y1-y_bot_mid, 2));
+    // double center_x = x_bot_mid + 0.5*dist_top_bottom*cos(orientation);
+    // double center_y = y_bot_mid + 0.5*dist_top_bottom*sin(orientation);
+
     double x_bottom_m = 0.5*(_local_marker_locations_m[0]+_local_marker_locations_m[2]);
     double y_bottom_m = 0.5*(_local_marker_locations_m[1]+_local_marker_locations_m[3]);
 
@@ -95,27 +86,28 @@ void Robot::setRef(const std::vector<double>& ref_x, const std::vector<double>& 
 
 void Robot::draw(cv::Mat& frame, const cv::Scalar& color, int pixelspermeter){
   // // markers
-  // cv::Point2f center;
-  // for (int i=0; i<3; i++){
-  //   cv::circle(frame, cv::Point2f(_global_marker_locations_px[2*i], _global_marker_locations_px[2*i+1]), 10, color, 2);
-  // }
+  cv::Point2f center;
+  for (int i=0; i<2; i++){
+    cv::circle(frame, cv::Point2f(_global_marker_locations_px[2*i], _global_marker_locations_px[2*i+1]), 2, color, -1);
+  }
+  cv::circle(frame, cv::Point2f(_global_marker_locations_px[4], _global_marker_locations_px[5]), 2, cv::Scalar(0,0,255), -1);
   // box
   cv::Point2f vertices[4];
   _box.points(vertices);
   for (int i=0; i<4; i++){
     cv::line(frame, vertices[i], vertices[(i+1)%4], color, 2);
   }
-  // // pose
-  // std::vector<double> point1(2), point2(2);
-  // double orientation = _pose[2];
-  // point1[0] = _pose[0];
-  // point1[1] = _pose[1];
-  // point2[0] = point1[0] + 0.1*cos(orientation);
-  // point2[1] = point1[1] + 0.1*sin(orientation);
-  // point1 = invtransform(point1, pixelspermeter, frame.size().height);
-  // point2 = invtransform(point2, pixelspermeter, frame.size().height);
-  // cv::circle(frame, cv::Point2f(point1[0], point1[1]), 5, color, -3);
-  // cv::line(frame, cv::Point2f(point1[0], point1[1]), cv::Point2f(point2[0], point2[1]), color, 3);
+  // pose
+  std::vector<double> point1(2), point2(2);
+  double orientation = _pose[2];
+  point1[0] = _pose[0];
+  point1[1] = _pose[1];
+  point2[0] = point1[0] + 0.1*cos(orientation);
+  point2[1] = point1[1] + 0.1*sin(orientation);
+  point1 = invtransform(point1, pixelspermeter, frame.size().height);
+  point2 = invtransform(point2, pixelspermeter, frame.size().height);
+  cv::circle(frame, cv::Point2f(point1[0], point1[1]), 5, color, -3);
+  cv::line(frame, cv::Point2f(point1[0], point1[1]), cv::Point2f(point2[0], point2[1]), color, 3);
   // reference
   cv::Scalar color_w;
   mixWithWhite(color, color_w, 50);

@@ -19,10 +19,10 @@
   <struct name="state_fb_par" type="array">
     <description>State feedback parameters: kx, ky, kt</description>
     <simple name="kx" type="double">
-      <value>1</value>
+      <value>1.5</value>
     </simple>
     <simple name="ky" type="double">
-      <value>1</value>
+      <value>1.5</value>
     </simple>
     <simple name="kt" type="double">
       <value>1.5</value>

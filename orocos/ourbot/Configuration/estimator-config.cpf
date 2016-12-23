@@ -48,30 +48,53 @@
 
   <simple name="transmit_rate" type="long">
     <description>Frequency to transmit estimate</description>
-    <value>10</value>
+    <value>20</value>
   </simple>
 
   <struct name="marker_locations" type="array">
     <description>Location of markers in local frame [x1, y1, x2, y2, x3, y3] (m)</description>
     <simple name="x1" type="double">
-      <value>-0.018</value>
+        <value>-0.018</value>
     </simple>
     <simple name="y1" type="double">
-      <value>-0.075</value>
+        <value>-0.08</value>
     </simple>
     <simple name="x2" type="double">
-      <value>-0.018</value>
+        <value>-0.018</value>
     </simple>
     <simple name="y2" type="double">
-      <value>0.075</value>
+        <value>0.08</value>
     </simple>
     <simple name="x3" type="double">
-      <value>0.078</value>
+        <value>0.082</value>
     </simple>
     <simple name="y3" type="double">
-      <value>0.0</value>
+        <value>0.0</value>
     </simple>
   </struct>
+
+  <!-- laser cut -->
+<!--   <struct name="marker_locations" type="array">
+    <description>Location of markers in local frame [x1, y1, x2, y2, x3, y3] (m)</description>
+    <simple name="x1" type="double">
+        <value>-0.0145</value>
+    </simple>
+    <simple name="y1" type="double">
+        <value>-0.082</value>
+    </simple>
+    <simple name="x2" type="double">
+        <value>-0.0145</value>
+    </simple>
+    <simple name="y2" type="double">
+        <value>0.082</value>
+    </simple>
+    <simple name="x3" type="double">
+        <value>0.0855</value>
+    </simple>
+    <simple name="y3" type="double">
+        <value>0.0</value>
+    </simple>
+  </struct> -->
 
   <simple name="max_cov_det" type="double">
     <description>Maximum allowed covariance determinant</description>

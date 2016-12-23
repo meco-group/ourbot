@@ -20,8 +20,12 @@ vehicle.set_initial_conditions([0.3, 0.3])
 vehicle.set_terminal_conditions([3., 1.5])
 
 # create environment
-width = 4.0
-height = 2.25
+# width = 4.0
+# height = 2.25
+
+width = 4.61
+height = 2.59
+
 environment = Environment(room={'shape': Rectangle(width, height), 'position': [0.5*width, 0.5*height]})
 rectangle = Rectangle(width=0.25, height=0.5)
 

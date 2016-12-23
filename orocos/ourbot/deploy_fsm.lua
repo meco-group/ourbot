@@ -25,9 +25,9 @@ local containers_to_fill = {
 
 -- ports to report
 local ports_to_report = {
-  estimator       = {'est_pose_port'},
-  reference       = {'ref_pose_port', 'ref_velocity_port'},
-  io              = {'cal_velocity_port'}
+  estimator       = {'est_pose_port'}
+  -- reference       = {'ref_pose_port', 'ref_velocity_port'},
+  -- io              = {'cal_velocity_port'}
     --add here componentname = 'portnames'
 }
 
@@ -197,7 +197,7 @@ return rfsm.state {
         -- estimator
         dp:addPeer('communicator', 'estimator')
         if not addIncoming('estimator', 'markers_port', 6050 + index) then rfsm.send_events(fsm, 'e_failed') return end
-        -- if not addOutgoing('estimator', 'est_pose_tx_port', 6000 + index, emperor) then rfsm.send_events(fsm, 'e_failed') return end
+        if not addOutgoing('estimator', 'est_pose_tx_port', 6000 + index, emperor) then rfsm.send_events(fsm, 'e_failed') return end
         -- motion planning
         dp:addPeer('communicator', 'motionplanning')
         if not addIncoming('motionplanning', 'obstacle_port', 6070) then rfsm.send_events(fsm, 'e_failed') return end

@@ -1,6 +1,6 @@
 import sys, os
 
-directory = os.getcwd()+'/images3/'
+directory = os.getcwd()+'/images4/'
 print directory
 print os.listdir(directory)
 
