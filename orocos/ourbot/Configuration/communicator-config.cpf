@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "cpf.dtd">
+<properties>
+  <simple name="iface" type="string">
+    <description>Interface for communication.</description>
+    <value>wlan0</value>
+  </simple>
+  <simple name="portnr" type="long">
+    <description>Port number to send discovery beacons on.</description>
+    <value>200012</value>
+  </simple>
+  <simple name="verbose" type="long">
+    <description>Verbosity of debug info.</description>
+    <value>3</value>
+  </simple>
+</properties>

@@ -44,16 +44,20 @@ class MotionPlanningInterface : public RTT::TaskContext{
     int _failure_cnt;
     bool _first_iteration;
     bool _valid;
+    double _omega;
+    int _trajectory_length_tx;
+    std::vector<std::vector<double> > _ref_pose_trajectory_ss;
 
   protected:
     virtual bool trajectoryUpdate() = 0;
     virtual bool initialize() = 0;
     virtual bool config() = 0;
     virtual bool targetReached();
-    std::vector<obstacle_t> _obstacles;
+    void interpolateOrientation(std::vector<double>& theta_trajectory, std::vector<double>& omega_trajectory);
 
+    InputPort<std::vector<double> > _est_pose_port;
+    std::vector<obstacle_t> _obstacles;
     int _trajectory_length;
-    int _trajectory_length_tx;
     int _trajectory_length_full;
     int _tx_subsample;
     int _update_length;
@@ -68,7 +72,6 @@ class MotionPlanningInterface : public RTT::TaskContext{
     std::vector<double> _obstacle_data;
     std::vector<std::vector<double> > _ref_pose_trajectory;
     std::vector<std::vector<double> > _ref_velocity_trajectory;
-    std::vector<std::vector<double> > _ref_pose_trajectory_ss;
     bool _ideal_prediction;
     int _n_obs;
 
@@ -83,5 +86,6 @@ class MotionPlanningInterface : public RTT::TaskContext{
     bool valid();
     void enable();
     void disable();
+    virtual std::vector<double> setConfiguration(int number_of_robots);
 };
 #endif

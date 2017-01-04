@@ -10,6 +10,7 @@ local teensy        = tc:getPeer('teensy')
 local estimatorUpdate           = estimator:getOperation("update")
 local estimatorInRunTimeError   = estimator:getOperation("inRunTimeError")
 -- local scanmatcherInRunTimeError = scanmatcher:getOperation("inRunTimeError")
+local softVelocityControl       = teensy:getOperation("softVelocityControl")
 local snapshot                  = reporter:getOperation("snapshot")
 
 -- variables for the timing diagnostics
@@ -17,32 +18,47 @@ local jitter    = 0
 local duration  = 0
 
 function connectPorts()
-  if not communicator:addIncomingConnection('io', 'cmd_velocity_port', 'cmd_velocity') then rfsm.send_events(fsm, 'e_failed') return end
+  local addConnection = components.communicator:getOperation("addConnection")
+  if not addConnection('io', 'cmd_velocity_port', 'cmd_velocity') then rfsm.send_events(fsm, 'e_failed') return end
 end
 
 function disconnectPorts()
-  communicator:removeConnection('io', 'cmd_velocity_port', 'cmd_velocity')
+  local removeConnection = components.communicator:getOperation("removeConnection")
+  removeConnection('io', 'cmd_velocity_port', 'cmd_velocity')
 end
 
 return rfsm.state {
-  rfsm.trans{src = 'initial', tgt = 'init'},
-  rfsm.trans{src = 'init',    tgt = 'run',    events = {'e_done'}},
-  rfsm.trans{src = 'init',    tgt = 'stop',   events = {'e_stop'}},
+  rfsm.trans{src = 'initial', tgt = 'idle'},
+  rfsm.trans{src = 'idle',    tgt = 'init',   events = {'e_init'}},
+  rfsm.trans{src = 'init',    tgt = 'run',    events = {'e_run'}},
   rfsm.trans{src = 'run',     tgt = 'stop',   events = {'e_stop'}},
-  rfsm.trans{src = 'stop',    tgt = 'init',   events = {'e_restart'}},
-  rfsm.trans{src = 'stop',    tgt = 'idle',   events = {'e_reset'}},
+  rfsm.trans{src = 'stop',    tgt = 'run',    events = {'e_restart'}},  -- no reinitiliaziation
+  rfsm.trans{src = 'stop',    tgt = 'reset',  events = {'e_reset'}},    -- with reinitialization
+  rfsm.trans{src = 'reset',   tgt = 'idle',   events = {'e_done'}},
 
   initial = rfsm.conn{},
 
+  idle = rfsm.state{
+    entry=function()
+      print("Waiting on Initialize...")
+    end
+  },
+
   init = rfsm.state{
     entry = function(fsm)
-      print("Initializing...")
       connectPorts() -- connect gamepad velocity command
       if not io:start() then
         rtt.logl("Error","Could not start io component")
         rfsm.send_events(fsm,'e_failed')
         return
       end
+      softVelocityControl()
+      print("Waiting on Run...")
+    end
+  },
+
+  run = rfsm.state{
+    entry = function(fsm)
       -- if not scanmatcher:start() then
       --   rtt.logl("Error","Could not start scanmatcher component")
       --   rfsm.send_events(fsm,'e_failed')
@@ -58,13 +74,7 @@ return rfsm.state {
         rfsm.send_events(fsm,'e_failed')
         return
       end
-      teensy:softVelocityControl()
-    end
-  },
-
-  run = rfsm.state{
-    entry = function(fsm)
-      print "Let's roll..."
+      print("System started. Abort by using Break.")
     end,
 
     doo = function(fsm)
@@ -132,11 +142,18 @@ return rfsm.state {
       -- scanmatcher:stop()
       estimator:stop()
       reporter:stop()
-      io:stop()
-      disconnectPorts()
       print("System stopped. Waiting on Restart or Reset...")
     end,
   },
 
-  idle = rfsm.state{},
+  reset = rfsm.state{
+    entry = function(fsm)
+      if not io:stop() then
+        rtt.logl("Error","Could not stop io component")
+        rfsm.send_events(fsm,'e_failed')
+        return
+      end
+      disconnectPorts()
+    end,
+  }
 }

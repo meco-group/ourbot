@@ -3,26 +3,133 @@
 #include "DistributedMotionPlanning-component.hpp"
 #include <rtt/Component.hpp>
 #include <iostream>
+#include <algorithm>
 
 using namespace std;
 
 DistributedMotionPlanning::DistributedMotionPlanning(std::string const& name) : MotionPlanningInterface(name),
-_target_reached(false), _residuals(3), _rel_pos_c(2){
+_target_reached(false), _n_nghb(2), _neighbors(2), _residuals(3), _rel_pos_c(2){
 
+  ports()->addPort("negotiate_out_port", _negotiate_out_port).doc("negotiation port out");
+  ports()->addPort("negotiate_in_port", _negotiate_in_port).doc("negotiation port in");
   ports()->addPort("x_var_port", _x_var_port).doc("x var port");
-  for (int k=0; k<2; k++){
+  for (int k=0; k<_n_nghb; k++){
     ports()->addPort("zl_ij_var_port_" + to_string(k), _zl_ij_var_port[k]);
     ports()->addPort("x_j_var_port_" + to_string(k), _x_j_var_port[k]);
     ports()->addPort("zl_ji_var_port_" + to_string(k), _zl_ji_var_port[k]);
   }
 
-  addProperty("nghb_index", _nghb_index).doc("Index numbers of neighbouring agents");
-  addProperty("rel_pos_c", _rel_pos_c).doc("Relative pose wrt fleet center");
+  addProperty("configuration_x", _configuration_x).doc("x coordinates relative to fleet center");
+  addProperty("configuration_y", _configuration_y).doc("y coordinates relative to fleet center");
+  // addProperty("nghb_index", _nghb_index).doc("Index numbers of neighbouring agents");
   addProperty("init_iter", _init_iter).doc("Number of initial ADMM iterations");
   addProperty("rho", _rho).doc("Penalty factor for ADMM");
 
   addOperation("setRelPoseC", &DistributedMotionPlanning::setRelPoseC, this).doc("Set rel_pos_c");
   addOperation("writeSample", &DistributedMotionPlanning::writeSample, this).doc("Write sample");
+}
+
+std::vector<double> DistributedMotionPlanning::setConfiguration(int number_of_robots){
+  TaskContext* communicator = getPeer("communicator");
+  if (communicator == NULL){
+    log(Error) << "Could not find component communicator." << endlog();
+    error();
+  }
+  OperationCaller<std::string(void)> getHost = communicator->getOperation("getHost");
+  OperationCaller<std::string(const std::string&, const std::string&, const std::string&)> getSender = communicator->getOperation("getSender");
+  OperationCaller<std::string(const std::string&, const std::string&, const std::string&, const std::string&)> addOutgoingConnection = communicator->getOperation("addOutgoingConnection");
+  OperationCaller<std::string(const std::string&, const std::string&, const std::string&)> addIncomingConnection = communicator->getOperation("addIncomingConnection");
+  OperationCaller<std::string(const std::string&, const std::string&, const std::string&)> removeConnection = communicator->getOperation("removeConnection");
+
+  if (!getHost.ready()){
+    log(Error) << "Could not find communicator.getHost operation!" << endlog();
+    error();
+  }
+  if (!getSender.ready()){
+    log(Error) << "Could not find communicator.getSender operation!" << endlog();
+    error();
+  }
+  if (!addOutgoingConnection.ready()){
+    log(Error) << "Could not find communicator.addOutgoingConnection operation!" << endlog();
+    error();
+  }
+  if (!addIncomingConnection.ready()){
+    log(Error) << "Could not find communicator.addIncomingConnection operation!" << endlog();
+    error();
+  }
+  if (!removeConnection.ready()){
+    log(Error) << "Could not find communicator.removeConnection operation!" << endlog();
+    error();
+  }
+  std::string host = getHost();
+  // receive everyone's position
+  std::vector<double> est_pose(3);
+  std::vector<std::vector<double> > pos_robots(number_of_robots);
+  std::vector<std::string> robots(number_of_robots);
+  std::vector<int> indices;
+  _est_pose_port.read(est_pose);
+  _negotiate_out_port.write(est_pose);
+  pos_robots[0] = est_pose;
+  robots[0] = host;
+  for (int k=1; k<number_of_robots; k++){
+    while (_negotiate_in_port.read(pos_robots[k]) != RTT::NewData); // connection should be buffered!!
+    robots[k] = getSender("distrmotionplanning", "negotiate_in_port", "negotiate");
+    indices[k] = k;
+  }
+  // build configuration vector
+  std::vector<std::vector<double>> configuration(number_of_robots, std::vector<double>(2));
+  for (int k=0; k<number_of_robots; k++){
+    configuration[k][0] = _configuration_x[k];
+    configuration[k][1] = _configuration_y[k];
+  }
+  // determine optimal midpoint and robot permutation
+  std::vector<double> pose0(3, 0);
+  std::vector<double> ind0(number_of_robots);
+  double residual = 10000000000;
+  do {
+    std::vector<double> pose0_tmp(2);
+    for (int k=0; k<number_of_robots; k++){
+      pose0_tmp[0] += (1./number_of_robots)*(pos_robots[indices[k]][0] - configuration[k][0]);
+      pose0_tmp[1] += (1./number_of_robots)*(pos_robots[indices[k]][1] - configuration[k][1]);
+    }
+    double res = 0;
+    for (int k=0; k<number_of_robots; k++){
+      res += pow(pos_robots[indices[k]][0] - pose0_tmp[0] - configuration[k][0], 2);
+      res += pow(pos_robots[indices[k]][1] - pose0_tmp[1] - configuration[k][1], 2);
+    }
+    if (res < residual){
+      pose0[0] = pose0_tmp[0];
+      pose0[1] = pose0_tmp[1];
+      for (int k=0; k<number_of_robots; k++){
+        ind0[k] = indices[k];
+      }
+    }
+  } while(std::next_permutation(indices.begin(),indices.end()));
+  int host_index = 0;
+  for (int k=0; k<number_of_robots; k++){
+    if (ind0[k] == 0){
+      host_index = k;
+      break;
+    }
+  }
+  _rel_pos_c = configuration[host_index];
+  // remove possible previous connections
+  for (int k=0; k<_n_nghb; k++){
+    removeConnection("distrmotionplanning", "x_var_port", "x_var_" + host);
+    removeConnection("distrmotionplanning", "zl_ij_var_port_" + std::to_string(k), "zl_var_" + host);
+    removeConnection("distrmotionplanning", "x_j_var_port_" + std::to_string(k), "x_var_" + _neighbors[k]);
+    removeConnection("distrmotionplanning", "zl_ji_var_port_" + std::to_string(k), "zl_var_" + _neighbors[k]);
+  }
+  // add new connections
+  _neighbors[0] = robots[ind0[(number_of_robots+host_index+1)%number_of_robots]];
+  _neighbors[1] = robots[ind0[(number_of_robots+host_index-1)%number_of_robots]];
+  for (int k=0; k<_n_nghb; k++){
+    addOutgoingConnection("distrmotionplanning", "x_var_port", "x_var_" + host, _neighbors[k]);
+    addOutgoingConnection("distrmotionplanning", "zl_ij_var_port_" + std::to_string(k), "zl_var_" + host, _neighbors[k]);
+    addIncomingConnection("distrmotionplanning", "x_j_var_port_" + std::to_string(k), "x_var_" + _neighbors[k]);
+    addIncomingConnection("distrmotionplanning", "zl_ji_var_port_" + std::to_string(k), "zl_var_" + _neighbors[k]);
+  }
+  return pose0;
 }
 
 void DistributedMotionPlanning::writeSample(){
@@ -39,16 +146,17 @@ bool DistributedMotionPlanning::config(){
   if (_ideal_prediction){
     vehicle->setIdealPrediction(true);
   }
+  _n_st = vehicle->getNState();
+  _n_in = vehicle->getNInput();
   _problem = new omgf::FormationPoint2Point(vehicle, _update_time, _sample_time, _horizon_time, _trajectory_length_full, _init_iter, _rho);
   _obstacles.resize(_problem->n_obs);
   _ref_pose.resize(_trajectory_length_full);
   _ref_velocity.resize(_trajectory_length_full);
   for(int k=0; k<_trajectory_length_full; k++){
-    _ref_pose[k].resize(2);
-    _ref_velocity[k].resize(2);
+    _ref_pose[k].resize(_n_st);
+    _ref_velocity[k].resize(_n_in);
   }
   _n_obs = _problem->n_obs;
-  _n_nghb = _nghb_index.size();
   _n_shared = _problem->n_shared;
   _x_var.resize(_n_shared);
   _x_j_var.resize(_n_nghb);
@@ -164,15 +272,15 @@ bool DistributedMotionPlanning::admmIteration(bool initial){
   _x_var_port.write(_x_p_var);
   // in the meantime, extract trajectories
   for (int k=0; k<_trajectory_length; k++){
-    for (int j=0; j<2; j++){
-      _ref_velocity_trajectory[j][k] = _ref_velocity[k][j];
+    for (int j=0; j<_n_st; j++){
       _ref_pose_trajectory[j][k] = _ref_pose[k][j];
     }
-  }
-  for (int k=0; k<_trajectory_length_tx; k++){
-    for (int j=0; j<2; j++){
-      _ref_pose_trajectory_ss[j][k] = _ref_pose[k*_tx_subsample][j];
+    for (int j=0; j<_n_in; j++){
+      _ref_velocity_trajectory[j][k] = _ref_velocity[k][j];
     }
+  }
+  if (_n_st == 2){
+    interpolateOrientation(_ref_pose_trajectory[2], _ref_velocity_trajectory[2]);
   }
   #ifdef DEBUG
   time_elapsed = TimeService::Instance()->secondsSince(_timestamp);

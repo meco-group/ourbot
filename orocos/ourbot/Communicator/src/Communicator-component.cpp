@@ -5,37 +5,233 @@
 using namespace std;
 
 Communicator::Communicator(std::string const& name) : TaskContext(name, PreOperational){
-  addOperation("addOutgoing", &Communicator::addOutgoing, this).doc("Adds an outgoing connection.");
-  addOperation("addIncoming", &Communicator::addIncoming, this).doc("Adds an incoming connection.");
+  addOperation("addOutgoingConnection", &Communicator::addOutgoingConnection, this).doc("Add outgoing connection");
+  addOperation("addIncomingConnection", &Communicator::addIncomingConnection, this).doc("Add incoming connection");
+  addOperation("addBufferedIncomingConnection", &Communicator::addBufferedIncomingConnection, this).doc("Add buffered incoming connection");
   addOperation("removeConnection", &Communicator::removeConnection, this).doc("Remove connection.");
-  addOperation("disablePort", &Communicator::disablePort, this).doc("Disable sending/listening on port.");
-  addOperation("enablePort", &Communicator::disablePort, this).doc("Enable sending/listening on port.");
-  addProperty("trusted_hosts", _trusted_hosts).doc("From which hosts should received packets be interpreted.");
+  addOperation("joinGroup", &Communicator::joinGroup, this).doc("Join a communication group.");
+  addOperation("leaveGroup", &Communicator::leaveGroup, this).doc("Leave a communication group.");
+  addOperation("getGroupSize", &Communicator::getGroupSize, this).doc("Get size of a communication group.");
+  addOperation("getSender", &Communicator::getSender, this).doc("Get sender of last message on connection.");
+  addOperation("getHost", &Communicator::getHost, this).doc("Get name of this host.");
+  addOperation("setHost", &Communicator::setHost, this).doc("Set name of this host.");
+  addOperation("disable", &Communicator::disable, this).doc("Disable connection.");
+  addOperation("enable", &Communicator::enable, this).doc("Enable connection.");
+  addOperation("wait", &Communicator::wait, this).doc("Wait a (milli)sec.");
+
+  addProperty("iface", _iface).doc("Interface for communication.");
+  addProperty("portnr", _portnr).doc("Port number to send discovery beacons on.");
+  addProperty("host", _host).doc("Name of this host.");
+  addProperty("verbose", _verbose).doc("Verbosity of debug info.");
 }
 
 bool Communicator::configureHook(){
-  for (uint k=0; k<_connections.size(); k++){
-    _connections[k]->setTrustedHosts(_trusted_hosts);
+  if (!createNode()){
+    log(Error) << "Error while creating zyre node." << endlog();
+    return false;
+  }
+  if (!joinGroups()){
+    log(Error) << "Error while joining groups." << endlog();
+    return false;
   }
   return true;
 }
 
 void Communicator::updateHook(){
+  TimeService::ticks timestamp = TimeService::Instance()->getTicks();
   for (uint k=0; k<_connections.size(); k++){
-    if (!_connections[k]->checkPort()){
-      log(Error) << "Error in checking " << _connections[k]->toString() << endlog();
+    if (!_connections[k]->speak()){
+      log(Error) << "Error in speaking of " << _connections[k]->toString() << endlog();
       error();
     }
+  }
+  // listing to incoming messages
+  if (!listen()){
+    error();
+  }
+  if (_verbose >= 4){
+    Seconds time_elapsed = TimeService::Instance()->secondsSince(timestamp);
+    std::cout << "Communication update took " << time_elapsed << " s" << std::endl;
   }
 }
 
 void Communicator::cleanupHook(){
-  for (uint k=0; k<_connections.size(); k++){
-    _connections[k]->closeConnection();
+  std::vector<std::string> groups;
+  getMyGroups(groups);
+  for (uint k=0; k<groups.size(); k++){
+    leaveGroup(groups[k]);
+  }
+  zyre_stop(_node);
+  zyre_destroy(&_node);
+}
+
+bool Communicator::isInput(Port port){
+  if (dynamic_cast<RTT::base::InputPortInterface*>(port) == NULL){
+    return false;
+  }
+  return true;
+}
+
+bool Communicator::createNode(){
+  std::cout << "here1" << std::endl;
+  _node = zyre_new(_host.c_str());
+  std::cout << "here2" << std::endl;
+  if (_verbose >= 3){
+    zyre_set_verbose(_node);
+  }
+  std::cout << "here3" << std::endl;
+  zyre_set_port(_node, _portnr);
+  std::cout << "here4" << std::endl;
+  zyre_set_interface(_node, _iface.c_str());
+  std::cout << "here5" << std::endl;
+  if (zyre_start(_node) != 0){
+      return false;
+  }
+  std::cout << "here6" << std::endl;
+  zclock_sleep(250);
+  std::cout << "here7" << std::endl;
+  _poller = zpoller_new(zyre_socket(_node));
+  std::cout << "here8" << std::endl;
+  return true;
+}
+
+bool Communicator::joinGroups(){
+  if (!joinGroup(_host)){
+    return false;
+  }
+  if (!joinGroup("all")){
+    return false;
+  }
+  if (!streq(_host.c_str(), "emperor")){
+    if (!joinGroup("ourbots")){
+      return false;
+    }
+  }
+  return true;
+}
+
+bool Communicator::joinGroup(const std::string& group){
+  if (zyre_join(_node, group.c_str())){
+    return false;
+  }
+  addGroup(group, _host);
+  return true;
+}
+
+bool Communicator::leaveGroup(const std::string& group){
+  if (zyre_leave(_node, group.c_str())){
+    return false;
+  }
+  removeGroup(group, _host);
+  return true;
+}
+
+void Communicator::addGroup(const std::string& group, const std::string& peer){
+  if (_groups.find(group) == _groups.end()){
+    _groups[group] = {peer};
+  } else {
+    if (std::find(_groups[group].begin(), _groups[group].end(), peer) == _groups[group].end()){
+      _groups[group].push_back(peer);
+    }
   }
 }
 
-bool Communicator::addOutgoing(const string& component_name, const string& port_name, int port_nr, const vector<string>& remote_addresses){
+void Communicator::removeGroup(const std::string& group, const std::string& peer){
+  if (_groups.find(group) == _groups.end()){
+    return;
+  }
+  _groups[group].erase(std::remove(_groups[group].begin(), _groups[group].end(), peer), _groups[group].end());
+  if (_groups[group].empty()){
+    _groups.erase(group);
+  }
+}
+
+void Communicator::getMyGroups(std::vector<std::string>& groups){
+  groups.resize(0);
+  std::string group;
+  std::vector<std::string> peers;
+  for (std::map<std::string,std::vector<std::string>>::iterator iter=_groups.begin(); iter!=_groups.end(); ++iter){
+    group = iter->first;
+    peers = iter->second;
+    if (std::find(peers.begin(), peers.end(), _host) != peers.end()){
+      groups.push_back(group);
+    }
+  }
+}
+
+int Communicator::getGroupSize(const std::string& group){
+  if (_groups.find(group) == _groups.end()){
+    return 0;
+  }
+  else {
+    return _groups[group].size();
+  }
+}
+
+bool Communicator::listen(){
+  void* which;
+  while(true){
+    which = zpoller_wait(_poller, 0);
+    if (which != zyre_socket(_node)){
+      break;
+    }
+    if (which == NULL){ // pipe is empty
+      return true;
+    }
+    _event = zyre_event_new(_node);
+    const char* command = zyre_event_type(_event);
+    if (streq(command, "JOIN")){
+      std::string group = std::string(zyre_event_group(_event));
+      std::string peer = std::string(zyre_event_peer_name(_event));
+      addGroup(group, peer);
+      #ifdef DEBUG
+      std::cout << peer << " joined " << group << "." << std::endl;
+      #endif
+    }
+    if (streq(command, "LEAVE")){
+      std::string group = std::string(zyre_event_group(_event));
+      std::string peer = std::string(zyre_event_peer_name(_event));
+      removeGroup(group, peer);
+      #ifdef DEBUG
+      std::cout << peer << " left " << group << "." << std::endl;
+      #endif
+    }
+    if (streq(command, "SHOUT")){
+      zmsg_t* msg = zyre_event_msg(_event);
+      if (msg == NULL){
+          log(Error) << "Received message is NULL." << endlog();
+          return false;
+      }
+      std::string peer = std::string(zyre_event_peer_name(_event));
+      zframe_t* header_frame = zmsg_first(msg);
+      zframe_t* data_frame = zmsg_next(msg);
+      char* header = (char*)zframe_data(header_frame);
+      for (uint k=0; k<_connections.size(); k++){
+        if(!_connections[k]->receive(header, data_frame, peer)){
+          log(Error) << "Error while receiving in " << _connections[k]->toString() << endlog();
+          return false;
+        }
+      }
+      zmsg_destroy(&msg);
+    }
+  }
+  return true;
+}
+
+std::string Communicator::getSender(const string& component_name, const string& port_name, const string& id){
+  Connection* connection = _con_map[component_name+port_name+id];
+  return connection->getSender();
+}
+
+std::string Communicator::getHost(){
+  return _host;
+}
+
+void Communicator::setHost(const string& host){
+  _host = host;
+}
+
+Port Communicator::clonePort(const string& component_name, const string& port_name, ConnPolicy& policy){
   TaskContext* component = getPeer(component_name);
   if (component == NULL){
     log(Error) << "Could not find component " << component_name << "." << endlog();
@@ -46,192 +242,171 @@ bool Communicator::addOutgoing(const string& component_name, const string& port_
     log(Error) << "Could not find port " << port_name << " of " << component_name << "." << endlog();
     return false;
   }
-  Port anti_port;
+  Port anti_port = this->getPort(port_name);
+  if (anti_port == NULL){
+    anti_port = port->antiClone();
+    addPort(port_name, *anti_port);
+    port->connectTo(anti_port, policy);
+  }
+  return anti_port;
+}
+
+bool Communicator::addOutgoingConnection(const string& component_name, const string& port_name, const string& id, const string& group){
   Connection* connection;
-  if (getPort(port_name) == NULL){
-    anti_port = port->antiClone();
-    addPort(port_name, *anti_port);
+  if (_con_map.find(component_name+port_name+id) != _con_map.end()){
+    connection = _con_map[component_name+port_name+id];
+    connection->addGroup(group);
+  } else {
+    ConnPolicy policy = RTT::ConnPolicy::data();
+    Port anti_port = clonePort(component_name, port_name, policy);
+    connection = getOutgoingConnection(anti_port, _node, id, group);
+    connection->setVerbose(_verbose);
   }
-  else if ((connection=findConnection(port_nr)) != NULL){ // just add extra send addresses
-    return connection->addRemoteAddresses(remote_addresses);
-  }
-  else {
-    anti_port = getPort(port_name);
-  }
-  port->connectTo(anti_port);
-  connection = getOutgoingConnection(anti_port, port_nr, remote_addresses);
   if (connection == NULL){
     log(Error) << "Type of port is not known!" << endlog();
     return false;
   }
   _connections.push_back(connection);
-  connection->setTrustedHosts(_trusted_hosts);
-  if (!retrieveSocket(connection, port_nr)){
-    return false;
-  }
+  _con_map[component_name+port_name+id] = connection;
   return true;
 }
 
-bool Communicator::addIncoming(const string& component_name, const string& port_name, int port_nr){
-  TaskContext* component = getPeer(component_name);
-  if (component == NULL){
-    log(Error) << "Could not find component " << component_name << "." << endlog();
-    return false;
+bool Communicator::addIncomingConnection(const string& component_name, const string& port_name, const string& id){
+  Connection* connection;
+  if (_con_map.find(component_name+port_name+id) != _con_map.end()){
+    connection = _con_map[component_name+port_name+id];
+  } else {
+    ConnPolicy policy = RTT::ConnPolicy::data();
+    Port anti_port = clonePort(component_name, port_name, policy);
+    connection = getIncomingConnection(anti_port, _node, id);
+    connection->setVerbose(_verbose);
   }
-  Port port = component->getPort(port_name);
-  if (port == NULL){
-    log(Error) << "Could not find port " << port_name << " of " << component_name << "." << endlog();
-    return false;
-  }
-  Port anti_port;
-  if (getPort(port_name) == NULL){
-    anti_port = port->antiClone();
-    addPort(port_name, *anti_port);
-  }
-  else {
-    anti_port = getPort(port_name);
-  }
-  port->connectTo(anti_port);
-  Connection* connection = getIncomingConnection(anti_port, port_nr);
   if (connection == NULL){
     log(Error) << "Type of port is not known!" << endlog();
     return false;
   }
   _connections.push_back(connection);
-  connection->setTrustedHosts(_trusted_hosts);
-  if(!retrieveSocket(connection, port_nr)){
+  _con_map[component_name+port_name+id] = connection;
+  return true;
+}
+
+bool Communicator::addBufferedIncomingConnection(const string& component_name, const string& port_name, const string& id, int buffer_size){
+  Connection* connection;
+  if (_con_map.find(component_name+port_name+id) != _con_map.end()){
+    connection = _con_map[component_name+port_name+id];
+  } else {
+    ConnPolicy policy = RTT::ConnPolicy::buffer(buffer_size);
+    Port anti_port = clonePort(component_name, port_name, policy);
+    connection = getIncomingConnection(anti_port, _node, id);
+  }
+  if (connection == NULL){
+    log(Error) << "Type of port is not known!" << endlog();
     return false;
   }
+  _connections.push_back(connection);
+  _con_map[component_name+port_name+id] = connection;
   return true;
 }
 
-void Communicator::removeConnection(int port_nr){
-  for (uint k=0; k<_connections.size(); k++){
-    if (port_nr == _connections[k]->getPortNr()){
-      _connections[k]->closeConnection();
-      _connections.erase(_connections.begin()+k);
-    }
-  }
-  _sockets.erase(port_nr);
+void Communicator::removeConnection(const string& component_name, const string& port_name, const string& id){
+  Connection* connection = _con_map[component_name+port_name+id];
+  _connections.erase(std::remove(_connections.begin(), _connections.end(), connection), _connections.end());
+  _con_map.erase(component_name+port_name+id);
 }
 
-Connection* Communicator::findConnection(int port_nr){
-  for (uint k=0; k<_connections.size(); k++){
-    if (port_nr == _connections[k]->getPortNr()){
-      return _connections[k];
-    }
-  }
+void Communicator::disable(const string& component_name, const string& port_name, const string& id){
+  Connection* connection = _con_map[component_name+port_name+id];
+  connection->disable();
+}
+
+void Communicator::enable(const string& component_name, const string& port_name, const string& id){
+  Connection* connection = _con_map[component_name+port_name+id];
+  connection->enable();
+}
+
+void Communicator::wait(int ms){
+  zclock_sleep(ms);
+}
+
+Connection* Communicator::getIncomingConnection(Port port, zyre_t* node, const string& id){
+  string type = port->getTypeInfo()->getTypeName();
+  if (type.compare("char") == 0)
+    return new IncomingConnection <char> (port, node, id);
+  if (type.compare("unsigned char") == 0)
+    return new IncomingConnection <unsigned char> (port, node, id);
+  if (type.compare("signed char") == 0)
+    return new IncomingConnection <signed char> (port, node, id);
+  if (type.compare("int") == 0)
+    return new IncomingConnection <int> (port, node, id);
+  if (type.compare("unsigned int") == 0)
+    return new IncomingConnection <unsigned int> (port, node, id);
+  if (type.compare("signed int") == 0)
+    return new IncomingConnection <signed int> (port, node, id);
+  if (type.compare("short int") == 0)
+    return new IncomingConnection <short int> (port, node, id);
+  if (type.compare("unsigned short int") == 0)
+    return new IncomingConnection <unsigned short int> (port, node, id);
+  if (type.compare("signed short int") == 0)
+    return new IncomingConnection <signed short int> (port, node, id);
+  if (type.compare("long int") == 0)
+    return new IncomingConnection <long int> (port, node, id);
+  if (type.compare("signed long int") == 0)
+    return new IncomingConnection <signed long int> (port, node, id);
+  if (type.compare("unsigned long int") == 0)
+    return new IncomingConnection <unsigned long int> (port, node, id);
+  if (type.compare("float") == 0)
+    return new IncomingConnection <float> (port, node, id);
+  if (type.compare("double") == 0)
+    return new IncomingConnection <double> (port, node, id);
+  if (type.compare("long double") == 0)
+    return new IncomingConnection <long double> (port, node, id);
+  if (type.compare("wchar_t") == 0)
+    return new IncomingConnection <wchar_t> (port, node, id);
+  if (type.compare("string") == 0)
+    return new IncomingConnection <string, char> (port, node, id);
+  if (type.compare("array") == 0)
+    return new IncomingConnection <vector<double>, double > (port, node, id);
   return NULL;
 }
 
-void Communicator::disablePort(int port_nr){
-  Connection* con = findConnection(port_nr);
-  con->disable();
-}
-
-void Communicator::enablePort(int port_nr){
-  Connection* con = findConnection(port_nr);
-  con->enable();
-}
-
-bool Communicator::retrieveSocket(Connection* connection, int port_nr){
-  int socket_nr;
-  if(_sockets.find(port_nr) == _sockets.end()){
-    if(!connection->createSocket(socket_nr)){
-      log(Error) << "Could not create socket!" << endlog();
-      return false;
-    }
-  }
-  else{
-    socket_nr = _sockets[port_nr];
-    if(!connection->setSocket(socket_nr)){
-      log(Error) << "Could not set socket " << socket_nr << endlog();
-      return false;
-    }
-  }
-  _sockets[port_nr] = socket_nr;
-  return true;
-}
-
-Connection* Communicator::getIncomingConnection(Port port, int port_nr){
+Connection* Communicator::getOutgoingConnection(Port port, zyre_t* node, const string& id, const string& group){
   string type = port->getTypeInfo()->getTypeName();
   if (type.compare("char") == 0)
-    return new IncomingConnection <char> (port, port_nr);
+    return new OutgoingConnection <char> (port, node, id, group);
   if (type.compare("unsigned char") == 0)
-    return new IncomingConnection <unsigned char> (port, port_nr);
+    return new OutgoingConnection <unsigned char> (port, node, id, group);
   if (type.compare("signed char") == 0)
-    return new IncomingConnection <signed char> (port, port_nr);
+    return new OutgoingConnection <signed char> (port, node, id, group);
   if (type.compare("int") == 0)
-    return new IncomingConnection <int> (port, port_nr);
+    return new OutgoingConnection <int> (port, node, id, group);
   if (type.compare("unsigned int") == 0)
-    return new IncomingConnection <unsigned int> (port, port_nr);
+    return new OutgoingConnection <unsigned int> (port, node, id, group);
   if (type.compare("signed int") == 0)
-    return new IncomingConnection <signed int> (port, port_nr);
+    return new OutgoingConnection <signed int> (port, node, id, group);
   if (type.compare("short int") == 0)
-    return new IncomingConnection <short int> (port, port_nr);
+    return new OutgoingConnection <short int> (port, node, id, group);
   if (type.compare("unsigned short int") == 0)
-    return new IncomingConnection <unsigned short int> (port, port_nr);
+    return new OutgoingConnection <unsigned short int> (port, node, id, group);
   if (type.compare("signed short int") == 0)
-    return new IncomingConnection <signed short int> (port, port_nr);
+    return new OutgoingConnection <signed short int> (port, node, id, group);
   if (type.compare("long int") == 0)
-    return new IncomingConnection <long int> (port, port_nr);
+    return new OutgoingConnection <long int> (port, node, id, group);
   if (type.compare("signed long int") == 0)
-    return new IncomingConnection <signed long int> (port, port_nr);
+    return new OutgoingConnection <signed long int> (port, node, id, group);
   if (type.compare("unsigned long int") == 0)
-    return new IncomingConnection <unsigned long int> (port, port_nr);
+    return new OutgoingConnection <unsigned long int> (port, node, id, group);
   if (type.compare("float") == 0)
-    return new IncomingConnection <float> (port, port_nr);
+    return new OutgoingConnection <float> (port, node, id, group);
   if (type.compare("double") == 0)
-    return new IncomingConnection <double> (port, port_nr);
+    return new OutgoingConnection <double> (port, node, id, group);
   if (type.compare("long double") == 0)
-    return new IncomingConnection <long double> (port, port_nr);
+    return new OutgoingConnection <long double> (port, node, id, group);
   if (type.compare("wchar_t") == 0)
-    return new IncomingConnection <wchar_t> (port, port_nr);
+    return new OutgoingConnection <wchar_t> (port, node, id, group);
   if (type.compare("string") == 0)
-    return new IncomingConnection <string, char> (port, port_nr);
+    return new OutgoingConnection <string, char> (port, node, id, group);
   if (type.compare("array") == 0)
-    return new IncomingConnection <vector<double>, double > (port, port_nr);
-  return NULL;
-}
-
-Connection* Communicator::getOutgoingConnection(Port port, int port_nr, const vector<string>& remote_addresses){
-  string type = port->getTypeInfo()->getTypeName();
-  if (type.compare("char") == 0)
-    return new OutgoingConnection <char> (port, port_nr, remote_addresses);
-  if (type.compare("unsigned char") == 0)
-    return new OutgoingConnection <unsigned char> (port, port_nr, remote_addresses);
-  if (type.compare("signed char") == 0)
-    return new OutgoingConnection <signed char> (port, port_nr, remote_addresses);
-  if (type.compare("int") == 0)
-    return new OutgoingConnection <int> (port, port_nr, remote_addresses);
-  if (type.compare("unsigned int") == 0)
-    return new OutgoingConnection <unsigned int> (port, port_nr, remote_addresses);
-  if (type.compare("signed int") == 0)
-    return new OutgoingConnection <signed int> (port, port_nr, remote_addresses);
-  if (type.compare("short int") == 0)
-    return new OutgoingConnection <short int> (port, port_nr, remote_addresses);
-  if (type.compare("unsigned short int") == 0)
-    return new OutgoingConnection <unsigned short int> (port, port_nr, remote_addresses);
-  if (type.compare("signed short int") == 0)
-    return new OutgoingConnection <signed short int> (port, port_nr, remote_addresses);
-  if (type.compare("long int") == 0)
-    return new OutgoingConnection <long int> (port, port_nr, remote_addresses);
-  if (type.compare("signed long int") == 0)
-    return new OutgoingConnection <signed long int> (port, port_nr, remote_addresses);
-  if (type.compare("unsigned long int") == 0)
-    return new OutgoingConnection <unsigned long int> (port, port_nr, remote_addresses);
-  if (type.compare("float") == 0)
-    return new OutgoingConnection <float> (port, port_nr, remote_addresses);
-  if (type.compare("double") == 0)
-    return new OutgoingConnection <double> (port, port_nr, remote_addresses);
-  if (type.compare("long double") == 0)
-    return new OutgoingConnection <long double> (port, port_nr, remote_addresses);
-  if (type.compare("wchar_t") == 0)
-    return new OutgoingConnection <wchar_t> (port, port_nr, remote_addresses);
-  if (type.compare("string") == 0)
-    return new OutgoingConnection <string, char> (port, port_nr, remote_addresses);
-  if (type.compare("array") == 0)
-    return new OutgoingConnection <vector<double>, double > (port, port_nr, remote_addresses);
+    return new OutgoingConnection <vector<double>, double > (port, node, id, group);
   return NULL;
 }
 

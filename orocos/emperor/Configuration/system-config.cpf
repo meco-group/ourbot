@@ -26,6 +26,11 @@
     <value>10.</value>
   </simple>
 
+  <simple name="host" type="string">
+    <description>Name of this host.</description>
+    <value>emperor</value>
+  </simple>
+
   <struct name="trusted_hosts" type="strings">
     <description>From which hosts should received packets be interpreted</description>
     <simple name="dave" type="string">

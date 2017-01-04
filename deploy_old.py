@@ -77,7 +77,38 @@ def send_files(ftp, ssh, loc_files, rem_files, fancy_print=False):
         print ''
 
 
-def modify_host_config(host):
+def get_ip():
+    arg = 'ip route list'
+    p = subprocess.Popen(arg, shell=True, stdout=subprocess.PIPE)
+    data = p.communicate()
+    sdata = data[0].split()
+    for k, word in enumerate(sdata):
+        if (word == 'src'):
+            if sdata[k+1].startswith('192.168.11'):
+                return sdata[k+1]
+    return '0.0.0.0'
+
+
+def modify_emperor_config():
+    # modify system-config
+    file = os.path.join(
+        current_dir, 'orocos/emperor/Configuration/system-config.cpf')
+    tree = et.parse(file)
+    root = tree.getroot()
+    for elem in root.findall('struct'):
+        if elem.attrib['name'] == 'trusted_hosts':
+            for e in elem.findall('simple'):
+                if e.attrib['name'] == 'emperor':
+                    e.find('value').text = get_ip()
+    f = open(file, 'w')
+    f.seek(0)
+    f.truncate()
+    f.write('<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE properties SYSTEM "cpf.dtd">\n')
+    tree.write(f)
+    f.close()
+
+
+def modify_host_config(host, distributed_mp=False):
     local_files, remote_files = [], []
     # modify system-config
     local_files.append(os.path.join(
@@ -86,20 +117,76 @@ def modify_host_config(host):
         remote_root, 'Configuration/system-config.cpf'))
     tree = et.parse(local_files[-1])
     root = tree.getroot()
+    index = addresses.keys().index(host)
+    for elem in root.findall('struct'):
+        if elem.attrib['name'] == 'trusted_hosts':
+            for e in elem.findall('simple'):
+                if e.attrib['name'] == 'emperor':
+                    e.find('value').text = get_ip()
     for elem in root.findall('simple'):
         if elem.attrib['name'] == 'host':
             elem.find('value').text = host
+        if elem.attrib['name'] == 'index':
+            elem.find('value').text = str(index)
         if host == obstacle:
             if elem.attrib['name'] == 'obstacle_mode':
                 elem.find('value').text = str(1)
+        elif obstacle is not None:
+            if elem.attrib['name'] == 'robobs_index':
+                elem.find('value').text = str(addresses.keys().index(obstacle))
+    if distributed_mp:
+        N = len(coop_hosts)
+        for elem in root.findall('simple'):
+            if elem.attrib['name'] == 'distributed_mp':
+                elem.find('value').text = 'true'
+            if elem.attrib['name'] == 'motionplanning':
+                elem.find('value').text = 'DistributedMotionPlanning'
+        # set neighbors
+        neighbors = [coop_hosts[(N+index+1) % N], coop_hosts[(N+index-1) % N]]
+        for elem in root.findall('struct'):
+            if elem.attrib['name'] == 'neighbors':
+                for e in elem.findall('simple'):
+                    if e.attrib['name'] == 'neighbor0':
+                        e.find('value').text = addresses[neighbors[0]]
+                    if e.attrib['name'] == 'neighbor1':
+                        e.find('value').text = addresses[neighbors[1]]
+            if elem.attrib['name'] == 'nghb_index':
+                for e in elem.findall('simple'):
+                    if e.attrib['name'] == 'neighbor0':
+                        e.find('value').text = str(indices[neighbors[0]])
+                    if e.attrib['name'] == 'neighbor1':
+                        e.find('value').text = str(indices[neighbors[1]])
     file = open(local_files[-1]+'_', 'w')
     file.write('<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE properties SYSTEM "cpf.dtd">\n')
     tree.write(file)
     file.close()
+    if distributed_mp:
+        # modify motionplanning-config file
+        local_files.append(os.path.join(
+            current_dir, 'orocos/ourbot/Configuration/motionplanning-config.cpf'))
+        remote_files.append(os.path.join(
+            remote_root, 'Configuration/motionplanning-config.cpf'))
+        tree = et.parse(local_files[-1])
+        root = tree.getroot()
+        for elem in root.findall('struct'):
+            if elem.attrib['name'] == 'rel_pos_c':
+                for e in elem.findall('simple'):
+                    if e.attrib['name'] == 'Element0':
+                        e.find('value').text = str(configuration[host][0])
+                        # e.find('value').text = str(radius*np.cos(index*2*np.pi/N))
+                    if e.attrib['name'] == 'Element1':
+                        e.find('value').text = str(configuration[host][1])
+                        # e.find('value').text = str(radius*np.sin(index*2*np.pi/N))
+        file = open(local_files[-1]+'_', 'w')
+        file.write('<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE properties SYSTEM "cpf.dtd">\n')
+        tree.write(file)
+        file.close()
     return [lf+'_' for lf in local_files], remote_files
 
 
-def write_settings():
+def write_settings(distributed_mp):
+    # modify emperor's config files
+    modify_emperor_config()
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     for host in hosts:
@@ -111,7 +198,7 @@ def write_settings():
             local_files.append(os.path.join(current_dir+'/orocos/ourbot', file))
             remote_files.append(os.path.join(remote_root, file))
         # modify host's config files
-        local_files_mod, remote_files_mod = modify_host_config(host)
+        local_files_mod, remote_files_mod = modify_host_config(host, distributed_mp)
         # open ssh connection
         ssh.connect(addresses[host], username=username, password=password)
         ftp = ssh.open_sftp()
@@ -126,7 +213,8 @@ def write_settings():
 
 
 def deploy(hosts):
-    write_settings()
+    distributed_mp = False if (len(coop_hosts) == 1) else True
+    write_settings(distributed_mp)
     command = ['gnome-terminal']
     for host in hosts:
         address = addresses[host]

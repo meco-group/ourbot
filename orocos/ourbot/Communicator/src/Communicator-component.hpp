@@ -4,32 +4,60 @@
 #include <rtt/RTT.hpp>
 #include <rtt/Port.hpp>
 #include "Connection.hpp"
+#include <zyre.h>
+#include <rtt/os/TimeService.hpp>
+#include <rtt/Time.hpp>
 
 using namespace RTT;
+using namespace RTT::os;
 
+typedef base::PortInterface* Port;
+typedef base::PortInterface* Port;
 typedef base::PortInterface* Port;
 
 class Communicator : public RTT::TaskContext{
   private:
-    std::map<int, int> _sockets;
-    std::vector<Connection*> _connections;
-    std::vector<std::string> _trusted_hosts;
+    std::string _iface;
+    int _portnr;
+    std::string _host;
+    zyre_t* _node;
+    zpoller_t* _poller;
+    zyre_event_t* _event;
+    int _verbose;
 
-    Connection* getIncomingConnection(Port port, int port_nr);
-    Connection* getOutgoingConnection(Port port, int port_nr, const std::vector<std::string>& remote_addresses);
-    bool retrieveSocket(Connection* connection, int port_nr);
-    Connection* findConnection(int port_nr);
+    std::vector<Connection*> _connections;
+    std::map<std::string, Connection*> _con_map;
+    std::map<std::string, std::vector<std::string>> _groups;
+
+    bool isInput(Port port);
+    bool createNode();
+    bool joinGroups();
+    void addGroup(const std::string& group, const std::string& peer);
+    void removeGroup(const std::string& group, const std::string& peer);
+    void getMyGroups(std::vector<std::string>& groups);
+    bool listen();
+    Port clonePort(const string& component_name, const string& port_name, ConnPolicy& policy);
+    Connection* getIncomingConnection(Port port, zyre_t* node, const string& id);
+    Connection* getOutgoingConnection(Port port, zyre_t* node, const string& id, const string& group);
 
   public:
     Communicator(std::string const& name);
     void updateHook();
     bool configureHook();
     void cleanupHook();
-    bool addOutgoing(const std::string& component_name, const std::string& port_name, int port_nr, const std::vector<std::string>& remote_address);
-    bool addIncoming(const std::string& component_name, const std::string& port_name, int port_nr);
-    void removeConnection(int port_nr);
-    void disablePort(int port_nr);
-    void enablePort(int port_nr);
+    bool addOutgoingConnection(const std::string& component_name, const std::string& port_name, const std::string& id, const std::string& group);
+    bool addIncomingConnection(const std::string& component_name, const std::string& port_name, const std::string& id);
+    bool addBufferedIncomingConnection(const string& component_name, const string& port_name, const string& id, int buffer_size);
+    void removeConnection(const std::string& component_name, const std::string& port_name, const std::string& id);
+    void enable(const std::string& component_name, const std::string& port_name, const std::string& identifier);
+    void disable(const std::string& component_name, const std::string& port_name, const std::string& identifier);
+    void wait(int ms);
+    bool joinGroup(const std::string& group);
+    bool leaveGroup(const std::string& group);
+    int getGroupSize(const std::string& group);
+    std::string getSender(const string& component_name, const string& port_name, const string& id);
+    std::string getHost();
+    void setHost(const string& host);
 };
 
 #endif

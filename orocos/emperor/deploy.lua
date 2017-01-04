@@ -11,14 +11,14 @@ _velocitycmd_type       = rtt.Property("string","velocitycmd","VelocityCommand c
 _velcmd_sample_rate     = rtt.Property("double","velcmd_sample_rate","Frequency to update velocity commander")
 _emperor_sample_rate    = rtt.Property("double","emperor_sample_rate","Frequency to update communicator")
 _hawkeye_sample_rate    = rtt.Property("double","hawkeye_sample_rate","Frequency to update hawkeye")
-_trusted_hosts          = rtt.Property("strings","trusted_hosts","Ip's of trusted hosts")
+_host                   = rtt.Property("string","host","Name of host")
 
 tc:addProperty(_print_level)
 tc:addProperty(_velcmd_sample_rate)
 tc:addProperty(_velocitycmd_type)
 tc:addProperty(_emperor_sample_rate)
 tc:addProperty(_hawkeye_sample_rate)
-tc:addProperty(_trusted_hosts)
+tc:addProperty(_host)
 
 -- ports that drive/read the FSM
 _deployer_fsm_event_port      = rtt.InputPort("string")
@@ -36,30 +36,7 @@ function configureHook()
    velocitycmd_type     = _velocitycmd_type:get()
    emperor_sample_rate  = _emperor_sample_rate:get()
    hawkeye_sample_rate  = _hawkeye_sample_rate:get()
-   trusted_hosts        = _trusted_hosts:get()
-
-   -- create host aliases
-   dave = rtt.Variable("strings")
-   kurt = rtt.Variable("strings")
-   krist = rtt.Variable("strings")
-   hawkeye = rtt.Variable("strings")
-   emperor = rtt.Variable("strings")
-   robots = rtt.Variable("strings")
-   broadcast = rtt.Variable("strings")
-   dave:resize(1)
-   kurt:resize(1)
-   krist:resize(1)
-   hawkeye:resize(1)
-   emperor:resize(1)
-   robots:resize(3)
-   broadcast:resize(5)
-   dave:fromtab{trusted_hosts[0]}
-   kurt:fromtab{trusted_hosts[1]}
-   krist:fromtab{trusted_hosts[2]}
-   hawkeye:fromtab{trusted_hosts[3]}
-   emperor:fromtab{trusted_hosts[5]}
-   robots:fromtab{trusted_hosts[0], trusted_hosts[1], trusted_hosts[2]}
-   broadcast:fromtab{trusted_hosts[0], trusted_hosts[1], trusted_hosts[2], trusted_hosts[3], trusted_hosts[4], trusted_hosts[5]}
+   host                 = _host:get()
 
    -- create some variables referering to files
    emperor_file      = 'Emperor/emperor.lua'

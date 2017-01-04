@@ -5,11 +5,12 @@
 #include <iostream>
 
 MotionPlanningInterface::MotionPlanningInterface(std::string const& name) : TaskContext(name, PreOperational),
-    _got_target(false), _enable(false), _mp_trigger_data(4), _failure_cnt(0), _first_iteration(true), _valid(false), _predict_shift(0), _est_pose(3),
-    _target_pose(3), _ref_pose_trajectory(3), _ref_velocity_trajectory(3), _ref_pose_trajectory_ss(3), _n_obs(0){
+    _got_target(false), _enable(false), _mp_trigger_data(4), _failure_cnt(0), _first_iteration(true), _valid(false), _ref_pose_trajectory_ss(3), _predict_shift(0), _est_pose(3),
+    _target_pose(3), _ref_pose_trajectory(3), _ref_velocity_trajectory(3), _n_obs(0){
 
   ports()->addPort("target_pose_port", _target_pose_port).doc("Target pose");
   ports()->addPort("obstacle_port", _obstacle_port).doc("Detected obstacles");
+  ports()->addPort("est_pose_port", _est_pose_port).doc("Estimated pose wrt to initial frame");
   ports()->addEventPort("mp_trigger_port", _mp_trigger_port).doc("Trigger for motion planning: is composed of current estimated pose and start index of internal reference input vector");
   ports()->addPort("robobs_pose_port", _robobs_pose_port).doc("Pose information of a robot obstacle");
   ports()->addPort("robobs_velocity_port", _robobs_velocity_port).doc("Velocity information of a robot obstacle");
@@ -40,6 +41,7 @@ MotionPlanningInterface::MotionPlanningInterface(std::string const& name) : Task
   addOperation("valid", &MotionPlanningInterface::valid, this).doc("Valid trajectories computed?");
   addOperation("enable", &MotionPlanningInterface::enable, this).doc("Enable Motion Planning");
   addOperation("disable", &MotionPlanningInterface::disable, this).doc("Disable Motion Planning");
+  addOperation("setConfiguration", &MotionPlanningInterface::setConfiguration, this).doc("Set configuration between ourbots");
 }
 
 void MotionPlanningInterface::setTargetPose(double target_x, double target_y, double target_t){
@@ -66,12 +68,14 @@ void MotionPlanningInterface::enable(){
   }
   _enable = true;
   _first_iteration = true;
+  _omega = 0.;
 }
 
 void MotionPlanningInterface::disable(){
   _enable = false;
   _got_target = false;
   _valid = false;
+  _omega = 0.;
   std::cout << "disabling...." << std::endl;
 }
 
@@ -124,6 +128,7 @@ bool MotionPlanningInterface::startHook(){
   }
   _got_target = false;
   _enable = false;
+  _omega = 0.;
   return true;
 }
 
@@ -183,6 +188,12 @@ void MotionPlanningInterface::updateHook(){
     _failure_cnt = 0;
   }
   _first_iteration = false;
+  // subsample for transmission
+  for (int k=0; k<_trajectory_length_tx; k++){
+    for (int j=0; j<3; j++){
+      _ref_pose_trajectory_ss[j][k] = _ref_pose_trajectory[j][k*_tx_subsample];
+    }
+  }
   // write trajectory
   for (int i=0; i<3; i++){
     _ref_pose_trajectory_port[i].write(_ref_pose_trajectory[i]);
@@ -191,12 +202,38 @@ void MotionPlanningInterface::updateHook(){
   }
   // check timing
   Seconds time_elapsed = TimeService::Instance()->secondsSince(_timestamp);
-  // if (time_elapsed > _update_time*0.9){
-  //   log(Warning) << "MotionPlanning: Duration of calculation exceeded 90% of update_time" <<endlog();
-  // }
   #ifdef DEBUG
   std::cout << "ended mp update in " << time_elapsed << " s" << std::endl;
   #endif
+}
+
+std::vector<double> MotionPlanningInterface::setConfiguration(int number_of_robots){
+  std::vector<double> est_pose(3);
+  _est_pose_port.read(est_pose);
+  return est_pose;
+}
+
+void MotionPlanningInterface::interpolateOrientation(std::vector<double>& theta_trajectory, std::vector<double>& omega_trajectory){
+  // drive orientation to zero
+  double theta0 = _est_pose[2];
+  double interpolation_time = _update_time;
+  if (_omega > 0){
+    theta0 += _omega*(_update_time + _predict_shift*_sample_time);
+    interpolation_time = -theta0/_omega;
+  }
+  else {
+    _omega = -theta0/_update_time;
+  }
+  for (int k=0; k<int(interpolation_time/_sample_time); k++){
+    theta_trajectory[k] = theta0 + _omega*_sample_time*k;
+    omega_trajectory[k] = _omega;
+  }
+  for (uint k=uint(interpolation_time/_sample_time); k<theta_trajectory.size(); k++){
+    theta_trajectory[k] = 0.;
+  }
+  for (uint k=uint(interpolation_time/_sample_time); k<omega_trajectory.size(); k++){
+    omega_trajectory[k] = 0.;
+  }
 }
 
 void MotionPlanningInterface::initObstacles(){

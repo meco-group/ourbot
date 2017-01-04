@@ -15,9 +15,10 @@ rect = Rectangle(0.55, 0.4)
 rect.radius = 0.02
 vehicle = Holonomic(shapes=rect, options=options, bounds={'vmin': -0.8, 'vmax': 0.8, 'amin': -0.5, 'amax': 0.5})
 vehicle.set_options({'safety_distance': 0.05})
+# vehicle.set_options({'room_constraints': False})
 
 vehicle.set_initial_conditions([0.3, 0.3])
-vehicle.set_terminal_conditions([3., 1.5])
+vehicle.set_terminal_conditions([3.,2.])
 
 # create environment
 # width = 4.0
@@ -51,11 +52,11 @@ options['casadilib'] = os.path.join(casadi_path, 'casadi/')
 
 # export the problem
 problem.export(options)
-# vehicle.plot('input')
-# problem.plot('scene')
-# simulator = Simulator(problem, sample_time=0.01, update_time=0.5)
-# trajectories, signals = simulator.run()
-# problem.plot_movie('scene', number_of_frames=100)
+vehicle.plot('input')
+problem.plot('scene')
+simulator = Simulator(problem, sample_time=0.01, update_time=0.5)
+trajectories, signals = simulator.run()
+problem.plot_movie('scene', number_of_frames=100)
 
 # note: you need to implement your vehicle type in c++. Take a look at
 # Holonomic.cpp and Holonomic.hpp which are also exported as an example.

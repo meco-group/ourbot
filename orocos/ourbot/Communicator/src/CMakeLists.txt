@@ -11,6 +11,9 @@
 # and installs in the directory lib/orocos/Communicator/
 #
 orocos_component(Communicator Communicator-component.hpp Communicator-component.cpp Connection.hpp) # ...you may add multiple source files
+
+target_link_libraries(Communicator ${ZMQ_LIBRARIES} ${CZMQ_LIBRARIES} ${ZYRE_LIBRARIES}) # Link libraries to Orocos component here
+
 #
 # You may add multiple orocos_component statements.
 
