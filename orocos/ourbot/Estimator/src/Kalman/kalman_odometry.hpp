@@ -24,29 +24,30 @@
 
 class OdometryGenericObservation  {
 public:
-  enum {OFF_X = 0, OFF_Y = 1, OFF_THETA = 2};
+  enum {OFF_X = 0, OFF_Y = 2, OFF_THETA = 4};
   void transform_R_dR(double theta, M<2, 2>& A, M<2, 2>& B);
 };
 
 
-class OdometryObservation : public KalmanObservation<3, 3>, OdometryGenericObservation {
+class OdometryObservation : public KalmanObservation<6, 0>, OdometryGenericObservation {
 public:
-  virtual void observe(const M<3, 1>& x, const M<3, 3>& S, const M<3, 1>& u,
-    M<3, 1>& xp, M<3, 3>& Sp, M<3, 1>& up);
-  void set(double V_X, double V_Y, double omega);
+  virtual void observe(const M<6, 1>& x, const M<6, 6>& S, const M<0, 1>& u,
+    M<6, 1>& xp, M<6, 6>& Sp);
+  void set(double V_X, double V_Y, double omega,
+    double sigma_X, double sigma_Y, double sigma_omega);
 
 private:
-  M<2, 1> V;
-  M<1, 1> Omega;
+  M<3, 1> V;
+  M<3, 3> Sigma;
 
-  KalmanObserver<3, 3, 3> ko;
+  KalmanObserver<6, 0, 3> ko;
 };
 
 template<int Nm>
-class markerObservation : public KalmanObservation<3, 3>, OdometryGenericObservation {
+class markerObservation : public KalmanObservation<6, 0>, OdometryGenericObservation {
 public:
-  virtual void observe(const M<3, 1>& x, const M<3, 3>& S, const M<3, 1>& u,
-      M<3, 1>& xp, M<3, 3>& Sp, M<3, 1>& up);
+  virtual void observe(const M<6, 1>& x, const M<6, 6>& S, const M<0, 1>& u,
+      M<6, 1>& xp, M<6, 6>& Sp);
   void set(const M<Nm, 2>& pattern_meas, const M<Nm, 2>& pattern_ref, double sigma);
 
 private:
@@ -54,9 +55,8 @@ private:
   M<Nm, 2> pattern_ref_;
   double sigma_;
 
-  KalmanObserver<3, 3, 2*Nm> ko;
+  KalmanObserver<6, 0, 2*Nm> ko;
 };
-
 
 template<int N>
 class OdometryObservations {
@@ -67,19 +67,21 @@ class OdometryObservations {
 
 /**
  * OdometryFilter is a Kalman filter tracking a rigid body in a plane.
- *
+ * 
  * The states being tracked are x, y and theta [m],[m],[rad].
- * Kinematic models of order n=1 (constant position) are used for each coordinate.
- *
+ * Kinematic models of order n=2 (constant velocity) are used for each coordinate.
+ * 
  */
 template<int Nm>
-class OdometryFilter : public KinematicKalmanFilter< OdometryObservations<Nm> , 1, 1, 1> {
+class OdometryFilter : public KinematicKalmanFilter<OdometryObservations<Nm>, 2, 2, 2> {
   public:
-  /**
+  /** 
    * Initialize the OdometryFilter, given noise levels for the x,y and theta models.
-   * These noises are velocity-like squared [(m/s)^2]
-   *
-   *
+   * These noises are acceleration-like squared [(m/s^2)^2]
+   * 
+   * E.g. if the rigid body is on a slippery hilly landscape, innovations in the kimenatic kalman filter
+   * may be on the order of gravity. In that case you could set psd_x and psd_y to 9.81^2
+   * 
    */
   OdometryFilter(double psd_x, double psd_y, double psd_theta, int buffer=100);
 
@@ -94,8 +96,13 @@ class OdometryFilter : public KinematicKalmanFilter< OdometryObservations<Nm> , 
       V_Y: velocity in x direction [m/s]
       omega: angular velocity [rad/s]
 
+      sigma_X: uncertainty on V_X [m^2/s^2]
+      sigma_Y: uncertainty on V_Y [m^2/s^2]
+      omega: uncertainty on omega [rad^2/s^2]
+
   */
-  void observe_odo(double t, double V_X, double V_Y, double omega);
+  void observe_odo(double t, double V_X, double V_Y, double omega,
+    double sigma_X, double sigma_Y, double sigma_omega);
 
   /**
     Observe markers on objects:

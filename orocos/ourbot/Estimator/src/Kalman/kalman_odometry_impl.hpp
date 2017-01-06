@@ -22,12 +22,10 @@
  */
 #include "kalman_odometry.hpp"
 
-
 template<int Nm>
-void markerObservation<Nm>::observe(const M<3, 1>& x, const M<3, 3>& S, const M<3, 1>& u,
-    M<3, 1>& xp, M<3, 3>& Sp, M<3, 1>& up) {
+void markerObservation<Nm>::observe(const M<6, 1>& x, const M<6, 6>& S, const M<0, 1>& u,
+    M<6, 1>& xp, M<6, 6>& Sp) {
   M<2, 2> R, dR;
-  up << u;
 
   transform_R_dR(x(OFF_THETA), R, dR);
   M<2, 1> p;
@@ -36,7 +34,7 @@ void markerObservation<Nm>::observe(const M<3, 1>& x, const M<3, 3>& S, const M<
 
   M<2, Nm> m = pattern_meas_.transpose()  - (R*pattern_ref_.transpose() + pr);
 
-  M<2*Nm, 3> H;
+  M<2*Nm, 6> H;
   H.setConstant(0);
 
   for (int i=0;i<Nm;++i) {
@@ -62,20 +60,21 @@ void markerObservation<Nm>::set(const M<Nm, 2>& pattern_meas,
 
 template<int Nm>
 OdometryFilter<Nm>::OdometryFilter(double psd_x, double psd_y, double psd_theta, int buffer):
-  KinematicKalmanFilter<OdometryObservations<Nm>, 1, 1, 1>({psd_x, psd_y, psd_theta}, buffer) {
+  KinematicKalmanFilter<OdometryObservations<Nm>, 2, 2, 2>({psd_x, psd_y, psd_theta}, buffer) {
 
 }
 
 template<int Nm>
 void OdometryFilter<Nm>::unknown(double t, double sigma) {
-  this->reset(t, M<3, 1>::Zero(3, 1), sigma*M<3, 3>::Identity(3, 3));
+  this->reset(t, M<6, 1>::Zero(6, 1), sigma*M<6, 6>::Identity(6, 6));
 }
 
 template<int Nm>
-void OdometryFilter<Nm>::observe_odo(double t, double V_X, double V_Y, double omega) {
+void OdometryFilter<Nm>::observe_odo(double t, double V_X, double V_Y, double omega,
+    double sigma_X, double sigma_Y, double sigma_omega) {
   auto e = this->pop_event();
   e->active_observation = &e->m.odo;
-  e->m.odo.set(V_X, V_Y, omega);
+  e->m.odo.set(V_X, V_Y, omega, sigma_X, sigma_Y, sigma_omega);
   this->add_event(t, e);
 }
 

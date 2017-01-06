@@ -4,26 +4,26 @@
   <struct name="psd_state" type="array">
     <description>Acceleration-like squared noise levels for x,y,theta (m/s^2)^2</description>
     <simple name="x" type="double">
-      <value>100</value>
+      <value>500</value>
     </simple>
     <simple name="y" type="double">
-      <value>100</value>
+      <value>500</value>
     </simple>
     <simple name="theta" type="double">
-      <value>100</value>
+      <value>500</value>
     </simple>
   </struct>
 
   <struct name="sigma_odo" type="array">
     <description>Uncertainty on measured velocity (m/s)^2</description>
     <simple name="x" type="double">
-      <value>0.5</value>
+      <value>1</value>
     </simple>
     <simple name="y" type="double">
-      <value>0.5</value>
+      <value>1</value>
     </simple>
     <simple name="theta" type="double">
-      <value>0.5</value>
+      <value>1</value>
     </simple>
   </struct>
 
@@ -33,7 +33,7 @@
 
   <simple name="sigma_markers" type="double">
     <description>Uncertainty on measured markers (m)^2</description>
-    <value>0.5</value>
+    <value>0.1</value>
   </simple>
 
   <simple name="enable_odo" type="boolean">

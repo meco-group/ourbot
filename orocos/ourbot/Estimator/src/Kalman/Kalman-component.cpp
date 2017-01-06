@@ -5,12 +5,13 @@
 #include <chrono>
 
 Kalman::Kalman(std::string const& name) : EstimatorInterface(name),
-_sigma_odo(3), _cal_velocity(3), _est_pose(3), _marker_data(7)
+_sigma_odo(3), _cal_velocity(3), _est_pose(3), _est_velocity(3), _marker_data(7)
 {
   // add ports
   ports()->addPort("markers_port", _markers_port).doc("Markers + timestamp detected by camera.");
 
   // add properties
+  addProperty("psd_state", _psd_state).doc("Acceleration-like squared noise levels for x,y,theta (m/s^2)^2");
   addProperty("sigma_odo", _sigma_odo).doc("Uncertainty on measured velocity (m/s)^2");
   addProperty("sigma_markers", _sigma_markers).doc("Uncertainty on measured markers (m)^2");
   addProperty("marker_locations", _marker_loc).doc("Location of markers in local frame [x1, y1, x2, y2, x3, y3]");
@@ -24,7 +25,7 @@ _sigma_odo(3), _cal_velocity(3), _est_pose(3), _marker_data(7)
 }
 
 bool Kalman::initialize(){
-  _kf = new OdometryFilter<3>(_sigma_odo[0], _sigma_odo[1], _sigma_odo[2]);
+  _kf = new OdometryFilter<3>(_psd_state[0], _psd_state[1], _psd_state[2]);
   _start_time = captureTime();
   _kf->unknown(_start_time);
   _control_sample_rate = getControlSampleRate();
@@ -43,9 +44,9 @@ double Kalman::captureTime(){
 bool Kalman::estimateUpdate(){
   _time = captureTime();
   // odometry velocity
-  _cal_velocity = getCalVelocity();
   if (_enable_odo){
-    _kf->observe_odo(_time, _cal_velocity[0], _cal_velocity[1], _cal_velocity[2]);
+    _cal_velocity = getCalVelocity();
+    _kf->observe_odo(_time, _cal_velocity[0], _cal_velocity[1], _cal_velocity[2], _sigma_odo[0], _sigma_odo[1], _sigma_odo[2]);
   }
   // marker measurements
   if (_markers_port.read(_marker_data) == RTT::NewData){
@@ -60,8 +61,11 @@ bool Kalman::estimateUpdate(){
   // _time = captureTime();
   _kf->predict(_time, _state, _P);
   _est_pose[0] = _state[0];
-  _est_pose[1] = _state[1];
-  _est_pose[2] = _state[2];
+  _est_pose[1] = _state[2];
+  _est_pose[2] = _state[4];
+  _est_velocity[0] = _state[1];
+  _est_velocity[1] = _state[3];
+  _est_velocity[2] = _state[5];
 
   // check if estimation is valid
   setValidEstimation(_P.determinant() < _max_cov_det);
@@ -70,7 +74,7 @@ bool Kalman::estimateUpdate(){
     std::cout << "cov det: " << _P.determinant() << std::endl;
   }
   setEstPose(_est_pose);
-  setEstVelocity(_cal_velocity);
+  setEstVelocity(_est_velocity);
   return true;
 }
 
