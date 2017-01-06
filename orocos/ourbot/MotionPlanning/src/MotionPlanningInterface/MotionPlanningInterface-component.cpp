@@ -213,27 +213,8 @@ std::vector<double> MotionPlanningInterface::setConfiguration(int number_of_robo
   return est_pose;
 }
 
-void MotionPlanningInterface::interpolateOrientation(std::vector<double>& theta_trajectory, std::vector<double>& omega_trajectory){
-  // drive orientation to zero
-  double theta0 = _est_pose[2];
-  double interpolation_time = _update_time;
-  if (_omega > 0){
-    theta0 += _omega*(_update_time + _predict_shift*_sample_time);
-    interpolation_time = -theta0/_omega;
-  }
-  else {
-    _omega = -theta0/_update_time;
-  }
-  for (int k=0; k<int(interpolation_time/_sample_time); k++){
-    theta_trajectory[k] = theta0 + _omega*_sample_time*k;
-    omega_trajectory[k] = _omega;
-  }
-  for (uint k=uint(interpolation_time/_sample_time); k<theta_trajectory.size(); k++){
-    theta_trajectory[k] = 0.;
-  }
-  for (uint k=uint(interpolation_time/_sample_time); k<omega_trajectory.size(); k++){
-    omega_trajectory[k] = 0.;
-  }
+bool MotionPlanningInterface::zeroOrientation(){
+  return true;
 }
 
 void MotionPlanningInterface::initObstacles(){

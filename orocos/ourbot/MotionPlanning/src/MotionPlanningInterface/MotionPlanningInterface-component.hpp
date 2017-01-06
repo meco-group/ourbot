@@ -53,7 +53,6 @@ class MotionPlanningInterface : public RTT::TaskContext{
     virtual bool initialize() = 0;
     virtual bool config() = 0;
     virtual bool targetReached();
-    void interpolateOrientation(std::vector<double>& theta_trajectory, std::vector<double>& omega_trajectory);
 
     InputPort<std::vector<double> > _est_pose_port;
     std::vector<obstacle_t> _obstacles;
@@ -87,5 +86,6 @@ class MotionPlanningInterface : public RTT::TaskContext{
     void enable();
     void disable();
     virtual std::vector<double> setConfiguration(int number_of_robots);
+    virtual bool zeroOrientation();
 };
 #endif

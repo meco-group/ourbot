@@ -56,6 +56,7 @@ class Reference : public RTT::TaskContext{
 
     bool _just_started;
     bool _first_time;
+    double _orientation_homing_rate;
 
     double _control_sample_rate;
     double _pathupd_sample_rate;
@@ -78,6 +79,7 @@ class Reference : public RTT::TaskContext{
     OperationCaller<void(void)> mpEnable;
     OperationCaller<void(void)> mpDisable;
     OperationCaller<bool(void)> mpGotTarget;
+    OperationCaller<bool(void)> mpZeroOrientation;
 
     void reset();
     void triggerMotionPlanning();
@@ -85,6 +87,7 @@ class Reference : public RTT::TaskContext{
     void loadTrajectories();
     void readPorts();
     void updateTxTrajectory();
+    void interpolateOrientation(std::vector<double>& theta_trajectory, std::vector<double>& omega_trajectory);
 
   public:
     Reference(std::string const& name);

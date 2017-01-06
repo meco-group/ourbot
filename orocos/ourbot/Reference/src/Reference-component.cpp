@@ -38,6 +38,7 @@ Reference::Reference(std::string const& name) : TaskContext(name, PreOperational
   addProperty("max_computation_periods", _max_computation_periods).doc("Maximum allowed number of trajectory update periods to make trajectory computations");
   addProperty("repeat_offline_trajectory", _repeat_offline_trajectory).doc("Repeat offline trajectory");
   addProperty("ref_tx_subsample", _tx_subsample).doc("Subsamples for transmitted reference trajectories");
+  addProperty("orientation_homing_rate", _orientation_homing_rate).doc("Rotational velocity to bring orientation to zero");
 
   addOperation("writeSample",&Reference::writeSample, this).doc("Set data sample on output ports");
   addOperation("loadTrajectory",&Reference::loadTrajectory, this).doc("Load offline trajectory");
@@ -99,6 +100,7 @@ bool Reference::configureHook(){
   mpEnable = mp->getOperation("enable");
   mpDisable = mp->getOperation("disable");
   mpGotTarget = mp->getOperation("gotTarget");
+  mpZeroOrientation = mp->getOperation("zeroOrientation");
   if(!mpValid.ready()){
     log(Error) << "Could not find MotionPlanning.valid operation!" << endlog();
     return false;
@@ -113,6 +115,10 @@ bool Reference::configureHook(){
   }
   if(!mpGotTarget.ready()){
     log(Error) << "Could not find MotionPlanning.gotTarget operation!" << endlog();
+    return false;
+  }
+  if(!mpZeroOrientation.ready()){
+    log(Error) << "Could not find MotionPlanning.zeroOrientation operation!" << endlog();
     return false;
   }
   return true;
@@ -203,6 +209,10 @@ bool Reference::startHook(){
 void Reference::updateHook(){
   if (!_offline_trajectory){
     if (!mpGotTarget()){
+      for (int i=0; i<3; i++){
+        _ref_velocity_sample[i] = 0.0;
+        _ref_velocity_port.write(_ref_velocity_sample);
+      }
       reset();
       return;
     }
@@ -322,10 +332,37 @@ void Reference::loadTrajectories(){
   // reset indices
   _index2 = _index1%_update_length;
   _index1 = 0;
+  // interpolate orientation if desired
+  if (mpZeroOrientation()){
+    interpolateOrientation(_cur_ref_pose_trajectory[2], _cur_ref_velocity_trajectory[2]);
+  }
   // reset checks
   for (int i=0; i<3; i++){
     _got_ref_pose_trajectory[i] = false;
     _got_ref_velocity_trajectory[i] = false;
+  }
+}
+
+void Reference::interpolateOrientation(std::vector<double>& theta_trajectory, std::vector<double>& omega_trajectory){
+  // get most recent estimate of theta
+  std::vector<double> est_pose(3);
+  _est_pose_port.read(est_pose);
+  double theta0 = est_pose[2];
+  double omega = _orientation_homing_rate;
+  if (theta0 > 0){
+    omega = -omega;
+  }
+  // drive theta to zero
+  double interpolation_time = fabs(theta0/omega);
+  int n_int = int(interpolation_time*_control_sample_rate);
+  for (int k=0; k<theta_trajectory.size(); k++){
+    if (k <= n_int && fabs(theta0) > 0.1) {
+      theta_trajectory[k] = 1.0/0.0; // disable fb
+      omega_trajectory[k] = omega;
+    } else {
+      theta_trajectory[k] = 0.;
+      omega_trajectory[k] = 0.;
+    }
   }
 }
 
