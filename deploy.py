@@ -133,6 +133,7 @@ def deploy(hosts):
         command.extend(['--tab', '-e', '''
             bash -c '
             sshpass -p %s ssh %s@%s "
+            killall deployer-gnulinux
             cd %s
             rm reports.nc
             echo I am %s
@@ -142,6 +143,7 @@ def deploy(hosts):
         ])
     command.extend(['--tab', '-e', '''
         bash -c '
+        killall deployer-gnulinux
         cd %s
         rm reports.nc
         echo I am emperor

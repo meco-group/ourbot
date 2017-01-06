@@ -7,18 +7,14 @@ tc = rtt.getTC()
 
 -- property definitions
 _print_level            = rtt.Property("int","print_level","Level of output printing")
-_velocitycmd_type       = rtt.Property("string","velocitycmd","VelocityCommand component to use")
 _velcmd_sample_rate     = rtt.Property("double","velcmd_sample_rate","Frequency to update velocity commander")
 _emperor_sample_rate    = rtt.Property("double","emperor_sample_rate","Frequency to update communicator")
 _hawkeye_sample_rate    = rtt.Property("double","hawkeye_sample_rate","Frequency to update hawkeye")
-_host                   = rtt.Property("string","host","Name of host")
 
 tc:addProperty(_print_level)
 tc:addProperty(_velcmd_sample_rate)
-tc:addProperty(_velocitycmd_type)
 tc:addProperty(_emperor_sample_rate)
 tc:addProperty(_hawkeye_sample_rate)
-tc:addProperty(_host)
 
 -- ports that drive/read the FSM
 _deployer_fsm_event_port      = rtt.InputPort("string")
@@ -33,10 +29,8 @@ function configureHook()
    -- create local copies of the property values
    print_level          = _print_level:get()
    velcmd_sample_rate   = _velcmd_sample_rate:get()
-   velocitycmd_type     = _velocitycmd_type:get()
    emperor_sample_rate  = _emperor_sample_rate:get()
    hawkeye_sample_rate  = _hawkeye_sample_rate:get()
-   host                 = _host:get()
 
    -- create some variables referering to files
    emperor_file      = 'Emperor/emperor.lua'

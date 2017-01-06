@@ -17,11 +17,9 @@ local menu_option_ind      = 1
 --Create properties
 _print_level            = rtt.Property("int","print_level","Level of output printing")
 _reporter_sample_rate   = rtt.Property("double","reporter_sample_rate", "Frequency to take snapshots for the reporter")
-_trusted_hosts          = rtt.Property("strings","trusted_hosts","Ip's of trusted hosts")
 
 tc:addProperty(_print_level)
 tc:addProperty(_reporter_sample_rate)
-tc:addProperty(_trusted_hosts)
 
 --Ports which drive/read the FSM
 _emperor_fsm_event_port      = rtt.InputPort("string")
@@ -51,7 +49,6 @@ function configureHook()
    -- create local copies of the property values
    print_level = _print_level:get()
    reporter_sample_rate = _reporter_sample_rate:get()
-   trusted_hosts = _trusted_hosts:get()
 
    -- variables to use in updateHook
    communicator = tc:getPeer('communicator')

@@ -10,6 +10,9 @@ local hawkeyeInRunTimeError = hawkeye:getOperation("inRunTimeError")
 
 function connectPorts()
   if not communicator:addOutgoingConnection('hawkeye', 'obstacle_port', 'obstacles', 'ourbots') then rfsm.send_events(fsm, 'e_failed') return end
+  if not communicator:addOutgoingConnection('hawkeye', 'robot9_pose_port', 'markers_kurt', 'kurt') then rfsm.send_events(fsm, 'e_failed') return end
+  if not communicator:addOutgoingConnection('hawkeye', 'robot10_pose_port', 'markers_krist', 'krist') then rfsm.send_events(fsm, 'e_failed') return end
+  if not communicator:addOutgoingConnection('hawkeye', 'robot11_pose_port', 'markers_dave', 'dave') then rfsm.send_events(fsm, 'e_failed') return end
 end
 
 function disconnectPorts()
@@ -32,7 +35,7 @@ return rfsm.state {
     entry = function(fsm)
       main_state = 'motionplanning'
       sub_state = 'run'
-      connectPorts() -- connect obstacle port
+      connectPorts() -- connect outgoing ports hawkeye
       print("Initializing...")
       if (not reporter:start()) then
         rtt.log("Error","Could not start reporter component")

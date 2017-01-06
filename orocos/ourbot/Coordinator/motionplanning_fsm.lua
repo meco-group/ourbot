@@ -26,7 +26,7 @@ local duration  = 0
 return rfsm.state {
   rfsm.trans{src = 'initial', tgt = 'init'},
   rfsm.trans{src = 'init',    tgt = 'home',   events = {'e_done'}},
-  rfsm.trans{src = 'home',    tgt = 'run',    events = {'e_run'}},
+  rfsm.trans{src = 'home',    tgt = 'run',    events = {'e_done'}},
   rfsm.trans{src = 'init',    tgt = 'stop',   events = {'e_stop'}},
   rfsm.trans{src = 'home',    tgt = 'stop',   events = {'e_stop'}},
   rfsm.trans{src = 'run',     tgt = 'stop',   events = {'e_stop'}},
@@ -38,7 +38,6 @@ return rfsm.state {
   init = rfsm.state{
     entry = function(fsm)
       nr_coop_ourbots = communicator:getGroupSize("ourbots") - communicator:getGroupSize("obstacle")
-      print(nr_coop_ourbots)
       if (nr_coop_ourbots == 1) then
         mp = motionplanning
       else
@@ -68,7 +67,7 @@ return rfsm.state {
     end,
 
     doo = function(fsm)
-      -- wait on valid estimate
+      -- wait for valid estimate
       while true do
         estimatorUpdate()
         if validEstimation() then
@@ -83,7 +82,11 @@ return rfsm.state {
         end
         rfsm.yield(true)
       end
+      print("nr of cooperating ourbots:")
+      print(nr_coop_ourbots)
       pose0 = mp:setConfiguration(nr_coop_ourbots)
+      print("initial pose:")
+      print(pose0)
     end
   },
 
@@ -95,7 +98,7 @@ return rfsm.state {
     doo = function(fsm)
       while true do
         if not mp:gotTarget() then
-          break
+          return
         end
         -- update reference/estimator/controller
         estimatorUpdate()
