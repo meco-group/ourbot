@@ -11,6 +11,6 @@
   </simple>
   <simple name="verbose" type="long">
     <description>Verbosity of debug info.</description>
-    <value>3</value>
+    <value>0</value>
   </simple>
 </properties>

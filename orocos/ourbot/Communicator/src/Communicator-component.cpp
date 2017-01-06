@@ -73,25 +73,18 @@ bool Communicator::isInput(Port port){
 }
 
 bool Communicator::createNode(){
-  std::cout << "here1" << std::endl;
   _node = zyre_new(_host.c_str());
-  std::cout << "here2" << std::endl;
   if (_verbose >= 3){
     zyre_set_verbose(_node);
   }
-  std::cout << "here3" << std::endl;
   zyre_set_port(_node, _portnr);
-  std::cout << "here4" << std::endl;
   zyre_set_interface(_node, _iface.c_str());
-  std::cout << "here5" << std::endl;
   if (zyre_start(_node) != 0){
       return false;
   }
-  std::cout << "here6" << std::endl;
-  zclock_sleep(250);
-  std::cout << "here7" << std::endl;
+  std::cout << "node " << _host.c_str() << " created." << std::endl;
   _poller = zpoller_new(zyre_socket(_node));
-  std::cout << "here8" << std::endl;
+  zclock_sleep(100);
   return true;
 }
 
