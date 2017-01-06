@@ -5,8 +5,8 @@
 #include <iostream>
 
 MotionPlanningInterface::MotionPlanningInterface(std::string const& name) : TaskContext(name, PreOperational),
-    _got_target(false), _enable(false), _mp_trigger_data(4), _failure_cnt(0), _first_iteration(true), _valid(false), _ref_pose_trajectory_ss(3), _predict_shift(0), _est_pose(3),
-    _target_pose(3), _ref_pose_trajectory(3), _ref_velocity_trajectory(3), _n_obs(0){
+    _got_target(false), _enable(false), _mp_trigger_data(4), _failure_cnt(0), _first_iteration(true), _valid(false), _predict_shift(0), _est_pose(3),
+    _target_pose(3), _ref_pose_trajectory(3), _ref_velocity_trajectory(3), _ref_pose_trajectory_ss(2), _n_obs(0){
 
   ports()->addPort("target_pose_port", _target_pose_port).doc("Target pose");
   ports()->addPort("obstacle_port", _obstacle_port).doc("Detected obstacles");
@@ -25,7 +25,6 @@ MotionPlanningInterface::MotionPlanningInterface(std::string const& name) : Task
 
   ports()->addPort("ref_pose_trajectory_ss_x_port", _ref_pose_trajectory_ss_port[0]).doc("subsampled x reference trajectory for whole horizon");
   ports()->addPort("ref_pose_trajectory_ss_y_port", _ref_pose_trajectory_ss_port[1]).doc("subsampled y reference trajectory for whole horizon");
-  ports()->addPort("ref_pose_trajectory_ss_t_port", _ref_pose_trajectory_ss_port[2]).doc("subsampled t reference trajectory for whole horizon");
 
   addProperty("control_sample_rate", _control_sample_rate).doc("Frequency to update the control loop");
   addProperty("pathupd_sample_rate", _pathupd_sample_rate).doc("Frequency to update the path");
@@ -42,6 +41,7 @@ MotionPlanningInterface::MotionPlanningInterface(std::string const& name) : Task
   addOperation("enable", &MotionPlanningInterface::enable, this).doc("Enable Motion Planning");
   addOperation("disable", &MotionPlanningInterface::disable, this).doc("Disable Motion Planning");
   addOperation("setConfiguration", &MotionPlanningInterface::setConfiguration, this).doc("Set configuration between ourbots");
+  addOperation("zeroOrientation", &MotionPlanningInterface::zeroOrientation, this).doc("Should orientation kept zero?");
 }
 
 void MotionPlanningInterface::setTargetPose(double target_x, double target_y, double target_t){
@@ -98,7 +98,9 @@ bool MotionPlanningInterface::configureHook(){
   for(int i=0;i<3;i++){
     _ref_pose_trajectory[i].resize(_trajectory_length);
     _ref_velocity_trajectory[i].resize(_trajectory_length);
-    _ref_pose_trajectory_ss[i].resize(_trajectory_length_tx);
+    if (i < 2){
+      _ref_pose_trajectory_ss[i].resize(_trajectory_length_tx);
+    }
   }
   // show example data sample to ports to make data flow real-time
   std::vector<double> example(_trajectory_length, 0.0);
@@ -106,7 +108,9 @@ bool MotionPlanningInterface::configureHook(){
   for(int i=0; i<3; i++){
     _ref_pose_trajectory_port[i].setDataSample(example);
     _ref_velocity_trajectory_port[i].setDataSample(example);
-    _ref_pose_trajectory_ss_port[i].setDataSample(example2);
+    if (i < 2){
+      _ref_pose_trajectory_ss_port[i].setDataSample(example2);
+    }
   }
   if (!config()){
     log(Error) << "Error occured in configure() !" << endlog();
@@ -188,17 +192,13 @@ void MotionPlanningInterface::updateHook(){
     _failure_cnt = 0;
   }
   _first_iteration = false;
-  // subsample for transmission
-  for (int k=0; k<_trajectory_length_tx; k++){
-    for (int j=0; j<3; j++){
-      _ref_pose_trajectory_ss[j][k] = _ref_pose_trajectory[j][k*_tx_subsample];
-    }
-  }
   // write trajectory
   for (int i=0; i<3; i++){
     _ref_pose_trajectory_port[i].write(_ref_pose_trajectory[i]);
     _ref_velocity_trajectory_port[i].write(_ref_velocity_trajectory[i]);
-    _ref_pose_trajectory_ss_port[i].write(_ref_pose_trajectory_ss[i]);
+    if (i < 2){
+      _ref_pose_trajectory_ss_port[i].write(_ref_pose_trajectory_ss[i]);
+    }
   }
   // check timing
   Seconds time_elapsed = TimeService::Instance()->secondsSince(_timestamp);
@@ -208,8 +208,9 @@ void MotionPlanningInterface::updateHook(){
 }
 
 std::vector<double> MotionPlanningInterface::setConfiguration(int number_of_robots){
-  std::vector<double> est_pose(3);
+  std::vector<double> est_pose(3, 0);
   _est_pose_port.read(est_pose);
+  est_pose[2] = 0.;
   return est_pose;
 }
 
@@ -231,7 +232,6 @@ void MotionPlanningInterface::computeObstacles(){
   std::vector<double> obst_pose(3);
   std::vector<double> obst_velocity(3);
   double orientation, width, height;
-  std::cout << "n_obs: " << _n_obs << std::endl;
   for (int k=0; k<_n_obs; k++){
     if (_obstacle_data[5*k] == -100){
       _obstacles[k].avoid = false;
@@ -301,9 +301,9 @@ void MotionPlanningInterface::computeObstacles(){
     _obstacles[_n_obs-1].checkpoints[5] = -0.5*width*sin(orientation) - 0.5*height*cos(orientation);
     _obstacles[_n_obs-1].checkpoints[6] = -0.5*width*cos(orientation) - 0.5*height*sin(orientation);
     _obstacles[_n_obs-1].checkpoints[7] = -0.5*width*sin(orientation) + 0.5*height*cos(orientation);
-    std::cout << "obst pos: " << _obstacles[_n_obs-1].position[0] << "," << _obstacles[_n_obs-1].position[0] << std::endl;
-    std::cout << "obst ori: " << orientation << std::endl;
-    std::cout << "obst vel: " << _obstacles[_n_obs-1].velocity[0] << "," << _obstacles[_n_obs-1].velocity[1] << std::endl;
+    // std::cout << "obst pos: " << _obstacles[_n_obs-1].position[0] << "," << _obstacles[_n_obs-1].position[0] << std::endl;
+    // std::cout << "obst ori: " << orientation << std::endl;
+    // std::cout << "obst vel: " << _obstacles[_n_obs-1].velocity[0] << "," << _obstacles[_n_obs-1].velocity[1] << std::endl;
   }
 }
 

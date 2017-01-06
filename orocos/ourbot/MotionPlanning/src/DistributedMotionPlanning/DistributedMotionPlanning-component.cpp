@@ -279,8 +279,10 @@ bool DistributedMotionPlanning::admmIteration(bool initial){
       _ref_velocity_trajectory[j][k] = _ref_velocity[k][j];
     }
   }
-  if (_n_st == 2){
-    interpolateOrientation(_ref_pose_trajectory[2], _ref_velocity_trajectory[2]);
+  for (int k=0; k<_trajectory_length_tx; k++){
+    for (int j=0; j<2; j++){
+      _ref_pose_trajectory_ss[j][k] = _ref_pose[k*_tx_subsample][j];
+    }
   }
   #ifdef DEBUG
   time_elapsed = TimeService::Instance()->secondsSince(_timestamp);

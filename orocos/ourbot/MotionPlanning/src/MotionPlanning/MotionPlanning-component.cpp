@@ -37,7 +37,6 @@ bool MotionPlanning::trajectoryUpdate(){
   std::vector<omg::obstacle_t> obstacles(_n_obs);
   getObstacles(obstacles);
   // update motion planning algorithm
-  std::cout << _est_pose[0] << "," << _est_pose[1] << "," << _est_pose[2] << std::endl;
   bool check = _p2p->update(_est_pose, _target_pose, _ref_pose, _ref_velocity, obstacles, _predict_shift);
   for (int k=0; k<_trajectory_length; k++){
     for (int j=0; j<_n_st; j++){
@@ -47,8 +46,11 @@ bool MotionPlanning::trajectoryUpdate(){
       _ref_velocity_trajectory[j][k] = _ref_velocity[k][j];
     }
   }
-  if (_n_st == 2){
-    interpolateOrientation(_ref_pose_trajectory[2], _ref_velocity_trajectory[2]);
+  // subsample for transmission
+  for (int k=0; k<_trajectory_length_tx; k++){
+    for (int j=0; j<2; j++){
+      _ref_pose_trajectory_ss[j][k] = _ref_pose[k*_tx_subsample][j];
+    }
   }
   return check;
 }
