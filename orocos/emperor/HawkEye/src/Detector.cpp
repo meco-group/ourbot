@@ -189,6 +189,7 @@ int Detector::isRobot(cv::Mat& roi, const std::vector<cv::Point2f>& points, std:
       }
     }
   }
+  // std::cout << "code : " << code << std::endl;
   // std::cout << "code : " <<  std::bitset<8>(code) << std::endl;
   // fixed order of markers (left - right - top)
   double x1 = top.x;

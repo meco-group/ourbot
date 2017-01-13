@@ -107,7 +107,7 @@ void HawkEye::updateHook(){
   DEBUG_PRINT("update took " << time_elapsed << "s")
 }
 
-void HawkEye::stopHook(){
+void HawkEye::cleanupHook(){
   _gui->stop();
   _camera->stop();
 }

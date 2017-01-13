@@ -88,15 +88,15 @@ void Robot::draw(cv::Mat& frame, const cv::Scalar& color, int pixelspermeter){
   // // markers
   cv::Point2f center;
   for (int i=0; i<2; i++){
-    cv::circle(frame, cv::Point2f(_global_marker_locations_px[2*i], _global_marker_locations_px[2*i+1]), 2, color, -1);
+    cv::circle(frame, cv::Point2f(_global_marker_locations_px[2*i], _global_marker_locations_px[2*i+1]), 3, color, -1);
   }
-  cv::circle(frame, cv::Point2f(_global_marker_locations_px[4], _global_marker_locations_px[5]), 2, cv::Scalar(0,0,255), -1);
+  cv::circle(frame, cv::Point2f(_global_marker_locations_px[4], _global_marker_locations_px[5]), 3, cv::Scalar(0,0,255), -1);
   // box
-  cv::Point2f vertices[4];
-  _box.points(vertices);
-  for (int i=0; i<4; i++){
-    cv::line(frame, vertices[i], vertices[(i+1)%4], color, 2);
-  }
+  // cv::Point2f vertices[4];
+  // _box.points(vertices);
+  // for (int i=0; i<4; i++){
+  //   cv::line(frame, vertices[i], vertices[(i+1)%4], color, 2);
+  // }
   // pose
   // std::vector<double> point1(2), point2(2);
   // double orientation = _pose[2];
@@ -111,7 +111,6 @@ void Robot::draw(cv::Mat& frame, const cv::Scalar& color, int pixelspermeter){
   // reference
   cv::Scalar color_w;
   mixWithWhite(color, color_w, 50);
-  // std::vector<std::vector<double> > points(_ref_x.size(), std::vector<double>(2));
   std::vector<std::vector<double> > points;
   std::vector<double> point(2);
   for (uint i=0; i<_ref_x.size(); i++){

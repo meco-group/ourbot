@@ -91,7 +91,7 @@ class HawkEye : public RTT::TaskContext{
         bool configureHook();
         bool startHook();
         void updateHook();
-        void stopHook();
+        void cleanupHook();
         bool captureBackground(cv::Mat& background);
         std::vector<double> getRoomSize();
         void setTargetPose();
