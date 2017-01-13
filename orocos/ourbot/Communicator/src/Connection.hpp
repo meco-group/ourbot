@@ -7,6 +7,7 @@
 #include <rtt/Component.hpp>
 #include <string.h>
 #include <queue>
+#include <unistd.h>
 
 #define BUFFERSIZE 1024
 
@@ -61,6 +62,10 @@ class Connection {
         virtual std::string getSender(){
             return NULL;
         }
+
+        virtual void setBufferSize(int size){
+
+        }
 };
 
 template <class C, typename T=void> class OutgoingConnection : public Connection {
@@ -101,7 +106,7 @@ template <class C, typename T=void> class OutgoingConnection : public Connection
                             return false;
                         }
                         if (_verbose >= 1){
-                            std::cout << "[" << _id << "] " << toString() << " sending " << _size << " bytes to " << _groups[k];
+                            std::cout << "[" << _id << "] " << toString() << " sending " << _size << " bytes to " << _groups[k] << std::endl;
                             if (_verbose >= 2){
                                 std::cout << ": " << std::endl << "(";
                                 for (int l=0; l<_data.size(); l++){
@@ -160,7 +165,7 @@ template <class C> class OutgoingConnection<C, void> : public Connection {
                             return false;
                         }
                         if (_verbose >= 1){
-                            std::cout << "[" << _id << "] " << toString() << " sending " << _size << " bytes to " << _groups[k];
+                            std::cout << "[" << _id << "] " << toString() << " sending " << _size << " bytes to " << _groups[k] << std::endl;
                             if (_verbose >= 2){
                                 std::cout << ": " << _data << std::endl;
                             } else {
@@ -185,12 +190,14 @@ template <class C, typename T=void> class IncomingConnection : public Connection
         C _data;
         size_t _type_size;
         size_t _size;
-        string _sender;
+        std::queue<string> _senders;
+        int _buffer_size;
 
     public:
         IncomingConnection(Port& port, zyre_t* node, const string& id):Connection(node, id){
             _port = (OutputPort<C>*)port;
             _type_size = sizeof(T);
+            _buffer_size = 1;
         }
 
         bool receive(char* header, zframe_t* data_frame, const string& peer){
@@ -201,7 +208,7 @@ template <class C, typename T=void> class IncomingConnection : public Connection
             _data.resize(_size/_type_size);
             memcpy(&_data[0], zframe_data(data_frame), _size);
             _port->write(_data);
-            _sender = peer;
+            addSender(peer);
             if (_verbose >= 1){
                 std::cout << "[" << _id << "] " << toString() << " receiving " << _size << " bytes from " << peer;
                 if (_verbose >= 2){
@@ -224,8 +231,21 @@ template <class C, typename T=void> class IncomingConnection : public Connection
             return Connection::toString() + ":" + _port->getName();
         }
 
+        void addSender(const std::string& sender){
+            _senders.push(sender);
+            while (_senders.size() > _buffer_size){
+                _senders.pop();
+            }
+        }
+
         std::string getSender(){
-            return _sender;
+            string sender = _senders.front();
+            _senders.pop();
+            return sender;
+        }
+
+        void setBufferSize(int size){
+            _buffer_size = size;
         }
 };
 
@@ -234,12 +254,14 @@ template <class C> class IncomingConnection<C, void> : public Connection {
         OutputPort<C>* _port;
         C _data;
         size_t _size;
-        string _sender;
+        std::queue<string> _senders;
+        int _buffer_size;
 
     public:
         IncomingConnection(Port& port, zyre_t* node, const string& id):Connection(node, id){
             _port = (OutputPort<C>*)port;
             _size = sizeof(C);
+            _buffer_size = 1;
         }
 
         bool receive(char* header, zframe_t* data_frame, const string& peer){
@@ -248,7 +270,7 @@ template <class C> class IncomingConnection<C, void> : public Connection {
             }
             memcpy(&_data, zframe_data(data_frame), _size);
             _port->write(_data);
-            _sender = peer;
+            addSender(peer);
             if (_verbose >= 1){
                 std::cout << "[" << _id << "] " << toString() << " receiving " << _size << " bytes from " << peer;
                 if (_verbose >= 2){
@@ -264,8 +286,21 @@ template <class C> class IncomingConnection<C, void> : public Connection {
             return Connection::toString() + ":" + _port->getName();
         }
 
+        void addSender(const std::string& sender){
+            _senders.push(sender);
+            while (_senders.size() > _buffer_size){
+                _senders.pop();
+            }
+        }
+
         std::string getSender(){
-            return _sender;
+            string sender = _senders.front();
+            _senders.pop();
+            return sender;
+        }
+
+        void setBufferSize(int size){
+            _buffer_size = size;
         }
 };
 

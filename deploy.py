@@ -24,14 +24,11 @@ local_root = os.path.join(current_dir, 'orocos/emperor')
 username = 'odroid'
 password = 'odroid'
 
-# hosts = ['kurt', 'krist', 'dave']
-# hosts = ['kurt', 'krist', 'dave']
-hosts = ['kurt']
-# hosts = ['dave']
-# coop_hosts = hosts
-
-# obstacle = 'dave'
-obstacle = None
+hosts = ['kurt', 'krist', 'dave']
+# hosts = ['krist']
+# hosts = ['kurt', 'dave']
+obstacle = 'krist'
+# obstacle = None
 
 coop_hosts = [h for h in hosts if h != obstacle]
 addresses = col.OrderedDict([('kurt', '192.168.11.121'), ('krist', '192.168.11.122'), ('dave', '192.168.11.120')])

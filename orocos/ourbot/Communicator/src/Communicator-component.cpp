@@ -239,8 +239,8 @@ Port Communicator::clonePort(const string& component_name, const string& port_na
   if (anti_port == NULL){
     anti_port = port->antiClone();
     addPort(port_name, *anti_port);
-    port->connectTo(anti_port, policy);
   }
+  port->connectTo(anti_port, policy);
   return anti_port;
 }
 
@@ -291,6 +291,8 @@ bool Communicator::addBufferedIncomingConnection(const string& component_name, c
     ConnPolicy policy = RTT::ConnPolicy::buffer(buffer_size);
     Port anti_port = clonePort(component_name, port_name, policy);
     connection = getIncomingConnection(anti_port, _node, id);
+    connection->setBufferSize(buffer_size);
+    connection->setVerbose(_verbose);
   }
   if (connection == NULL){
     log(Error) << "Type of port is not known!" << endlog();

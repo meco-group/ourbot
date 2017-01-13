@@ -18,7 +18,6 @@ bool PoseController::initialize(){
         _cmd_vel_prev[k] = 0.;
     }
     _Ts = 1./getControlSampleRate();
-    std::cout << "ts: " << _Ts << std::endl;
     return true;
 }
 

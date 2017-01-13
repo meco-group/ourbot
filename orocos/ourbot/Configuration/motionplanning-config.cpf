@@ -2,15 +2,6 @@
 <!DOCTYPE properties SYSTEM "cpf.dtd">
 <properties>
 
-<struct name="rel_pos_c" type="array">
-<description>Relative pose wrt fleet center</description>
-<simple name="Element0" type="double">
-  <value>0.</value>
-</simple>
-<simple name="Element1" type="double">
-  <value>0.</value>
-</simple>
-</struct>
 <simple name="init_iter" type="long">
   <description>Number of initial ADMM iterations</description>
   <value>5</value>

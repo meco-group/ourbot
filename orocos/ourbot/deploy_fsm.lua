@@ -125,6 +125,8 @@ return rfsm.state {
         -- add motionplanning as peer of reference
         if not dp:addPeer('reference', 'motionplanning')      then rfsm.send_events(fsm,'e_failed') return end
         if not dp:addPeer('reference', 'distrmotionplanning') then rfsm.send_events(fsm,'e_failed') return end
+        -- add communicator as peer of distrmotionplanning
+        if not dp:addPeer('distrmotionplanning', 'communicator') then rfsm.send_events(fsm,'e_failed') return end
         -- load execution file in coordinator component
         if not components.coordinator:exec_file(coordinator_file) then rfsm.send_events(fsm,'e_failed') return end
       end
@@ -192,6 +194,8 @@ return rfsm.state {
           end
         end
         if not dp:addPeer('communicator', 'lua') then rfsm.send_events(fsm,'e_failed') return end
+        -- add communicator as peer of distributed motion planning component (for negotiation)
+        if not dp:addPeer('distrmotionplanning', 'communicator') then rfsm.send_events(fsm,'e_failed') return end
         -- load operations
         local addIncoming         = components.communicator:getOperation('addIncomingConnection')
         local addBufferedIncoming = components.communicator:getOperation('addBufferedIncomingConnection')
@@ -202,7 +206,7 @@ return rfsm.state {
         if not addIncoming('estimator', 'markers_port', 'markers_'..host) then rfsm.send_events(fsm, 'e_failed') return end
         -- if not addOutgoing('estimator', 'est_pose_tx_port', 'est_pose_'..host, 'emperor') then rfsm.send_events(fsm, 'e_failed') return end
         -- motion planning
-        if not addIncoming('motionplanning', 'obstacle_port', 'obstacles') then rfsm.send_events(fsm, 'e_failed') return end
+        -- if not addIncoming('motionplanning', 'obstacle_port', 'obstacles') then rfsm.send_events(fsm, 'e_failed') return end
         if not addIncoming('motionplanning', 'target_pose_port', 'target_pose') then rfsm.send_events(fsm, 'e_failed') return end
         if not obstacle_mode then
           if not addIncoming('motionplanning', 'robobs_pose_port', 'robobs_pose') then rfsm.send_events(fsm, 'e_failed') return end
@@ -214,8 +218,9 @@ return rfsm.state {
           if not addIncoming('distrmotionplanning', 'robobs_pose_port', 'robobs_pose') then rfsm.send_events(fsm, 'e_failed') return end
           if not addIncoming('distrmotionplanning', 'robobs_velocity_port', 'robobs_velocity') then rfsm.send_events(fsm, 'e_failed') return end
         end
-        if not addOutgoing('distrmotionplanning', 'negotiate_out_port', 'negotiate', 'ourbots') then rfsm.send_events(fsm, 'e_failed') return end
-        if not addBufferedIncoming('distrmotionplanning', 'negotiate_in_port', 'negotiate', 10) then rfsm.send_events(fsm, 'e_failed') return end
+        -- if not addOutgoing('distrmotionplanning', 'negotiate_out_port', 'negotiate', 'ourbots') then rfsm.send_events(fsm, 'e_failed') return end
+        -- if not addBufferedIncoming('distrmotionplanning', 'negotiate_in_port', 'negotiate', 10) then rfsm.send_events(fsm, 'e_failed') return end
+        -- if not addIncoming('distrmotionplanning', 'negotiate_in_port', 'negotiate') then rfsm.send_events(fsm, 'e_failed') return end
         -- reference
         if not addOutgoing('reference', 'ref_pose_trajectory_x_tx_port', 'ref_x_'..host, 'emperor') then rfsm.send_events(fsm, 'e_failed') return end
         if not addOutgoing('reference', 'ref_pose_trajectory_y_tx_port', 'ref_y_'..host, 'emperor') then rfsm.send_events(fsm, 'e_failed') return end
