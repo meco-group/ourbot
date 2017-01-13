@@ -23,6 +23,7 @@ bool MotionPlanning::config(){
   }
   _obstacles.resize(_p2p->n_obs);
   _n_obs = _p2p->n_obs;
+  std::cout << "Loaded motion planning problem with " << _n_obs << " obstacles." << std::endl;
   return true;
 }
 

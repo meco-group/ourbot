@@ -8,6 +8,7 @@ local reference           = tc:getPeer('reference')
 local reporter            = tc:getPeer('reporter')
 local io                  = tc:getPeer('io')
 local teensy              = tc:getPeer('teensy')
+local communicator        = tc:getPeer('communicator')
 
 local estimatorUpdate              = estimator:getOperation("update")
 local referenceUpdate              = reference:getOperation("update")
@@ -18,6 +19,18 @@ local estimatorInRunTimeError      = estimator:getOperation("inRunTimeError")
 local controllerInRunTimeError     = controller:getOperation("inRunTimeError")
 local referenceInRunTimeError      = reference:getOperation("inRunTimeError")
 local snapshot                     = reporter:getOperation("snapshot")
+
+local addIncoming         = communicator:getOperation('addIncomingConnection')
+local addBufferedIncoming = communicator:getOperation('addBufferedIncomingConnection')
+local addOutgoing         = communicator:getOperation('addOutgoingConnection')
+
+
+-- if not addIncoming('coordinator', 'negotiate_in_port', 'negotiate') then rfsm.send_events(fsm, 'e_failed') return end
+
+_negotiate_out_port = rtt.OutputPort("array")
+_negotiate_in_port = rtt.InputPort("array")
+tc:addPort(_negotiate_out_port, "negotiate_out_port", "negotiation port out")
+tc:addPort(_negotiate_in_port,"negotiate_in_port","negotiation port in")
 
 -- variables for the timing diagnostics
 local jitter    = 0
@@ -40,8 +53,12 @@ return rfsm.state {
       nr_coop_ourbots = communicator:getGroupSize("ourbots") - communicator:getGroupSize("obstacle")
       if (nr_coop_ourbots == 1) then
         mp = motionplanning
+        reference:setMotionPlanner("motionplanning")
       else
         mp = distrmotionplanning
+        reference:setMotionPlanner("distrmotionplanning")
+        if not addOutgoing('coordinator', 'negotiate_out_port', 'negotiate', 'ourbots') then rfsm.send_events(fsm, 'e_failed') return end
+        if not addBufferedIncoming('coordinator', 'negotiate_in_port', 'negotiate', nr_coop_ourbots-1) then rfsm.send_events(fsm, 'e_failed') return end
       end
       if not io:start() then
         rtt.logl("Error","Could not start io component")
@@ -82,11 +99,32 @@ return rfsm.state {
         end
         rfsm.yield(true)
       end
-      print("nr of cooperating ourbots:")
-      print(nr_coop_ourbots)
-      pose0 = mp:setConfiguration(nr_coop_ourbots)
-      print("initial pose:")
-      print(pose0)
+      if (nr_coop_ourbots > 1) then
+        mp:resetNeighbors()
+        est_pose = estimator:getEstimatedPose()
+        robot_pose0 = rtt.Variable("array")
+        robot_pose0:resize(3)
+        robot_pose0:fromtab{-1,-1,-1}
+        _negotiate_out_port:write(est_pose)
+        fs, robot_pose = _negotiate_in_port:read()
+        for k=1, nr_coop_ourbots-1 do
+          while fs ~= 'NewData' or (robot_pose0[0]==robot_pose[0] or robot_pose0[1]==robot_pose[1])  do
+            fs, robot_pose = _negotiate_in_port:read()
+            rfsm.yield(true)
+          end
+          robot_pose0 = robot_pose
+          robot_name = communicator:getSender("coordinator", "negotiate_in_port", "negotiate");
+          mp:addNeighbor(robot_pose, robot_name)
+        end
+        pose0 = mp:setConfiguration()
+        if not mp:connectWithNeighbors() then
+          rtt.logl("Error","Could not connect with neighbors")
+          rfsm.send_events(fsm,'e_failed')
+          return
+        end
+      else
+        pose0 = mp:setConfiguration()
+      end
     end
   },
 

@@ -40,7 +40,7 @@ MotionPlanningInterface::MotionPlanningInterface(std::string const& name) : Task
   addOperation("valid", &MotionPlanningInterface::valid, this).doc("Valid trajectories computed?");
   addOperation("enable", &MotionPlanningInterface::enable, this).doc("Enable Motion Planning");
   addOperation("disable", &MotionPlanningInterface::disable, this).doc("Disable Motion Planning");
-  addOperation("setConfiguration", &MotionPlanningInterface::setConfiguration, this).doc("Set configuration between ourbots");
+  addOperation("setConfiguration", &MotionPlanningInterface::setConfiguration, this);
   addOperation("zeroOrientation", &MotionPlanningInterface::zeroOrientation, this).doc("Should orientation kept zero?");
 }
 
@@ -145,7 +145,7 @@ bool MotionPlanningInterface::targetReached(){
   }
   target_dist = sqrt(target_dist);
   input_norm = sqrt(input_norm);
-  if (target_dist < 1e-2 && input_norm < 1e-2){
+  if (target_dist < 5e-2 && input_norm < 1e-2){
     return true;
   }
   return false;
@@ -207,7 +207,7 @@ void MotionPlanningInterface::updateHook(){
   #endif
 }
 
-std::vector<double> MotionPlanningInterface::setConfiguration(int number_of_robots){
+std::vector<double> MotionPlanningInterface::setConfiguration(){
   std::vector<double> est_pose(3, 0);
   _est_pose_port.read(est_pose);
   est_pose[2] = 0.;

@@ -85,7 +85,7 @@ class MotionPlanningInterface : public RTT::TaskContext{
     bool valid();
     void enable();
     void disable();
-    virtual std::vector<double> setConfiguration(int number_of_robots);
+    virtual std::vector<double> setConfiguration();
     virtual bool zeroOrientation();
 };
 #endif
