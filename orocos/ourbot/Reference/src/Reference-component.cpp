@@ -43,6 +43,7 @@ Reference::Reference(std::string const& name) : TaskContext(name, PreOperational
   addOperation("writeSample",&Reference::writeSample, this).doc("Set data sample on output ports");
   addOperation("loadTrajectory",&Reference::loadTrajectory, this).doc("Load offline trajectory");
   addOperation("ready",&Reference::ready, this).doc("Is the reference ready?");
+  addOperation("setMotionPlanner",&Reference::setMotionPlanner, this).doc("Set motion planning component to interact with");
 
   _cur_ref_pose_trajectory = _ref_pose_trajectory_1;
   _cur_ref_velocity_trajectory = _ref_velocity_trajectory_1;
@@ -90,10 +91,17 @@ bool Reference::configureHook(){
     _got_ref_pose_trajectory[i] = false;
     _got_ref_velocity_trajectory[i] = false;
   }
-  // get motion planning component
-  TaskContext* mp = getPeer("motionplanning");
+  // set default motion planning component
+  if (!setMotionPlanner("motionplanning")){
+    return false;
+  }
+  return true;
+}
+
+bool Reference::setMotionPlanner(const std::string& motionplanning){
+  TaskContext* mp = getPeer(motionplanning);
   if (!mp) {
-    log(Error) << "Could not find motionplanning component!"<<endlog();
+    log(Error) << "Could not find peer " << motionplanning << "!" << endlog();
     return false;
   }
   mpValid = mp->getOperation("valid");
@@ -102,23 +110,23 @@ bool Reference::configureHook(){
   mpGotTarget = mp->getOperation("gotTarget");
   mpZeroOrientation = mp->getOperation("zeroOrientation");
   if(!mpValid.ready()){
-    log(Error) << "Could not find MotionPlanning.valid operation!" << endlog();
+    log(Error) << "Could not find " << motionplanning << ".valid operation!" << endlog();
     return false;
   }
   if(!mpEnable.ready()){
-    log(Error) << "Could not find MotionPlanning.enable operation!" << endlog();
+    log(Error) << "Could not find " << motionplanning << ".enable operation!" << endlog();
     return false;
   }
   if(!mpDisable.ready()){
-    log(Error) << "Could not find MotionPlanning.disable operation!" << endlog();
+    log(Error) << "Could not find " << motionplanning << ".disable operation!" << endlog();
     return false;
   }
   if(!mpGotTarget.ready()){
-    log(Error) << "Could not find MotionPlanning.gotTarget operation!" << endlog();
+    log(Error) << "Could not find " << motionplanning << ".gotTarget operation!" << endlog();
     return false;
   }
   if(!mpZeroOrientation.ready()){
-    log(Error) << "Could not find MotionPlanning.zeroOrientation operation!" << endlog();
+    log(Error) << "Could not find " << motionplanning << ".zeroOrientation operation!" << endlog();
     return false;
   }
   return true;

@@ -97,5 +97,6 @@ class Reference : public RTT::TaskContext{
     void writeSample();
     bool loadTrajectory();
     bool ready();
+    bool setMotionPlanner(const std::string& motionplanning);
 };
 #endif
