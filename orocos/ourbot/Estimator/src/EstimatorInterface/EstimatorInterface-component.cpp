@@ -47,6 +47,8 @@ EstimatorInterface::EstimatorInterface(std::string const& name) : TaskContext(na
 
   addOperation("writeSample",&EstimatorInterface::writeSample, this).doc("Set data sample on output ports");
   addOperation("validEstimation",&EstimatorInterface::validEstimation, this).doc("Is the last estimation valid?");
+  addOperation("getEstimatedPose",&EstimatorInterface::getEstimatedPose, this).doc("Get last estimated pose");
+  addOperation("getEstimatedVelocity",&EstimatorInterface::getEstimatedVelocity, this).doc("Get last estimated velocity");
 }
 
 void EstimatorInterface::writeSample(){
@@ -58,6 +60,14 @@ void EstimatorInterface::writeSample(){
 
 bool EstimatorInterface::validEstimation(){
   return _valid_estimation;
+}
+
+std::vector<double> EstimatorInterface::getEstimatedPose(){
+  return _est_pose;
+}
+
+std::vector<double> EstimatorInterface::getEstimatedVelocity(){
+  return _est_velocity;
 }
 
 void EstimatorInterface::setValidEstimation(bool valid_estimation){
