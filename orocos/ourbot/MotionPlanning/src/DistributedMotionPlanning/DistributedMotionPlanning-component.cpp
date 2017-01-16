@@ -150,7 +150,7 @@ bool DistributedMotionPlanning::connectWithNeighbors(){
   return true;
 }
 
-void DistributedMotionPla`nning::writeSample(){
+void DistributedMotionPlanning::writeSample(){
   std::vector<double> example1(_n_shared + 1, 0.0);
   std::vector<double> example2(2*_n_shared + 1, 0.0);
   for (int k=0; k<_n_nghb; k++){
