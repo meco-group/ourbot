@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "cpf.dtd">
+<properties>
+  <simple name="enable_fb" type="boolean">
+    <description>Enable feedback action</description>
+    <value>1</value>
+  </simple>
+
+  <simple name="enable_ff" type="boolean">
+    <description>Enable feedforward action</description>
+    <value>1</value>
+  </simple>
+
+  <simple name="correct_orientation" type="boolean">
+    <description>Transform velocity ff reference to local frame</description>
+    <value>1</value>
+  </simple>
+
+  <struct name="proportional_gain" type="array">
+    <description>Proportional gain: kp_x, kp_y, kp_t</description>
+    <simple name="kp_x" type="double">
+      <value>3.</value>
+    </simple>
+    <simple name="kp_y" type="double">
+      <value>3.</value>
+    </simple>
+    <simple name="kp_t" type="double">
+      <value>3.</value>
+    </simple>
+  </struct>
+
+  <struct name="integration_gain" type="array">
+    <description>Integration gain: kp_x, kp_y, kp_t</description>
+    <simple name="ki_x" type="double">
+      <value>0.</value>
+    </simple>
+    <simple name="ki_y" type="double">
+      <value>0.</value>
+    </simple>
+    <simple name="ki_t" type="double">
+      <value>0.</value>
+    </simple>
+  </struct>
+</properties>

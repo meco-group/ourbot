@@ -1,0 +1,40 @@
+export void VelocityControl(){
+  emperor_send_event_port.write("e_velocitycmd")
+}
+
+export void MotionPlanning(){
+  emperor_send_event_port.write("e_motionplanning")
+}
+
+export void TrajectoryFollowing(){
+  emperor_send_event_port.write("e_trajectoryfollowing")
+}
+
+
+export void Idle(){
+  emperor_send_event_port.write("e_idle")
+}
+
+export void Reset(){
+  emperor_send_event_port.write("e_reset")
+}
+
+export void Run(){
+  emperor_send_event_port.write("e_run")
+}
+
+export void Restart(){
+  emperor_send_event_port.write("e_restart")
+}
+
+export void Break(){
+  emperor_send_event_port.write("e_stop")
+}
+
+export void Init(){
+  emperor_send_event_port.write("e_init")
+}
+
+export string getState(){
+  return emperor_current_state_port.last()
+}

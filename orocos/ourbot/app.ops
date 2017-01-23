@@ -1,0 +1,39 @@
+export void VelocityControl(){
+  coordinator_send_event_port.write("e_velocitycmd")
+}
+
+export void MotionPlanning(){
+  coordinator_send_event_port.write("e_motionplanning")
+}
+
+export void TrajectoryFollowing(){
+  coordinator_send_event_port.write("e_trajectoryfollowing")
+}
+
+export void Idle(){
+  coordinator_send_event_port.write("e_idle")
+}
+
+export void Reset(){
+  coordinator_send_event_port.write("e_reset")
+}
+
+export void Run(){
+  coordinator_send_event_port.write("e_run")
+}
+
+export void Restart(){
+  coordinator_send_event_port.write("e_restart")
+}
+
+export void Break(){
+  coordinator_send_event_port.write("e_stop")
+}
+
+export void Init(){
+  coordinator_send_event_port.write("e_init")
+}
+
+export string getState(){
+  return coordinator_current_state_port.last()
+}

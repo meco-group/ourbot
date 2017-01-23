@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "cpf.dtd">
+<properties>
+	<simple name="encoder_ticks_per_revolution" type="long">
+    <description>Number of encoder ticks per full revolution. Gear ratio should also be accounted for!</description>
+    <value>35840</value>
+  </simple>
+  <simple name="usb_port_name" type="string">
+    <description>Port name for the USB device. Full path required.</description>
+    <value>/dev/ttyACM0</value>
+  </simple>
+
+  <struct name="velocity_pid_soft" type="array">
+    <description>PID parameters for soft velocity control (gamepad)</description>
+    <simple name="P" type="double">
+      <value>0.2</value>
+    </simple>
+    <simple name="I" type="double">
+      <value>2.0</value>
+    </simple>
+    <simple name="D" type="double">
+      <value>0.0</value>
+    </simple>
+  </struct>
+
+  <struct name="velocity_pid_strong" type="array">
+    <description>PID parameters for strong velocity control (smooth trajectories)</description>
+    <simple name="P" type="double">
+      <!-- <value>5.</value> -->
+      <value>1.</value>
+    </simple>
+    <simple name="I" type="double">
+      <!-- <value>15.</value> -->
+      <value>1.5</value>
+    </simple>
+    <simple name="D" type="double">
+      <!-- <value>0.015</value> -->
+      <value>0.00</value>
+    </simple>
+  </struct>
+
+	<!-- Left IMU configuration -->
+	<struct name="imul_acc_offset" type="array">
+    <description>Offset of the left accelerometer</description>
+    <simple name="Element0" type="double">
+      <value>1250</value>
+    </simple>
+    <simple name="Element1" type="double">
+      <value>0</value>
+    </simple>
+    <simple name="Element2" type="double">
+      <value>0</value>
+    </simple>
+  </struct>
+	<struct name="imul_gyr_offset" type="array">
+    <description>Offset of the left gyroscope</description>
+    <simple name="Element0" type="double">
+      <value>0.</value>
+    </simple>
+    <simple name="Element1" type="double">
+      <value>0.</value>
+    </simple>
+    <simple name="Element2" type="double">
+      <value>0.</value>
+    </simple>
+  </struct>
+  <struct name="imul_mag_offset" type="array">
+    <description>Offset of the left magnetometer</description>
+    <simple name="Element0" type="double">
+      <value>0.</value>
+    </simple>
+    <simple name="Element1" type="double">
+      <value>0.</value>
+    </simple>
+    <simple name="Element2" type="double">
+      <value>0.</value>
+    </simple>
+  </struct>
+
+  <struct name="imul_acc_scale" type="array">
+    <description>Scale of the left accelerometer</description>
+    <simple name="Element0" type="double">
+      <value>0.000613125</value>
+    </simple>
+    <simple name="Element1" type="double">
+      <value>0.000613125</value>
+    </simple>
+    <simple name="Element2" type="double">
+      <value>0.000613125</value>
+    </simple>
+  </struct>
+  <struct name="imul_gyr_scale" type="array">
+    <description>Scale of the left gyroscope</description>
+    <simple name="Element0" type="double">
+      <value>1.</value>
+    </simple>
+    <simple name="Element1" type="double">
+      <value>1.</value>
+    </simple>
+    <simple name="Element2" type="double">
+      <value>1.</value>
+    </simple>
+  </struct>
+  <struct name="imul_mag_scale" type="array">
+    <description>Scale of the left magnetometer</description>
+    <simple name="Element0" type="double">
+      <value>1.</value>
+    </simple>
+    <simple name="Element1" type="double">
+      <value>1.</value>
+    </simple>
+    <simple name="Element2" type="double">
+      <value>1.</value>
+    </simple>
+  </struct>
+
+	<!-- Right IMU configuration -->
+	<struct name="imur_acc_offset" type="array">
+    <description>Offset of the right accelerometer</description>
+    <simple name="Element0" type="double">
+      <value>1250</value>
+    </simple>
+    <simple name="Element1" type="double">
+      <value>0</value>
+    </simple>
+    <simple name="Element2" type="double">
+      <value>0</value>
+    </simple>
+  </struct>
+  <struct name="imur_gyr_offset" type="array">
+    <description>Offset of the right gyroscope</description>
+    <simple name="Element0" type="double">
+      <value>0.</value>
+    </simple>
+    <simple name="Element1" type="double">
+      <value>0.</value>
+    </simple>
+    <simple name="Element2" type="double">
+      <value>0.</value>
+    </simple>
+  </struct>
+  <struct name="imur_mag_offset" type="array">
+    <description>Offset of the right magnetometer</description>
+    <simple name="Element0" type="double">
+      <value>0.</value>
+    </simple>
+    <simple name="Element1" type="double">
+      <value>0.</value>
+    </simple>
+    <simple name="Element2" type="double">
+      <value>0.</value>
+    </simple>
+  </struct>
+
+  <struct name="imur_acc_scale" type="array">
+    <description>Scale of the right accelerometer</description>
+    <simple name="Element0" type="double">
+      <value>0.00060184</value>
+    </simple>
+    <simple name="Element1" type="double">
+      <value>0.00060184</value>
+    </simple>
+    <simple name="Element2" type="double">
+      <value>0.00060184</value>
+    </simple>
+  </struct>
+	<struct name="imur_gyr_scale" type="array">
+    <description>Scale of the right gyroscope</description>
+    <simple name="Element0" type="double">
+      <value>1.</value>
+    </simple>
+    <simple name="Element1" type="double">
+      <value>1.</value>
+    </simple>
+    <simple name="Element2" type="double">
+      <value>1.</value>
+    </simple>
+  </struct>
+  <struct name="imur_mag_scale" type="array">
+    <description>Scale of the right magnetometer</description>
+    <simple name="Element0" type="double">
+      <value>1.</value>
+    </simple>
+    <simple name="Element1" type="double">
+      <value>1.</value>
+    </simple>
+    <simple name="Element2" type="double">
+      <value>1.</value>
+    </simple>
+  </struct>
+</properties>
