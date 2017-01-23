@@ -21,11 +21,11 @@
 #------------------------------------------------------------------------------
 # Change this
 #------------------------------------------------------------------------------
-CASADILIB = /home/ruben/Documents/Work/Repositories/casadi_binary/casadi/
-CASADIINC = /home/ruben/Documents/Work/Repositories/casadi_binary/include/
-CASADIOBJ = /home/ruben/ourbot/orocos/ourbot/MotionPlanning/src/MotionPlanning/Toolbox/bin/
-SOURCEFILES = test_p2p.cpp Holonomic_p2p.cpp
-EXECUTABLE = Point2Point
+CASADILIB = @casadilib@
+CASADIINC = @casadiinc@
+CASADIOBJ = @casadiobj@
+SOURCEFILES = @sourcefiles@
+EXECUTABLE = @executable@
 #------------------------------------------------------------------------------
 
 CXX = g++
@@ -35,11 +35,11 @@ LIBDIR = $(CASADILIB)
 CXXFLAGS = -I$(INCDIR) -DUSE_CXX11 -std=c++11 -fPIC -std=c++11 -DCASADIOBJ="\"$(CASADIOBJ)\""
 CFLAGS = -fPIC -shared -std=c99
 LDFLAGS = -L$(LIBDIR) -lcasadi -lstdc++ -lcasadi -Wl,-rpath $(LIBDIR)
-PROBSOURCES = nlp.c
+PROBSOURCES = @probsources@
 PROBOBJECTS = $(PROBSOURCES:.c=.so)
-SOURCES = $(SOURCEFILES) Point2Point_p2p.cpp Vehicle_p2p.cpp
+SOURCES = $(SOURCEFILES) @sourcefiles2@
 OBJECTS = $(SOURCES:.cpp=.o)
-LIB = libomg_p2p.so
+LIB = @libname@
 SRCDIR = src
 OBJDIR = obj
 OUTDIR = bin

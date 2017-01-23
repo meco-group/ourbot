@@ -26,6 +26,7 @@ from netCDF4 import Dataset
 import matplotlib
 import matplotlib.pyplot as plt
 matplotlib.use('TKAgg')
+import socket
 import collections as col
 
 # Default parameters
@@ -36,9 +37,9 @@ username = 'odroid'
 password = 'odroid'
 show_plots = True
 hosts = col.OrderedDict()
-# hosts['dave'] = '192.168.11.120'
+hosts['dave'] = '192.168.11.120'
 hosts['kurt'] = '192.168.11.121'
-# hosts['krist'] = '192.168.11.122'
+hosts['krist'] = '192.168.11.122'
 server = 'kurt'
 
 
@@ -106,7 +107,12 @@ if __name__ == "__main__":
 
     index = 0
     for host, address in hosts.items():
-        print 'Host %s ...' % host
+        try:
+            ssh.connect(address, username=username, password=password, timeout=0.5)
+        except socket.error:
+            print 'Could not connect to %s' % host
+            continue
+        print 'Fetching data from %s...' % host
         ssh.connect(address, username=username, password=password)
         ftp = ssh.open_sftp()
         remote_dir = [d for d in ftp.listdir(remote_root) if 'd'

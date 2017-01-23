@@ -6,7 +6,7 @@ This script
 - creates new components on the remote odroids if desired
 Run ./write2ourbots.py --help for available options.
 
-Ruben Van Parys - 2015
+Ruben Van Parys - 2016
 """
 
 import optparse
@@ -18,6 +18,7 @@ import math
 import errno
 import pickle
 import hashlib
+import socket
 
 # Default parameters
 current_dir = os.path.dirname(os.path.realpath(__file__))
@@ -108,27 +109,28 @@ def send_files(ftp, ssh, loc_files, rem_files):
     print ''
 
 
-def detect_changes(loc_files, rem_files):
+def detect_changes(loc_files, rem_files, host):
     _lf, _rf = [], []
     try:
-        l = pickle.load(open('.db'))
+        db = pickle.load(open('.db'))
     except IOError:
-        l = []
-    db = dict(l)
+        db = {}
+    if host not in db:
+        db[host] = {}
     for lf, rf in zip(loc_files, rem_files):
         checksum = hashlib.md5(open(lf).read()).hexdigest()
-        if db.get(lf, None) != checksum:
-            db[lf] = checksum
+        if db[host].get(lf, None) != checksum:
+            db[host][lf] = checksum
             _lf.append(lf)
             _rf.append(rf)
-    pickle.dump(db.items(), open('.db', 'w'))
+    pickle.dump(db, open('.db', 'w'))
     if options.send_all:
         return loc_files, rem_files
     else:
         return _lf, _rf
 
 
-def get_source_files():
+def get_source_files(host):
     loc_files, rem_files = [], []
     local_files = [f for f in os.listdir(local_root)
                    if os.path.isfile(os.path.join(local_root, f))]
@@ -147,7 +149,7 @@ def get_source_files():
                     rem_file = loc_file.replace(loc_dir, rem_dir)
                     loc_files.append(loc_file)
                     rem_files.append(rem_file)
-    return detect_changes(loc_files, rem_files)
+    return detect_changes(loc_files, rem_files, host)
 
 
 def mp_adaptations(ftp, ssh):
@@ -236,12 +238,13 @@ if __name__ == "__main__":
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-    # get source files to send
-    loc_files, rem_files = get_source_files()
-
     for host, address in hosts.items():
-        print 'Host %s' % host
-        ssh.connect(address, username=username, password=password)
+        try:
+            ssh.connect(address, username=username, password=password, timeout=0.5)
+        except socket.error:
+            print 'Could not connect to %s' % host
+            continue
+        print 'Writing to %s' % host
         ftp = ssh.open_sftp()
         remote_dir = [d for d in ftp.listdir(remote_root) if 'd'
                       in str(ftp.lstat(os.path.join(remote_root, d))).split()[0]]
@@ -271,6 +274,8 @@ if __name__ == "__main__":
 
         # sending source files
         print 'Sending source files'
+        # get source files to send
+        loc_files, rem_files = get_source_files(host)
         send_files(ftp, ssh, loc_files, rem_files)
 
         # adapt stuff for MotionPlanning component
@@ -278,4 +283,4 @@ if __name__ == "__main__":
 
         ftp.close()
         ssh.close()
-    os.system('clear')
+    # os.system('clear')

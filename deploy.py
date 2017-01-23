@@ -16,6 +16,7 @@ import collections as col
 import errno
 import sys
 import math
+import socket
 
 # default parameters
 remote_root = '/home/odroid/orocos'
@@ -93,18 +94,25 @@ def modify_host_config(host):
 def write_settings():
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    for host in hosts:
+    hosts_tmp = hosts[:]
+    for host in hosts_tmp:
         # send all deploy scripts and configuration files
         local_files, remote_files = [], []
         files = ['deploy.lua', 'deploy_fsm.lua']
         files += [('Configuration/'+ff) for ff in os.listdir(current_dir+'/orocos/ourbot/Configuration')]
+        files += [('Coordinator/'+ff) for ff in os.listdir(current_dir+'/orocos/ourbot/Coordinator')]
         for file in files:
             local_files.append(os.path.join(current_dir+'/orocos/ourbot', file))
             remote_files.append(os.path.join(remote_root, file))
         # modify host's config files
         local_files_mod, remote_files_mod = modify_host_config(host)
         # open ssh connection
-        ssh.connect(addresses[host], username=username, password=password)
+        try:
+            ssh.connect(addresses[host], username=username, password=password, timeout=0.5)
+        except socket.error:
+            print 'Could not connect to %s' % host
+            hosts.remove(host)
+            continue
         ftp = ssh.open_sftp()
         # send files
         send_files(ftp, ssh, local_files+local_files_mod, remote_files+remote_files_mod)
@@ -118,6 +126,8 @@ def write_settings():
 
 def deploy(hosts):
     write_settings()
+    if len(hosts) == 0:
+        return
     command = ['gnome-terminal']
     for host in hosts:
         address = addresses[host]

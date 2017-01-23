@@ -1,7 +1,7 @@
 import sys, os
-sys.path.insert(0, '/home/ruben/Documents/Work/Programs/motionplanningtoolbox/')
+# sys.path.insert(0, '/home/ruben/Documents/Work/Programs/motionplanningtoolbox/')
 from omgtools import *
-import os
+# import os
 
 """
 This file demonstrates how to export a point2point problem to c++. It generates
@@ -41,14 +41,11 @@ problem.set_options({'hard_term_con': True})
 problem.init()
 
 options = {}
-casadi_path = os.path.join('/home/ruben/Documents/Work/Repositories/casadi_binary/')
-options['directory'] = os.path.join(os.getcwd(), 'Toolbox/')
-# path to object files of your exported optimization problem
+options['directory'] = os.getenv('ROS_WORKSPACE') + '/ourbot/MotionPlanning/src/MotionPlanning/Toolbox/'
 options['casadiobj'] = os.path.join(options['directory'], 'bin/')
-# your casadi include path
-options['casadiinc'] = os.path.join(casadi_path, 'include/')
-# your casadi library path
-options['casadilib'] = os.path.join(casadi_path, 'casadi/')
+options['casadiinc'] = '$(CASADI_INC)'
+options['casadilib'] = '$(CASADI_LIB)'
+options['namespace'] = 'omgf'
 
 # export the problem
 problem.export(options)

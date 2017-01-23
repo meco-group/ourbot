@@ -17,8 +17,8 @@
 // License along with this program; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include "Point2Point_p2p.hpp"
-#include "Holonomic_p2p.hpp"
+#include "Point2Point.hpp"
+#include "Holonomic.hpp"
 #include <ctime>
 #include <iostream>
 #include <fstream>
