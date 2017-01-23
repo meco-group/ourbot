@@ -21,11 +21,11 @@
 #------------------------------------------------------------------------------
 # Change this
 #------------------------------------------------------------------------------
-CASADILIB = @casadilib@
-CASADIINC = @casadiinc@
-CASADIOBJ = @casadiobj@
-SOURCEFILES = @sourcefiles@
-EXECUTABLE = @executable@
+CASADILIB = $(CASADI_LIB)
+CASADIINC = $(CASADI_INC)
+CASADIOBJ = $(ROS_WORKSPACE)/ourbot/MotionPlanning/src/MotionPlanning/Toolbox/bin/
+SOURCEFILES = test_p2p.cpp Holonomic_p2p.cpp
+EXECUTABLE = Point2Point
 #------------------------------------------------------------------------------
 
 CXX = g++
@@ -35,11 +35,11 @@ LIBDIR = $(CASADILIB)
 CXXFLAGS = -I$(INCDIR) -DUSE_CXX11 -std=c++11 -fPIC -std=c++11 -DCASADIOBJ="\"$(CASADIOBJ)\""
 CFLAGS = -fPIC -shared -std=c99
 LDFLAGS = -L$(LIBDIR) -lcasadi -lstdc++ -lcasadi -Wl,-rpath $(LIBDIR)
-PROBSOURCES = @probsources@
+PROBSOURCES = nlp.c
 PROBOBJECTS = $(PROBSOURCES:.c=.so)
-SOURCES = $(SOURCEFILES) @sourcefiles2@
+SOURCES = $(SOURCEFILES) Point2Point_p2p.cpp Vehicle_p2p.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
-LIB = @libname@
+LIB = libomg_p2p.so
 SRCDIR = src
 OBJDIR = obj
 OUTDIR = bin

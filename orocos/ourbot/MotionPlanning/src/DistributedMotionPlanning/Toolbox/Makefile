@@ -23,7 +23,7 @@
 #------------------------------------------------------------------------------
 CASADILIB = $(CASADI_LIB)
 CASADIINC = $(CASADI_INC)
-CASADIOBJ = /home/ruben/ourbot/orocos/ourbot/MotionPlanning/src/DistributedMotionPlanning/Toolbox/bin/
+CASADIOBJ = $(ROS_WORKSPACE)/ourbot/MotionPlanning/src/DistributedMotionPlanning/Toolbox/bin/
 SOURCEFILES = test_p2pf.cpp Holonomic_p2pf.cpp
 EXECUTABLE = FormationPoint2Point
 #------------------------------------------------------------------------------

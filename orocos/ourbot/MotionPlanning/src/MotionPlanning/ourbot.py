@@ -1,7 +1,6 @@
 import sys, os
-# sys.path.insert(0, '/home/ruben/Documents/Work/Programs/motionplanningtoolbox/')
+sys.path.insert(0, os.getenv('HOME') + '/Downloads/omg-tools/')
 from omgtools import *
-# import os
 
 """
 This file demonstrates how to export a point2point problem to c++. It generates
@@ -15,15 +14,11 @@ rect = Rectangle(0.55, 0.4)
 rect.radius = 0.02
 vehicle = Holonomic(shapes=rect, options=options, bounds={'vmin': -0.8, 'vmax': 0.8, 'amin': -0.5, 'amax': 0.5})
 vehicle.set_options({'safety_distance': 0.05})
-# vehicle.set_options({'room_constraints': False})
 
 vehicle.set_initial_conditions([0.3, 0.3])
 vehicle.set_terminal_conditions([3.,2.])
 
 # create environment
-# width = 4.0
-# height = 2.25
-
 width = 4.61
 height = 2.59
 
@@ -42,10 +37,10 @@ problem.init()
 
 options = {}
 options['directory'] = os.getenv('ROS_WORKSPACE') + '/ourbot/MotionPlanning/src/MotionPlanning/Toolbox/'
-options['casadiobj'] = os.path.join(options['directory'], 'bin/')
+options['casadiobj'] = '$(ROS_WORKSPACE)/ourbot/MotionPlanning/src/MotionPlanning/Toolbox/bin/'
 options['casadiinc'] = '$(CASADI_INC)'
 options['casadilib'] = '$(CASADI_LIB)'
-options['namespace'] = 'omgf'
+options['namespace'] = 'omg'
 
 # export the problem
 problem.export(options)
@@ -54,9 +49,3 @@ problem.plot('scene')
 simulator = Simulator(problem, sample_time=0.01, update_time=0.5)
 trajectories, signals = simulator.run()
 problem.plot_movie('scene', number_of_frames=100)
-
-# note: you need to implement your vehicle type in c++. Take a look at
-# Holonomic.cpp and Holonomic.hpp which are also exported as an example.
-
-import matplotlib.pyplot as plt
-plt.show(block=True)

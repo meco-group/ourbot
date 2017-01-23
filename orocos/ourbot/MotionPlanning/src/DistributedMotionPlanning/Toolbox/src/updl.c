@@ -15,10 +15,10 @@ extern "C" {
 
 #ifndef real_t
 #define real_t double
-#define to_double(x) (double) x
-#define to_int(x) (int) x
 #endif /* real_t */
 
+#define to_double(x) (double) x
+#define to_int(x) (int) x
 /* Pre-c99 compatibility */
 #if __STDC_VERSION__ < 199901L
 real_t CASADI_PREFIX(fmin)(real_t x, real_t y) { return x<y ? x : y;}
@@ -34,11 +34,11 @@ real_t CASADI_PREFIX(sq)(real_t x) { return x*x;}
 real_t CASADI_PREFIX(sign)(real_t x) { return x<0 ? -1 : x>0 ? 1 : x;}
 #define sign(x) CASADI_PREFIX(sign)(x)
 
-static const int CASADI_PREFIX(s0)[] = {26, 1, 0, 26, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25};
+static const int CASADI_PREFIX(s0)[30] = {26, 1, 0, 26, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25};
 #define s0 CASADI_PREFIX(s0)
-static const int CASADI_PREFIX(s1)[] = {52, 1, 0, 52, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51};
+static const int CASADI_PREFIX(s1)[56] = {52, 1, 0, 52, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51};
 #define s1 CASADI_PREFIX(s1)
-static const int CASADI_PREFIX(s2)[] = {1, 1, 0, 1, 0};
+static const int CASADI_PREFIX(s2)[5] = {1, 1, 0, 1, 0};
 #define s2 CASADI_PREFIX(s2)
 /* upd_l_0 */
 int upd_l_0(const real_t** arg, real_t** res, int* iw, real_t* w, int mem) {

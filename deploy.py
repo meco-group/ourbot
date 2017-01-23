@@ -19,14 +19,17 @@ import math
 import socket
 
 # default parameters
-remote_root = '/home/odroid/orocos'
+remote_root = '/home/odroid/orocos/ourbot/'
+# remote_root = os.path.join(os.getenv('HOME'), 'orocos/ourbot/')
 current_dir = os.path.dirname(os.path.realpath(__file__))
 local_root = os.path.join(current_dir, 'orocos/emperor')
+# username = os.getenv('USER')
+# password = os.getenv('USER')
 username = 'odroid'
 password = 'odroid'
 
 hosts = ['kurt', 'krist', 'dave']
-# obstacle = 'dave'
+# hosts = ['kurt']# obstacle = 'dave'
 obstacle = None
 
 coop_hosts = [h for h in hosts if h != obstacle]

@@ -24,7 +24,7 @@ import socket
 current_dir = os.path.dirname(os.path.realpath(__file__))
 local_root = os.path.join(current_dir, 'orocos/ourbot')
 other_local_dirs = []
-remote_root = '/home/odroid/orocos'
+remote_root = '/home/odroid/orocos/ourbot/'
 username = 'odroid'
 password = 'odroid'
 hosts = col.OrderedDict()
@@ -152,70 +152,6 @@ def get_source_files(host):
     return detect_changes(loc_files, rem_files, host)
 
 
-def mp_adaptations(ftp, ssh):
-    local_files = []
-    remote_files = []
-    # adapt CMakeLists.txt
-    local_files.append(os.path.join(
-        current_dir, 'orocos/ourbot/MotionPlanning/CMakeLists.txt'))
-    remote_files.append(os.path.join(
-        remote_root, 'MotionPlanning/CMakeLists.txt'))
-    f1 = open(local_files[-1], 'r')
-    body = f1.read()
-    f1.close()
-    for repl in ['include_directories', 'link_directories']:
-        while(body.find(repl) > 0):
-            index = body.find(repl)
-            string = body[index:].split(')')[0]+')\n'
-            body = body.replace(string, '')
-    part1, part2 = body[:index], body[index:]
-    body = part1 + '\n'
-    body += 'link_directories('
-    body += os.path.join(
-        remote_root + '/MotionPlanning/src/MotionPlanning/Toolbox/bin/') + ')\n'
-    body += 'link_directories('
-    body += os.path.join(
-        remote_root + '/MotionPlanning/src/DistributedMotionPlanning/Toolbox/bin/') + ')\n'
-    body += 'include_directories('
-    body += os.path.join(
-        remote_root + '/MotionPlanning/src/MotionPlanning/Toolbox/src/') + ')\n'
-    body += 'include_directories('
-    body += os.path.join(
-        remote_root + '/MotionPlanning/src/DistributedMotionPlanning/Toolbox/src/') + ')\n'
-    body += part2
-    f2 = open(local_files[-1]+'_', 'w')
-    f2.write(body)
-    f2.close()
-    # adapt Makefiles
-    for mp_type in ['MotionPlanning', 'DistributedMotionPlanning']:
-        local_files.append(os.path.join(
-            current_dir, ('orocos/ourbot/MotionPlanning/src/' +
-                          mp_type + '/Toolbox/Makefile')))
-        remote_files.append(os.path.join(
-            remote_root, 'MotionPlanning/src/'+mp_type+'/Toolbox/Makefile'))
-        f1 = open(local_files[-1], 'r')
-        body = f1.read()
-        f1.close()
-        index = body.find('CASADILIB =')
-        string = body[index:].split('\n')[0]
-        body = body.replace(string, 'CASADILIB = /usr/local/lib/')
-        index = body.find('CASADIINC =')
-        string = body[index:].split('\n')[0]
-        body = body.replace(string, 'CASADIINC = /usr/local/include/casadi/')
-        index = body.find('CASADIOBJ =')
-        string = body[index:].split('\n')[0]
-        body = body.replace(
-            string, 'CASADIOBJ = ' + os.path.join(
-                remote_root, 'MotionPlanning/src/'+mp_type+'/Toolbox/bin/'))
-        f2 = open(local_files[-1]+'_', 'w')
-        f2.write(body)
-        f2.close()
-    # send files
-    for lf, rf in zip(local_files, remote_files):
-        send_file(ftp, ssh, lf+'_', rf)
-        os.remove(lf+'_')
-
-
 if __name__ == "__main__":
     usage = ('Usage: %prog [options]')
     op = optparse.OptionParser(usage=usage)
@@ -277,10 +213,6 @@ if __name__ == "__main__":
         # get source files to send
         loc_files, rem_files = get_source_files(host)
         send_files(ftp, ssh, loc_files, rem_files)
-
-        # adapt stuff for MotionPlanning component
-        mp_adaptations(ftp, ssh)
-
         ftp.close()
         ssh.close()
-    # os.system('clear')
+    os.system('clear')
