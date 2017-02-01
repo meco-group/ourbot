@@ -42,30 +42,8 @@
         </simple> -->
     </struct>
 
-    <struct name="marker_locations" type="array">
-        <description>Locations of markers in robot frame [x1_r1, y1_r1, x2_r1, y2_r1, x3_r1, y3_r1, x1_r2, ...] (m)</description>
-        <simple name="x1_robot1" type="double">
-            <value>-0.018</value>
-        </simple>
-        <simple name="y1_robot1" type="double">
-            <value>-0.08</value>
-        </simple>
-        <simple name="x2_robot1" type="double">
-            <value>-0.018</value>
-        </simple>
-        <simple name="y2_robot1" type="double">
-            <value>0.08</value>
-        </simple>
-        <simple name="x3_robot1" type="double">
-            <value>0.082</value>
-        </simple>
-        <simple name="y3_robot1" type="double">
-            <value>0.0</value>
-        </simple>
-    </struct>
-
     <!-- laser cut markers -->
-<!--     <struct name="marker_locations" type="array">
+    <struct name="marker_locations" type="array">
         <description>Locations of markers in robot frame [x1_r1, y1_r1, x2_r1, y2_r1, x3_r1, y3_r1, x1_r2, ...] (m)</description>
         <simple name="x1_robot1" type="double">
             <value>-0.0145</value>
@@ -85,7 +63,7 @@
         <simple name="y3_robot1" type="double">
             <value>0.0</value>
         </simple>
-    </struct> -->
+    </struct>
 
     <simple name="video_port_name" type="string">
         <description>Path to video driver</description>
