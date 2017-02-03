@@ -1,186 +1,134 @@
 #ifndef CONNECTION_HPP
 #define CONNECTION_HPP
 
-// #define DEBUG
-
+#include <zyre.h>
 #include <rtt/RTT.hpp>
 #include <rtt/Port.hpp>
 #include <rtt/Component.hpp>
-#include <stdlib.h> /* defines exit and other sys calls */
-#include <stdio.h>
-#include <string.h> // needed for memset
-#include <sys/socket.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <sys/types.h>
+#include <string.h>
+#include <queue>
 #include <unistd.h>
-#include <fcntl.h>
-#include <errno.h>
 
 #define BUFFERSIZE 1024
 
 using namespace RTT;
+using namespace std;
+
 typedef base::PortInterface* Port;
 
 class Connection {
     protected:
-        int _socket;
-        int _port_nr;
-        bool _enabled;
-        std::vector<std::string> _trusted_hosts;
-        std::vector<sockaddr_in> _rem_addresses;
-        socklen_t _rem_address_len;
+        zyre_t* _node;
+        string _id;
+        zlist_t* _peers;
+        bool _enable;
+        int _verbose;
 
     public:
-        Connection(int port_nr):_enabled(true){
-            _rem_address_len = sizeof(sockaddr);
-            _port_nr = port_nr;
-        }
-
-        bool createSocket(int& socket_nr){
-            // create socket
-            struct sockaddr_in myaddr;
-            if ((_socket = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-                return false;
-            }
-            if (fcntl(_socket, F_SETFL, fcntl(_socket, F_GETFL, 0) |O_NONBLOCK) < 0) {
-                return false;
-            }
-            // bind it to all local addresses and pick a port number
-            memset((char *)&myaddr, 0, sizeof(myaddr));
-            myaddr.sin_family = AF_INET;
-            myaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-            myaddr.sin_port = htons(_port_nr);
-            if (bind(_socket, (struct sockaddr *)&myaddr, sizeof(myaddr)) < 0) {
-                return false;
-            }
-            socket_nr = _socket;
-            return true;
-        }
-
-        bool setSocket(int socket_nr){
-            _socket = socket_nr;
-            return true;
-        }
-
-        int getPortNr(){
-            return _port_nr;
-        }
-
-        void setTrustedHosts(const std::vector<std::string>& trusted_hosts){
-            _trusted_hosts = trusted_hosts;
-        }
-
-        bool checkHost(const sockaddr_in& host_address){
-            for (uint k=0; k<_trusted_hosts.size(); k++){
-                if (_trusted_hosts[k].compare(readAddress(host_address)) == 0){
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        std::string readAddress(const sockaddr_in& address){
-            char address_string[INET_ADDRSTRLEN];
-            if (inet_ntop(AF_INET, &address.sin_addr, address_string, INET_ADDRSTRLEN)==0){
-                return "not found";
-            }
-            std::string ret(address_string);
-            return ret;
-        }
-
-        bool createRemoteAddresses(const std::vector<std::string>& remote_addresses){
-            _rem_addresses.resize(remote_addresses.size());
-            for (uint k=0; k<remote_addresses.size(); k++){
-                memset((char *) &_rem_addresses[k], 0, sizeof(_rem_addresses[k]));
-                _rem_addresses[k].sin_family = AF_INET;
-                _rem_addresses[k].sin_port = htons(_port_nr);
-                if (inet_pton(AF_INET, remote_addresses[k].c_str(), &_rem_addresses[k].sin_addr)==0) {
-                  return false;
-                }
-            }
-            return true;
-        }
-
-        bool addRemoteAddresses(const std::vector<std::string>& remote_addresses){
-            std::vector<sockaddr_in> new_remote_addresses(remote_addresses.size());
-            int ori_size = _rem_addresses.size();
-            _rem_addresses.resize(ori_size + remote_addresses.size());
-            for (uint k=ori_size; k<_rem_addresses.size(); k++){
-                 memset((char *) &_rem_addresses[k], 0, sizeof(_rem_addresses[k]));
-                _rem_addresses[k].sin_family = AF_INET;
-                _rem_addresses[k].sin_port = htons(_port_nr);
-                if (inet_pton(AF_INET, remote_addresses[k-ori_size].c_str(), &_rem_addresses[k].sin_addr)==0) {
-                  return false;
-                }
-            }
-            return true;
-        }
-
-        int getSocket(){
-            return _socket;
-        }
-
-        void closeConnection(){
-            close(_socket);
+        Connection(zyre_t* node, const string& id): _id(id), _enable(true){
+            _node = node;
+            _verbose = 0;
         }
 
         void disable(){
-            _enabled = false;
+            _enable = false;
         }
 
         void enable(){
-            _enabled = true;
+            _enable = true;
         }
 
-        virtual bool checkPort()=0;
-        virtual std::string toString()=0;
+        void setVerbose(int verbose){
+            _verbose = verbose;
+        }
+
+        virtual bool speak(){
+            return true;
+        }
+
+        virtual bool receive(char* header, zframe_t* data_frame, const string& peer){
+            return true;
+        }
+
+        virtual void addGroup(const std::string& group){
+            return;
+        }
+
+        virtual std::string toString(){
+            std::string node_name(zyre_name(_node));
+            return zyre_name(_node);
+        }
+
+        virtual std::string getSender(){
+            return NULL;
+        }
+
+        virtual void setBufferSize(int size){
+
+        }
 };
 
 template <class C, typename T=void> class OutgoingConnection : public Connection {
     private:
         InputPort<C>* _port;
         C _data;
+        std::vector<string> _groups;
+        size_t _type_size;
         size_t _size;
 
     public:
-        OutgoingConnection(Port& port, int port_nr, const std::vector<std::string>& remote_addresses):Connection(port_nr){
-            createRemoteAddresses(remote_addresses);
+        OutgoingConnection(Port& port, zyre_t* node, const string& id, const string& group):Connection(node, id){
             _port = (InputPort<C>*)port;
-            _size = sizeof(T);
+            _type_size = sizeof(T);
+            addGroup(group);
         }
 
-        bool checkPort(){
-            if (!_enabled){
-                return true;
+        void addGroup(const std::string& group){
+            if (std::find(_groups.begin(), _groups.end(), group) == _groups.end()){
+                _groups.push_back(group);
             }
+        }
+
+        bool speak(){
             if (_port->read(_data) == RTT::NewData){
-                std::string portname = _port->getName();
-                #ifdef DEBUG
-                std::cout << _port->getName() << ": sending "  << _data.size()*_size << " bytes to ";
-                std::cout << readAddress(_rem_addresses[0]);
-                for (uint k=1; k<_rem_addresses.size(); k++){
-                    std::cout << ", " << readAddress(_rem_addresses[k]);
+                if (!_enable){
+                    return true;
                 }
-                std::cout << std::endl;
-                std::cout << "[" << _data[0];
-                for (uint k=1; k<_data.size(); k++){
-                    std::cout << "," << _data[k];
-                }
-                std::cout << "]" << std::endl;
-                #endif
-                for (uint k=0; k<_rem_addresses.size(); k++){
-                    if (sendto(_socket, (void*)&_data[0], _data.size()*_size, 0, (struct sockaddr *)&_rem_addresses[k], _rem_address_len)==-1){
-                        return false;
+                _size = _data.size()*_type_size;
+                zmsg_t* msg = zmsg_new();
+                zmsg_pushmem(msg, &_data[0], _size);
+                const char* header = _id.c_str();
+                zmsg_pushmem(msg, header, strlen(header)+1);
+                for (int k=0; k<_groups.size(); k++){
+                    _peers = zyre_peers_by_group(_node, _groups[k].c_str());
+                    if (_peers != NULL && zlist_size(_peers) > 0){
+                        if (zyre_shout(_node, _groups[k].c_str(), &msg) != 0){
+                            return false;
+                        }
+                        if (_verbose >= 1){
+                            std::cout << "[" << _id << "] " << toString() << " sending " << _size << " bytes to " << _groups[k] << std::endl;
+                            if (_verbose >= 2){
+                                std::cout << ": " << std::endl << "(";
+                                for (int l=0; l<_data.size(); l++){
+                                    std::cout << _data[l];
+                                    if (l != _data.size()-1){
+                                        std::cout << ",";
+                                    }
+                                }
+                                std::cout << ")" << std::endl;
+                            } else {
+                                std::cout << std::endl;
+                            }
+                        }
                     }
                 }
+                zmsg_destroy(&msg);
             }
             return true;
         }
 
         std::string toString(){
-            return "outgoing connection " + _port->getName();
+            return Connection::toString() + ":" + _port->getName();
         }
 };
 
@@ -188,118 +136,171 @@ template <class C> class OutgoingConnection<C, void> : public Connection {
     private:
         InputPort<C>* _port;
         C _data;
+        std::vector<string> _groups;
+        size_t _size;
 
     public:
-        OutgoingConnection(Port& port, int port_nr, const std::vector<std::string>& remote_addresses):Connection(port_nr){
-            createRemoteAddresses(remote_addresses);
+        OutgoingConnection(Port& port, zyre_t* node, const string& id, const string& group):Connection(node, id){
             _port = (InputPort<C>*)port;
+            _size = sizeof(C);
+            addGroup(group);
         }
 
-        bool checkPort(){
-            if (!_enabled){
-                return true;
+        void addGroup(const std::string& group){
+            if (std::find(_groups.begin(), _groups.end(), group) == _groups.end()){
+                _groups.push_back(group);
             }
+        }
+
+        bool speak(){
             if (_port->read(_data) == RTT::NewData){
-                #ifdef DEBUG
-                std::cout << _port->getName() << ": sending "  << sizeof(_data) << " bytes to ";
-                std::cout << readAddress(_rem_addresses[0]) << ":" << _port_nr;
-                for (uint k=1; k<_rem_addresses.size(); k++){
-                    std::cout << ", " << readAddress(_rem_addresses[k]) << ":" << _port_nr;
-                }
-                std::cout << std::endl;
-                std::cout << _data << std::endl;
-                #endif
-                for (uint k=0; k<_rem_addresses.size(); k++){
-                    if (sendto(_socket, (void*)&_data, sizeof(_data), 0, (struct sockaddr *)&_rem_addresses[k], _rem_address_len)==-1){
-                        return false;
+                zmsg_t* msg = zmsg_new();
+                zmsg_pushmem(msg, &_data, _size);
+                const char* header = _id.c_str();
+                zmsg_pushmem(msg, header, strlen(header)+1);
+                for (int k=0; k<_groups.size(); k++){
+                    _peers = zyre_peers_by_group(_node, _groups[k].c_str());
+                    if (_peers != NULL && zlist_size(_peers) > 0){
+                        if (zyre_shout(_node, _groups[k].c_str(), &msg) != 0){
+                            return false;
+                        }
+                        if (_verbose >= 1){
+                            std::cout << "[" << _id << "] " << toString() << " sending " << _size << " bytes to " << _groups[k] << std::endl;
+                            if (_verbose >= 2){
+                                std::cout << ": " << _data << std::endl;
+                            } else {
+                                std::cout << std::endl;
+                            }
+                        }
                     }
                 }
+                zmsg_destroy(&msg);
             }
             return true;
         }
 
         std::string toString(){
-            return "outgoing connection " + _port->getName();
+            return Connection::toString() + ":" + _port->getName();
         }
 };
 
 template <class C, typename T=void> class IncomingConnection : public Connection {
     private:
         OutputPort<C>* _port;
-        int _rcv_len;
-        size_t _size;
-        unsigned char _buffer[BUFFERSIZE];
         C _data;
-        sockaddr_in _rcv_address;
+        size_t _type_size;
+        size_t _size;
+        std::queue<string> _senders;
+        int _buffer_size;
 
     public:
-        IncomingConnection(Port& port, int port_nr):Connection(port_nr){
+        IncomingConnection(Port& port, zyre_t* node, const string& id):Connection(node, id){
             _port = (OutputPort<C>*)port;
-            _size = sizeof(T);
+            _type_size = sizeof(T);
+            _buffer_size = 1;
         }
 
-        bool checkPort(){
-            if (!_enabled){
+        bool receive(char* header, zframe_t* data_frame, const string& peer){
+            if (!streq(header, _id.c_str())){
                 return true;
             }
-            _rcv_len = recvfrom(_socket, _buffer, BUFFERSIZE, 0, (struct sockaddr*)&_rcv_address, &_rem_address_len);
-            if (_rcv_len > 0 && checkHost(_rcv_address)) {
-                _data.resize(_rcv_len/_size);
-                memcpy(&_data[0], _buffer, _rcv_len);
-                _port->write(_data);
-                std::string portname = _port->getName();
-                #ifdef DEBUG
-                std::cout << _port->getName() << ": receiving "  << _rcv_len << " bytes from ";
-                std::cout << readAddress(_rcv_address) << std::endl;
-                 std::cout << "[" << _data[0];
-                for (uint k=1; k<_data.size(); k++){
-                    std::cout << "," << _data[k];
+            _size = zframe_size(data_frame);
+            _data.resize(_size/_type_size);
+            memcpy(&_data[0], zframe_data(data_frame), _size);
+            _port->write(_data);
+            addSender(peer);
+            if (_verbose >= 1){
+                std::cout << "[" << _id << "] " << toString() << " receiving " << _size << " bytes from " << peer;
+                if (_verbose >= 2){
+                    std::cout << ": " << std::endl << "(";
+                    for (int l=0; l<_data.size(); l++){
+                        std::cout << _data[l];
+                        if (l != _data.size()-1){
+                            std::cout << ",";
+                        }
+                    }
+                    std::cout << ")" << std::endl;
+                } else {
+                    std::cout << std::endl;
                 }
-                std::cout << "]" << std::endl;
-                #endif
             }
-            else if (errno != EAGAIN)
-                return false;
             return true;
         }
 
         std::string toString(){
-            return "incoming connection " + _port->getName();
+            return Connection::toString() + ":" + _port->getName();
+        }
+
+        void addSender(const std::string& sender){
+            _senders.push(sender);
+            while (_senders.size() > _buffer_size){
+                _senders.pop();
+            }
+        }
+
+        std::string getSender(){
+            string sender = _senders.front();
+            _senders.pop();
+            return sender;
+        }
+
+        void setBufferSize(int size){
+            _buffer_size = size;
         }
 };
 
 template <class C> class IncomingConnection<C, void> : public Connection {
     private:
         OutputPort<C>* _port;
-        int _rcv_len;
         C _data;
-        sockaddr_in _rcv_address;
+        size_t _size;
+        std::queue<string> _senders;
+        int _buffer_size;
 
     public:
-        IncomingConnection(Port& port, int port_nr):Connection(port_nr){
+        IncomingConnection(Port& port, zyre_t* node, const string& id):Connection(node, id){
             _port = (OutputPort<C>*)port;
+            _size = sizeof(C);
+            _buffer_size = 1;
         }
 
-        bool checkPort(){
-            if (!_enabled){
+        bool receive(char* header, zframe_t* data_frame, const string& peer){
+            if (!streq(header, _id.c_str())){
                 return true;
             }
-            _rcv_len = recvfrom(_socket, &_data, sizeof(_data), 0, (struct sockaddr *)&_rcv_address, &_rem_address_len);
-            if (_rcv_len > 0 && checkHost(_rcv_address)) {
-                _port->write(_data);
-                #ifdef DEBUG
-                std::cout << _port->getName() << ": receiving "  << _rcv_len << " bytes from ";
-                std::cout << readAddress(_rcv_address) << std::endl;
-                std::cout << _data << std::endl;
-                #endif
+            memcpy(&_data, zframe_data(data_frame), _size);
+            _port->write(_data);
+            addSender(peer);
+            if (_verbose >= 1){
+                std::cout << "[" << _id << "] " << toString() << " receiving " << _size << " bytes from " << peer;
+                if (_verbose >= 2){
+                    std::cout << ": " << _data << std::endl;
+                } else {
+                    std::cout << std::endl;
+                }
             }
-            else if (errno != EAGAIN)
-                return false;
             return true;
         }
 
         std::string toString(){
-            return "incoming connection " + _port->getName();
+            return Connection::toString() + ":" + _port->getName();
+        }
+
+        void addSender(const std::string& sender){
+            _senders.push(sender);
+            while (_senders.size() > _buffer_size){
+                _senders.pop();
+            }
+        }
+
+        std::string getSender(){
+            string sender = _senders.front();
+            _senders.pop();
+            return sender;
+        }
+
+        void setBufferSize(int size){
+            _buffer_size = size;
         }
 };
 

@@ -9,13 +9,11 @@ local components_to_load = {
   hawkeye         = 'HawkEye',
   emperor         = 'OCL::LuaTLSFComponent',
   reporter        = 'OCL::NetcdfReporting'
-    --add here componentname = 'componenttype'
 }
 
 -- ports to report
 local ports_to_report = {
   gamepad         = {'cmd_velocity_port'}
-    --add here componentname = 'portnames'
 }
 
 -- packages to import
@@ -23,16 +21,15 @@ local packages_to_import = {
   gamepad = 'Serial',
   hawkeye = 'HawkEye',
   communicator = 'Communicator'
-    --add here componentname = 'parentcomponenttype'
 }
 
 -- configuration files to load
 local system_config_file      = 'Configuration/system-config.cpf'
 local component_config_files  = {
-  reporter  = 'Configuration/reporter-config.cpf',
-  hawkeye   = 'Configuration/hawkeye-config.cpf',
-  gamepad   = 'Configuration/gamepad-config.cpf'
-    --add here componentname = 'Configuration/component-config.cpf'
+  communicator  = '../ourbot/Configuration/communicator-config.cpf',
+  reporter      = 'Configuration/reporter-config.cpf',
+  hawkeye       = 'Configuration/hawkeye-config.cpf',
+  gamepad       = 'Configuration/gamepad-config.cpf'
 }
 
 local components      = {}
@@ -54,6 +51,7 @@ return rfsm.state {
     entry = function()
       _deployer_failure_event_port:write('e_failed')
       components.communicator:update()
+      components.communicator:wait(500)
       for name, comp in pairs(components) do
         comp:stop()
         comp:cleanup()
@@ -132,36 +130,37 @@ return rfsm.state {
 
     connect_remote_components = rfsm.state {
       entry = function(fsm)
-        local addOutgoing = components.communicator:getOperation("addOutgoing")
-        local addIncoming = components.communicator:getOperation("addIncoming")
+        -- add every component as peer of communicator
+        for name, comp in pairs(components) do
+          if (name ~= 'communicator') then
+            if not dp:addPeer('communicator', name) then rfsm.send_events(fsm,'e_failed') return end
+          end
+        end
+        if not dp:addPeer('communicator', 'lua') then rfsm.send_events(fsm,'e_failed') return end
+        -- load operations
+        local addIncoming = components.communicator:getOperation('addIncomingConnection')
+        local addOutgoing = components.communicator:getOperation('addOutgoingConnection')
         -- emperor
-        dp:addPeer('communicator', 'emperor')
-        if not addOutgoing('emperor', 'emperor_send_event_port', 4000, robots) then rfsm.send_events(fsm,'e_failed') return end
+        if not addOutgoing('emperor', 'emperor_send_event_port', 'fsm_event', 'ourbots') then rfsm.send_events(fsm,'e_failed') return end
         -- gamepad
-        dp:addPeer('communicator', 'gamepad')
-        if not addOutgoing('gamepad', 'cmd_velocity_port', 4002, robots) then rfsm.send_events(fsm,'e_failed') return end
+        if not addOutgoing('gamepad', 'cmd_velocity_port', 'cmd_velocity', 'ourbots') then rfsm.send_events(fsm,'e_failed') return end
         -- hawkeye
-        dp:addPeer('communicator', 'hawkeye')
-        if not addOutgoing('hawkeye', 'kurt_pose_port', 6050, kurt) then rfsm.send_events(fsm, 'e_failed') return end
-        if not addOutgoing('hawkeye', 'krist_pose_port', 6051, krist) then rfsm.send_events(fsm, 'e_failed') return end
-        if not addOutgoing('hawkeye', 'dave_pose_port', 6052, dave) then rfsm.send_events(fsm, 'e_failed') return end
-        if not addOutgoing('hawkeye', 'obstacle_port', 6070, robots) then rfsm.send_events(fsm, 'e_failed') return end
-        if not addOutgoing('hawkeye', 'target_pose_port', 6071, robots) then rfsm.send_events(fsm, 'e_failed') return end
-        -- if not addIncoming('hawkeye', 'kurt_est_pose_port', 6000) then rfsm.send_events(fsm,'e_failed') return end
-        -- if not addIncoming('hawkeye', 'krist_est_pose_port', 6001) then rfsm.send_events(fsm,'e_failed') return end
-        -- if not addIncoming('hawkeye', 'dave_est_pose_port', 6002) then rfsm.send_events(fsm,'e_failed') return end
-
-        if not addIncoming('hawkeye', 'kurt_ref_x_port', 6020) then rfsm.send_events(fsm,'e_failed') return end
-        if not addIncoming('hawkeye', 'krist_ref_x_port', 6021) then rfsm.send_events(fsm,'e_failed') return end
-        if not addIncoming('hawkeye', 'dave_ref_x_port', 6022) then rfsm.send_events(fsm,'e_failed') return end
-        if not addIncoming('hawkeye', 'kurt_ref_y_port', 6030) then rfsm.send_events(fsm,'e_failed') return end
-        if not addIncoming('hawkeye', 'krist_ref_y_port', 6031) then rfsm.send_events(fsm,'e_failed') return end
-        if not addIncoming('hawkeye', 'dave_ref_y_port', 6032) then rfsm.send_events(fsm,'e_failed') return end
-
-        -- deployer (added as last: highest priority)
-        dp:addPeer('communicator', 'lua')
-        if not addIncoming('lua', 'deployer_fsm_event_port', 4001) then rfsm.send_events(fsm, 'e_failed') return end
-        if not addOutgoing('lua', 'deployer_failure_event_port', 4001, broadcast) then rfsm.send_events(fsm,'e_failed') return end
+        if not addOutgoing('hawkeye', 'target_pose_port', 'target_pose', 'ourbots') then rfsm.send_events(fsm, 'e_failed') return end
+        if not addOutgoing('hawkeye', 'robot9_pose_port', 'markers_kurt', 'kurt') then rfsm.send_events(fsm, 'e_failed') return end
+        if not addOutgoing('hawkeye', 'robot0_pose_port', 'markers_dave', 'dave') then rfsm.send_events(fsm, 'e_failed') return end
+        if not addOutgoing('hawkeye', 'robot1_pose_port', 'markers_krist', 'krist') then rfsm.send_events(fsm, 'e_failed') return end
+        -- if not addIncoming('hawkeye', 'robot9_est_pose_port', 'est_pose_kurt') then rfsm.send_events(fsm,'e_failed') return end
+        -- if not addIncoming('hawkeye', 'robot0_est_pose_port', 'est_pose_dave') then rfsm.send_events(fsm,'e_failed') return end
+        -- if not addIncoming('hawkeye', 'robot1_est_pose_port', 'est_pose_krist') then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('hawkeye', 'robot9_ref_x_port', 'ref_x_kurt') then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('hawkeye', 'robot0_ref_x_port', 'ref_x_dave') then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('hawkeye', 'robot1_ref_x_port', 'ref_x_krist') then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('hawkeye', 'robot9_ref_y_port', 'ref_y_kurt') then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('hawkeye', 'robot0_ref_y_port', 'ref_y_dave') then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('hawkeye', 'robot1_ref_y_port', 'ref_y_krist') then rfsm.send_events(fsm,'e_failed') return end
+        -- deployer
+        if not addOutgoing('lua', 'deployer_failure_event_port', 'deployer_event', 'ourbots') then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('lua', 'deployer_fsm_event_port', 'deployer_event') then rfsm.send_events(fsm, 'e_failed') return end
       end,
     },
 

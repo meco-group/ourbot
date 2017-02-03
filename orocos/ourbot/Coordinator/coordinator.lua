@@ -41,6 +41,10 @@ function configureHook()
    communicatorUpdate = communicator:getOperation("update")
    communicatorInRunTimeError = communicator:getOperation("inRunTimeError")
 
+   if obstacle_mode then
+      communicator:joinGroup('obstacle')
+   end
+
    -- load state machine
    fsm = rfsm.init(rfsm.load("Coordinator/coordinator_fsm.lua"))
    if not fsm then

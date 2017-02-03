@@ -1,0 +1,1 @@
+#undef MOTOR_PIN_SINGLE

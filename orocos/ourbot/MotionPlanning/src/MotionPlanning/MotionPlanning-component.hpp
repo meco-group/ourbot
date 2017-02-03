@@ -8,6 +8,8 @@
 
 class MotionPlanning : public MotionPlanningInterface{
   private:
+    int _n_st;
+    int _n_in;
     omg::Point2Point* _p2p;
 
     std::vector<std::vector<double> > _ref_pose;
