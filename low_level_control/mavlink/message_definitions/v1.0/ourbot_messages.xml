@@ -1,37 +1,7 @@
 <?xml version='1.0'?>
 <mavlink>
-    <version>2</version>
+	<include>microos_messages.xml</include>
     <messages>
-		<message id="0" name="HEARTBEAT">
-			<description>The heartbeat message shows that a system is present and responding. The type of the MAV and Autopilot hardware allow the receiving system to treat further messages from this system appropriate (e.g. by laying out the user interface based on the autopilot).</description>
-			<field type="uint32_t" name="mode">A bitfield for use for autopilot-specific flags.</field>
-			<field type="uint32_t" name="time">System onboard time</field>
-			<field type="int16_t" name="VBat">Battery voltage</field>
-			<field type="uint8_t" name="type">Type of ourbot</field>
-			<field type="uint32_t" name="event">System status flag: an event has occurred</field>
-			<field type="uint8_t_mavlink_version" name="mavlink_version">MAVLink version</field>
-		</message>
-		<message id="1" name="DEBUG">
-			<description>Debug message</description>
-			<field type="uint32_t" name="time">Time at which the message was sent</field>
-			<field type="float" name="float1">float1 of the debug message</field>
-			<field type="float" name="float2">float2 of the debug message</field>
-			<field type="float" name="float3">float3 of the debug message</field>
-			<field type="int32_t" name="int1">int1 of the debug message</field>
-			<field type="int32_t" name="int2">int2 of the debug message</field>
-			<field type="int32_t" name="int3">int3 of the debug message</field>
-		</message>
-		<message id="2" name="THREADTIME">
-			<description>Send thread times</description>
-			<field type="uint32_t" name="time">Time at which the message was sent</field>
-			<field type="uint32_t" name="thread1">execution time of thread 1</field>
-			<field type="uint32_t" name="thread2">execution time of thread 2</field>
-			<field type="uint32_t" name="thread3">execution time of thread 3</field>
-			<field type="uint32_t" name="thread4">execution time of thread 4</field>
-			<field type="uint32_t" name="thread5">execution time of thread 5</field>
-			<field type="uint32_t" name="thread6">execution time of thread 6</field>
-		</message>		
-		
 		<message id="10" name="MOTOR_STATE">
 			<description>Send the motor state</description>
 			<field type="int32_t" name="position">Position of the motor in encoder ticks</field>
