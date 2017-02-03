@@ -19,26 +19,26 @@
   <struct name="proportional_gain" type="array">
     <description>Proportional gain: kp_x, kp_y, kp_t</description>
     <simple name="kp_x" type="double">
-      <value>3.</value>
+      <value>2.</value>
     </simple>
     <simple name="kp_y" type="double">
-      <value>3.</value>
+      <value>2.</value>
     </simple>
     <simple name="kp_t" type="double">
-      <value>3.</value>
+      <value>2.</value>
     </simple>
   </struct>
 
   <struct name="integration_gain" type="array">
     <description>Integration gain: kp_x, kp_y, kp_t</description>
     <simple name="ki_x" type="double">
-      <value>0.</value>
+      <value>0</value>
     </simple>
     <simple name="ki_y" type="double">
-      <value>0.</value>
+      <value>0</value>
     </simple>
     <simple name="ki_t" type="double">
-      <value>0.</value>
+      <value>0</value>
     </simple>
   </struct>
 </properties>

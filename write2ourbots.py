@@ -6,7 +6,7 @@ This script
 - creates new components on the remote odroids if desired
 Run ./write2ourbots.py --help for available options.
 
-Ruben Van Parys - 2016
+Ruben Van Parys - 2015/2016/2017
 """
 
 import optparse
@@ -20,17 +20,15 @@ import pickle
 import hashlib
 import socket
 
-# Default parameters
+# parameters
+user = os.getenv('USER') # default: user with same name as on emperor
+password = user
+remote_root = os.path.join('/home/' + user, 'orocos/ourbot/')
 current_dir = os.path.dirname(os.path.realpath(__file__))
 local_root = os.path.join(current_dir, 'orocos/ourbot')
 other_local_dirs = []
-remote_root = '/home/odroid/orocos/ourbot/'
-username = 'odroid'
-password = 'odroid'
-hosts = col.OrderedDict()
-hosts['kurt'] = '192.168.11.121'
-hosts['krist'] = '192.168.11.122'
-hosts['dave'] = '192.168.11.120'
+
+addresses = col.OrderedDict([('kurt', '192.168.11.121'), ('krist', '192.168.11.122'), ('dave', '192.168.11.120')])
 ignore = []
 exclude = ['build', 'include', 'bin', 'lib', 'obj', '.tb_history']
 
@@ -174,9 +172,9 @@ if __name__ == "__main__":
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-    for host, address in hosts.items():
+    for host, address in addresses.items():
         try:
-            ssh.connect(address, username=username, password=password, timeout=0.5)
+            ssh.connect(address, username=user, password=password, timeout=0.5)
         except socket.error:
             print 'Could not connect to %s' % host
             continue

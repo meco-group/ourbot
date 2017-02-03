@@ -4,7 +4,7 @@
 This script deploys remote odroids and local pc.
 Run ./deploy.py --help for available options.
 
-Ruben Van Parys - 2016
+Ruben Van Parys - 2016/2017
 """
 
 import subprocess
@@ -18,23 +18,18 @@ import sys
 import math
 import socket
 
-# default parameters
-remote_root = '/home/odroid/orocos/ourbot/'
-# remote_root = os.path.join(os.getenv('HOME'), 'orocos/ourbot/')
+# parameters
+user = os.getenv('USER') # default: user with same name as on emperor
+password = user
+remote_root = os.path.join('/home/' + user, 'orocos/ourbot/')
 current_dir = os.path.dirname(os.path.realpath(__file__))
 local_root = os.path.join(current_dir, 'orocos/emperor')
-# username = os.getenv('USER')
-# password = os.getenv('USER')
-username = 'odroid'
-password = 'odroid'
 
 hosts = ['kurt', 'krist', 'dave']
-# hosts = ['kurt']# obstacle = 'dave'
+# obstacle = 'dave'
 obstacle = None
 
-coop_hosts = [h for h in hosts if h != obstacle]
 addresses = col.OrderedDict([('kurt', '192.168.11.121'), ('krist', '192.168.11.122'), ('dave', '192.168.11.120')])
-indices = {key: index for index, key in enumerate(addresses.keys())}
 
 
 def send_file(ftp, ssh, loc_file, rem_file):
@@ -111,7 +106,7 @@ def write_settings():
         local_files_mod, remote_files_mod = modify_host_config(host)
         # open ssh connection
         try:
-            ssh.connect(addresses[host], username=username, password=password, timeout=0.5)
+            ssh.connect(addresses[host], username=user, password=password, timeout=0.5)
         except socket.error:
             print 'Could not connect to %s' % host
             hosts.remove(host)
@@ -138,12 +133,13 @@ def deploy(hosts):
             bash -c '
             sshpass -p %s ssh %s@%s "
             killall deployer-gnulinux
+            source /home/%s/orocos/setup.bash
             cd %s
             rm reports.nc
             echo I am %s
             deployer-gnulinux -s run.ops
             "'
-            ''' % (password, username, address, remote_root, host)
+            ''' % (password, user, address, user, remote_root, host)
         ])
     command.extend(['--tab', '-e', '''
         bash -c '
