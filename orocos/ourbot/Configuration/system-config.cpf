@@ -37,7 +37,7 @@
   </simple>
   <simple name="pathupd_sample_rate" type="double">
     <description>Frequency to update motion planning</description>
-    <value>4.</value>
+    <value>2.</value>
   </simple>
   <simple name="io_sample_rate" type="double">
     <description>Frequency to update io</description>
