@@ -206,7 +206,7 @@ return rfsm.state {
         if not components.emperor:start() then rfsm.send_events(fsm,'e_failed') return end
         if not components.communicator:start() then rfsm.send_events(fsm, 'e_failed') return end
         if not components.gamepad:start() then rfsm.send_events(fsm, 'e_failed') return end
-        if not components.hawkeye:start() then rfsm.send_events(fsm, 'e_failed') return end
+        -- if not components.hawkeye:start() then rfsm.send_events(fsm, 'e_failed') return end
       end,
     },
   },
