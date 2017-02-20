@@ -29,18 +29,16 @@ matplotlib.use('TKAgg')
 import socket
 import collections as col
 
-# Default parameters
+# parameters
+user = os.getenv('USER') # default: user with same name as on emperor
+password = user
+remote_root = os.path.join('/home/' + user, 'orocos/ourbot/')
 current_dir = os.path.dirname(os.path.realpath(__file__))
-local_root = os.path.join(current_dir,'orocos/emperor')
-remote_root = '/home/odroid/orocos'
-username = 'odroid'
-password = 'odroid'
+local_root = os.path.join(current_dir, 'orocos/emperor')
+
+hosts = ['kurt', 'krist', 'dave']
+addresses = col.OrderedDict([('kurt', '192.168.11.121'), ('krist', '192.168.11.122'), ('dave', '192.168.11.120')])
 show_plots = True
-hosts = col.OrderedDict()
-hosts['dave'] = '192.168.11.120'
-hosts['kurt'] = '192.168.11.121'
-hosts['krist'] = '192.168.11.122'
-server = 'kurt'
 
 
 def get_file(ftp, rem_file, loc_file):
@@ -87,7 +85,7 @@ if __name__ == "__main__":
                 default values.''')
     op = optparse.OptionParser(usage=usage)
     op.add_option("-u", "--username", dest="username",
-                  default=username, help="ssh username")
+                  default=user, help="ssh username")
     op.add_option("-p", "--password", dest="password",
                   default=password, help="ssh password")
     op.add_option("-s", "--show", dest="show_plots",
@@ -98,7 +96,7 @@ if __name__ == "__main__":
         local_root = args(0)
         remote_root = args(1)
 
-    username = options.username
+    user = options.username
     password = options.password
     show_plots = options.show_plots
 
@@ -106,14 +104,14 @@ if __name__ == "__main__":
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
     index = 0
-    for host, address in hosts.items():
+    for host, address in addresses.items():
         try:
-            ssh.connect(address, username=username, password=password, timeout=0.5)
+            ssh.connect(address, username=user, password=password, timeout=0.5)
         except socket.error:
             print 'Could not connect to %s' % host
             continue
         print 'Fetching data from %s...' % host
-        ssh.connect(address, username=username, password=password)
+        ssh.connect(address, username=user, password=password)
         ftp = ssh.open_sftp()
         remote_dir = [d for d in ftp.listdir(remote_root) if 'd'
             in str(ftp.lstat(os.path.join(remote_root, d))).split()[0]]
@@ -126,6 +124,6 @@ if __name__ == "__main__":
         index += 1
 
     if show_plots:
-        for index, host in enumerate(hosts.values()):
+        for index, host in enumerate(addresses.values()):
             plot_nc(os.path.join(local_root, 'reports_'+str(index)+'.nc'))
         plt.show()
