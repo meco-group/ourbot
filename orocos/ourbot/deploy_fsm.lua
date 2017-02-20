@@ -206,7 +206,7 @@ return rfsm.state {
         if not addIncoming('estimator', 'markers_port', 'markers_'..host) then rfsm.send_events(fsm, 'e_failed') return end
         -- if not addOutgoing('estimator', 'est_pose_tx_port', 'est_pose_'..host, 'emperor') then rfsm.send_events(fsm, 'e_failed') return end
         -- motion planning
-        -- if not addIncoming('motionplanning', 'obstacle_port', 'obstacles') then rfsm.send_events(fsm, 'e_failed') return end
+        if not addIncoming('motionplanning', 'obstacle_port', 'obstacles') then rfsm.send_events(fsm, 'e_failed') return end
         if not addIncoming('motionplanning', 'target_pose_port', 'target_pose') then rfsm.send_events(fsm, 'e_failed') return end
         if not obstacle_mode then
           if not addIncoming('motionplanning', 'robobs_pose_port', 'robobs_pose') then rfsm.send_events(fsm, 'e_failed') return end
