@@ -22,7 +22,7 @@ using namespace RTT;
 class Detector {
     private:
         std::vector<double> _marker_params;
-        cv::SimpleBlobDetector* _blob_detector;
+        cv::Ptr<cv::SimpleBlobDetector> _blob_detector;
         cv::Mat _background;
         cv::Mat _mask;
 

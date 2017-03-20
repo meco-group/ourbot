@@ -29,7 +29,7 @@ void Detector::initDetector(){
   par.minArea = 80;
   par.filterByCircularity = true;
   par.minCircularity = 0.85;
-  _blob_detector = new cv::SimpleBlobDetector(par);
+  _blob_detector = cv::SimpleBlobDetector::create(par);
 }
 
 bool Detector::start(const cv::Mat& background){
