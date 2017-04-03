@@ -2,10 +2,10 @@
 
 using namespace RTT;
 
-Camera::Camera(const std::string& video_port_name, const std::vector<int>& resolution, int brightness, int exposure, int iso,
-    const std::vector<double>& camera_cfs, const std::vector<double>& distortion_cfs, double capture_time_mod):
+Camera::Camera(const std::string& video_port_name, const std::vector<int>& resolution, int brightness,
+    const std::vector<double>& camera_cfs, const std::vector<double>& distortion_cfs, double capture_time_mod, double crop_ratio):
     _video_port_name(video_port_name), _resolution(resolution),
-    _brightness(brightness), _exposure(exposure), _iso(iso), _capture_time_mod(capture_time_mod){
+    _brightness(brightness), _capture_time_mod(capture_time_mod), _crop_ratio(crop_ratio){
     buildMatrices(camera_cfs, distortion_cfs);
 }
 
@@ -244,8 +244,14 @@ bool Camera::capture(cv::Mat& frame, double& capture_time){
     capture_time = t0 + _capture_time_mod*(t1-t0);
     cv::Mat frame_rgb(cv::Size(_resolution[0]/2, _resolution[1]/2), CV_8UC3);
     convertToRGB(reinterpret_cast<uint16_t*>(_cam_buffer), frame_rgb.data, _resolution[0], _resolution[1]);
+    cv::flip(frame_rgb, frame_rgb, -1);
     // undistort image
     cv::undistort(frame_rgb, frame, _camera_matrix, _distortion_vector);
+    // crop a little bit
+    int width = frame.size().width;
+    int height = frame.size().height;
+    cv::Rect roi(0.5*(width-_crop_ratio*width), 0.5*(height-_crop_ratio*height), _crop_ratio*width, _crop_ratio*height);
+    frame = frame(roi);
     // reset buffer
     buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     buffer.memory = V4L2_MEMORY_MMAP;

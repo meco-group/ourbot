@@ -40,16 +40,16 @@ void Gui::draw(cv::Mat& frame, const std::vector<double>& obstacles, const std::
     int width = frame.size().width;
     _resolution_orig[0] = width;
     _resolution_orig[1] = height;
-    // // draw coordinate system
-    // cv::circle(frame, cv::Point2i(0, height), 10, _black, -3);
-    // cv::line(frame, cv::Point2i(0, height), cv::Point2i(30, height), _black, 3);
-    // cv::line(frame, cv::Point2i(0, height), cv::Point2i(0, height-30), _black, 3);
-    // for (int i=0; i<(height/_pixelspermeter); i++){
-    //     cv::line(frame, cv::Point2i(0, height-(i+1)*_pixelspermeter), cv::Point2i(10, height-(i+1)*_pixelspermeter), _black, 3);
-    // }
-    // for (int i=0; i<(width/_pixelspermeter); i++){
-    //     cv::line(frame, cv::Point2i((i+1)*_pixelspermeter, height), cv::Point2i((i+1)*_pixelspermeter, height-10), _black, 3);
-    // }
+    // draw coordinate system
+    cv::circle(frame, cv::Point2i(0, height), 5, _black, -2);
+    cv::line(frame, cv::Point2i(0, height), cv::Point2i(20, height), _black, 2);
+    cv::line(frame, cv::Point2i(0, height), cv::Point2i(0, height-20), _black, 2);
+    for (int i=0; i<(height/_pixelspermeter); i++){
+        cv::line(frame, cv::Point2i(0, height-(i+1)*_pixelspermeter), cv::Point2i(5, height-(i+1)*_pixelspermeter), _black, 2);
+    }
+    for (int i=0; i<(width/_pixelspermeter); i++){
+        cv::line(frame, cv::Point2i((i+1)*_pixelspermeter, height), cv::Point2i((i+1)*_pixelspermeter, height-5), _black, 2);
+    }
     // draw obstacles
     for (uint k=0; k<obstacles.size(); k+=5){
         if (obstacles[k] == -100){
@@ -69,9 +69,10 @@ void Gui::draw(cv::Mat& frame, const std::vector<double>& obstacles, const std::
         }
     }
     // draw robots
+    int n_colors = robot_colors.size();
     for (uint k=0; k<robots.size(); k++){
         if (robots[k]->detected()){
-            robots[k]->draw(frame, cv::Scalar(robot_colors[3*k+2], robot_colors[3*k+1], robot_colors[3*k]), _pixelspermeter);
+            robots[k]->draw(frame, cv::Scalar(robot_colors[(3*k+2)%n_colors], robot_colors[(3*k+1)%n_colors], robot_colors[(3*k)%n_colors]), _pixelspermeter);
         }
     }
     // show frame
@@ -79,7 +80,7 @@ void Gui::draw(cv::Mat& frame, const std::vector<double>& obstacles, const std::
     cv::resize(frame, displayed_frame, cv::Size(_resolution[0], _resolution[1]), 0, 0);
     // click position
     cv::circle(displayed_frame, cv::Point2i(_mouseclick_position[0], _mouseclick_position[1]), 30, _black, 2);
-    cv::circle(displayed_frame, cv::Point2i(_mouseclick_position[0], _mouseclick_position[1]), 10, _black, -2);
+    cv::circle(displayed_frame, cv::Point2i(_mouseclick_position[0], _mouseclick_position[1]), 10, _black, -1.5);
     // save video
     if (_save_video){
         _saved_video.write(displayed_frame);

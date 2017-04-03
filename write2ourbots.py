@@ -6,7 +6,7 @@ This script
 - creates new components on the remote odroids if desired
 Run ./write2ourbots.py --help for available options.
 
-Ruben Van Parys - 2015
+Ruben Van Parys - 2015/2016/2017
 """
 
 import optparse
@@ -18,18 +18,17 @@ import math
 import errno
 import pickle
 import hashlib
+import socket
 
-# Default parameters
+# parameters
+user = os.getenv('USER') # default: user with same name as on emperor
+password = user
+remote_root = os.path.join('/home/' + user, 'orocos/ourbot/')
 current_dir = os.path.dirname(os.path.realpath(__file__))
 local_root = os.path.join(current_dir, 'orocos/ourbot')
 other_local_dirs = []
-remote_root = '/home/odroid/orocos'
-username = 'odroid'
-password = 'odroid'
-hosts = col.OrderedDict()
-hosts['kurt'] = '192.168.11.121'
-hosts['krist'] = '192.168.11.122'
-hosts['dave'] = '192.168.11.120'
+
+addresses = col.OrderedDict([('kurt', '192.168.11.121'), ('krist', '192.168.11.122'), ('dave', '192.168.11.120')])
 ignore = []
 exclude = ['build', 'include', 'bin', 'lib', 'obj', '.tb_history']
 
@@ -108,27 +107,28 @@ def send_files(ftp, ssh, loc_files, rem_files):
     print ''
 
 
-def detect_changes(loc_files, rem_files):
+def detect_changes(loc_files, rem_files, host):
     _lf, _rf = [], []
     try:
-        l = pickle.load(open('.db'))
+        db = pickle.load(open('.db'))
     except IOError:
-        l = []
-    db = dict(l)
+        db = {}
+    if host not in db:
+        db[host] = {}
     for lf, rf in zip(loc_files, rem_files):
         checksum = hashlib.md5(open(lf).read()).hexdigest()
-        if db.get(lf, None) != checksum:
-            db[lf] = checksum
+        if db[host].get(lf, None) != checksum:
+            db[host][lf] = checksum
             _lf.append(lf)
             _rf.append(rf)
-    pickle.dump(db.items(), open('.db', 'w'))
+    pickle.dump(db, open('.db', 'w'))
     if options.send_all:
         return loc_files, rem_files
     else:
         return _lf, _rf
 
 
-def get_source_files():
+def get_source_files(host):
     loc_files, rem_files = [], []
     local_files = [f for f in os.listdir(local_root)
                    if os.path.isfile(os.path.join(local_root, f))]
@@ -147,71 +147,7 @@ def get_source_files():
                     rem_file = loc_file.replace(loc_dir, rem_dir)
                     loc_files.append(loc_file)
                     rem_files.append(rem_file)
-    return detect_changes(loc_files, rem_files)
-
-
-def mp_adaptations(ftp, ssh):
-    local_files = []
-    remote_files = []
-    # adapt CMakeLists.txt
-    local_files.append(os.path.join(
-        current_dir, 'orocos/ourbot/MotionPlanning/CMakeLists.txt'))
-    remote_files.append(os.path.join(
-        remote_root, 'MotionPlanning/CMakeLists.txt'))
-    f1 = open(local_files[-1], 'r')
-    body = f1.read()
-    f1.close()
-    for repl in ['include_directories', 'link_directories']:
-        while(body.find(repl) > 0):
-            index = body.find(repl)
-            string = body[index:].split(')')[0]+')\n'
-            body = body.replace(string, '')
-    part1, part2 = body[:index], body[index:]
-    body = part1 + '\n'
-    body += 'link_directories('
-    body += os.path.join(
-        remote_root + '/MotionPlanning/src/MotionPlanning/Toolbox/bin/') + ')\n'
-    body += 'link_directories('
-    body += os.path.join(
-        remote_root + '/MotionPlanning/src/DistributedMotionPlanning/Toolbox/bin/') + ')\n'
-    body += 'include_directories('
-    body += os.path.join(
-        remote_root + '/MotionPlanning/src/MotionPlanning/Toolbox/src/') + ')\n'
-    body += 'include_directories('
-    body += os.path.join(
-        remote_root + '/MotionPlanning/src/DistributedMotionPlanning/Toolbox/src/') + ')\n'
-    body += part2
-    f2 = open(local_files[-1]+'_', 'w')
-    f2.write(body)
-    f2.close()
-    # adapt Makefiles
-    for mp_type in ['MotionPlanning', 'DistributedMotionPlanning']:
-        local_files.append(os.path.join(
-            current_dir, ('orocos/ourbot/MotionPlanning/src/' +
-                          mp_type + '/Toolbox/Makefile')))
-        remote_files.append(os.path.join(
-            remote_root, 'MotionPlanning/src/'+mp_type+'/Toolbox/Makefile'))
-        f1 = open(local_files[-1], 'r')
-        body = f1.read()
-        f1.close()
-        index = body.find('CASADILIB =')
-        string = body[index:].split('\n')[0]
-        body = body.replace(string, 'CASADILIB = /usr/local/lib/')
-        index = body.find('CASADIINC =')
-        string = body[index:].split('\n')[0]
-        body = body.replace(string, 'CASADIINC = /usr/local/include/casadi/')
-        index = body.find('CASADIOBJ =')
-        string = body[index:].split('\n')[0]
-        body = body.replace(
-            string, 'CASADIOBJ = ' + os.path.join(
-                remote_root, 'MotionPlanning/src/'+mp_type+'/Toolbox/bin/'))
-        f2 = open(local_files[-1]+'_', 'w')
-        f2.write(body)
-        f2.close()
-    # send files
-    for lf, rf in zip(local_files, remote_files):
-        send_file(ftp, ssh, lf+'_', rf)
-        os.remove(lf+'_')
+    return detect_changes(loc_files, rem_files, host)
 
 
 if __name__ == "__main__":
@@ -236,12 +172,13 @@ if __name__ == "__main__":
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-    # get source files to send
-    loc_files, rem_files = get_source_files()
-
-    for host, address in hosts.items():
-        print 'Host %s' % host
-        ssh.connect(address, username=username, password=password)
+    for host, address in addresses.items():
+        try:
+            ssh.connect(address, username=user, password=password, timeout=0.5)
+        except socket.error:
+            print 'Could not connect to %s' % host
+            continue
+        print 'Writing to %s' % host
         ftp = ssh.open_sftp()
         remote_dir = [d for d in ftp.listdir(remote_root) if 'd'
                       in str(ftp.lstat(os.path.join(remote_root, d))).split()[0]]
@@ -271,11 +208,9 @@ if __name__ == "__main__":
 
         # sending source files
         print 'Sending source files'
+        # get source files to send
+        loc_files, rem_files = get_source_files(host)
         send_files(ftp, ssh, loc_files, rem_files)
-
-        # adapt stuff for MotionPlanning component
-        mp_adaptations(ftp, ssh)
-
         ftp.close()
         ssh.close()
-    # os.system('clear')
+    os.system('clear')

@@ -19,26 +19,15 @@
   </simple>
   <simple name="hawkeye_sample_rate" type="double">
     <description>Frequency to update hawkeye</description>
-    <value>4</value>
+    <value>10</value>
   </simple>
   <simple name="reporter_sample_rate" type="double">
     <description>Frequency to take snapshots for the reporter</description>
     <value>10.</value>
   </simple>
 
-  <struct name="trusted_hosts" type="strings">
-    <description>From which hosts should received packets be interpreted</description>
-    <simple name="dave" type="string">
-      <value>192.168.11.120</value>
-    </simple>
-    <simple name="kurt" type="string">
-      <value>192.168.11.121</value>
-    </simple>
-    <simple name="krist" type="string">
-      <value>192.168.11.122</value>
-    </simple>
-    <simple name="emperor" type="string">
-      <value>192.168.11.113</value>
-    </simple>
-  </struct>
+  <simple name="host" type="string">
+    <description>Name of this host.</description>
+    <value>emperor</value>
+  </simple>
 </properties>

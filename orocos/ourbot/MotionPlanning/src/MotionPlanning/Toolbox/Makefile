@@ -21,9 +21,9 @@
 #------------------------------------------------------------------------------
 # Change this
 #------------------------------------------------------------------------------
-CASADILIB = /home/ruben/Documents/Work/Repositories/casadi_binary/casadi/
-CASADIINC = /home/ruben/Documents/Work/Repositories/casadi_binary/include/
-CASADIOBJ = /home/ruben/ourbot/orocos/ourbot/MotionPlanning/src/MotionPlanning/Toolbox/bin/
+CASADILIB = $(CASADI_LIB)
+CASADIINC = $(CASADI_INC)
+CASADIOBJ = $(ROS_WORKSPACE)/ourbot/MotionPlanning/src/MotionPlanning/Toolbox/bin/
 SOURCEFILES = test_p2p.cpp Holonomic_p2p.cpp
 EXECUTABLE = Point2Point
 #------------------------------------------------------------------------------

@@ -5,6 +5,8 @@ The ourbot is a mobile robotic platform which is designed, constructed and progr
 More information on the setup can be found on our [ourbot wiki](https://gitlab.mech.kuleuven.be/meco-setups/ourbot/wikis/home).
 Any questions can be asked to the developers: Ruben, Maarten and Tim or can be posted on our mailinglist ourBot@ls.kuleuven.be.
 
+The ourbots are used by multiple people. If you want to use it, please fill in your name at the [ourbot reservation sheet](https://docs.google.com/spreadsheets/d/1S4pfZJR3xoZ4--ovK8XHElOvlXIIyVh01351QcIzOlU/edit?usp=sharing).
+
 We would like to thank some people who contributed to this project in some sense (ideas, testing, coding, construction, fablab support, nailpolish, ...): Goele, Jan, Joris, Erik, Eline, Eddy, Bertram, Jean-Pierre, Jens, Simon, Michiel.
 
 <!-- <div align="center">

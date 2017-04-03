@@ -21,12 +21,15 @@ typedef struct _code_t {
 
 class DistributedMotionPlanning : public MotionPlanningInterface{
   private:
-    OutputPort<std::vector<double> > _x_var_port;
+    OutputPort<std::vector<double> > _x_var_port[2];
     OutputPort<std::vector<double> > _zl_ij_var_port[2];
 
     InputPort<std::vector<double> > _x_j_var_port[2];
     InputPort<std::vector<double> > _zl_ji_var_port[2];
 
+
+    int _n_st;
+    int _n_in;
     omgf::FormationPoint2Point* _problem;
 
     std::vector<std::vector<double> > _ref_pose;
@@ -49,6 +52,18 @@ class DistributedMotionPlanning : public MotionPlanningInterface{
 
     int _n_shared;
     int _n_nghb;
+
+    TaskContext* _communicator;
+    std::string _host;
+    std::vector<std::string> _neighbors;
+    std::vector<std::vector<double> > _robot_poses;
+    std::vector<std::string> _robot_names;
+    std::vector<int> _robot_indices;
+    int _host_index;
+
+    std::vector<double> _configuration_x;
+    std::vector<double> _configuration_y;
+
     std::vector<int> _nghb_index;
     std::vector<double> _residuals;
     std::vector<double> _rel_pos_c;
@@ -75,6 +90,12 @@ class DistributedMotionPlanning : public MotionPlanningInterface{
     bool targetReached();
     void writeSample();
     void setRelPoseC(std::vector<double>);
+
+    void resetNeighbors();
+    void addNeighbor(const std::vector<double>& neighbor_pose, const std::string& neighbor_name);
+    std::vector<double> setConfiguration();
+    bool connectWithNeighbors();
+
 };
 
 #endif

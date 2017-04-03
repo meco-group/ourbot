@@ -8,11 +8,7 @@ loadService("he", "marshalling")
 he.marshalling.loadProperties("../Configuration/hawkeye-config.cpf")
 he.marshalling.loadProperties("../Configuration/system-config.cpf")
 
-he.setPeriod(0.2)
+he.setPeriod(1)
 
-he.configure
-he.start
-
-he.stop
-
-he.start
+he.configure()
+he.start()

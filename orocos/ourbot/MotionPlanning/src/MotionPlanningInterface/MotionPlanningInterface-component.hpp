@@ -27,8 +27,8 @@ class MotionPlanningInterface : public RTT::TaskContext{
     InputPort<std::vector<double> > _robobs_pose_port;
     InputPort<std::vector<double> > _robobs_velocity_port;
     OutputPort<std::vector<double> > _ref_pose_trajectory_port[3];
+    OutputPort<std::vector<double> > _ref_pose_trajectory_ss_port[2];
     OutputPort<std::vector<double> > _ref_velocity_trajectory_port[3];
-    OutputPort<std::vector<double> > _ref_pose_trajectory_ss_port[3];
     OutputPort<bool> _valid_trajectories_port;
 
     TimeService::ticks _timestamp;
@@ -44,17 +44,19 @@ class MotionPlanningInterface : public RTT::TaskContext{
     int _failure_cnt;
     bool _first_iteration;
     bool _valid;
+    double _omega;
 
   protected:
     virtual bool trajectoryUpdate() = 0;
     virtual bool initialize() = 0;
     virtual bool config() = 0;
     virtual bool targetReached();
-    std::vector<obstacle_t> _obstacles;
 
+    InputPort<std::vector<double> > _est_pose_port;
+    std::vector<obstacle_t> _obstacles;
     int _trajectory_length;
-    int _trajectory_length_tx;
     int _trajectory_length_full;
+    int _trajectory_length_tx;
     int _tx_subsample;
     int _update_length;
     double _control_sample_rate;
@@ -83,5 +85,7 @@ class MotionPlanningInterface : public RTT::TaskContext{
     bool valid();
     void enable();
     void disable();
+    virtual std::vector<double> setConfiguration();
+    virtual bool zeroOrientation();
 };
 #endif

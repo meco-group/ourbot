@@ -17,13 +17,12 @@ class Robot {
         std::vector<double> _ref_x;
         std::vector<double> _ref_y;
         std::string _name;
-        std::vector<cv::Mat> _top_markers;
-        std::vector<double> _local_marker_locations_m;
         std::vector<int> _global_marker_locations_px;
         cv::RotatedRect _box;
         bool _detected;
         int _width;
         int _height;
+        std::vector<double> _local_marker_locations_m;
 
         void createBox();
         std::vector<double> transform(const std::vector<double>& point, int pixelspermeter, int height);
@@ -31,8 +30,7 @@ class Robot {
         void mixWithWhite(const cv::Scalar& color, cv::Scalar& color_w, double perc_white);
 
     public:
-        Robot(const std::string& name, const std::vector<cv::Mat>& top_markers,
-            const std::vector<double>& local_marker_locations_m, int width, int height);
+        Robot(int width, int height, std::vector<double>& local_marker_locations_m);
         void reset();
         void setMarkers(const std::vector<int>& marker_locations_px);
         std::string getName();

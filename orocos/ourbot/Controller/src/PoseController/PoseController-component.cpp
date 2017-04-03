@@ -3,15 +3,21 @@
 #include <iostream>
 
 PoseController::PoseController(std::string const& name) : ControllerInterface(name),
-    _cmd_vel(3), _est_pose(3), _ref_pose(3), _error_gl(3), _error_loc(3),
+    _cmd_vel(3), _cmd_vel_prev(3), _est_pose(3), _ref_pose(3), _error_gl(3), _error_loc(3), _error_loc_prev(3),
     _ref_vel_gl(3), _ref_vel_loc(3){
     addProperty("enable_fb", _enable_fb).doc("Enable feedback action");
     addProperty("enable_ff", _enable_ff).doc("Enable feedforward action");
     addProperty("correct_orientation", _correct_orientation).doc("Transform velocity ff reference to local frame");
-    addProperty("state_fb_par", _state_fb_par).doc("State feedback parameters: kx, ky, kt");
+    addProperty("proportional_gain", _kp).doc("Proportional gain: kp_x, kp_y, kp_t");
+    addProperty("integration_gain", _ki).doc("Integration gain: ki_x, ki_y, ki_t");
 }
 
 bool PoseController::initialize(){
+    for (int k=0; k<3; k++){
+        _error_loc_prev[k] = 0.;
+        _cmd_vel_prev[k] = 0.;
+    }
+    _Ts = 1./getControlSampleRate();
     return true;
 }
 
@@ -28,7 +34,11 @@ bool PoseController::controlUpdate(){
         }
         _error_loc = global2local(_error_gl, _est_pose[2]);
         for (int k=0; k<3; k++){
-            _cmd_vel[k] = _state_fb_par[k]*_error_loc[k];
+            if (!isinf(_error_loc[k])){ // disable fb by setting inf ref
+                _cmd_vel[k] = (_kp[k]+0.5*_ki[k]*_Ts)*_error_loc[k] + (_cmd_vel_prev[k] + (-_kp[k]+0.5*_ki[k]*_Ts)*_error_loc_prev[k]);
+                _cmd_vel_prev[k] = _cmd_vel[k];
+                _error_loc_prev[k] = _error_loc[k];
+            }
         }
     }
     // feedforward action

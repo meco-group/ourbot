@@ -1,7 +1,5 @@
-
 import sys, os
-sys.path.insert(0, '/home/ruben/Documents/Work/Repositories/casadi_binary_old/')
-sys.path.insert(0, '/home/ruben/Documents/Work/Programs/motionplanningtoolbox/')
+sys.path.insert(0, os.getenv('HOME') + '/Downloads/omg-tools/')
 from omgtools import *
 
 """
@@ -18,22 +16,16 @@ rect.radius = 0.02
 vehicles = [Holonomic(shapes=rect, options=options, bounds={'vmin': -0.1, 'vmax': 0.1, 'amin': -0.3, 'amax': 0.3}) for _ in range(N)]
 fleet = Fleet(vehicles)
 configuration = np.array([[-0.2, -0.2], [-0.2, 0.2], [0.4, 0]])
-# configuration = np.array([[-0.2, -0.2], [-0.2, 0.2]])
 init_positions = [0.8, 0.8] + configuration
 terminal_positions = [3.2, 1.5] + configuration
-
-# init_positions = [0.8, 1.125] + configuration
-# terminal_positions = [3.5, 1.125] + configuration
-
 
 fleet.set_configuration(configuration.tolist())
 fleet.set_initial_conditions(init_positions.tolist())
 fleet.set_terminal_conditions(terminal_positions.tolist())
 
-
 # create environment
-width = 4.0
-height = 2.25
+width = 4.61
+height = 2.59
 environment = Environment(room={'shape': Rectangle(width, height), 'position': [0.5*width, 0.5*height]})
 rectangle = Rectangle(width=0.3, height=0.8)
 
@@ -49,27 +41,16 @@ problem.set_options({'hard_term_con': False})
 problem.init()
 
 options = {}
-casadi_path = os.path.join('/home/ruben/Documents/Work/Repositories/casadi_binary/')
-options['directory'] = os.path.join(os.getcwd(), 'Toolbox/')
-# path to object files of your exported optimization problem
-options['casadiobj'] = os.path.join(options['directory'], 'bin/')
-# your casadi include path
-options['casadiinc'] = os.path.join(casadi_path, 'include/')
-# your casadi library path
-options['casadilib'] = os.path.join(casadi_path, 'casadi/')
+options['directory'] = os.getenv('ROS_WORKSPACE') + '/ourbot/MotionPlanning/src/DistributedMotionPlanning/Toolbox/'
+options['casadiobj'] = '$(ROS_WORKSPACE)/ourbot/MotionPlanning/src/DistributedMotionPlanning/Toolbox/bin/'
+options['casadiinc'] = '$(CASADI_INC)'
+options['casadilib'] = '$(CASADI_LIB)'
 options['namespace'] = 'omgf'
 
 # export the problem
 problem.export(options)
-# fleet.plot('input')
-# problem.plot('scene')
-# simulator = Simulator(problem, sample_time=0.01, update_time=0.5)
-# trajectories, signals = simulator.run()
-# problem.plot_movie('scene', repeat=True, number_of_frames=100)
-
-
-# note: you need to implement your vehicle type in c++. Take a look at
-# Holonomic.cpp and Holonomic.hpp which are also exported as an example.
-
-import matplotlib.pyplot as plt
-plt.show(block=True)
+fleet.plot('input')
+problem.plot('scene')
+simulator = Simulator(problem, sample_time=0.01, update_time=0.5)
+trajectories, signals = simulator.run()
+problem.plot_movie('scene', repeat=True, number_of_frames=100)

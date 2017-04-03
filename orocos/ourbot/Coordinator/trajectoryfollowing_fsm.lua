@@ -8,16 +8,13 @@ local reporter        = tc:getPeer('reporter')
 local io              = tc:getPeer('io')
 local teensy          = tc:getPeer('teensy')
 
-local loadTrajectory               = reference:getOperation("loadTrajectory")
 local estimatorUpdate              = estimator:getOperation("update")
 local referenceUpdate              = reference:getOperation("update")
 local validEstimation              = estimator:getOperation("validEstimation")
-local disablePort                  = communicator:getOperation("disablePort")
 local controllerUpdate             = controller:getOperation("update")
 local estimatorInRunTimeError      = estimator:getOperation("inRunTimeError")
 local controllerInRunTimeError     = controller:getOperation("inRunTimeError")
 local referenceInRunTimeError      = reference:getOperation("inRunTimeError")
-local strongVelocityControl        = teensy:getOperation("strongVelocityControl")
 local snapshot                     = reporter:getOperation("snapshot")
 
 -- variables for the timing diagnostics
@@ -25,42 +22,26 @@ local jitter    = 0
 local duration  = 0
 
 return rfsm.state {
-  rfsm.trans{src = 'initial', tgt = 'idle'},
-  rfsm.trans{src = 'idle',    tgt = 'init',   events = {'e_init'}},
+  rfsm.trans{src = 'initial', tgt = 'init'},
   rfsm.trans{src = 'init',    tgt = 'run',    events = {'e_run'}},
-  rfsm.trans{src = 'run',     tgt = 'stop',   events = {'e_stop', 'e_failed'}},
-  rfsm.trans{src = 'stop',    tgt = 'run',    events = {'e_restart'}},  -- no reinitiliaziation
-  rfsm.trans{src = 'stop',    tgt = 'reset',  events = {'e_reset'}},    -- with reinitialization
-  rfsm.trans{src = 'reset',   tgt = 'idle',   events = {'e_done'}},
+  rfsm.trans{src = 'run',     tgt = 'stop',   events = {'e_stop'}},
+  rfsm.trans{src = 'stop',    tgt = 'init',   events = {'e_restart'}},
+  rfsm.trans{src = 'stop',    tgt = 'idle',   events = {'e_reset'}},
 
   initial = rfsm.conn{},
 
-  idle = rfsm.state{
-    entry=function()
-      print("Waiting on Initialize...")
-    end
-  },
-
   init = rfsm.state{
     entry = function(fsm)
-      disablePort(4002) -- disable velocity command via gamepad
       if not io:start() then
         rtt.logl("Error","Could not start io component")
         rfsm.send_events(fsm,'e_failed')
         return
       end
-      if not loadTrajectory() then
+      if not reference:loadTrajectory() then
         rtt.logl("Error","Could not load trajectory in reference component")
         rfsm.send_events(fsm,'e_failed')
         return
       end
-      strongVelocityControl()
-      print("Waiting on Run...")
-    end,
-  },
-
-  run = rfsm.state{
-    entry = function(fsm)
       if not reporter:start() then
         rtt.logl("Error","Could not start reporter component")
         rfsm.send_events(fsm,'e_failed')
@@ -71,7 +52,13 @@ return rfsm.state {
         rfsm.send_events(fsm,'e_failed')
         return
       end
-      print("System started. Abort by using Break.")
+      teensy:strongVelocityControl()
+    end,
+  },
+
+  run = rfsm.state{
+    entry = function(fsm)
+      print "Ready to roll..."
     end,
 
     doo = function(fsm)
@@ -141,13 +128,10 @@ return rfsm.state {
       controller:stop()
       estimator:stop()
       reporter:stop()
+      io:stop()
       print("System stopped. Waiting on Restart or Reset...")
     end,
   },
 
-  reset = rfsm.state{
-    entry = function(fsm)
-      io:stop()
-    end,
-  }
+  idle = rfsm.state{}
 }

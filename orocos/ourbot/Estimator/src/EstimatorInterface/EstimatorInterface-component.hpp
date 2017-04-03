@@ -106,5 +106,7 @@ class EstimatorInterface : public RTT::TaskContext{
     virtual void stopHook();
     void writeSample();
     bool validEstimation();
+    std::vector<double> getEstimatedPose();
+    std::vector<double> getEstimatedVelocity();
 };
 #endif

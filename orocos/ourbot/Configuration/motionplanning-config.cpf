@@ -2,15 +2,6 @@
 <!DOCTYPE properties SYSTEM "cpf.dtd">
 <properties>
 
-<struct name="rel_pos_c" type="array">
-<description>Relative pose wrt fleet center</description>
-<simple name="Element0" type="double">
-  <value>0.</value>
-</simple>
-<simple name="Element1" type="double">
-  <value>0.</value>
-</simple>
-</struct>
 <simple name="init_iter" type="long">
   <description>Number of initial ADMM iterations</description>
   <value>5</value>
@@ -21,7 +12,7 @@
 </simple>
 <simple name="ideal_prediction" type="boolean">
   <description>Use prediction based on computed trajectories and not on state estimation</description>
-  <value>1</value>
+  <value>0</value>
 </simple>
 <simple name="maximum_failures" type="long">
   <description>Maximum allowed consecutive failures</description>
@@ -31,5 +22,31 @@
   <description>Target reached detection?</description>
   <value>1</value>
 </simple>
+
+<struct name="configuration_x" type="array">
+  <description>x coordinates relative to fleet center</description>
+  <simple name="Element0" type="double">
+    <value>-0.2</value>
+  </simple>
+  <simple name="Element1" type="double">
+    <value>-0.2</value>
+  </simple>
+  <simple name="Element2" type="double">
+    <value>0.35</value>
+  </simple>
+</struct>
+
+<struct name="configuration_y" type="array">
+  <description>y coordinates relative to fleet center</description>
+  <simple name="Element0" type="double">
+    <value>-0.2</value>
+  </simple>
+  <simple name="Element1" type="double">
+    <value>0.2</value>
+  </simple>
+  <simple name="Element2" type="double">
+    <value>0.0</value>
+  </simple>
+</struct>
 
 </properties>

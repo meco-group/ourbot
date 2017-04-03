@@ -88,22 +88,6 @@
     <value>0.05</value>
   </simple>
 
-  <struct name="kin_limitations" type="array">
-    <description>Kinematic limitations (vmax, vmin, amax, amin)</description>
-    <simple name="vmax" type="double">
-      <value>5.</value>
-    </simple>
-    <simple name="vmin" type="double">
-      <value>-5.</value>
-    </simple>
-    <simple name="amax" type="double">
-      <value>1.</value>
-    </simple>
-    <simple name="amin" type="double">
-      <value>-1.</value>
-    </simple>
-  </struct>
-
   <simple name="accelero_mounting_distance" type="double">
     <description>Distance between the accelerometer and the center of the robot</description>
     <value>0.10738</value>
@@ -126,30 +110,10 @@
       <value>192.168.11.120</value>
     </simple>
   </struct>
-  <struct name="nghb_index" type="ints">
-    <description>Index numbers of neighbouring agents</description>
-    <simple name="neighbor0" type="long">
-      <value>1</value>
-    </simple>
-    <simple name="neighbor1" type="long">
-      <value>1</value>
-    </simple>
-  </struct>
 
-  <struct name="trusted_hosts" type="strings">
-    <description>From which hosts should received packets be interpreted</description>
-    <simple name="dave" type="string">
-      <value>192.168.11.120</value>
-    </simple>
-    <simple name="kurt" type="string">
-      <value>192.168.11.121</value>
-    </simple>
-    <simple name="krist" type="string">
-      <value>192.168.11.122</value>
-    </simple>
-    <simple name="emperor" type="string">
-      <value>192.168.11.113</value>
-    </simple>
-  </struct>
+  <simple name="host" type="string">
+    <description>Name of this host.</description>
+    <value>erveepee</value>
+  </simple>
 
 </properties>
