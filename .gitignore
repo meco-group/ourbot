@@ -16,7 +16,6 @@ todo
 *.ior
 *~
 **/*~
-*.o
 *.so
 *.pyc
 orocos/setup.bash
@@ -28,3 +27,4 @@ orocos/setup.zsh
 *_
 *.avi
 orocos/ourbot/Estimator/src/Kalman/const_*
+
