@@ -66,6 +66,7 @@ class TeensyBridge : public USBInterface
 		RTT::OutputPort<std::vector<double> > _cal_motor_voltage_port;
 		RTT::OutputPort<std::vector<double> > _cal_motor_current_port;
 		RTT::OutputPort<std::vector<double> > _debug_port;
+		RTT::OutputPort<double> _cal_trailer_angle_port;
 
 		bool action(mavlink_message_t msg);
 		void setMotorReference(int reference, int ID, int mode);
@@ -111,6 +112,7 @@ class TeensyBridge : public USBInterface
 		void showDebug();
 		void showThreadTime();
 		void showIMUData(int ID);
+		void showTrailerAngle();
 };
 
 #endif //TEENSYBRIDGE_H
