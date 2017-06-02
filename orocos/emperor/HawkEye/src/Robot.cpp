@@ -98,16 +98,16 @@ void Robot::draw(cv::Mat& frame, const cv::Scalar& color, int pixelspermeter){
   //   cv::line(frame, vertices[i], vertices[(i+1)%4], color, 2);
   // }
   // pose
-  // std::vector<double> point1(2), point2(2);
-  // double orientation = _pose[2];
-  // point1[0] = _pose[0];
-  // point1[1] = _pose[1];
-  // point2[0] = point1[0] + 0.1*cos(orientation);
-  // point2[1] = point1[1] + 0.1*sin(orientation);
-  // point1 = invtransform(point1, pixelspermeter, frame.size().height);
-  // point2 = invtransform(point2, pixelspermeter, frame.size().height);
-  // cv::circle(frame, cv::Point2f(point1[0], point1[1]), 5, color, -2);
-  // cv::line(frame, cv::Point2f(point1[0], point1[1]), cv::Point2f(point2[0], point2[1]), color, 2);
+  std::vector<double> point1(2), point2(2);
+  double orientation = _pose[2];
+  point1[0] = _pose[0];
+  point1[1] = _pose[1];
+  point2[0] = point1[0] + 0.1*cos(orientation);
+  point2[1] = point1[1] + 0.1*sin(orientation);
+  point1 = invtransform(point1, pixelspermeter, frame.size().height);
+  point2 = invtransform(point2, pixelspermeter, frame.size().height);
+  cv::circle(frame, cv::Point2f(point1[0], point1[1]), 5, color, -2);
+  cv::line(frame, cv::Point2f(point1[0], point1[1]), cv::Point2f(point2[0], point2[1]), color, 2);
   // reference
   cv::Scalar color_w;
   mixWithWhite(color, color_w, 50);
