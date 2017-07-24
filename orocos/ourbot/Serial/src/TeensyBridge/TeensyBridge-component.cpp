@@ -31,6 +31,7 @@ TeensyBridge::TeensyBridge(std::string const& name) :
 	this->ports()->addPort( "cal_motor_voltage_port", _cal_motor_voltage_port ).doc( "Output port for the motor voltage values. (FL,FR,RL,RR) in [V]" );
 	this->ports()->addPort( "cal_motor_current_port", _cal_motor_current_port ).doc( "Output port for the calibrated motor current values. (FL,FR,RL,RR) in [A]" );
 	this->ports()->addPort( "debug_port", _debug_port ).doc( "Debug variables port" );
+	this->ports()->addPort( "cal_trailer_angle_port", _cal_trailer_angle_port).doc( "Output port for calibrated trailer angle (degrees)");
 
 	addOperation("getPacketsDropped", &TeensyBridge::getPacketsDropped, this).doc("Returns the amount of dropped packets since the beginning.");
 	addOperation("getPacketsReceived", &TeensyBridge::getPacketsReceived, this).doc("Returns the amount of received packets since the beginning.");
@@ -52,6 +53,7 @@ TeensyBridge::TeensyBridge(std::string const& name) :
 	addOperation("showDebug", &TeensyBridge::showDebug, this).doc("Displays the ourbot debug variables.");
 	addOperation("showThreadTime", &TeensyBridge::showThreadTime, this).doc("Displays the ourbot onboard thread times.");
 	addOperation("showIMUData", &TeensyBridge::showIMUData, this).doc("Displays the ourbot onboard thread times.").arg("ID","ID of the sensor");
+	addOperation("showTrailerAngle", &TeensyBridge::showTrailerAngle, this).doc("Display trailer angle.");
 
 	// SETUP IMU
 	addIMUPorts(_imus[0], std::string("l"), 7);
@@ -169,6 +171,8 @@ void TeensyBridge::writeRawDataToPorts()
 	debug[5] = _gpio.gpio_float[2];
 
 	_debug_port.write(debug);
+
+	_cal_trailer_angle_port.write(debug[3]);
 }
 
 bool TeensyBridge::configureHook()
@@ -449,6 +453,11 @@ void TeensyBridge::showDebug()
 	std::cout << "int1 = " << _gpio.gpio_int[0] << std::endl;
 	std::cout << "int2 = " << _gpio.gpio_int[1] << std::endl;
 	std::cout << "int3 = " << _gpio.gpio_int[2] << std::endl;
+}
+
+void TeensyBridge::showTrailerAngle()
+{
+	std::cout << "Trailer angle = " << _gpio.gpio_float[0] << "deg";
 }
 
 void TeensyBridge::showThreadTime()

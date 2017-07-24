@@ -104,12 +104,14 @@ if __name__ == "__main__":
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
     index = 0
+    addresses_av = col.OrderedDict()
     for host, address in addresses.items():
         try:
             ssh.connect(address, username=user, password=password, timeout=0.5)
         except socket.error:
             print 'Could not connect to %s' % host
             continue
+        addresses_av[host] = address
         print 'Fetching data from %s...' % host
         ssh.connect(address, username=user, password=password)
         ftp = ssh.open_sftp()
@@ -124,6 +126,6 @@ if __name__ == "__main__":
         index += 1
 
     if show_plots:
-        for index, host in enumerate(addresses.values()):
+        for index, host in enumerate(addresses_av.values()):
             plot_nc(os.path.join(local_root, 'reports_'+str(index)+'.nc'))
         plt.show()
