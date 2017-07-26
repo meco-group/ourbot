@@ -63,6 +63,7 @@ class Communicator : public RTT::TaskContext{
     std::string getSender(const string& component_name, const string& port_name, const string& id);
     std::string getHost();
     void setHost(const string& host);
+    std::string getUUID();
 };
 
 #endif

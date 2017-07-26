@@ -15,6 +15,7 @@ Communicator::Communicator(std::string const& name) : TaskContext(name, PreOpera
   addOperation("getSender", &Communicator::getSender, this).doc("Get sender of last message on connection.");
   addOperation("getHost", &Communicator::getHost, this).doc("Get name of this host.");
   addOperation("setHost", &Communicator::setHost, this).doc("Set name of this host.");
+  addOperation("getUUID", &Communicator::getUUID, this).doc("Get uuid of zyre node");
   addOperation("disable", &Communicator::disable, this).doc("Disable connection.");
   addOperation("enable", &Communicator::enable, this).doc("Enable connection.");
   addOperation("wait", &Communicator::wait, this).doc("Wait a (milli)sec.");
@@ -182,17 +183,17 @@ bool Communicator::listen(){
       std::string group = std::string(zyre_event_group(_event));
       std::string peer = std::string(zyre_event_peer_name(_event));
       addGroup(group, peer);
-      #ifdef DEBUG
-      std::cout << peer << " joined " << group << "." << std::endl;
-      #endif
+      if (_verbose >= 1) {
+        std::cout << peer << " joined " << group << "." << std::endl;
+      }
     }
     if (streq(command, "LEAVE")){
       std::string group = std::string(zyre_event_group(_event));
       std::string peer = std::string(zyre_event_peer_name(_event));
       removeGroup(group, peer);
-      #ifdef DEBUG
-      std::cout << peer << " left " << group << "." << std::endl;
-      #endif
+      if (_verbose >= 1) {
+        std::cout << peer << " left " << group << "." << std::endl;
+      }
     }
     if (streq(command, "SHOUT") || streq(command, "WHISPER")){
       zmsg_t* msg = zyre_event_msg(_event);
@@ -258,6 +259,10 @@ std::string Communicator::getHost(){
 
 void Communicator::setHost(const string& host){
   _host = host;
+}
+
+std::string Communicator::getUUID(){
+  return std::string(zyre_uuid(_node));
 }
 
 Port Communicator::clonePort(const string& component_name, const string& port_name, ConnPolicy& policy){
