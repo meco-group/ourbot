@@ -1,6 +1,7 @@
 #include "Communicator-component.hpp"
 #include <rtt/Component.hpp>
 #include <iostream>
+#include <boost/algorithm/string.hpp>
 
 using namespace std;
 
@@ -262,7 +263,10 @@ void Communicator::setHost(const string& host){
 }
 
 std::string Communicator::getUUID(){
-  return std::string(zyre_uuid(_node));
+  std::string buf = std::string(zyre_uuid(_node));
+  std::string uuid = buf.substr(0, 8) + '-' + buf.substr(8, 4) + '-' + buf.substr(12, 4) + '-' + buf.substr(16, 4) + '-' + buf.substr(20, 12);
+  boost::to_lower(uuid);
+  return uuid;
 }
 
 Port Communicator::clonePort(const string& component_name, const string& port_name, ConnPolicy& policy){
