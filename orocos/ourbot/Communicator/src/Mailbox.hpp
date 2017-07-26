@@ -57,7 +57,7 @@ class Mailbox {
                 _size = _message.size()*sizeof(char);
                 zmsg_t* msg = zmsg_new();
                 zmsg_pushmem(msg, &_message[0], _size);
-                if (zyre_whisper(_node, peer.c_str(), &msg)) {
+                if (zyre_whisper(_node, peer.c_str(), &msg) != 0) {
                     return false;
                 }
                 if (_verbose >= 1) {

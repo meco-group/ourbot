@@ -52,6 +52,9 @@ void Communicator::updateHook(){
       error();
     }
   }
+  if (!_mailbox->send()){
+    log(Error) << "Error in sending mailbox" << endlog();
+  }
   // listing to incoming messages
   if (!listen()){
     error();
