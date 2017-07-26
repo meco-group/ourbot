@@ -4,6 +4,7 @@
 #include <rtt/RTT.hpp>
 #include <rtt/Port.hpp>
 #include "Connection.hpp"
+#include "Mailbox.hpp"
 #include <zyre.h>
 #include <rtt/os/TimeService.hpp>
 #include <rtt/Time.hpp>
@@ -24,6 +25,7 @@ class Communicator : public RTT::TaskContext{
     zpoller_t* _poller;
     zyre_event_t* _event;
     int _verbose;
+    Mailbox* _mailbox;
 
     std::vector<Connection*> _connections;
     std::map<std::string, Connection*> _con_map;
@@ -48,6 +50,9 @@ class Communicator : public RTT::TaskContext{
     bool addOutgoingConnection(const std::string& component_name, const std::string& port_name, const std::string& id, const std::string& group);
     bool addIncomingConnection(const std::string& component_name, const std::string& port_name, const std::string& id);
     bool addBufferedIncomingConnection(const string& component_name, const string& port_name, const string& id, int buffer_size);
+    void writeMail(const string& message, const string& peer);
+    std::vector<string> readMail(bool remove);
+    void removeMail();
     void removeConnection(const std::string& component_name, const std::string& port_name, const std::string& id);
     void enable(const std::string& component_name, const std::string& port_name, const std::string& identifier);
     void disable(const std::string& component_name, const std::string& port_name, const std::string& identifier);

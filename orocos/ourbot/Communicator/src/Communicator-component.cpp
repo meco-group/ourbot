@@ -18,6 +18,9 @@ Communicator::Communicator(std::string const& name) : TaskContext(name, PreOpera
   addOperation("disable", &Communicator::disable, this).doc("Disable connection.");
   addOperation("enable", &Communicator::enable, this).doc("Enable connection.");
   addOperation("wait", &Communicator::wait, this).doc("Wait a (milli)sec.");
+  addOperation("writeMail", &Communicator::writeMail, this).doc("Push string message in outbox.");
+  addOperation("readMail", &Communicator::readMail, this).doc("Read latest received string message in inbox.");
+  addOperation("removeMail", &Communicator::removeMail, this).doc("Pop latest received string message from inbox.");
 
   addProperty("iface", _iface).doc("Interface for communication.");
   addProperty("portnr", _portnr).doc("Port number to send discovery beacons on.");
@@ -34,6 +37,8 @@ bool Communicator::configureHook(){
     log(Error) << "Error while joining groups." << endlog();
     return false;
   }
+  _mailbox = new Mailbox(_node);
+  _mailbox->setVerbose(_verbose);
   return true;
 }
 
@@ -189,26 +194,57 @@ bool Communicator::listen(){
       std::cout << peer << " left " << group << "." << std::endl;
       #endif
     }
-    if (streq(command, "SHOUT")){
+    if (streq(command, "SHOUT") || streq(command, "WHISPER")){
       zmsg_t* msg = zyre_event_msg(_event);
       if (msg == NULL){
           log(Error) << "Received message is NULL." << endlog();
           return false;
       }
       std::string peer = std::string(zyre_event_peer_name(_event));
-      zframe_t* header_frame = zmsg_first(msg);
-      zframe_t* data_frame = zmsg_next(msg);
-      char* header = (char*)zframe_data(header_frame);
-      for (uint k=0; k<_connections.size(); k++){
-        if(!_connections[k]->receive(header, data_frame, peer)){
-          log(Error) << "Error while receiving in " << _connections[k]->toString() << endlog();
+      std::string peer_uuid = std::string(zyre_event_peer_uuid(_event));
+
+      if (zmsg_size(msg) == 1) {
+        zframe_t* data_frame = zmsg_first(msg);
+        if (!_mailbox->receive(data_frame, peer, peer_uuid)) {
+          log(Error) << "Error while receiving mail." << endlog();
           return false;
         }
+      } else if (zmsg_size(msg) == 2) {
+        zframe_t* header_frame = zmsg_first(msg);
+        zframe_t* data_frame = zmsg_next(msg);
+        char* header = (char*)zframe_data(header_frame);
+        for (uint k=0; k<_connections.size(); k++) {
+          if(!_connections[k]->receive(header, data_frame, peer)) {
+            log(Error) << "Error while receiving in " << _connections[k]->toString() << endlog();
+            return false;
+          }
+        }
+      } else {
+        log(Warning) << "Wrong message size, discarding." << endlog();
       }
       zmsg_destroy(&msg);
     }
   }
   return true;
+}
+
+void Communicator::writeMail(const string& message, const string& peer) {
+  _mailbox->write(message, peer);
+}
+
+std::vector<string> Communicator::readMail(bool remove) {
+  string message, peer;
+  if (!_mailbox->read(message, peer)) {
+    return std::vector<string>{};
+  }
+  if (remove) {
+    removeMail();
+  }
+  return std::vector<string>{message, peer};
+}
+
+void Communicator::removeMail() {
+  _mailbox->popInbox();
 }
 
 std::string Communicator::getSender(const string& component_name, const string& port_name, const string& id){
