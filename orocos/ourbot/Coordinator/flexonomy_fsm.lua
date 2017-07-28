@@ -7,9 +7,7 @@ local duration = 0
 
 local reference = tc:getPeer('reference')
 local motionplanning = tc:getPeer('motionplanning')
-local teensy = tc:getPeer('teensy')
 
-local setVelocity = teensy:getOperation('setVelocity')
 local setTargetPose = motionplanning:getOperation('setTargetPose')
 local disableMotionPlanning = motionplanning:getOperation('disable')
 local referenceUpdate = reference:getOperation("update")
@@ -54,17 +52,12 @@ return rfsm.state {
 
   idle = rfsm.state{
 
-    entry = function(fsm)
-      setVelocity(0, 0, 0)
-    end,
-
     doo = function(fsm)
       while true do
         -- perform default loop update
         if not update(fsm, 'ready', false) then
           return
         end
-        setVelocity(0, 0, 0) -- why??
         -- check for new task
         local t = executeNextTask()
         if t ~= nil then
