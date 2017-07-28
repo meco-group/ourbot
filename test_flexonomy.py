@@ -1,0 +1,71 @@
+import getch
+import pyre
+import time
+import json
+import collections as col
+GROUP = 'ourbots'
+
+node = pyre.Pyre('coordinator')
+node.set_interface('wlan0')
+node.start()
+# node.set_verbose()
+node.join(GROUP)
+
+
+header = col.OrderedDict()
+header['version'] = '1.0.0'
+header['type'] = 'task_request'
+header['model'] = ''
+header['uuid'] = str(node.uuid())
+header['timestamp'] = '2017-07-07T02:20:00.000Z'
+msg = col.OrderedDict()
+msg['header'] = header
+
+kp = 0
+# kp = getch.getch()
+# print ord(kp)
+
+current_task_id = '71c7e94b-6ac0-4912-b707-5ef9df7b4302'
+
+while(kp != 'q'):
+    kp = getch.getch()
+    if (ord(kp) == 49): # keypress 1
+        msg['header']['type'] = 'task_request'
+        msg['payload'] = col.OrderedDict()
+        msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4302'
+        msg['payload']['task_type'] = 'move_to'
+        msg['payload']['task_parameters'] = {'target': 'A'}
+        msg['payload']['finished_by'] = '2017-08-07T02:20:00.000Z'
+        node.shout(GROUP, json.dumps(msg))
+        print 'sent task_request msg'
+        m = node.recv()
+        while(m[0] != 'WHISPER'):
+            m = node.recv()
+        data = json.loads(m[3])
+        print(data)
+    elif (ord(kp) == 50): # keypress 2
+        msg['header']['type'] = 'execute'
+        msg['payload'] = col.OrderedDict()
+        msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4302'
+        msg['payload']['task_type'] = 'move_to'
+        msg['payload']['task_parameters'] = {'target': 'A'}
+        node.shout(GROUP, json.dumps(msg))
+        print 'sent execute msg 1'
+    elif (ord(kp) == 51): # keypress 3
+        msg['header']['type'] = 'execute'
+        msg['payload'] = col.OrderedDict()
+        msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4303'
+        msg['payload']['task_type'] = 'move_to'
+        msg['payload']['task_parameters'] = {'target': 'B'}
+        node.shout(GROUP, json.dumps(msg))
+        print 'sent execute msg 2'
+    elif (ord(kp) == 52): # keypress 4
+        msg['header']['type'] = 'cancel'
+        msg['payload'] = col.OrderedDict()
+        msg['payload']['task_uuid'] = current_task_id
+        node.shout(GROUP, json.dumps(msg))
+        print 'sent cancel msg'
+
+
+
+node.stop()
