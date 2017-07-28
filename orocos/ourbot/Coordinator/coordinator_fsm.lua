@@ -4,9 +4,11 @@ return rfsm.state {
   rfsm.trans{src = 'idle',                      tgt = 'motionplanning',     events = {'e_motionplanning'}},
   rfsm.trans{src = 'idle',                      tgt = 'velocitycmd',        events = {'e_velocitycmd'}},
   rfsm.trans{src = 'idle',                      tgt = 'trajectoryfollowing',events = {'e_trajectoryfollowing'}},
+  rfsm.trans{src = 'idle',                      tgt = 'flexonomy',          events = {'e_done'}},
   rfsm.trans{src = 'motionplanning',            tgt = 'failure',            events = {'e_failed'}},
   rfsm.trans{src = 'velocitycmd',               tgt = 'failure',            events = {'e_failed'}},
   rfsm.trans{src = 'trajectoryfollowing',       tgt = 'failure',            events = {'e_failed'}},
+  rfsm.trans{src = 'flexonomy',                 tgt = 'failure',            events = {'e_failed'}},
   rfsm.trans{src = 'motionplanning.idle',       tgt = 'idle',               events = {'e_done'}},
   rfsm.trans{src = 'velocitycmd.idle',          tgt = 'idle',               events = {'e_done'}},
   rfsm.trans{src = 'trajectoryfollowing.idle',  tgt = 'idle',               events = {'e_done'}},
@@ -20,7 +22,7 @@ return rfsm.state {
         print('\nIn obstacle mode (control with gamepad)')
         _coordinator_send_event_port:write('e_velocitycmd')
       else
-        print('\nWaiting for command...\nPossibilities: VelocityControl, MotionPlanning, TrajectoryFollowing')
+        print('\nWaiting for command...\nPossibilities: VelocityControl, MotionPlanning, TrajectoryFollowing, Flexonomy')
       end
     end
   },
@@ -34,4 +36,5 @@ return rfsm.state {
   motionplanning      = rfsm.load("Coordinator/motionplanning_fsm.lua"),
   velocitycmd         = rfsm.load("Coordinator/velocitycmd_fsm.lua"),
   trajectoryfollowing = rfsm.load("Coordinator/trajectoryfollowing_fsm.lua"),
+  flexonomy           = rfsm.load("Coordinator/flexonomy_fsm.lua"),
 }
