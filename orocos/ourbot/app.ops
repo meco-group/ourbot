@@ -10,6 +10,10 @@ export void TrajectoryFollowing(){
   coordinator_send_event_port.write("e_trajectoryfollowing")
 }
 
+export void Flexonomy(){
+  coordinator_send_event_port.write("e_flexonomy")
+}
+
 export void Idle(){
   coordinator_send_event_port.write("e_idle")
 }

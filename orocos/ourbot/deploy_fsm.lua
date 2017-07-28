@@ -204,10 +204,10 @@ return rfsm.state {
         if not addIncoming('coordinator', 'coordinator_fsm_event_port', 'fsm_event') then rfsm.send_events(fsm, 'e_failed') return end
         -- estimator
         if not addIncoming('estimator', 'markers_port', 'markers_'..host) then rfsm.send_events(fsm, 'e_failed') return end
-        if not addOutgoing('estimator', 'est_pose_tx_port', 'est_pose_'..host, 'emperor') then rfsm.send_events(fsm, 'e_failed') return end
+        -- if not addOutgoing('estimator', 'est_pose_tx_port', 'est_pose_'..host, 'emperor') then rfsm.send_events(fsm, 'e_failed') return end
         -- motion planning
         if not addIncoming('motionplanning', 'obstacle_port', 'obstacles') then rfsm.send_events(fsm, 'e_failed') return end
-        if not addIncoming('motionplanning', 'target_pose_port', 'target_pose') then rfsm.send_events(fsm, 'e_failed') return end
+        -- if not addIncoming('motionplanning', 'target_pose_port', 'target_pose') then rfsm.send_events(fsm, 'e_failed') return end
         if not obstacle_mode then
           if not addIncoming('motionplanning', 'robobs_pose_port', 'robobs_pose') then rfsm.send_events(fsm, 'e_failed') return end
           if not addIncoming('motionplanning', 'robobs_velocity_port', 'robobs_velocity') then rfsm.send_events(fsm, 'e_failed') return end
@@ -222,8 +222,8 @@ return rfsm.state {
         -- if not addBufferedIncoming('distrmotionplanning', 'negotiate_in_port', 'negotiate', 10) then rfsm.send_events(fsm, 'e_failed') return end
         -- if not addIncoming('distrmotionplanning', 'negotiate_in_port', 'negotiate') then rfsm.send_events(fsm, 'e_failed') return end
         -- reference
-        if not addOutgoing('reference', 'ref_pose_trajectory_x_tx_port', 'ref_x_'..host, 'emperor') then rfsm.send_events(fsm, 'e_failed') return end
-        if not addOutgoing('reference', 'ref_pose_trajectory_y_tx_port', 'ref_y_'..host, 'emperor') then rfsm.send_events(fsm, 'e_failed') return end
+        -- if not addOutgoing('reference', 'ref_pose_trajectory_x_tx_port', 'ref_x_'..host, 'emperor') then rfsm.send_events(fsm, 'e_failed') return end
+        -- if not addOutgoing('reference', 'ref_pose_trajectory_y_tx_port', 'ref_y_'..host, 'emperor') then rfsm.send_events(fsm, 'e_failed') return end
         if obstacle_mode then
           if not addOutgoing('estimator', 'est_pose_tx_port', 'robobs_pose', 'ourbots') then rfsm.send_events(fsm, 'e_failed') return end
           if not addOutgoing('estimator', 'est_velocity_tx_port', 'robobs_velocity', 'ourbots') then rfsm.send_events(fsm, 'e_failed') return end
