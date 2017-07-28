@@ -30,6 +30,7 @@ class MotionPlanningInterface : public RTT::TaskContext{
     OutputPort<std::vector<double> > _ref_pose_trajectory_ss_port[2];
     OutputPort<std::vector<double> > _ref_velocity_trajectory_port[3];
     OutputPort<bool> _valid_trajectories_port;
+    OutputPort<double> _motion_time_port;
 
     TimeService::ticks _timestamp;
     void initObstacles();
@@ -51,6 +52,7 @@ class MotionPlanningInterface : public RTT::TaskContext{
     virtual bool initialize() = 0;
     virtual bool config() = 0;
     virtual bool targetReached();
+    virtual double getMotionTime();
 
     InputPort<std::vector<double> > _est_pose_port;
     std::vector<obstacle_t> _obstacles;

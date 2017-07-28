@@ -26,6 +26,8 @@ MotionPlanningInterface::MotionPlanningInterface(std::string const& name) : Task
   ports()->addPort("ref_pose_trajectory_ss_x_port", _ref_pose_trajectory_ss_port[0]).doc("subsampled x reference trajectory for whole horizon");
   ports()->addPort("ref_pose_trajectory_ss_y_port", _ref_pose_trajectory_ss_port[1]).doc("subsampled y reference trajectory for whole horizon");
 
+  ports()->addPort("motion_time_port", _motion_time_port).doc("Motion time of computed motion trajectory");
+
   addProperty("control_sample_rate", _control_sample_rate).doc("Frequency to update the control loop");
   addProperty("pathupd_sample_rate", _pathupd_sample_rate).doc("Frequency to update the path");
   addProperty("horizon_time", _horizon_time).doc("Horizon to compute motion trajectory");
@@ -37,6 +39,7 @@ MotionPlanningInterface::MotionPlanningInterface(std::string const& name) : Task
 
   addOperation("setTargetPose", &MotionPlanningInterface::setTargetPose, this).doc("Set target pose");
   addOperation("gotTarget", &MotionPlanningInterface::gotTarget, this).doc("Do we have a target?");
+  addOperation("targetReached", &MotionPlanningInterface::targetReached, this).doc("Did we reach the current target?");
   addOperation("valid", &MotionPlanningInterface::valid, this).doc("Valid trajectories computed?");
   addOperation("enable", &MotionPlanningInterface::enable, this).doc("Enable Motion Planning");
   addOperation("disable", &MotionPlanningInterface::disable, this).doc("Disable Motion Planning");
@@ -151,6 +154,10 @@ bool MotionPlanningInterface::targetReached(){
   return false;
 }
 
+double MotionPlanningInterface::getMotionTime(){
+  return _horizon_time; //dummy implementation
+}
+
 void MotionPlanningInterface::updateHook(){
   if (!_enable){
     return;
@@ -200,6 +207,8 @@ void MotionPlanningInterface::updateHook(){
       _ref_pose_trajectory_ss_port[i].write(_ref_pose_trajectory_ss[i]);
     }
   }
+  // write motion time
+  _motion_time_port.write(getMotionTime());
   // check timing
   Seconds time_elapsed = TimeService::Instance()->secondsSince(_timestamp);
   #ifdef DEBUG
