@@ -29,11 +29,14 @@ class Communicator : public RTT::TaskContext{
 
     std::vector<Connection*> _connections;
     std::map<std::string, Connection*> _con_map;
+    std::map<std::string, std::string> _peers;
     std::map<std::string, std::vector<std::string>> _groups;
 
     bool isInput(Port port);
     bool createNode();
     bool joinGroups();
+    void addPeer(const std::string& peer, const std::string& peer_uuid);
+    void removePeer(const std::string& peer);
     void addGroup(const std::string& group, const std::string& peer);
     void removeGroup(const std::string& group, const std::string& peer);
     void getMyGroups(std::vector<std::string>& groups);
@@ -60,6 +63,7 @@ class Communicator : public RTT::TaskContext{
     bool joinGroup(const std::string& group);
     bool leaveGroup(const std::string& group);
     int getGroupSize(const std::string& group);
+    std::string getPeerUUID(const std::string& peer);
     std::string getSender(const string& component_name, const string& port_name, const string& id);
     std::string getHost();
     void setHost(const string& host);

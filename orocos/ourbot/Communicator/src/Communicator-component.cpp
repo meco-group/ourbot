@@ -17,6 +17,7 @@ Communicator::Communicator(std::string const& name) : TaskContext(name, PreOpera
   addOperation("getHost", &Communicator::getHost, this).doc("Get name of this host.");
   addOperation("setHost", &Communicator::setHost, this).doc("Set name of this host.");
   addOperation("getUUID", &Communicator::getUUID, this).doc("Get uuid of zyre node");
+  addOperation("getPeerUUID", &Communicator::getPeerUUID, this).doc("Translate peer name to its uuid");
   addOperation("disable", &Communicator::disable, this).doc("Disable connection.");
   addOperation("enable", &Communicator::enable, this).doc("Enable connection.");
   addOperation("wait", &Communicator::wait, this).doc("Wait a (milli)sec.");
@@ -129,6 +130,17 @@ bool Communicator::leaveGroup(const std::string& group){
   return true;
 }
 
+void Communicator::addPeer(const std::string& peer, const std::string& peer_uuid) {
+  _peers[peer] = peer_uuid;
+}
+
+void Communicator::removePeer(const std::string& peer) {
+  if (_peers.find(peer) == _peers.end()) {
+    return;
+  }
+  _peers.erase(peer);
+}
+
 void Communicator::addGroup(const std::string& group, const std::string& peer){
   if (_groups.find(group) == _groups.end()){
     _groups[group] = {peer};
@@ -162,6 +174,10 @@ void Communicator::getMyGroups(std::vector<std::string>& groups){
   }
 }
 
+std::string Communicator::getPeerUUID(const std::string& peer){
+  return _peers[peer];
+}
+
 int Communicator::getGroupSize(const std::string& group){
   if (_groups.find(group) == _groups.end()){
     return 0;
@@ -183,6 +199,22 @@ bool Communicator::listen(){
     }
     _event = zyre_event_new(_node);
     const char* command = zyre_event_type(_event);
+    if (streq(command, "ENTER")){
+      std::string peer = std::string(zyre_event_peer_name(_event));
+      std::string peer_uuid = std::string(zyre_event_peer_uuid(_event));
+      addPeer(peer, peer_uuid);
+      if (_verbose >= 1) {
+        std::cout << peer << " entered the network." << std::endl;
+      }
+    }
+    if (streq(command, "EXIT")){
+      std::string peer = std::string(zyre_event_peer_name(_event));
+      std::string peer_uuid = std::string(zyre_event_peer_uuid(_event));
+      removePeer(peer);
+      if (_verbose >= 1) {
+        std::cout << peer << " left the network." << std::endl;
+      }
+    }
     if (streq(command, "JOIN")){
       std::string group = std::string(zyre_event_group(_event));
       std::string peer = std::string(zyre_event_peer_name(_event));
