@@ -58,6 +58,7 @@ bool MotionPlanning::trajectoryUpdate(){
 
 void MotionPlanning::getObstacles(std::vector<omg::obstacle_t>& obstacles){
   for (int k=0; k<_n_obs; k++){
+    std::cout << "obstacle " << k << ": [" << _obstacles[k].position[0] <<  ", " << _obstacles[k].position[1] << "]" << std::endl;
     obstacles[k].position = _obstacles[k].position;
     obstacles[k].velocity = _obstacles[k].velocity;
     obstacles[k].acceleration = _obstacles[k].acceleration;

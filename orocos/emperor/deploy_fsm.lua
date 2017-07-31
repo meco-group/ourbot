@@ -146,6 +146,7 @@ return rfsm.state {
         if not addOutgoing('gamepad', 'cmd_velocity_port', 'cmd_velocity', 'ourbots') then rfsm.send_events(fsm,'e_failed') return end
         -- hawkeye
         if not addOutgoing('hawkeye', 'target_pose_port', 'target_pose', 'ourbots') then rfsm.send_events(fsm, 'e_failed') return end
+        if not addOutgoing('hawkeye', 'obstacle_port', 'obstacles', 'ourbots') then rfsm.send_events(fsm, 'e_failed') return end
         if not addOutgoing('hawkeye', 'robot9_pose_port', 'markers_kurt', 'kurt') then rfsm.send_events(fsm, 'e_failed') return end
         if not addOutgoing('hawkeye', 'robot0_pose_port', 'markers_dave', 'dave') then rfsm.send_events(fsm, 'e_failed') return end
         if not addOutgoing('hawkeye', 'robot1_pose_port', 'markers_krist', 'krist') then rfsm.send_events(fsm, 'e_failed') return end

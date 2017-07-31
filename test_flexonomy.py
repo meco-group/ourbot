@@ -34,7 +34,7 @@ while(kp != 'q'):
         msg['payload'] = col.OrderedDict()
         msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4302'
         msg['payload']['task_type'] = 'move_to'
-        msg['payload']['task_parameters'] = {'target': 'A'}
+        msg['payload']['task_parameters'] = 'A'
         msg['payload']['finished_by'] = '2017-08-07T02:20:00.000Z'
         node.shout(GROUP, json.dumps(msg))
         print 'sent task_request msg'
@@ -48,18 +48,34 @@ while(kp != 'q'):
         msg['payload'] = col.OrderedDict()
         msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4302'
         msg['payload']['task_type'] = 'move_to'
-        msg['payload']['task_parameters'] = {'A'}
+        msg['payload']['task_parameters'] = 'A'
         node.shout(GROUP, json.dumps(msg))
-        print 'sent execute msg 1'
+        print 'sent execute msg task A'
     elif (ord(kp) == 51): # keypress 3
         msg['header']['type'] = 'execute'
         msg['payload'] = col.OrderedDict()
         msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4303'
         msg['payload']['task_type'] = 'move_to'
-        msg['payload']['task_parameters'] = {'B'}
+        msg['payload']['task_parameters'] = 'B'
         node.shout(GROUP, json.dumps(msg))
-        print 'sent execute msg 2'
+        print 'sent execute msg task B'
     elif (ord(kp) == 52): # keypress 4
+        msg['header']['type'] = 'execute'
+        msg['payload'] = col.OrderedDict()
+        msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4303'
+        msg['payload']['task_type'] = 'move_to'
+        msg['payload']['task_parameters'] = 'C'
+        node.shout(GROUP, json.dumps(msg))
+        print 'sent execute msg task C'
+    elif (ord(kp) == 53): # keypress 5
+        msg['header']['type'] = 'execute'
+        msg['payload'] = col.OrderedDict()
+        msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4303'
+        msg['payload']['task_type'] = 'move_to'
+        msg['payload']['task_parameters'] = 'D'
+        node.shout(GROUP, json.dumps(msg))
+        print 'sent execute msg task D'
+    elif (ord(kp) == 54): # keypress 6
         msg['header']['type'] = 'cancel'
         msg['payload'] = col.OrderedDict()
         msg['payload']['task_uuid'] = current_task_id
