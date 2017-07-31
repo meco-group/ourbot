@@ -410,7 +410,7 @@ function getTargetPose(task)
     elseif zone == 'B' then
         return {2, 0.5, 0}
     elseif zone == 'C' then
-        return {3.5 2, 0}
+        return {3.5, 2, 0}
     elseif zonde == 'D' then
         return {3.5, 0.5, 0}
     else
