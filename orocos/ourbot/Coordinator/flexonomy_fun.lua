@@ -31,7 +31,7 @@ local targetReached = motionplanning:getOperation('targetReached')
 -- properties
 local header_version = '1.0.0'
 local statemsg_sample_rate = 1
-local coordinator_name = 'coordinator'
+local coordinator_name = 'SH1'
 local vmax = 0.8
 
 -- ports
@@ -204,6 +204,7 @@ function checkMail()
         -- decode message
         local msg = ret[0]
         local peer = ret[1]
+        print(msg)
         local status, msg_tbl = pcall(json.decode, msg)
         if status then
             if msg_tbl.header.version == header_version then
@@ -320,6 +321,7 @@ function removeTask(task)
             return
         end
     end
+    print ('task uuid not known')
 end
 
 function cancelTask(task)
@@ -357,6 +359,7 @@ function bidForTask(task, peer)
     msg_tbl.header.type = 'bid'
     msg_tbl.header.timestamp = encodeTime(get_sec())
     msg_tbl.payload = {task_uuid = task.task_uuid, bid = total_time}
+    print('peer: '..peer)
     writeMail(json.encode(msg_tbl), peer)
 end
 
@@ -401,11 +404,15 @@ function encodeTime(time)
 end
 
 function getTargetPose(task)
-    local zone = task.task_parameters.target
+    local zone = task.task_parameters
     if zone == 'A' then
         return {2, 2, 0}
     elseif zone == 'B' then
         return {2, 0.5, 0}
+    elseif zone == 'C' then
+        return {3.5 2, 0}
+    elseif zonde == 'D' then
+        return {3.5, 0.5, 0}
     else
         print('target zone not recognized')
         return nil

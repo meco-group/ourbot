@@ -48,7 +48,7 @@ while(kp != 'q'):
         msg['payload'] = col.OrderedDict()
         msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4302'
         msg['payload']['task_type'] = 'move_to'
-        msg['payload']['task_parameters'] = {'target': 'A'}
+        msg['payload']['task_parameters'] = {'A'}
         node.shout(GROUP, json.dumps(msg))
         print 'sent execute msg 1'
     elif (ord(kp) == 51): # keypress 3
@@ -56,7 +56,7 @@ while(kp != 'q'):
         msg['payload'] = col.OrderedDict()
         msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4303'
         msg['payload']['task_type'] = 'move_to'
-        msg['payload']['task_parameters'] = {'target': 'B'}
+        msg['payload']['task_parameters'] = {'B'}
         node.shout(GROUP, json.dumps(msg))
         print 'sent execute msg 2'
     elif (ord(kp) == 52): # keypress 4

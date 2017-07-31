@@ -203,7 +203,7 @@ bool Communicator::listen(){
       std::string peer = std::string(zyre_event_peer_name(_event));
       std::string peer_uuid = std::string(zyre_event_peer_uuid(_event));
       addPeer(peer, peer_uuid);
-      if (_verbose >= 1) {
+      if (_verbose >= 0) {
         std::cout << peer << " entered the network." << std::endl;
       }
     }
@@ -211,7 +211,7 @@ bool Communicator::listen(){
       std::string peer = std::string(zyre_event_peer_name(_event));
       std::string peer_uuid = std::string(zyre_event_peer_uuid(_event));
       removePeer(peer);
-      if (_verbose >= 1) {
+      if (_verbose >= 0) {
         std::cout << peer << " left the network." << std::endl;
       }
     }
@@ -219,7 +219,7 @@ bool Communicator::listen(){
       std::string group = std::string(zyre_event_group(_event));
       std::string peer = std::string(zyre_event_peer_name(_event));
       addGroup(group, peer);
-      if (_verbose >= 1) {
+      if (_verbose >= 0) {
         std::cout << peer << " joined " << group << "." << std::endl;
       }
     }
@@ -227,7 +227,7 @@ bool Communicator::listen(){
       std::string group = std::string(zyre_event_group(_event));
       std::string peer = std::string(zyre_event_peer_name(_event));
       removeGroup(group, peer);
-      if (_verbose >= 1) {
+      if (_verbose >= 0) {
         std::cout << peer << " left " << group << "." << std::endl;
       }
     }
