@@ -205,7 +205,7 @@ return rfsm.state {
         -- start the emperor, gamepad and hawkeye
         if not components.emperor:start() then rfsm.send_events(fsm,'e_failed') return end
         if not components.communicator:start() then rfsm.send_events(fsm, 'e_failed') return end
-        if not components.gamepad:start() then rfsm.send_events(fsm, 'e_failed') return end
+        components.gamepad:start() -- no failure when not connected
         if not components.hawkeye:start() then rfsm.send_events(fsm, 'e_failed') return end
       end,
     },
