@@ -5,7 +5,7 @@ import json
 import collections as col
 GROUP = 'ourbots'
 
-node = pyre.Pyre('coordinator')
+node = pyre.Pyre('SH1')
 node.set_interface('wlan0')
 node.start()
 # node.set_verbose()

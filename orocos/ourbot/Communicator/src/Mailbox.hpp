@@ -3,6 +3,7 @@
 
 #include <zyre.h>
 #include <string.h>
+#include <vector>
 #include <queue>
 #include <unistd.h>
 
@@ -13,10 +14,11 @@ class Mailbox {
         zyre_t* _node;
         string _message;
         size_t _size;
-        queue<string> _inbox;
-        queue<string> _senders;
+        vector<string> _inbox;
+        vector<string> _senders;
         queue<string> _outbox;
         queue<string> _receivers;
+        int _msg_index;
 
         zlist_t* _peers;
         int _verbose;
@@ -25,6 +27,7 @@ class Mailbox {
         Mailbox(zyre_t* node) {
             _node = node;
             _verbose = 0;
+            _msg_index = -1;
         }
 
         void setVerbose(int verbose) {
@@ -35,8 +38,8 @@ class Mailbox {
             _size = zframe_size(data_frame);
             _message.resize(_size/sizeof(char));
             memcpy(&_message[0], zframe_data(data_frame), _size);
-            _inbox.push(_message);
-            _senders.push(peer_uuid);
+            _inbox.push_back(_message);
+            _senders.push_back(peer_uuid);
             if (_verbose >= 1) {
                 std::cout << "[mail] receiving " << _size << " bytes from " << peer;
                 if (_verbose >= 2) {
@@ -77,14 +80,19 @@ class Mailbox {
             if (_inbox.empty()) {
                 return false;
             }
-            message = _inbox.front();
-            peer = _senders.front();
+            _msg_index = (_msg_index+1)%_inbox.size();
+            message = _inbox.at(_msg_index);
+            peer = _senders.at(_msg_index);
             return true;
         }
 
-        void popInbox() {
-            _inbox.pop();
-            _senders.pop();
+        void remove() {
+            if (_msg_index == -1) {
+                return;
+            }
+            _inbox.erase(_inbox.begin() + _msg_index);
+            _senders.erase(_senders.begin() + _msg_index);
+            _msg_index--;
         }
 
         void write(const string& message, const string& peer) {

@@ -281,7 +281,7 @@ std::vector<string> Communicator::readMail(bool remove) {
 }
 
 void Communicator::removeMail() {
-  _mailbox->popInbox();
+  _mailbox->remove();
 }
 
 std::string Communicator::getSender(const string& component_name, const string& port_name, const string& id){

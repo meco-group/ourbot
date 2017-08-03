@@ -23,6 +23,7 @@ local referenceInRunTimeError = reference:getOperation("inRunTimeError")
 local snapshot = reporter:getOperation("snapshot")
 local getPeerUUID = communicator:getOperation('getPeerUUID')
 local readMail = communicator:getOperation('readMail')
+local removeMail = communicator:getOperation('removeMail')
 local writeMail = communicator:getOperation('writeMail')
 local getPose = estimator:getOperation('getEstimatedPose')
 local mpBusy = motionplanning:getOperation('gotTarget')
@@ -199,26 +200,30 @@ function controlLoop(fsm, control)
 end
 
 function checkMail()
-    local ret = readMail(true)
+    local ret = readMail(false)
     while (ret.size == 2) do
         -- decode message
         local msg = ret[0]
         local peer = ret[1]
-        print(msg)
-        local status, msg_tbl = pcall(json.decode, msg)
-        if status then
-            if msg_tbl.header.version == header_version then
-                local msg_type = msg_tbl.header.type
-                if msg_type == 'task_request' then bidForTask(msg_tbl.payload, peer)
-                elseif msg_type == 'execute' then addTask(msg_tbl.payload)
-                elseif msg_type == 'allocate' then allocateTask()
-                elseif msg_type == 'cancel' then cancelTask(msg_tbl.payload)
+        print(peer)
+        if peer == getPeerUUID(coordinator_name) then
+            print(msg)
+            local status, msg_tbl = pcall(json.decode, msg)
+            if status then
+                if msg_tbl.header.version == header_version then
+                    local msg_type = msg_tbl.header.type
+                    if msg_type == 'task_request' then bidForTask(msg_tbl.payload, peer)
+                    elseif msg_type == 'execute' then addTask(msg_tbl.payload)
+                    elseif msg_type == 'allocate' then allocateTask()
+                    elseif msg_type == 'cancel' then cancelTask(msg_tbl.payload)
+                    end
                 end
+            else
+                print('decoding failed')
             end
-        else
-            print('decoding failed')
+            removeMail()
         end
-        ret = readMail(true)
+        ret = readMail(false)
     end
 end
 
@@ -359,7 +364,6 @@ function bidForTask(task, peer)
     msg_tbl.header.type = 'bid'
     msg_tbl.header.timestamp = encodeTime(get_sec())
     msg_tbl.payload = {task_uuid = task.task_uuid, bid = total_time}
-    print('peer: '..peer)
     writeMail(json.encode(msg_tbl), peer)
 end
 
