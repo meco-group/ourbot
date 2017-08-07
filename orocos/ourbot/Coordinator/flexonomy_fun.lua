@@ -28,6 +28,7 @@ local writeMail = communicator:getOperation('writeMail')
 local getPose = estimator:getOperation('getEstimatedPose')
 local mpBusy = motionplanning:getOperation('gotTarget')
 local targetReached = motionplanning:getOperation('targetReached')
+local hostObstTraj = motionplanning:getOperation("writeHostObstTraj")
 
 -- properties
 local header_version = '1.0.0'
@@ -39,6 +40,7 @@ local vmax = 0.8
 local _motion_time_port = rtt.InputPort("double")
 tc:addPort(_motion_time_port, "motion_time_port", "Motion time of computed motion trajectory")
 _motion_time_port:connect(motionplanning:getPort('motion_time_port'))
+
 local _cmd_velocity_port = rtt.OutputPort("array")
 tc:addPort(_cmd_velocity_port, "cmd_velocity_port", "Input port for low level velocity controller. Vector contains [vx,vy,w]")
 _cmd_velocity_port:connect(teensy:getPort('cmd_velocity_port'))
@@ -147,6 +149,11 @@ function home(fsm)
     end
 end
 
+function compute_distance(start,target)
+    local dist = math.sqrt(math.pow(target[1]-start[1], 2) + math.pow(target[2]-start[2], 2))
+    return dist
+end
+
 function update(fsm, state, control)
     -- control action
     if not controlLoop(fsm, control) then
@@ -165,6 +172,18 @@ function update(fsm, state, control)
         statemsg_cnt = 1
     else
         statemsg_cnt = statemsg_cnt + 1
+    end
+    -- send host obstacle trajectory
+    if statemsg_cnt >= max_statemsg_cnt then
+        if control == false then
+            hostObstTraj(3)
+        else
+            if host == 'dave' then
+                hostObstTraj(1)
+            else
+                hostObstTraj(2)
+            end
+        end
     end
     -- check for new mail
     checkMail()

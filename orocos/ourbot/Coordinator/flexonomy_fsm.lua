@@ -44,6 +44,14 @@ return rfsm.state {
   },
 
   home = rfsm.state{
+    entry = function(fsm)
+      -- load operations
+      local addIncoming         = communicator:getOperation('addIncomingConnection')
+      local addOutgoing         = communicator:getOperation('addOutgoingConnection')
+      -- Make connections through communicator
+      if not addIncoming('motionplanning', 'obstacle_trajectory_port', 'obstacle_trajectory') then rfsm.send_events(fsm, 'e_failed') return end
+      if not addOutgoing('motionplanning', 'host_obstacle_trajectory_port', 'host_obstacle_trajectory'..host, 'ourbots') then rfsm.send_events(fsm, 'e_failed') return end
+    end,
 
     doo = function(fsm)
       home(fsm)

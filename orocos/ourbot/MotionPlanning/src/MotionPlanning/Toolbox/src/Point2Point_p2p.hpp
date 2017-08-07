@@ -55,6 +55,7 @@ typedef struct obstacle {
     std::vector<double> velocity;
     std::vector<double> acceleration;
     std::vector<double> checkpoints;
+    std::vector<double> traj_coeffs;
     std::vector<double> radii;
     bool avoid;
 } obstacle_t;
