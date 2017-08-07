@@ -33,6 +33,7 @@ local hostObstTraj = motionplanning:getOperation("writeHostObstTraj")
 -- properties
 local header_version = '1.0.0'
 local statemsg_sample_rate = 1
+local nghbcom_sample_rate = 4
 local coordinator_name = 'SH1'
 local vmax = 0.8
 
@@ -40,10 +41,15 @@ local vmax = 0.8
 local _motion_time_port = rtt.InputPort("double")
 tc:addPort(_motion_time_port, "motion_time_port", "Motion time of computed motion trajectory")
 _motion_time_port:connect(motionplanning:getPort('motion_time_port'))
-
 local _cmd_velocity_port = rtt.OutputPort("array")
 tc:addPort(_cmd_velocity_port, "cmd_velocity_port", "Input port for low level velocity controller. Vector contains [vx,vy,w]")
 _cmd_velocity_port:connect(teensy:getPort('cmd_velocity_port'))
+
+-- wireless ports
+local addIncoming = communicator:getOperation('addIncomingConnection')
+local addOutgoing = communicator:getOperation('addOutgoingConnection')
+if not addIncoming('motionplanning', 'obstacle_trajectory_port', 'obstacle_trajectory') then rfsm.send_events(fsm, 'e_failed') return end
+if not addOutgoing('motionplanning', 'host_obstacle_trajectory_port', 'host_obstacle_trajectory'..host, 'ourbots') then rfsm.send_events(fsm, 'e_failed') return end
 
 -- global vars
 current_task = nil
@@ -58,6 +64,8 @@ local max_snap_cnt = 1/(reporter_sample_rate*period)
 local snap_cnt = max_snap_cnt
 local max_statemsg_cnt = 1/(statemsg_sample_rate*period)
 local statemsg_cnt = max_statemsg_cnt
+local max_nghbcom_cnt = 1/(nghbcom_sample_rate*period)
+local nghbcom_cnt = max_nghbcom_cnt
 local zero_cmd = rtt.Variable('array')
 zero_cmd:resize(3)
 zero_cmd:fromtab{0, 0, 0}
@@ -98,8 +106,10 @@ function init(fsm)
         return
     end
     teensy:strongVelocityControl()
+    -- init counters
     snap_cnt = max_snap_cnt
     statemsg_cnt = max_statemsg_cnt
+    nghbcom_cnt = max_nghbcom_cnt
 end
 
 function stop()
@@ -174,8 +184,8 @@ function update(fsm, state, control)
         statemsg_cnt = statemsg_cnt + 1
     end
     -- send host obstacle trajectory
-    if statemsg_cnt >= max_statemsg_cnt then
-        if control == false then
+    if nghbcom_cnt >= max_nghbcom_cnt then
+        if not control then
             hostObstTraj(3)
         else
             if host == 'dave' then
@@ -184,6 +194,8 @@ function update(fsm, state, control)
                 hostObstTraj(2)
             end
         end
+    else
+        nghbcom_cnt = nghbcom_cnt + 1
     end
     -- check for new mail
     checkMail()

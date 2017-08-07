@@ -20,10 +20,10 @@ class FlexonomyMotionPlanning : public MotionPlanning{
     double _vmax;
 
     void getObstacles(std::vector<omg::obstacle_t>& obstacles);
+    bool config();
 
   public:
     FlexonomyMotionPlanning(std::string const& name);
-    void initHostObstTraj();
     void writeHostObstTraj(int option);
     double getMotionTime();
 };

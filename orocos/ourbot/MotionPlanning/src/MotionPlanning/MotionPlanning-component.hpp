@@ -15,14 +15,14 @@ class MotionPlanning : public MotionPlanningInterface{
     std::vector<std::vector<double> > _ref_pose;
     std::vector<std::vector<double> > _ref_velocity;
 
-    void getObstacles(std::vector<omg::obstacle_t>& obstacles);
 
   public:
     MotionPlanning(std::string const& name);
 
     bool trajectoryUpdate();
     bool initialize();
-    bool config();
+    virtual void getObstacles(std::vector<omg::obstacle_t>& obstacles);
+    virtual bool config();
 };
 
 #endif

@@ -12,10 +12,12 @@ local start_time
 _print_level            = rtt.Property("int","print_level","Level of output printing")
 _reporter_sample_rate   = rtt.Property("double","reporter_sample_rate", "Frequency to take snapshots for the reporter")
 _obstacle_mode          = rtt.Property("bool","obstacle_mode","Robot is acting as a moving obstacle")
+_host                   = rtt.Property("string","host","Name of host")
 
 tc:addProperty(_print_level)
 tc:addProperty(_reporter_sample_rate)
 tc:addProperty(_obstacle_mode)
+tc:addProperty(_host)
 
 -- ports that drive/read the FSM
 _coordinator_fsm_event_port      = rtt.InputPort("string")
@@ -35,6 +37,7 @@ function configureHook()
    print_level = _print_level:get()
    reporter_sample_rate = _reporter_sample_rate:get()
    obstacle_mode = _obstacle_mode:get()
+   host = _host:get()
 
    -- variables to use in updateHook
    communicator = tc:getPeer('communicator')
