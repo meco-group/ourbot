@@ -364,7 +364,7 @@ void Reference::interpolateOrientation(std::vector<double>& theta_trajectory, st
   double interpolation_time = fabs(theta0/omega);
   int n_int = int(interpolation_time*_control_sample_rate);
   for (int k=0; k<theta_trajectory.size(); k++){
-    if (k <= n_int && fabs(theta0) > 0.1) {
+    if (k <= n_int && fabs(theta0+k*(1./_control_sample_rate)*omega) > 0.1) {
       theta_trajectory[k] = 1.0/0.0; // disable fb
       omega_trajectory[k] = omega;
     } else {
