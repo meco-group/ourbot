@@ -87,59 +87,31 @@
   </simple>
 </struct>
 
-<struct name="obstacle_checkpts112" type="array">
-  <description>Robot arm check points</description>
-  <simple name="Element0" type="double">
-    <value>0.425</value>
-  </simple>
-  <simple name="Element1" type="double">
-    <value>0.4</value>
-  </simple>
-  <simple name="Element2" type="double">
-    <value>0.425</value>
-  </simple>
-  <simple name="Element3" type="double">
-    <value>-0.4</value>
-  </simple>
-  <simple name="Element4" type="double">
-    <value>-0.425</value>
-  </simple>
-  <simple name="Element5" type="double">
-    <value>-0.4</value>
-  </simple>
-  <simple name="Element6" type="double">
-    <value>-0.425</value>
-  </simple>
-  <simple name="Element7" type="double">
-    <value>0.4</value>
-  </simple>
-</struct>
-
 <struct name="obstacle_checkpts" type="array">
   <description>Robot arm check points</description>
   <simple name="Element0" type="double">
-    <value>0.2</value>
+    <value>0.0</value>
   </simple>
   <simple name="Element1" type="double">
-    <value>0.2</value>
+    <value>0.0</value>
   </simple>
   <simple name="Element2" type="double">
-    <value>0.2</value>
+    <value>0.0</value>
   </simple>
   <simple name="Element3" type="double">
-    <value>-0.2</value>
+    <value>-0.0</value>
   </simple>
   <simple name="Element4" type="double">
-    <value>-0.2</value>
+    <value>-0.0</value>
   </simple>
   <simple name="Element5" type="double">
-    <value>-0.2</value>
+    <value>-0.0</value>
   </simple>
   <simple name="Element6" type="double">
-    <value>-0.2</value>
+    <value>-0.0</value>
   </simple>
   <simple name="Element7" type="double">
-    <value>0.2</value>
+    <value>0.0</value>
   </simple>
 </struct>
 
@@ -162,16 +134,16 @@
 <struct name="obstacle_radius" type="array">
  <description>Robotarm obstacle radius</description>
    <simple name="Element0" type="double">
-    <value>0.20</value>
+    <value>0.30</value>
   </simple>
   <simple name="Element1" type="double">
-    <value>0.20</value>
+    <value>0.35</value>
   </simple>
   <simple name="Element2" type="double">
-    <value>0.20</value>
+    <value>0.35</value>
   </simple>
   <simple name="Element3" type="double">
-    <value>0.20</value>
+    <value>0.35</value>
   </simple>
 </struct>
 
@@ -197,7 +169,12 @@
 
 <simple name="vmax" type="double">
  <description>Max velocity calculating ETA</description>
-   <value>0.5</value>
+   <value>0.3</value>
+</simple>
+
+<simple name="num_secs_rot" type="double">
+ <description>Number of seconds of rotation</description>
+   <value>1.0</value>
 </simple>
 
 </properties>

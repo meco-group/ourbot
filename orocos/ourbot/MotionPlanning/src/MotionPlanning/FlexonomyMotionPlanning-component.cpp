@@ -25,6 +25,9 @@ FlexonomyMotionPlanning::FlexonomyMotionPlanning(std::string const& name) : Moti
   addProperty("horizon_time", _horizon_time).doc("Trajectory horizon time");
   addProperty("vmax", _vmax).doc("Maximum velocity");
 
+  //For rotation angle
+  addProperty("num_secs_rot", _num_secs_rot).doc("Number of seconds of rotation");
+
   //Operations
   addOperation("writeHostObstTraj", &FlexonomyMotionPlanning::writeHostObstTraj, this).doc("Write to host obstacle trajectory port");
   addOperation("sample_spline_trajs", &FlexonomyMotionPlanning::sample_spline_trajs, this).doc("Write to host obstacle trajectory port");
@@ -33,13 +36,6 @@ FlexonomyMotionPlanning::FlexonomyMotionPlanning(std::string const& name) : Moti
 bool FlexonomyMotionPlanning::config() {
   std::vector<double> example(26, 0.0);
   _host_obstacle_trajectory_port.setDataSample(example);
-  //For verification
-  guest_obstacle.position.resize(2, 0.0);
-  guest_obstacle.velocity.resize(2, 0.0);
-  guest_obstacle.acceleration.resize(2, 0.0);
-  guest_obstacle.checkpoints.resize(2*4, 0.0);
-  guest_obstacle.traj_coeffs.resize(2*13, 0.0);
-  guest_obstacle.radii.resize(4, 0.0);
   _old_estimated_pose.resize(3,0.0);
   return MotionPlanning::config();
 }
@@ -171,7 +167,6 @@ void FlexonomyMotionPlanning::getObstacles(std::vector<omg::obstacle_t>& obstacl
         obstacles[1].avoid = true;
         obstacles[1].radii = _obstacle_radius;
         obstacles[1].checkpoints = _obstacle_checkpts;
-        guest_obstacle.traj_coeffs = _obstacle_trajectory;
       }
     }
     else
@@ -219,6 +214,18 @@ double FlexonomyMotionPlanning::getMotionTime(){
     }
     std::cout << "Reach in " << time_inst << "s" << std::endl;
     return time_inst;
+  }
+}
+
+bool FlexonomyMotionPlanning::zeroOrientation() {
+    return false;
+  }
+
+void FlexonomyMotionPlanning::interpolateRotation() {
+    for(int i=0;i<_trajectory_length;i++)
+    { if(i<int(_num_secs_rot/_sample_time)) {_ref_pose_trajectory[2][i] = _old_estimated_pose[2] + ((_target_pose[2] - _old_estimated_pose[2])/(int(_num_secs_rot/_sample_time)-1))*i;}
+      else {_ref_pose_trajectory[2][i] = _target_pose[2];
+    }
   }
 }
 

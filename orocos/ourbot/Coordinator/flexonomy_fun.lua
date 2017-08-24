@@ -105,7 +105,7 @@ function init(fsm)
         rfsm.send_events(fsm,'e_failed')
         return
     end
-    teensy:softVelocityControl()
+    teensy:strongVelocityControl()
     -- init counters
     snap_cnt = max_snap_cnt
     statemsg_cnt = max_statemsg_cnt
@@ -450,11 +450,11 @@ end
 function getTargetPose(task)
     local zone = task.task_parameters
     if zone == 'A' then
-        return {1.5, 0.5, 0}
+        return {1.5, 0.5, 0.0}
     elseif zone == 'B' then
-        return {1.5, 2.0, 0}
+        return {1.5, 2.0, 0.0}
     elseif zone == 'C' then
-        return {3.5, 0.5, 0}
+        return {3.5, 0.5, 0.0}
     elseif zone == 'D' then
         return {3.5, 2.0, 0}
     else

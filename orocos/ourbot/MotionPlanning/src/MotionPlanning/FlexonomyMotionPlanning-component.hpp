@@ -22,8 +22,7 @@ class FlexonomyMotionPlanning : public MotionPlanning{
     double _eps_velocity;
     double _horizon_time;
     double _vmax;
-
-    omg::obstacle_t guest_obstacle;
+    double _num_secs_rot;
 
     void getObstacles(std::vector<omg::obstacle_t>& obstacles);
     bool config();
@@ -32,6 +31,8 @@ class FlexonomyMotionPlanning : public MotionPlanning{
     FlexonomyMotionPlanning(std::string const& name);
     void writeHostObstTraj(int option);
     double getMotionTime();
+    bool zeroOrientation();
+    void interpolateRotation();
 };
 
 #endif

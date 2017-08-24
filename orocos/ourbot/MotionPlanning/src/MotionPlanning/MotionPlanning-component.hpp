@@ -24,6 +24,7 @@ class MotionPlanning : public MotionPlanningInterface{
     bool initialize();
     virtual void getObstacles(std::vector<omg::obstacle_t>& obstacles);
     virtual bool config();
+    virtual void interpolateRotation();
     void sample_spline_trajs();
 };
 
