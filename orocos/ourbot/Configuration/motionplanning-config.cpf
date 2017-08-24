@@ -59,24 +59,130 @@
   </simple>
 </struct>
 
-<simple name="robotarm_radii" type="double">
+<struct name="robotarm_checkpts" type="array">
+  <description>Robot arm check points</description>
+  <simple name="Element0" type="double">
+    <value>0.2</value>
+  </simple>
+  <simple name="Element1" type="double">
+    <value>0.2</value>
+  </simple>
+  <simple name="Element2" type="double">
+    <value>0.2</value>
+  </simple>
+  <simple name="Element3" type="double">
+    <value>-0.2</value>
+  </simple>
+  <simple name="Element4" type="double">
+    <value>-0.2</value>
+  </simple>
+  <simple name="Element5" type="double">
+    <value>-0.2</value>
+  </simple>
+  <simple name="Element6" type="double">
+    <value>-0.2</value>
+  </simple>
+  <simple name="Element7" type="double">
+    <value>0.2</value>
+  </simple>
+</struct>
+
+<struct name="obstacle_checkpts112" type="array">
+  <description>Robot arm check points</description>
+  <simple name="Element0" type="double">
+    <value>0.425</value>
+  </simple>
+  <simple name="Element1" type="double">
+    <value>0.4</value>
+  </simple>
+  <simple name="Element2" type="double">
+    <value>0.425</value>
+  </simple>
+  <simple name="Element3" type="double">
+    <value>-0.4</value>
+  </simple>
+  <simple name="Element4" type="double">
+    <value>-0.425</value>
+  </simple>
+  <simple name="Element5" type="double">
+    <value>-0.4</value>
+  </simple>
+  <simple name="Element6" type="double">
+    <value>-0.425</value>
+  </simple>
+  <simple name="Element7" type="double">
+    <value>0.4</value>
+  </simple>
+</struct>
+
+<struct name="obstacle_checkpts" type="array">
+  <description>Robot arm check points</description>
+  <simple name="Element0" type="double">
+    <value>0.2</value>
+  </simple>
+  <simple name="Element1" type="double">
+    <value>0.2</value>
+  </simple>
+  <simple name="Element2" type="double">
+    <value>0.2</value>
+  </simple>
+  <simple name="Element3" type="double">
+    <value>-0.2</value>
+  </simple>
+  <simple name="Element4" type="double">
+    <value>-0.2</value>
+  </simple>
+  <simple name="Element5" type="double">
+    <value>-0.2</value>
+  </simple>
+  <simple name="Element6" type="double">
+    <value>-0.2</value>
+  </simple>
+  <simple name="Element7" type="double">
+    <value>0.2</value>
+  </simple>
+</struct>
+
+<struct name="robotarm_radii" type="array">
  <description>Robotarm obstacle radius</description>
-   <value>1.0</value>
-</simple>
+   <simple name="Element0" type="double">
+    <value>0.0</value>
+  </simple>
+  <simple name="Element1" type="double">
+    <value>0.0</value>
+  </simple>
+  <simple name="Element2" type="double">
+    <value>0.0</value>
+  </simple>
+  <simple name="Element3" type="double">
+    <value>0.0</value>
+  </simple>
+</struct>
+
+<struct name="obstacle_radius" type="array">
+ <description>Robotarm obstacle radius</description>
+   <simple name="Element0" type="double">
+    <value>0.20</value>
+  </simple>
+  <simple name="Element1" type="double">
+    <value>0.20</value>
+  </simple>
+  <simple name="Element2" type="double">
+    <value>0.20</value>
+  </simple>
+  <simple name="Element3" type="double">
+    <value>0.20</value>
+  </simple>
+</struct>
 
 <simple name="robotarm_avoid" type="boolean">
  <description>Robotarm obstacle radius</description>
-   <value>0</value>
+   <value>1</value>
 </simple>
 
 <simple name="eps_position" type="double">
  <description>Epsilon distance calculating ETA</description>
-   <value>0.001</value>
-</simple>
-
-<simple name="eps_position" type="double">
- <description>Epsilon distance calculating ETA</description>
-   <value>0.001</value>
+   <value>0.02</value>
 </simple>
 
 <simple name="eps_velocity" type="double">
@@ -91,7 +197,7 @@
 
 <simple name="vmax" type="double">
  <description>Max velocity calculating ETA</description>
-   <value>0.8</value>
+   <value>0.5</value>
 </simple>
 
 </properties>

@@ -10,11 +10,12 @@ class MotionPlanning : public MotionPlanningInterface{
   private:
     int _n_st;
     int _n_in;
-    omg::Point2Point* _p2p;
 
-    std::vector<std::vector<double> > _ref_pose;
     std::vector<std::vector<double> > _ref_velocity;
 
+  protected:
+    omg::Point2Point* _p2p;
+    std::vector<std::vector<double> > _ref_pose;
 
   public:
     MotionPlanning(std::string const& name);
@@ -23,6 +24,7 @@ class MotionPlanning : public MotionPlanningInterface{
     bool initialize();
     virtual void getObstacles(std::vector<omg::obstacle_t>& obstacles);
     virtual bool config();
+    void sample_spline_trajs();
 };
 
 #endif

@@ -49,7 +49,7 @@ _cmd_velocity_port:connect(teensy:getPort('cmd_velocity_port'))
 local addIncoming = communicator:getOperation('addIncomingConnection')
 local addOutgoing = communicator:getOperation('addOutgoingConnection')
 if not addIncoming('motionplanning', 'obstacle_trajectory_port', 'obstacle_trajectory') then rfsm.send_events(fsm, 'e_failed') return end
-if not addOutgoing('motionplanning', 'host_obstacle_trajectory_port', 'host_obstacle_trajectory'..host, 'ourbots') then rfsm.send_events(fsm, 'e_failed') return end
+if not addOutgoing('motionplanning', 'host_obstacle_trajectory_port', 'obstacle_trajectory', 'ourbots') then rfsm.send_events(fsm, 'e_failed') return end
 
 -- global vars
 current_task = nil
@@ -105,7 +105,7 @@ function init(fsm)
         rfsm.send_events(fsm,'e_failed')
         return
     end
-    teensy:strongVelocityControl()
+    teensy:softVelocityControl()
     -- init counters
     snap_cnt = max_snap_cnt
     statemsg_cnt = max_statemsg_cnt
@@ -143,6 +143,7 @@ function home(fsm)
     motionplanning:setTargetPose(pose0[0], pose0[1], pose0[2])
     while true do
         -- check if homing is finished
+        print "Homing...."
         if not mpBusy() then
             if targetReached() then -- succesful
                 return
@@ -176,7 +177,7 @@ function update(fsm, state, control)
     else
         snap_cnt = snap_cnt + 1
     end
-    -- send state messages
+    -- send state messagesf
     if statemsg_cnt >= max_statemsg_cnt then
         sendState(state)
         statemsg_cnt = 1
@@ -185,13 +186,14 @@ function update(fsm, state, control)
     end
     -- send host obstacle trajectory
     if nghbcom_cnt >= max_nghbcom_cnt then
+        nghbcom_cnt = 1
         if not control then
             hostObstTraj(3)
         else
             if host == 'dave' then
-                hostObstTraj(1)
+               hostObstTraj(1)
             else
-                hostObstTraj(2)
+               hostObstTraj(2)
             end
         end
     else
@@ -232,6 +234,7 @@ end
 
 function checkMail()
     local ret = readMail(false)
+    --print "Reading mail..."
     while (ret.size == 2) do
         -- decode message
         local msg = ret[0]
@@ -288,6 +291,12 @@ function checkMotionPlanning(fsm)
     -- check if task has started/update ETA
     local fs, motion_time = _motion_time_port:read()
     if fs == 'NewData' then -- new opt problem was solved
+        -- local i = 1
+        --         while i<1000 do
+        --             print "Motion time"
+        --             print(motion_time)
+        --             i=i+1
+        --         end
         local eta = get_sec() + motion_time
         if not task_started then
             current_eta = eta
@@ -441,13 +450,13 @@ end
 function getTargetPose(task)
     local zone = task.task_parameters
     if zone == 'A' then
-        return {2, 2, 0}
+        return {1.5, 0.5, 0}
     elseif zone == 'B' then
-        return {2, 0.5, 0}
+        return {1.5, 2.0, 0}
     elseif zone == 'C' then
-        return {3.5, 2, 0}
-    elseif zone == 'D' then
         return {3.5, 0.5, 0}
+    elseif zone == 'D' then
+        return {3.5, 2.0, 0}
     else
         print('target zone not recognized')
         return nil

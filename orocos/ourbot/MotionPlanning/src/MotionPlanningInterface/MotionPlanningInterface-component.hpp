@@ -16,6 +16,7 @@ typedef struct obstacle {
     std::vector<double> acceleration;
     std::vector<double> checkpoints;
     std::vector<double> radii;
+    std::vector<double> traj_coeffs;
     bool avoid;
 } obstacle_t;
 
@@ -43,7 +44,7 @@ class MotionPlanningInterface : public RTT::TaskContext{
     bool _target_detection;
 
     int _failure_cnt;
-    bool _first_iteration;
+
     bool _valid;
     double _omega;
 
@@ -75,6 +76,7 @@ class MotionPlanningInterface : public RTT::TaskContext{
     std::vector<std::vector<double> > _ref_pose_trajectory_ss;
     bool _ideal_prediction;
     int _n_obs;
+    bool _first_iteration;
 
   public:
     MotionPlanningInterface(std::string const& name);
@@ -89,5 +91,7 @@ class MotionPlanningInterface : public RTT::TaskContext{
     void disable();
     virtual std::vector<double> setConfiguration();
     virtual bool zeroOrientation();
+    virtual void sample_spline_trajs();
 };
 #endif
+

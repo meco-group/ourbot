@@ -36,6 +36,15 @@ bool MotionPlanning::initialize(){
 bool MotionPlanning::trajectoryUpdate(){
   // get obstacles
   std::vector<omg::obstacle_t> obstacles(_n_obs);
+  for (int k=0; k<_n_obs; k++){
+    obstacles[k].position.resize(2, 0.0);
+    obstacles[k].velocity.resize(2, 0.0);
+    obstacles[k].acceleration.resize(2, 0.0);
+    obstacles[k].checkpoints.resize(2*4, 0.0);
+    obstacles[k].traj_coeffs.resize(2*13, 0.0);
+    obstacles[k].radii.resize(4, 0.0);
+    obstacles[k].avoid = true;
+  }
   getObstacles(obstacles);
   // update motion planning algorithm
   bool check = _p2p->update(_est_pose, _target_pose, _ref_pose, _ref_velocity, obstacles, _predict_shift);
@@ -66,6 +75,38 @@ void MotionPlanning::getObstacles(std::vector<omg::obstacle_t>& obstacles){
     obstacles[k].radii = _obstacles[k].radii;
     obstacles[k].avoid = _obstacles[k].avoid;
   }
+}
+
+void MotionPlanning::sample_spline_trajs()
+{
+  if(1==0)
+  {
+    omg::Vehicle* vehicle = new omg::Holonomic();
+    int num_parts = 100;
+    std::vector<double> time_vector(num_parts, 0.);
+    std::vector< std::vector<double> > velocity_samples(num_parts, std::vector<double> (2, 0. ) );
+    std::vector< std::vector<double> > coeffs_vector_2D(13, std::vector<double> (2, 0. ) );
+    for(int i=0;i<2;i++)
+    {
+      std::cout << "i -> " << i << std::endl;
+      for(int j=0;j<13;j++)
+      {
+        coeffs_vector_2D[j][i]=i+j;
+        std::cout << "coeff " << j << "-> " << coeffs_vector_2D[i][j] << std::endl;
+      }
+    }
+    for(int i=1; i<100; i++)
+    {
+      time_vector[i] = time_vector[i-1]+_horizon_time/num_parts;
+    }
+    vehicle->splines2Input(coeffs_vector_2D, time_vector, velocity_samples);
+    for(int i=0;i<num_parts;i++)
+    {
+      std::cout << "i : " << time_vector[i] << "->" << velocity_samples[0][i] << "," << velocity_samples[1][i] << std::endl;
+    }
+  }
+  std::vector<omg::obstacle_t> obstacles(_n_obs);
+  getObstacles(obstacles);
 }
 
 ORO_LIST_COMPONENT_TYPE(MotionPlanning);

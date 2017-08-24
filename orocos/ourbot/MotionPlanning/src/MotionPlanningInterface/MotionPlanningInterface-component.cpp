@@ -219,7 +219,7 @@ void MotionPlanningInterface::updateHook(){
 std::vector<double> MotionPlanningInterface::setConfiguration(){
   std::vector<double> est_pose(3, 0);
   _est_pose_port.read(est_pose);
-  est_pose[2] = 0.;
+  est_pose[2] = 0.0;
   return est_pose;
 }
 
@@ -316,4 +316,9 @@ void MotionPlanningInterface::computeObstacles(){
   }
 }
 
+void MotionPlanningInterface::sample_spline_trajs(){
+  return;
+}
+
 ORO_CREATE_COMPONENT_LIBRARY()
+
