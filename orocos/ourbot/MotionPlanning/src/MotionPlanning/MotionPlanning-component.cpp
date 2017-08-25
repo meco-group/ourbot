@@ -57,7 +57,6 @@ bool MotionPlanning::trajectoryUpdate(){
       _ref_velocity_trajectory[j][k] = _ref_velocity[k][j];
     }
   }
-  interpolateRotation();
   // subsample for transmission
   for (int k=0; k<_trajectory_length_tx; k++){
     for (int j=0; j<2; j++){
@@ -77,10 +76,6 @@ void MotionPlanning::getObstacles(std::vector<omg::obstacle_t>& obstacles){
     obstacles[k].radii = _obstacles[k].radii;
     obstacles[k].avoid = _obstacles[k].avoid;
   }
-}
-
-void MotionPlanning::interpolateRotation(){
-  return;
 }
 
 void MotionPlanning::sample_spline_trajs()

@@ -20,6 +20,7 @@ Reference::Reference(std::string const& name) : TaskContext(name, PreOperational
   ports()->addPort("ref_pose_trajectory_y_tx_port", _ref_pose_trajectory_tx_port[1]).doc("y reference trajectory for tx over wifi");
   ports()->addPort("ref_pose_trajectory_t_tx_port", _ref_pose_trajectory_tx_port[2]).doc("t reference trajectory for tx over wifi");
 
+  ports()->addPort("reference_angle_port", _reference_angle_port).doc("Reference vehicle angle");
   ports()->addPort("est_pose_port", _est_pose_port).doc("Estimated pose.");
 
   ports()->addPort("mp_trigger_port", _mp_trigger_port).doc("Trigger for motion planning: is composed of current estimated pose and start index of internal reference input vector");
@@ -341,8 +342,15 @@ void Reference::loadTrajectories(){
   _index2 = _index1%_update_length;
   _index1 = 0;
   // interpolate orientation if desired
-  if (mpZeroOrientation()){
-    interpolateOrientation(_cur_ref_pose_trajectory[2], _cur_ref_velocity_trajectory[2]);
+  //if (mpZeroOrientation()){
+    //interpolateOrientation(_cur_ref_pose_trajectory[2], _cur_ref_velocity_trajectory[2]);
+  //}
+  //Above part takes care of homing. Now modify the same vector for angle if needed
+   //double reference_angle;
+  //_reference_angle_port.read(reference_angle);
+  //if(reference_angle!=0)
+  {
+    setVehicleOrientation(_cur_ref_pose_trajectory[2], _cur_ref_velocity_trajectory[2]);
   }
   // reset checks
   for (int i=0; i<3; i++){
@@ -409,6 +417,34 @@ void Reference::readPorts(){
         _just_started = false;
         _new_data = false;
       }
+    }
+  }
+}
+
+void Reference::setVehicleOrientation(std::vector<double>& theta_trajectory, std::vector<double>& omega_trajectory){
+// get most recent estimate of theta
+  double reference_angle;
+  _reference_angle_port.read(reference_angle);
+  std::vector<double> est_pose(3);
+  _est_pose_port.read(est_pose);
+  double thetaT = reference_angle;
+  double theta0 = est_pose[2];
+  double omega = _orientation_homing_rate;
+  if (theta0 > thetaT){
+    omega = -omega;
+  }
+  double interpolation_time = fabs((thetaT-theta0)/omega);
+  int n_int = int(interpolation_time*_control_sample_rate);
+  for (int k=0; k<theta_trajectory.size(); k++){
+    if (k <= n_int && fabs(thetaT - (theta0+k*(1./_control_sample_rate)*omega)) > 0.1)
+    {
+      theta_trajectory[k] = 1.0/0.0; // disable fb
+      omega_trajectory[k] = omega;
+    }
+    else
+    {
+      theta_trajectory[k] = reference_angle;
+      omega_trajectory[k] = 0.;
     }
   }
 }

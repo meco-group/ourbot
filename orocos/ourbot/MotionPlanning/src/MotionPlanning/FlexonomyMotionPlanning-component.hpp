@@ -31,8 +31,6 @@ class FlexonomyMotionPlanning : public MotionPlanning{
     FlexonomyMotionPlanning(std::string const& name);
     void writeHostObstTraj(int option);
     double getMotionTime();
-    bool zeroOrientation();
-    void interpolateRotation();
 };
 
 #endif

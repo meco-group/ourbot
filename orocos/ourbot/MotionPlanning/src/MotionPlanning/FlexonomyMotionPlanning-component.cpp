@@ -217,16 +217,4 @@ double FlexonomyMotionPlanning::getMotionTime(){
   }
 }
 
-bool FlexonomyMotionPlanning::zeroOrientation() {
-    return false;
-  }
-
-void FlexonomyMotionPlanning::interpolateRotation() {
-    for(int i=0;i<_trajectory_length;i++)
-    { if(i<int(_num_secs_rot/_sample_time)) {_ref_pose_trajectory[2][i] = _old_estimated_pose[2] + ((_target_pose[2] - _old_estimated_pose[2])/(int(_num_secs_rot/_sample_time)-1))*i;}
-      else {_ref_pose_trajectory[2][i] = _target_pose[2];
-    }
-  }
-}
-
 ORO_LIST_COMPONENT_TYPE(FlexonomyMotionPlanning);

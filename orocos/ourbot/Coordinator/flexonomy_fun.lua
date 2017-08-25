@@ -33,7 +33,7 @@ local hostObstTraj = motionplanning:getOperation("writeHostObstTraj")
 -- properties
 local header_version = '1.0.0'
 local statemsg_sample_rate = 1
-local nghbcom_sample_rate = 4
+local nghbcom_sample_rate = 8
 local coordinator_name = 'SH1'
 local vmax = 0.8
 
@@ -105,7 +105,7 @@ function init(fsm)
         rfsm.send_events(fsm,'e_failed')
         return
     end
-    teensy:strongVelocityControl()
+    teensy:softVelocityControl()
     -- init counters
     snap_cnt = max_snap_cnt
     statemsg_cnt = max_statemsg_cnt
@@ -450,13 +450,14 @@ end
 function getTargetPose(task)
     local zone = task.task_parameters
     if zone == 'A' then
-        return {1.5, 0.5, 0.0}
+        return {2.7, 2.2, 3.141}
     elseif zone == 'B' then
-        return {1.5, 2.0, 0.0}
+        return {3.8, 1.1, -1.5702}
+        --return {3.8, 1.1, 0.0}
     elseif zone == 'C' then
-        return {3.5, 0.5, 0.0}
+        return {1.5, 0.5, 0.0}
     elseif zone == 'D' then
-        return {3.5, 2.0, 0}
+        return {1.0, 2.0, 0.0}
     else
         print('target zone not recognized')
         return nil

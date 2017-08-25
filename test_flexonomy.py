@@ -51,7 +51,7 @@ while(kp != 'q'):
         msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4302'
         msg['payload']['task_type'] = 'move_to'
         msg['payload']['task_parameters'] = 'A'
-        node.shout('dave', json.dumps(msg))
+        node.shout('kurt', json.dumps(msg))
         print 'sent execute msg task A'
     elif (ord(kp) == 51): # keypress 3
         msg['header']['type'] = 'execute'
@@ -59,7 +59,7 @@ while(kp != 'q'):
         msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4303'
         msg['payload']['task_type'] = 'move_to'
         msg['payload']['task_parameters'] = 'B'
-        node.shout('kurt', json.dumps(msg))
+        node.shout('dave', json.dumps(msg))
         print 'sent execute msg task B'
     elif (ord(kp) == 52): # keypress 4
         msg['header']['type'] = 'execute'

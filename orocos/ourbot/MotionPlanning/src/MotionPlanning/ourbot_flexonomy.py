@@ -14,7 +14,7 @@ options = {}
 rect = Rectangle(0.85, 0.4)
 rect.radius = 0.02
 vehicle = Holonomic(shapes=rect, options=options, bounds={'vmin': -0.3, 'vmax': 0.3, 'amin': -0.5, 'amax': 0.5})
-vehicle.set_options({'safety_distance': 0.05})
+vehicle.set_options({'safety_distance': 0.3})
 
 vehicle.set_initial_conditions([0.3, 0.3])
 vehicle.set_terminal_conditions([3.,2.])

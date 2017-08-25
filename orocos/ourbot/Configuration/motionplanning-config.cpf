@@ -52,20 +52,20 @@
 <struct name="robotarm_pos" type="array">
   <description>Robot arm position</description>
   <simple name="Element0" type="double">
-    <value>0.0</value>
+    <value>4.0</value>
   </simple>
   <simple name="Element1" type="double">
-    <value>0.0</value>
+    <value>2.2</value>
   </simple>
 </struct>
 
 <struct name="robotarm_checkpts" type="array">
   <description>Robot arm check points</description>
   <simple name="Element0" type="double">
-    <value>0.2</value>
+    <value>0.0</value>
   </simple>
   <simple name="Element1" type="double">
-    <value>0.2</value>
+    <value>0.0</value>
   </simple>
   <simple name="Element2" type="double">
     <value>0.2</value>
@@ -118,7 +118,7 @@
 <struct name="robotarm_radii" type="array">
  <description>Robotarm obstacle radius</description>
    <simple name="Element0" type="double">
-    <value>0.0</value>
+    <value>0.30</value>
   </simple>
   <simple name="Element1" type="double">
     <value>0.0</value>
@@ -134,16 +134,16 @@
 <struct name="obstacle_radius" type="array">
  <description>Robotarm obstacle radius</description>
    <simple name="Element0" type="double">
-    <value>0.30</value>
+    <value>0.40</value>
   </simple>
   <simple name="Element1" type="double">
-    <value>0.35</value>
+    <value>0.15</value>
   </simple>
   <simple name="Element2" type="double">
-    <value>0.35</value>
+    <value>0.1</value>
   </simple>
   <simple name="Element3" type="double">
-    <value>0.35</value>
+    <value>0.15</value>
   </simple>
 </struct>
 
@@ -174,7 +174,7 @@
 
 <simple name="num_secs_rot" type="double">
  <description>Number of seconds of rotation</description>
-   <value>1.0</value>
+   <value>0.5</value>
 </simple>
 
 </properties>

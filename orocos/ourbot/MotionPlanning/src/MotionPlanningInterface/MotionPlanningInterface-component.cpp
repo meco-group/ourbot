@@ -14,6 +14,7 @@ MotionPlanningInterface::MotionPlanningInterface(std::string const& name) : Task
   ports()->addEventPort("mp_trigger_port", _mp_trigger_port).doc("Trigger for motion planning: is composed of current estimated pose and start index of internal reference input vector");
   ports()->addPort("robobs_pose_port", _robobs_pose_port).doc("Pose information of a robot obstacle");
   ports()->addPort("robobs_velocity_port", _robobs_velocity_port).doc("Velocity information of a robot obstacle");
+  ports()->addPort("reference_angle_port", _reference_angle_port).doc("Send reference angle of target to Reference component");
 
   ports()->addPort("ref_pose_trajectory_x_port", _ref_pose_trajectory_port[0]).doc("x reference trajectory");
   ports()->addPort("ref_pose_trajectory_y_port", _ref_pose_trajectory_port[1]).doc("y reference trajectory");
@@ -175,6 +176,7 @@ void MotionPlanningInterface::updateHook(){
   if (_target_pose_port.connected()){
     _target_pose_port.read(_target_pose);
   }
+  _reference_angle_port.write(_target_pose[2]);
   // read obstacle data
   if (_obstacle_port.connected()){
     _obstacle_port.read(_obstacle_data);
@@ -318,6 +320,10 @@ void MotionPlanningInterface::computeObstacles(){
 
 void MotionPlanningInterface::sample_spline_trajs(){
   return;
+}
+
+std::vector<double> MotionPlanningInterface::getTargetPose(){
+  return _target_pose;
 }
 
 ORO_CREATE_COMPONENT_LIBRARY()
