@@ -50,7 +50,7 @@ message ( STATUS "ZYRE_FOUND = ${ZYRE_FOUND}" )
 # The header will go in include/orocos/Communicator/types/Communicator/Communicator-types.hpp
 # So you can #include <Communicator/Communicator-types.hpp>
 #
-orocos_typegen_headers(include/Communicator/Communicator-types.hpp) # ...you may add multiple header files
+#orocos_typegen_headers(include/Communicator/Communicator-types.hpp) # ...you may add multiple header files
 #
 # You may only have *ONE* orocos_typegen_headers statement in your toplevel CMakeFile.txt !
 

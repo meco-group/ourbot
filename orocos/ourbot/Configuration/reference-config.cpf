@@ -10,9 +10,4 @@
     <description>Repeat offline trajectory</description>
     <value>0</value>
   </simple>
-
-  <simple name="orientation_homing_rate" type="double">
-    <description>Rotational velocity to bring orientation to zero</description>
-    <value>0.5</value>
-</simple>
 </properties>

@@ -5,7 +5,7 @@
 #include <iostream>
 
 MotionPlanningInterface::MotionPlanningInterface(std::string const& name) : TaskContext(name, PreOperational),
-    _got_target(false), _enable(false), _mp_trigger_data(4), _failure_cnt(0), _first_iteration(true), _valid(false), _predict_shift(0), _est_pose(3),
+    _got_target(false), _enable(false), _mp_trigger_data(4), _failure_cnt(0), _valid(false), _predict_shift(0), _first_iteration(true), _est_pose(3),
     _target_pose(3), _ref_pose_trajectory(3), _ref_velocity_trajectory(3), _ref_pose_trajectory_ss(2), _n_obs(0){
 
   ports()->addPort("target_pose_port", _target_pose_port).doc("Target pose");
@@ -14,7 +14,6 @@ MotionPlanningInterface::MotionPlanningInterface(std::string const& name) : Task
   ports()->addEventPort("mp_trigger_port", _mp_trigger_port).doc("Trigger for motion planning: is composed of current estimated pose and start index of internal reference input vector");
   ports()->addPort("robobs_pose_port", _robobs_pose_port).doc("Pose information of a robot obstacle");
   ports()->addPort("robobs_velocity_port", _robobs_velocity_port).doc("Velocity information of a robot obstacle");
-  ports()->addPort("reference_angle_port", _reference_angle_port).doc("Send reference angle of target to Reference component");
 
   ports()->addPort("ref_pose_trajectory_x_port", _ref_pose_trajectory_port[0]).doc("x reference trajectory");
   ports()->addPort("ref_pose_trajectory_y_port", _ref_pose_trajectory_port[1]).doc("y reference trajectory");
@@ -37,6 +36,7 @@ MotionPlanningInterface::MotionPlanningInterface(std::string const& name) : Task
   addProperty("maximum_failures", _maximum_failures).doc("Maximum allowed consecutive failures");
   addProperty("ref_tx_subsample", _tx_subsample).doc("Subsamples for transmitted reference trajectories");
   addProperty("target_detection", _target_detection).doc("Target reached detection?");
+  addProperty("orientation_interpolation_rate", _orientation_interpolation_rate).doc("Rate to interpolate orientation [rad/s]");
 
   addOperation("setTargetPose", &MotionPlanningInterface::setTargetPose, this).doc("Set target pose");
   addOperation("gotTarget", &MotionPlanningInterface::gotTarget, this).doc("Do we have a target?");
@@ -45,7 +45,6 @@ MotionPlanningInterface::MotionPlanningInterface(std::string const& name) : Task
   addOperation("enable", &MotionPlanningInterface::enable, this).doc("Enable Motion Planning");
   addOperation("disable", &MotionPlanningInterface::disable, this).doc("Disable Motion Planning");
   addOperation("setConfiguration", &MotionPlanningInterface::setConfiguration, this);
-  addOperation("zeroOrientation", &MotionPlanningInterface::zeroOrientation, this).doc("Should orientation kept zero?");
 }
 
 void MotionPlanningInterface::setTargetPose(double target_x, double target_y, double target_t){
@@ -143,15 +142,19 @@ bool MotionPlanningInterface::startHook(){
 bool MotionPlanningInterface::targetReached(){
   double target_dist = 0.;
   double input_norm = 0.;
-  for (int i=0; i<3; i++){
+  for (int i=0; i<2; i++) {
     target_dist += pow(_target_pose[i] - _est_pose[i], 2);
+  }
+  for (int i=0; i<3; i++){
     input_norm += pow(_ref_velocity_trajectory[i][_predict_shift], 2);
   }
   target_dist = sqrt(target_dist);
   input_norm = sqrt(input_norm);
-  if (target_dist < 5e-2 && input_norm < 1e-2){
+  double angle_dist = fabs(_target_pose[2]-_est_pose[2]);
+  if (target_dist < 1e-2 && input_norm < 1e-2 && angle_dist < 2e-2){
     return true;
   }
+  std::cout << "[" <<  target_dist << " - " << input_norm << " - " << angle_dist << "]" << std::endl;
   return false;
 }
 
@@ -176,7 +179,6 @@ void MotionPlanningInterface::updateHook(){
   if (_target_pose_port.connected()){
     _target_pose_port.read(_target_pose);
   }
-  _reference_angle_port.write(_target_pose[2]);
   // read obstacle data
   if (_obstacle_port.connected()){
     _obstacle_port.read(_obstacle_data);
@@ -201,6 +203,8 @@ void MotionPlanningInterface::updateHook(){
     _failure_cnt = 0;
   }
   _first_iteration = false;
+  // interpolate orientation
+  interpolateOrientation(_est_pose[2], _target_pose[2], _ref_pose_trajectory[2], _ref_velocity_trajectory[2]);
   // write trajectory
   for (int i=0; i<3; i++){
     _ref_pose_trajectory_port[i].write(_ref_pose_trajectory[i]);
@@ -225,8 +229,28 @@ std::vector<double> MotionPlanningInterface::setConfiguration(){
   return est_pose;
 }
 
-bool MotionPlanningInterface::zeroOrientation(){
-  return true;
+void MotionPlanningInterface::interpolateOrientation(double theta0, double thetaT, std::vector<double>& theta_trajectory, std::vector<double>& omega_trajectory){
+  double omega = _orientation_interpolation_rate;
+  // extrapolation
+  double th0 = theta0;
+  for (int k=0; k<int(_update_time/_sample_time); k++) {
+    th0 += omega_trajectory[k+_predict_shift]*_sample_time;
+  }
+
+  if (th0 > thetaT){
+    omega = -omega;
+  }
+  double interpolation_time = fabs((thetaT-th0)/omega);
+  int n_int = int(interpolation_time*_control_sample_rate);
+  for (uint k=0; k<theta_trajectory.size(); k++) {
+    if (k <= n_int && fabs(thetaT - th0) > 0.1) {
+      theta_trajectory[k] = (1./0.);
+      omega_trajectory[k] = omega;
+    } else {
+      theta_trajectory[k] = thetaT;
+      omega_trajectory[k] = 0;
+    }
+  }
 }
 
 void MotionPlanningInterface::initObstacles(){
@@ -316,14 +340,6 @@ void MotionPlanningInterface::computeObstacles(){
     // std::cout << "obst ori: " << orientation << std::endl;
     // std::cout << "obst vel: " << _obstacles[_n_obs-1].velocity[0] << "," << _obstacles[_n_obs-1].velocity[1] << std::endl;
   }
-}
-
-void MotionPlanningInterface::sample_spline_trajs(){
-  return;
-}
-
-std::vector<double> MotionPlanningInterface::getTargetPose(){
-  return _target_pose;
 }
 
 ORO_CREATE_COMPONENT_LIBRARY()

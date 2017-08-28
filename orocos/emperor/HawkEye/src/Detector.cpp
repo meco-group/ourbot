@@ -316,7 +316,7 @@ void Detector::filterObstacles(const std::vector<cv::RotatedRect>& rectangles, c
 
   // keep largest obstacles
   if (obstacles.size() > _max_detectable_obstacles){
-    log(Warning) << "More obstacles detected than allowed!" << endlog();
+    // log(Warning) << "More obstacles detected than allowed!" << endlog();
     for (int k=0; k<_max_detectable_obstacles; k++){
       for (int i=0; i<5; i++){
         obstacle_data.push_back(obstacles[k][i]);

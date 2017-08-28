@@ -32,7 +32,6 @@ class MotionPlanningInterface : public RTT::TaskContext{
     OutputPort<std::vector<double> > _ref_velocity_trajectory_port[3];
     OutputPort<bool> _valid_trajectories_port;
     OutputPort<double> _motion_time_port;
-    OutputPort<double> _reference_angle_port;
 
     TimeService::ticks _timestamp;
     void initObstacles();
@@ -48,6 +47,7 @@ class MotionPlanningInterface : public RTT::TaskContext{
 
     bool _valid;
     double _omega;
+    double _orientation_interpolation_rate;
 
   protected:
     virtual bool trajectoryUpdate() = 0;
@@ -55,6 +55,7 @@ class MotionPlanningInterface : public RTT::TaskContext{
     virtual bool config() = 0;
     virtual bool targetReached();
     virtual double getMotionTime();
+    virtual void interpolateOrientation(double theta0, double thetaT, std::vector<double>& theta_trajectory, std::vector<double>& omega_trajectory);
 
     InputPort<std::vector<double> > _est_pose_port;
     std::vector<obstacle_t> _obstacles;
@@ -91,9 +92,6 @@ class MotionPlanningInterface : public RTT::TaskContext{
     void enable();
     void disable();
     virtual std::vector<double> setConfiguration();
-    virtual bool zeroOrientation();
-    virtual void sample_spline_trajs();
-    std::vector<double> getTargetPose();
 };
 #endif
 

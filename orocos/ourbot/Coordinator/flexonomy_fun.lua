@@ -105,7 +105,7 @@ function init(fsm)
         rfsm.send_events(fsm,'e_failed')
         return
     end
-    teensy:softVelocityControl()
+    teensy:strongVelocityControl()
     -- init counters
     snap_cnt = max_snap_cnt
     statemsg_cnt = max_statemsg_cnt
@@ -143,12 +143,11 @@ function home(fsm)
     motionplanning:setTargetPose(pose0[0], pose0[1], pose0[2])
     while true do
         -- check if homing is finished
-        print "Homing...."
         if not mpBusy() then
             if targetReached() then -- succesful
                 return
             else -- unsuccesful
-                rtt.log("Error","Could not home!")
+                rtt.log("Error", "Could not home!")
                 rfsm.send_events(fsm,'e_failed')
                 return
             end
@@ -256,6 +255,8 @@ function checkMail()
                 print('decoding failed')
             end
             removeMail()
+        else
+            print('Not my coordinator!')
         end
         ret = readMail(false)
     end
@@ -450,14 +451,18 @@ end
 function getTargetPose(task)
     local zone = task.task_parameters
     if zone == 'A' then
-        return {2.7, 2.2, 3.141}
+        -- return {2.7, 2.2, 3.141}
+        return {3.2, 2, -1.5702}
     elseif zone == 'B' then
-        return {3.8, 1.1, -1.5702}
+        return {4.2, 1.2, 3.1415}
+        -- return {3.8, 1.1, -1.5702}
         --return {3.8, 1.1, 0.0}
     elseif zone == 'C' then
-        return {1.5, 0.5, 0.0}
+        return {3.2, 0.5, 1.5702}
+        -- return {1.5, 0.5, 0.0}
     elseif zone == 'D' then
-        return {1.0, 2.0, 0.0}
+        return {1, 1.2, 0}
+        -- return {1.0, 2.0, 0.0}
     else
         print('target zone not recognized')
         return nil

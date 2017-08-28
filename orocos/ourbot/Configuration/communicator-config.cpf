@@ -7,8 +7,8 @@
   </simple>
   <simple name="portnr" type="long">
     <description>Port number to send discovery beacons on.</description>
-    <!-- <value>200012</value> -->
-    <value>5670</value> <!-- default -->
+    <value>5671</value>
+    <!-- <value>5670</value> default -->
   </simple>
   <simple name="verbose" type="long">
     <description>Verbosity of debug info.</description>

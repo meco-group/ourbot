@@ -50,30 +50,50 @@ void Gui::draw(cv::Mat& frame, const std::vector<double>& obstacles, const std::
     for (int i=0; i<(width/_pixelspermeter); i++){
         cv::line(frame, cv::Point2i((i+1)*_pixelspermeter, height), cv::Point2i((i+1)*_pixelspermeter, height-5), _black, 2);
     }
-    // draw obstacles
-    for (uint k=0; k<obstacles.size(); k+=5){
-        if (obstacles[k] == -100){
-            break;
-        }
-        if (obstacles[k+3] < 0){
-            // circle
-            cv::circle(frame, cv::Point2f(obstacles[k]*_pixelspermeter, height-obstacles[k+1]*_pixelspermeter), obstacles[k+2]*_pixelspermeter, _black, 2);
-        } else {
-            // rectangle
-            cv::RotatedRect rectangle = cv::RotatedRect(cv::Point2f(obstacles[k]*_pixelspermeter, height-obstacles[k+1]*_pixelspermeter), cv::Size2f(obstacles[k+3]*_pixelspermeter, obstacles[k+4]*_pixelspermeter), -obstacles[k+2]);
-            cv::Point2f vertices[4];
-            rectangle.points(vertices);
-            for (int i=0; i<4; i++){
-                cv::line(frame, vertices[i], vertices[(i+1)%4], _black, 2);
-            }
-        }
-    }
+    // // draw obstacles
+    // for (uint k=0; k<obstacles.size(); k+=5){
+    //     if (obstacles[k] == -100){
+    //         break;
+    //     }
+    //     if (obstacles[k+3] < 0){
+    //         // circle
+    //         cv::circle(frame, cv::Point2f(obstacles[k]*_pixelspermeter, height-obstacles[k+1]*_pixelspermeter), obstacles[k+2]*_pixelspermeter, _black, 2);
+    //     } else {
+    //         // rectangle
+    //         cv::RotatedRect rectangle = cv::RotatedRect(cv::Point2f(obstacles[k]*_pixelspermeter, height-obstacles[k+1]*_pixelspermeter), cv::Size2f(obstacles[k+3]*_pixelspermeter, obstacles[k+4]*_pixelspermeter), -obstacles[k+2]);
+    //         cv::Point2f vertices[4];
+    //         rectangle.points(vertices);
+    //         for (int i=0; i<4; i++){
+    //             cv::line(frame, vertices[i], vertices[(i+1)%4], _black, 2);
+    //         }
+    //     }
+    // }
     // draw robots
     int n_colors = robot_colors.size();
     for (uint k=0; k<robots.size(); k++){
         if (robots[k]->detected()){
             robots[k]->draw(frame, cv::Scalar(robot_colors[(3*k+2)%n_colors], robot_colors[(3*k+1)%n_colors], robot_colors[(3*k)%n_colors]), _pixelspermeter);
         }
+    }
+    // draw flexonomy stuff
+    std::vector<double> robot_arm_size({2., 2.});
+    std::vector<double> robot_arm_pose({4.61, 2.59, 0});
+    double w = robot_arm_size[0];
+    double h = robot_arm_size[1];
+    double x = robot_arm_pose[0];
+    double y = robot_arm_pose[1];
+    double theta = robot_arm_pose[2];
+    std::vector<cv::Point2f> verts(4);
+    verts[0] = cv::Point2f(x+0.5*w*cos(theta) - 0.5*h*sin(theta), y+0.5*w*sin(theta) + 0.5*h*cos(theta));
+    verts[1] = cv::Point2f(x+0.5*w*cos(theta) + 0.5*h*sin(theta), y+0.5*w*sin(theta) - 0.5*h*cos(theta));
+    verts[2] = cv::Point2f(x-0.5*w*cos(theta) + 0.5*h*sin(theta), y-0.5*w*sin(theta) - 0.5*h*cos(theta));
+    verts[3] = cv::Point2f(x-0.5*w*cos(theta) - 0.5*h*sin(theta), y-0.5*w*sin(theta) + 0.5*h*cos(theta));
+    std::vector<cv::Point2f> verts_px(4);
+    for (int i=0; i<4; i++) {
+        verts_px[i] = cv::Point2f(verts[i].x*_pixelspermeter, height-verts[i].y*_pixelspermeter);
+    }
+    for (int i=0; i<4; i++) {
+        cv::line(frame, verts_px[i], verts_px[(i+1)%4], _black, 2);
     }
     // show frame
     cv::Mat displayed_frame;
