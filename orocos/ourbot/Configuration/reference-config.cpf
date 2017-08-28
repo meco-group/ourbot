@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "cpf.dtd">
+<properties>
+  <simple name="trajectory_path" type="string">
+    <description>Path of offline trajectory</description>
+    <value>/home/odroid/orocos/Reference/trajectories_x.csv</value>
+  </simple>
+
+  <simple name="repeat_offline_trajectory" type="boolean">
+    <description>Repeat offline trajectory</description>
+    <value>0</value>
+  </simple>
+
+  <simple name="orientation_homing_rate" type="double">
+    <description>Rotational velocity to bring orientation to zero</description>
+    <value>0.5</value>
+</simple>
+</properties>

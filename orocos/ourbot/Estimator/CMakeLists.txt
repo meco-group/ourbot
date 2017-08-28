@@ -16,6 +16,16 @@ if (NOT OROCOS-RTT_FOUND)
   message (FATAL_ERROR "\nCould not find Orocos. Please use the shell command\n 'source orocos_toolchain/env.sh' and then run cmake again.")
 endif()
 
+find_library(SLICOT_LIB
+  slicot
+  PATHS $ENV{SLICOT})
+
+if(NOT SLICOT_LIB)
+  message(STATUS "SLICOT: Cound not find library slicot. Try stetting SLICOT_LIBRARY_DIR env var.")
+endif()
+
+add_definitions(-std=c++11)
+
 # Defines the orocos_* cmake macros. See that file for additional
 # documentation.
 include( ${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake )
@@ -31,7 +41,7 @@ add_subdirectory( src )
 # The header will go in include/orocos/Estimator/types/Estimator/Estimator-types.hpp
 # So you can #include <Estimator/Estimator-types.hpp>
 #
-orocos_typegen_headers(include/Estimator/Estimator-types.hpp) # ...you may add multiple header files
+#orocos_typegen_headers(include/Estimator/Estimator-types.hpp) # ...you may add multiple header files
 #
 # You may only have *ONE* orocos_typegen_headers statement in your toplevel CMakeFile.txt !
 

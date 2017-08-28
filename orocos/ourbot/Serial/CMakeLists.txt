@@ -31,7 +31,7 @@ add_subdirectory( src )
 # The header will go in include/orocos/Serial/types/Serial/Serial-types.hpp
 # So you can #include <Serial/Serial-types.hpp>
 #
-orocos_typegen_headers(include/Serial/Serial-types.hpp) # ...you may add multiple header files
+#orocos_typegen_headers(include/Serial/Serial-types.hpp) # ...you may add multiple header files
 #
 # You may only have *ONE* orocos_typegen_headers statement in your toplevel CMakeFile.txt !
 

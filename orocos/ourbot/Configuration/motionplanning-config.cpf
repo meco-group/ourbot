@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "cpf.dtd">
+<properties>
+
+<simple name="init_iter" type="long">
+  <description>Number of initial ADMM iterations</description>
+  <value>5</value>
+</simple>
+<simple name="rho" type="double">
+  <description>Penalty factor for ADMM</description>
+  <value>0.2</value>
+</simple>
+<simple name="ideal_prediction" type="boolean">
+  <description>Use prediction based on computed trajectories and not on state estimation</description>
+  <value>0</value>
+</simple>
+<simple name="maximum_failures" type="long">
+  <description>Maximum allowed consecutive failures</description>
+  <value>5</value>
+</simple>
+<simple name="target_detection" type="boolean">
+  <description>Target reached detection?</description>
+  <value>1</value>
+</simple>
+
+<struct name="configuration_x" type="array">
+  <description>x coordinates relative to fleet center</description>
+  <simple name="Element0" type="double">
+    <value>-0.2</value>
+  </simple>
+  <simple name="Element1" type="double">
+    <value>-0.2</value>
+  </simple>
+  <simple name="Element2" type="double">
+    <value>0.35</value>
+  </simple>
+</struct>
+
+<struct name="configuration_y" type="array">
+  <description>y coordinates relative to fleet center</description>
+  <simple name="Element0" type="double">
+    <value>-0.2</value>
+  </simple>
+  <simple name="Element1" type="double">
+    <value>0.2</value>
+  </simple>
+  <simple name="Element2" type="double">
+    <value>0.0</value>
+  </simple>
+</struct>
+
+<struct name="robotarm_pos" type="array">
+  <description>Robot arm position</description>
+  <simple name="Element0" type="double">
+    <value>4.0</value>
+  </simple>
+  <simple name="Element1" type="double">
+    <value>2.2</value>
+  </simple>
+</struct>
+
+<struct name="robotarm_checkpts" type="array">
+  <description>Robot arm check points</description>
+  <simple name="Element0" type="double">
+    <value>0.0</value>
+  </simple>
+  <simple name="Element1" type="double">
+    <value>0.0</value>
+  </simple>
+  <simple name="Element2" type="double">
+    <value>0.2</value>
+  </simple>
+  <simple name="Element3" type="double">
+    <value>-0.2</value>
+  </simple>
+  <simple name="Element4" type="double">
+    <value>-0.2</value>
+  </simple>
+  <simple name="Element5" type="double">
+    <value>-0.2</value>
+  </simple>
+  <simple name="Element6" type="double">
+    <value>-0.2</value>
+  </simple>
+  <simple name="Element7" type="double">
+    <value>0.2</value>
+  </simple>
+</struct>
+
+<struct name="obstacle_checkpts" type="array">
+  <description>Robot arm check points</description>
+  <simple name="Element0" type="double">
+    <value>0.0</value>
+  </simple>
+  <simple name="Element1" type="double">
+    <value>0.0</value>
+  </simple>
+  <simple name="Element2" type="double">
+    <value>0.0</value>
+  </simple>
+  <simple name="Element3" type="double">
+    <value>-0.0</value>
+  </simple>
+  <simple name="Element4" type="double">
+    <value>-0.0</value>
+  </simple>
+  <simple name="Element5" type="double">
+    <value>-0.0</value>
+  </simple>
+  <simple name="Element6" type="double">
+    <value>-0.0</value>
+  </simple>
+  <simple name="Element7" type="double">
+    <value>0.0</value>
+  </simple>
+</struct>
+
+<struct name="robotarm_radii" type="array">
+ <description>Robotarm obstacle radius</description>
+   <simple name="Element0" type="double">
+    <value>0.30</value>
+  </simple>
+  <simple name="Element1" type="double">
+    <value>0.0</value>
+  </simple>
+  <simple name="Element2" type="double">
+    <value>0.0</value>
+  </simple>
+  <simple name="Element3" type="double">
+    <value>0.0</value>
+  </simple>
+</struct>
+
+<struct name="obstacle_radius" type="array">
+ <description>Robotarm obstacle radius</description>
+   <simple name="Element0" type="double">
+    <value>0.40</value>
+  </simple>
+  <simple name="Element1" type="double">
+    <value>0.15</value>
+  </simple>
+  <simple name="Element2" type="double">
+    <value>0.1</value>
+  </simple>
+  <simple name="Element3" type="double">
+    <value>0.15</value>
+  </simple>
+</struct>
+
+<simple name="robotarm_avoid" type="boolean">
+ <description>Robotarm obstacle radius</description>
+   <value>1</value>
+</simple>
+
+<simple name="eps_position" type="double">
+ <description>Epsilon distance calculating ETA</description>
+   <value>0.02</value>
+</simple>
+
+<simple name="eps_velocity" type="double">
+ <description>Epsilon velocity calculating ETA</description>
+   <value>0.001</value>
+</simple>
+
+<simple name="horizon_time" type="double">
+ <description>Horizon time calculating ETA</description>
+   <value>10.0</value>
+</simple>
+
+<simple name="vmax" type="double">
+ <description>Max velocity calculating ETA</description>
+   <value>0.3</value>
+</simple>
+
+<simple name="num_secs_rot" type="double">
+ <description>Number of seconds of rotation</description>
+   <value>0.5</value>
+</simple>
+
+</properties>

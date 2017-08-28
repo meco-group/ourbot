@@ -16,12 +16,31 @@ if (NOT OROCOS-RTT_FOUND)
   message (FATAL_ERROR "\nCould not find Orocos. Please use the shell command\n 'source orocos_toolchain/env.sh' and then run cmake again.")
 endif()
 
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake") # Find scripts for Zyre, etc.
+
+
+add_definitions(-DSWM_ZYRE_CONFIG_DIR="${CMAKE_HOME_DIRECTORY}")
+add_definitions(-std=c++11)
+
+# Load zmq, czmqm zyre
+find_package(ZMQ REQUIRED)
+find_package(CZMQ REQUIRED)
+find_package(ZYRE REQUIRED)
+
+include_directories( ${ZMQ_INCLUDE_DIRS} ${CZMQ_INCLUDE_DIRS} ${ZYRE_INCLUDE_DIRS})
+
 # Defines the orocos_* cmake macros. See that file for additional
 # documentation.
 include( ${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake )
 
 # Rest of the configuration is in src/
 add_subdirectory( src )
+
+# Return if zmq, czmqm zyre were found (=1) or not (=0)
+message ( STATUS "ZMQ_FOUND = ${ZMQ_FOUND}" )
+message ( STATUS "CZMQ_FOUND = ${CZMQ_FOUND}" )
+message ( STATUS "ZYRE_FOUND = ${ZYRE_FOUND}" )
+
 #
 # Building a typekit using typegen (recommended):
 #

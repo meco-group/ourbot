@@ -1,0 +1,34 @@
+<?xml version='1.0'?>
+<mavlink>
+	<include>microos_messages.xml</include>
+    <messages>
+		<message id="10" name="MOTOR_STATE">
+			<description>Send the motor state</description>
+			<field type="int32_t" name="position">Position of the motor in encoder ticks</field>
+			<field type="int32_t" name="velocity">Velocity of the motor in encoder ticks/sec</field>
+			<field type="int32_t" name="acceleration">Acceleration of the motor in encoder ticks/sec2</field>
+ 			<field type="int32_t" name="current">Armature current [mA]</field>
+ 			<field type="int16_t" name="FFvoltage">Feedforward armature voltage</field>
+ 			<field type="int16_t" name="FBvoltage">Feedback armature voltage</field>
+			<field type="int32_t" name="reference">Reference for the controller. Convenience field when interested in closed loop response</field>
+		</message>
+		<message id="11" name="MOTOR_COMMAND">
+			<description>Send a (velocity command to the motor)</description>
+			<field type="uint8_t" name="command_type">Command type: can be used to change from velocity to current commands for example</field>
+			<field type="int32_t" name="command_left_front">[Velocity] command for the left front wheel</field>
+			<field type="int32_t" name="command_right_front">[Velocity] command for the right front wheel</field>
+			<field type="int32_t" name="command_left_rear">[Velocity] command for the left rear wheel</field>
+			<field type="int32_t" name="command_right_rear">[Velocity] command for the right rear wheel</field>
+		</message>
+		<message id="12" name="MOTOR_CONTROLLER">
+			<field type="float" name="P">Proportional controller gain</field>
+			<field type="float" name="I">Integral controller gain</field>
+			<field type="float" name="D">Derivative controller gain</field>
+		</message>
+		<message id="20" name="RAW_IMU_DATA">
+			<field type="int16_t[3]" name="acc">accelerometer data (x,y,z)</field>
+			<field type="int16_t[3]" name="gyro">gyroscope data (x,y,z)</field>
+			<field type="int16_t[3]" name="mag">magnetometer data (x,y,z)</field>
+		</message>
+    </messages>
+</mavlink>

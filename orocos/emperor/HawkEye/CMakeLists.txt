@@ -16,6 +16,12 @@ if (NOT OROCOS-RTT_FOUND)
   message (FATAL_ERROR "\nCould not find Orocos. Please use the shell command\n 'source orocos_toolchain/env.sh' and then run cmake again.")
 endif()
 
+add_definitions(-std=c++11)
+
+# Load OpenCV
+find_package(OpenCV REQUIRED)
+include_directories( ${OpenCV_INCLUDE_DIRS} )
+
 # Defines the orocos_* cmake macros. See that file for additional
 # documentation.
 include( ${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake )
@@ -23,6 +29,10 @@ include( ${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake )
 # Rest of the configuration is in src/
 add_subdirectory( src )
 #
+
+# Return if OpenCV was found (=1) or not (=0)
+message ( STATUS "OpenCV_FOUND = ${OpenCV_FOUND}" )
+
 # Building a typekit using typegen (recommended):
 #
 # Creates a typekit library libHawkEye-types-<target>.so
@@ -31,7 +41,7 @@ add_subdirectory( src )
 # The header will go in include/orocos/HawkEye/types/HawkEye/HawkEye-types.hpp
 # So you can #include <HawkEye/HawkEye-types.hpp>
 #
-orocos_typegen_headers(include/HawkEye/HawkEye-types.hpp) # ...you may add multiple header files
+#orocos_typegen_headers(include/HawkEye/HawkEye-types.hpp) # ...you may add multiple header files
 #
 # You may only have *ONE* orocos_typegen_headers statement in your toplevel CMakeFile.txt !
 

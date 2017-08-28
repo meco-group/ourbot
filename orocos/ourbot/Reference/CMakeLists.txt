@@ -20,6 +20,7 @@ endif()
 # documentation.
 include( ${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake )
 
+add_definitions(-std=c++11)
 # Rest of the configuration is in src/
 add_subdirectory( src )
 #
@@ -31,7 +32,7 @@ add_subdirectory( src )
 # The header will go in include/orocos/Reference/types/Reference/Reference-types.hpp
 # So you can #include <Reference/Reference-types.hpp>
 #
-orocos_typegen_headers(include/Reference/Reference-types.hpp) # ...you may add multiple header files
+#orocos_typegen_headers(include/Reference/Reference-types.hpp) # ...you may add multiple header files
 #
 # You may only have *ONE* orocos_typegen_headers statement in your toplevel CMakeFile.txt !
 

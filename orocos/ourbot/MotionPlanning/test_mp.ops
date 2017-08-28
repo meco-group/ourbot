@@ -1,0 +1,15 @@
+import("rtt_ros")
+ros.import("rtt_rospack")
+ros.import("MotionPlanning")
+
+
+
+loadComponent("mp", "MotionPlanning")
+loadService("mp", "marshalling")
+mp.marshalling.loadProperties("../Configuration/system-config.cpf")
+mp.marshalling.loadProperties("../Configuration/motionplanning-config.cpf")
+
+mp.configure()
+mp.start()
+//mp.enable()
+//mp.update()
