@@ -46,7 +46,6 @@ class MotionPlanningInterface : public RTT::TaskContext{
     int _failure_cnt;
 
     bool _valid;
-    double _omega;
     double _orientation_interpolation_rate;
 
   protected:

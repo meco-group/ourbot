@@ -71,14 +71,12 @@ void MotionPlanningInterface::enable(){
   }
   _enable = true;
   _first_iteration = true;
-  _omega = 0.;
 }
 
 void MotionPlanningInterface::disable(){
   _enable = false;
   _got_target = false;
   _valid = false;
-  _omega = 0.;
   std::cout << "disabling...." << std::endl;
 }
 
@@ -135,7 +133,6 @@ bool MotionPlanningInterface::startHook(){
   }
   _got_target = false;
   _enable = false;
-  _omega = 0.;
   return true;
 }
 
@@ -194,6 +191,8 @@ void MotionPlanningInterface::updateHook(){
   // update trajectory
   _valid = trajectoryUpdate();
   if (!_valid){
+    std::cout << "recover" << std::endl;
+    _p2p->recover();
     _failure_cnt++;
     if (_failure_cnt >= _maximum_failures || _first_iteration){
       log(Error) << "MotionPlanning could not find trajectory." << endlog();

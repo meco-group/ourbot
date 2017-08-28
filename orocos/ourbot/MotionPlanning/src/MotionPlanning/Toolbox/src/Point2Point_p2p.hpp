@@ -82,7 +82,7 @@ class Point2Point{
         std::map<std::string, casadi::DM> args, sol;
         std::vector<double> parameters;
         std::vector<double> variables;
-        
+
         std::vector<double> lbg;
         std::vector<double> ubg;
         std::vector<double> time;
