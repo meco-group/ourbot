@@ -177,31 +177,31 @@ void FlexonomyMotionPlanning::getObstacles(std::vector<omg::obstacle_t>& obstacl
 }
 
 double FlexonomyMotionPlanning::getMotionTime(){
-  // If in the current horizon, target location is not present -> motion_time from the same formula used while bidding
-  // If the target location is present, then check along velocity trajectory where speed is zero
-  double v_mean;
-  double dist;
-
-  std::vector<double> coeff_vector(26, 0.0);
+  std::vector<double> coeff_vector;
   _p2p->getCoefficients(coeff_vector);
+  uint n_cfs = coeff_vector.size()/2;
+  // extrapolate theta
+  double th0 = _est_pose[2];
+  for (int k=0; k<int(_update_time/_sample_time); k++) {
+    th0 += _ref_velocity[k+_predict_shift][2]*_sample_time;
+  }
+  double rotation_time = (_target_pose[2] - th0)/_orientation_interpolation_rate;
 
-  double target_dist = sqrt(pow(_target_pose[0] - coeff_vector[12], 2) + pow(_target_pose[1] - coeff_vector[25], 2));
-
-  if(target_dist > 0.02) {
-    v_mean = 0.87*_vmax;
-    dist = sqrt(pow(_target_pose[0]-coeff_vector[0], 2) + pow(_target_pose[1]-coeff_vector[13], 2));
-    return dist/v_mean;
+  double target_dist = sqrt(pow(_target_pose[0] - coeff_vector[n_cfs-1], 2) + pow(_target_pose[1] - coeff_vector[2*n_cfs-1], 2));
+  if(target_dist > 0.02) { // end of trajectory is not on destination yet
+    double v_mean = 0.87*_vmax;
+    double dist = sqrt(pow(_target_pose[0]-coeff_vector[0], 2) + pow(_target_pose[1]-coeff_vector[n_cfs], 2));
+    return max(dist/v_mean, rotation_time);
   }
   else {
     int k;
     for (k=0; k<_trajectory_length_full; k++) {
-      //std::cout << "Time - " << time_inst << " --- [" << _ref_pose[k][0] << "," << _ref_pose[k][1] << "]" << std::endl;
       if(sqrt(pow(_ref_pose[k][0]-_target_pose[0], 2) + pow(_ref_pose[k][1]-_target_pose[1], 2)) <= 0.02) {
         break;
       }
     }
     std::cout << "motion time = " << k*_sample_time << "s" << std::endl;
-    return k*_sample_time;
+    return max(k*_sample_time, rotation_time);
   }
 }
 

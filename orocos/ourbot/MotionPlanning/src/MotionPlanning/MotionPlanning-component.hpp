@@ -11,10 +11,9 @@ class MotionPlanning : public MotionPlanningInterface{
     int _n_st;
     int _n_in;
 
-    std::vector<std::vector<double> > _ref_velocity;
-
   protected:
     omg::Point2Point* _p2p;
+    std::vector<std::vector<double> > _ref_velocity;
     std::vector<std::vector<double> > _ref_pose;
 
   public:

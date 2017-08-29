@@ -46,7 +46,6 @@ class MotionPlanningInterface : public RTT::TaskContext{
     int _failure_cnt;
 
     bool _valid;
-    double _orientation_interpolation_rate;
 
   protected:
     virtual bool trajectoryUpdate() = 0;
@@ -79,6 +78,7 @@ class MotionPlanningInterface : public RTT::TaskContext{
     bool _ideal_prediction;
     int _n_obs;
     bool _first_iteration;
+    double _orientation_interpolation_rate;
 
   public:
     MotionPlanningInterface(std::string const& name);

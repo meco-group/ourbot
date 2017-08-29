@@ -82,4 +82,6 @@ void MotionPlanning::getObstacles(std::vector<omg::obstacle_t>& obstacles){
   }
 }
 
+
+
 ORO_LIST_COMPONENT_TYPE(MotionPlanning);
