@@ -43,7 +43,7 @@ void FlexonomyMotionPlanning::writeHostObstTraj(int option) {
     _old_estimated_pose = est_pose;
   }
   if (!_first_iteration) {
-    coeff_vector = _p2p->spline_coeffs_vec;
+    _p2p->getCoefficients(coeff_vector);
   } else {
     for (int i=0;i<13;i++) {
       coeff_vector[i] = _old_estimated_pose[0] + ((_target_pose[0]-_old_estimated_pose[0])/12)*i;
@@ -182,8 +182,8 @@ double FlexonomyMotionPlanning::getMotionTime(){
   double v_mean;
   double dist;
 
-  std::vector<double> coeff_vector(26,0.0);
-  coeff_vector = _p2p->spline_coeffs_vec;
+  std::vector<double> coeff_vector(26, 0.0);
+  _p2p->getCoefficients(coeff_vector);
 
   double target_dist = sqrt(pow(_target_pose[0] - coeff_vector[12], 2) + pow(_target_pose[1] - coeff_vector[25], 2));
 

@@ -5,8 +5,8 @@
 #include <iostream>
 
 MotionPlanningInterface::MotionPlanningInterface(std::string const& name) : TaskContext(name, PreOperational),
-    _got_target(false), _enable(false), _mp_trigger_data(4), _failure_cnt(0), _valid(false), _predict_shift(0), _first_iteration(true), _est_pose(3),
-    _target_pose(3), _ref_pose_trajectory(3), _ref_velocity_trajectory(3), _ref_pose_trajectory_ss(2), _n_obs(0){
+    _got_target(false), _enable(false), _mp_trigger_data(4), _failure_cnt(0), _valid(false), _predict_shift(0), _est_pose(3),
+    _target_pose(3), _ref_pose_trajectory(3), _ref_velocity_trajectory(3), _ref_pose_trajectory_ss(2), _n_obs(0), _first_iteration(true){
 
   ports()->addPort("target_pose_port", _target_pose_port).doc("Target pose");
   ports()->addPort("obstacle_port", _obstacle_port).doc("Detected obstacles");
@@ -192,7 +192,7 @@ void MotionPlanningInterface::updateHook(){
   _valid = trajectoryUpdate();
   if (!_valid){
     std::cout << "recover" << std::endl;
-    _p2p->recover();
+    recover_after_fail();
     _failure_cnt++;
     if (_failure_cnt >= _maximum_failures || _first_iteration){
       log(Error) << "MotionPlanning could not find trajectory." << endlog();
@@ -240,7 +240,7 @@ void MotionPlanningInterface::interpolateOrientation(double theta0, double theta
     omega = -omega;
   }
   double interpolation_time = fabs((thetaT-th0)/omega);
-  int n_int = int(interpolation_time*_control_sample_rate);
+  uint n_int = int(interpolation_time*_control_sample_rate);
   for (uint k=0; k<theta_trajectory.size(); k++) {
     if (k <= n_int && fabs(thetaT - th0) > 0.1) {
       theta_trajectory[k] = (1./0.);

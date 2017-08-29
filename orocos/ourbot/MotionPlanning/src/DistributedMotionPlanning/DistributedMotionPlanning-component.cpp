@@ -223,6 +223,10 @@ bool DistributedMotionPlanning::initialize(){
   return true;
 }
 
+void DistributedMotionPlanning::recover_after_fail(){
+  _problem->recover();
+}
+
 void DistributedMotionPlanning::emptyPorts(){
   std::vector<double> dump(2*_n_shared + 1, 0.0);
   for (int k=0; k<_n_nghb; k++){

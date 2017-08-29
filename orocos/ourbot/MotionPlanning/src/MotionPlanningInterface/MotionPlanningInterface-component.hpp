@@ -52,6 +52,7 @@ class MotionPlanningInterface : public RTT::TaskContext{
     virtual bool trajectoryUpdate() = 0;
     virtual bool initialize() = 0;
     virtual bool config() = 0;
+    virtual void recover_after_fail() = 0;
     virtual bool targetReached();
     virtual double getMotionTime();
     virtual void interpolateOrientation(double theta0, double thetaT, std::vector<double>& theta_trajectory, std::vector<double>& omega_trajectory);

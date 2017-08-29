@@ -14,9 +14,9 @@ options = {}
 # rect = Rectangle(0.85, 0.4)
 # rect = Rectangle(0.66, 0.4)
 # rect.radius = 0.02
-shape = Circle(0.)
+shape = Circle(0.34)
 vehicle = Holonomic(shapes=shape, options=options, bounds={'vmin': -0.3, 'vmax': 0.3, 'amin': -0.5, 'amax': 0.5})
-vehicle.set_options({'safety_distance': 0.34})
+vehicle.set_options({'safety_distance': 0.05})
 
 vehicle.set_initial_conditions([0.5, 0.5])
 # vehicle.set_terminal_conditions([2.7, 2.2])
@@ -40,9 +40,8 @@ robot = Rectangle(width=2., height=2.)
 environment.add_obstacle(Obstacle({'position': [width, height]}, shape=robot))
 obstacle = Obstacle({'position': [2.5, 0.5]}, shape=Circle(0.34))
 environment.add_obstacle(obstacle)
-
-# obstacle.set_options({'spline_traj': True})
-# obstacle.set_options({'spline_params': spline_params})
+obstacle.set_options({'spline_traj': True})
+obstacle.set_options({'spline_params': spline_params})
 
 # create a point-to-point problem
 problem = Point2point(vehicle, environment, freeT=False)

@@ -33,6 +33,10 @@ bool MotionPlanning::initialize(){
   return true;
 }
 
+void MotionPlanning::recover_after_fail(){
+  _p2p->recover();
+}
+
 bool MotionPlanning::trajectoryUpdate(){
   // get obstacles
   std::vector<omg::obstacle_t> obstacles(_n_obs);

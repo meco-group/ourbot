@@ -30,7 +30,7 @@ namespace omg{
 
 Point2Point::Point2Point(Vehicle* vehicle,
     double update_time, double sample_time, double horizon_time, int trajectory_length, bool initialize):
-parameters(N_PAR), variables(N_VAR), lbg(LBG_DEF), ubg(UBG_DEF) {
+parameters(N_PAR), variables(N_VAR), lbg(LBG_DEF), ubg(UBG_DEF), _recover(false) {
     if (trajectory_length > int(horizon_time/sample_time)){
         cerr << "trajectory_length > (horizon_time/sample_time)!" << endl;
     }
@@ -119,6 +119,11 @@ void Point2Point::reset(){
 void Point2Point::resetTime(){
     current_time = 0.0;
     current_time_prev = 0.0;
+}
+
+void Point2Point::recover(){
+    // this method should be called (by user) when encountered infeasibilities
+    _recover = true;
 }
 
 bool Point2Point::update(vector<double>& condition0, vector<double>& conditionT,
@@ -211,8 +216,9 @@ bool Point2Point::update(vector<double>& condition0, vector<double>& conditionT,
 
 bool Point2Point::solve(double current_time, vector<obstacle_t>& obstacles){
     // init variables if first time
-    if(fabs(current_time)<=1.e-6){
+    if(fabs(current_time)<=1.e-6 || _recover){
         initVariables();
+        _recover = false;
     }
     updateBounds(current_time, obstacles);
     setParameters(obstacles);
@@ -289,18 +295,7 @@ void Point2Point::fillParameterDict(vector<obstacle_t>& obstacles, map<string, m
 	par_dict["obstacle0"]["rad"] = obstacles[0].radii;
 
 
-	pos0 = obstacles[1].position;
-	vel0 = obstacles[1].velocity;
-	acc0 = obstacles[1].acceleration;
-	// prediction over update_time
-	for (int j=0; j<2; j++){
-		posT[j] = pos0[j] + update_time*vel0[j] + 0.5*pow(update_time,2)*acc0[j];
-		velT[j] = vel0[j] + update_time*acc0[j];
-		accT[j] = acc0[j];
-	}
-	par_dict["obstacle1"]["x"] = posT;
-	par_dict["obstacle1"]["v"] = velT;
-	par_dict["obstacle1"]["a"] = accT;
+	par_dict["obstacle1"]["traj_coeffs"] = obstacles[1].traj_coeffs;
 	par_dict["obstacle1"]["checkpoints"] = obstacles[1].checkpoints;
 	par_dict["obstacle1"]["rad"] = obstacles[1].radii;
 
@@ -363,21 +358,15 @@ void Point2Point::getParameterVector(vector<double>& par_vect, map<string, map<s
 	for (int i=0; i<4; i++){
 		par_vect[20+i] = par_dict["obstacle0"]["rad"][i];
 	}
-	for (int i=0; i<2; i++){
-		par_vect[24+i] = par_dict["obstacle1"]["x"][i];
+	for (int i=0; i<26; i++){
+		par_vect[24+i] = par_dict["obstacle1"]["traj_coeffs"][i];
 	}
 	for (int i=0; i<2; i++){
-		par_vect[26+i] = par_dict["obstacle1"]["v"][i];
+		par_vect[50+i] = par_dict["obstacle1"]["checkpoints"][i];
 	}
-	for (int i=0; i<2; i++){
-		par_vect[28+i] = par_dict["obstacle1"]["a"][i];
-	}
-	for (int i=0; i<2; i++){
-		par_vect[30+i] = par_dict["obstacle1"]["checkpoints"][i];
-	}
-	par_vect[32] = par_dict["obstacle1"]["rad"][0];
-	par_vect[33] = par_dict["p2p0"]["T"][0];
-	par_vect[34] = par_dict["p2p0"]["t"][0];
+	par_vect[52] = par_dict["obstacle1"]["rad"][0];
+	par_vect[53] = par_dict["p2p0"]["T"][0];
+	par_vect[54] = par_dict["p2p0"]["t"][0];
 
 }
 
@@ -1052,6 +1041,26 @@ void Point2Point::updateBounds(double current_time, vector<obstacle_t>& obstacle
 		ubg[431] = +inf;
 		lbg[432] = -inf;
 		ubg[432] = +inf;
+		lbg[433] = -inf;
+		ubg[433] = +inf;
+		lbg[434] = -inf;
+		ubg[434] = +inf;
+		lbg[435] = -inf;
+		ubg[435] = +inf;
+		lbg[436] = -inf;
+		ubg[436] = +inf;
+		lbg[437] = -inf;
+		ubg[437] = +inf;
+		lbg[438] = -inf;
+		ubg[438] = +inf;
+		lbg[439] = -inf;
+		ubg[439] = +inf;
+		lbg[440] = -inf;
+		ubg[440] = +inf;
+		lbg[441] = -inf;
+		ubg[441] = +inf;
+		lbg[442] = -inf;
+		ubg[442] = +inf;
 	}else{
 		lbg[402] = -inf;
 		ubg[402] = 0;
@@ -1115,6 +1124,26 @@ void Point2Point::updateBounds(double current_time, vector<obstacle_t>& obstacle
 		ubg[431] = 0;
 		lbg[432] = -inf;
 		ubg[432] = 0;
+		lbg[433] = -inf;
+		ubg[433] = 0;
+		lbg[434] = -inf;
+		ubg[434] = 0;
+		lbg[435] = -inf;
+		ubg[435] = 0;
+		lbg[436] = -inf;
+		ubg[436] = 0;
+		lbg[437] = -inf;
+		ubg[437] = 0;
+		lbg[438] = -inf;
+		ubg[438] = 0;
+		lbg[439] = -inf;
+		ubg[439] = 0;
+		lbg[440] = -inf;
+		ubg[440] = 0;
+		lbg[441] = -inf;
+		ubg[441] = 0;
+		lbg[442] = -inf;
+		ubg[442] = 0;
 	}
 
 }

@@ -22,6 +22,7 @@ class MotionPlanning : public MotionPlanningInterface{
 
     bool trajectoryUpdate();
     bool initialize();
+    void recover_after_fail();
     virtual void getObstacles(std::vector<omg::obstacle_t>& obstacles);
     virtual bool config();
 };

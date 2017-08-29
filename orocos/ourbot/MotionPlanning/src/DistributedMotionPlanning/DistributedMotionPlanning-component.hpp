@@ -86,6 +86,7 @@ class DistributedMotionPlanning : public MotionPlanningInterface{
 
     bool trajectoryUpdate();
     bool initialize();
+    void recover_after_fail();
     bool config();
     bool targetReached();
     void writeSample();
