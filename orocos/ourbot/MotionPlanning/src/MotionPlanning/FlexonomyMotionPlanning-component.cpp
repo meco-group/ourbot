@@ -172,6 +172,7 @@ void FlexonomyMotionPlanning::getObstacles(std::vector<omg::obstacle_t>& obstacl
       obstacles[1].avoid = true;
       obstacles[1].radii = std::vector<double>({0.5*max(_neighbor_size[0], _neighbor_size[1])});
       obstacles[1].checkpoints = std::vector<double>({0., 0.});
+      std::cout << "received traj (rad=" << obstacles[1].radii[0] << "m): " << obstacles[1].traj_coeffs << std::endl;
     }
   }
 }
