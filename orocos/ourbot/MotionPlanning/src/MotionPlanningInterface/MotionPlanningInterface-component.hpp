@@ -33,6 +33,10 @@ class MotionPlanningInterface : public RTT::TaskContext{
     OutputPort<bool> _valid_trajectories_port;
     OutputPort<double> _motion_time_port;
 
+    double _target_dist_tol;
+    double _input_norm_tol;
+    double _angle_dist_tol;
+
     TimeService::ticks _timestamp;
     void initObstacles();
     void computeObstacles();

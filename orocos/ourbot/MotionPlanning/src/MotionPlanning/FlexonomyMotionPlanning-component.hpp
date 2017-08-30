@@ -15,7 +15,6 @@ class FlexonomyMotionPlanning : public MotionPlanning{
 
     std::vector<double> _old_estimated_pose;
 
-    double _horizon_time;
     double _vmax;
 
     void getObstacles(std::vector<omg::obstacle_t>& obstacles);

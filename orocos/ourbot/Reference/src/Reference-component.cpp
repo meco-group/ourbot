@@ -180,6 +180,7 @@ void Reference::reset(){
   _just_started = true;
   _first_time = true;
   _new_data = false;
+  _ready = false;
   _index1 = 0;
   _index2 = 0;
 }

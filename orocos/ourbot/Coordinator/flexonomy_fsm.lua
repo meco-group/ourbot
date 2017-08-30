@@ -12,12 +12,17 @@ local setTargetPose = motionplanning:getOperation('setTargetPose')
 local disableMotionPlanning = motionplanning:getOperation('disable')
 local referenceUpdate = reference:getOperation("update")
 
+local time0 = 0
+local recover_time = 1
+
 return rfsm.state {
   rfsm.trans{src = 'initial', tgt = 'init'},
   rfsm.trans{src = 'init',    tgt = 'home',   events = {'e_done'}},
   rfsm.trans{src = 'home',    tgt = 'idle',   events = {'e_done'}},
   rfsm.trans{src = 'idle',    tgt = 'p2p',    events = {'e_p2p'}},
-  rfsm.trans{src = 'p2p',     tgt = 'idle',   events = {'e_done'}},
+  rfsm.trans{src = 'p2p',     tgt = 'idle',   events = {'e_idle'}},
+  rfsm.trans{src = 'p2p',     tgt = 'auto_recover', events = {'e_auto_recover'}},
+  rfsm.trans{src = 'auto_recover', tgt = 'p2p', events = {'e_p2p'}},
 
   rfsm.trans{src = 'p2p',     tgt = 'stoptask', events = {'e_stop'}},
   rfsm.trans{src = 'stoptask',tgt = 'idle',     events = {'e_done'}},
@@ -85,12 +90,13 @@ return rfsm.state {
       while true do
         prev_start_time = start_time
         start_time = get_sec()
-        -- perform default loop update
-        if not update(fsm, 'busy', true) then
-          return
-        end
         -- check status of motion planning
         if not checkMotionPlanning(fsm) then
+          return
+        end
+        -- perform default loop update
+        if not update(fsm, 'busy', true) then
+          rfsm.send_events(fsm,'e_idle')
           return
         end
         -- check timings of previous iteration
@@ -114,6 +120,27 @@ return rfsm.state {
         rfsm.yield(true) -- sleep until next sample period
       end
     end,
+  },
+
+  auto_recover = rfsm.state{ -- handle infeasibilities
+    entry = function(fsm)
+      time0 = get_sec()
+    end,
+
+    doo = function(fsm)
+      while true do
+        -- perform default loop update
+        if not update(fsm, 'ready', false) then
+          return
+        end
+        -- wait a little bit
+        if get_sec() - time0 >= recover_time then
+          rfsm.send_events(fsm,'e_p2p')
+        end
+        rfsm.yield(true)
+      end
+    end,
+
   },
 
   stoptask = rfsm.state{

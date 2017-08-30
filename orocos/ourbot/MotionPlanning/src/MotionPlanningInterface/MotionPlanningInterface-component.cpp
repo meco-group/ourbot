@@ -37,6 +37,9 @@ MotionPlanningInterface::MotionPlanningInterface(std::string const& name) : Task
   addProperty("ref_tx_subsample", _tx_subsample).doc("Subsamples for transmitted reference trajectories");
   addProperty("target_detection", _target_detection).doc("Target reached detection?");
   addProperty("orientation_interpolation_rate", _orientation_interpolation_rate).doc("Rate to interpolate orientation [rad/s]");
+  addProperty("target_dist_tol", _target_dist_tol).doc("Tolerance for target position detection");
+  addProperty("angle_dist_tol", _angle_dist_tol).doc("Tolerance for target orientation detection");
+  addProperty("input_norm_tol", _input_norm_tol).doc("Tolerance for target input detection");
 
   addOperation("setTargetPose", &MotionPlanningInterface::setTargetPose, this).doc("Set target pose");
   addOperation("gotTarget", &MotionPlanningInterface::gotTarget, this).doc("Do we have a target?");
@@ -147,11 +150,17 @@ bool MotionPlanningInterface::targetReached(){
   }
   target_dist = sqrt(target_dist);
   input_norm = sqrt(input_norm);
-  double angle_dist = fabs(_target_pose[2]-_est_pose[2]);
-  if (target_dist < 1e-2 && input_norm < 1e-2 && angle_dist < 2e-2){
+  // double angle_dist;
+  // if (_est_pose[2] < 0) {
+  //   angle_dist = fabs(_target_pose[2]-(M_PI+_est_pose[2]));
+  // }
+  // double angle_dist = fabs(_target_pose[2]-_est_pose[2]);
+
+  std::cout << "angle dist: " << angle_dist << std::endl;
+  std::cout << _angle_dist_tol << std::endl;
+  if (target_dist < _target_dist_tol && input_norm < _input_norm_tol && angle_dist < _angle_dist_tol){
     return true;
   }
-  std::cout << "[" <<  target_dist << " - " << input_norm << " - " << angle_dist << "]" << std::endl;
   return false;
 }
 
@@ -241,9 +250,25 @@ void MotionPlanningInterface::interpolateOrientation(double theta0, double theta
   }
   double interpolation_time = fabs((thetaT-th0)/omega);
   uint n_int = int(interpolation_time*_control_sample_rate);
+  double th_ref=0;
+  std::cout << theta_trajectory.size() << std::endl;
   for (uint k=0; k<theta_trajectory.size(); k++) {
-    if (k <= n_int && fabs(thetaT - th0) > 0.1) {
-      theta_trajectory[k] = (1./0.);
+    // if (k <= n_int && fabs(thetaT - th0) > 0.1) {
+    //   theta_trajectory[k] = (1./0.);
+    //   omega_trajectory[k] = omega;
+    // } else {
+    //   theta_trajectory[k] = thetaT;
+    //   omega_trajectory[k] = 0;
+    // }
+    th_ref = th0 + omega*_sample_time*k;
+    double err;
+    if (th0 > thetaT) {
+      err = th_ref - thetaT;
+    } else {
+      err = -(th_ref - thetaT);
+    }
+    if (err > 0.1) {
+      theta_trajectory[k] = th_ref;
       omega_trajectory[k] = omega;
     } else {
       theta_trajectory[k] = thetaT;

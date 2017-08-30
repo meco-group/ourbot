@@ -4,13 +4,16 @@
   <struct name="psd_state" type="array">
     <description>Acceleration-like squared noise levels for x,y,theta (m/s^2)^2</description>
     <simple name="x" type="double">
-      <value>500</value>
+      <!-- <value>500</value> -->
+      <value>50000</value>
     </simple>
     <simple name="y" type="double">
-      <value>500</value>
+      <!-- <value>500</value> -->
+      <value>50000</value>
     </simple>
     <simple name="theta" type="double">
-      <value>500</value>
+      <!-- <value>500</value> -->
+      <value>5000000</value>
     </simple>
   </struct>
 

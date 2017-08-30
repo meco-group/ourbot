@@ -26,6 +26,7 @@ current_dir = os.path.dirname(os.path.realpath(__file__))
 local_root = os.path.join(current_dir, 'orocos/emperor')
 
 hosts = ['dave', 'kurt']
+# hosts = ['kurt']
 # obstacle = 'dave'
 obstacle = None
 

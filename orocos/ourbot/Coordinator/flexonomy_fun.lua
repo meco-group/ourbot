@@ -33,7 +33,7 @@ local hostObstTraj = motionplanning:getOperation("writeHostObstTraj")
 -- properties
 local header_version = '1.0.0'
 local statemsg_sample_rate = 1
-local nghbcom_sample_rate = 8
+local nghbcom_sample_rate = 4
 local coordinator_name = 'SH1'
 local vmax = 0.8
 
@@ -49,7 +49,11 @@ _cmd_velocity_port:connect(teensy:getPort('cmd_velocity_port'))
 local addIncoming = communicator:getOperation('addIncomingConnection')
 local addOutgoing = communicator:getOperation('addOutgoingConnection')
 if not addIncoming('motionplanning', 'obstacle_trajectory_port', 'obstacle_trajectory') then rfsm.send_events(fsm, 'e_failed') return end
-if not addOutgoing('motionplanning', 'host_obstacle_trajectory_port', 'obstacle_trajectory', 'ourbots') then rfsm.send_events(fsm, 'e_failed') return end
+if host == 'dave' then
+    if not addOutgoing('motionplanning', 'host_obstacle_trajectory_port', 'obstacle_trajectory', 'kurt') then rfsm.send_events(fsm, 'e_failed') return end
+else
+    if not addOutgoing('motionplanning', 'host_obstacle_trajectory_port', 'obstacle_trajectory', 'dave') then rfsm.send_events(fsm, 'e_failed') return end
+end
 
 -- global vars
 current_task = nil
@@ -66,6 +70,8 @@ local max_statemsg_cnt = 1/(statemsg_sample_rate*period)
 local statemsg_cnt = max_statemsg_cnt
 local max_nghbcom_cnt = 1/(nghbcom_sample_rate*period)
 local nghbcom_cnt = max_nghbcom_cnt
+local failure_cnt = 0
+local max_failure_cnt = 5
 local zero_cmd = rtt.Variable('array')
 zero_cmd:resize(3)
 zero_cmd:fromtab{0, 0, 0}
@@ -139,16 +145,22 @@ function waitForValidEstimate(fsm)
 end
 
 function home(fsm)
-    local pose0 = motionplanning:setConfiguration()
+    -- local pose0 = motionplanning:setConfiguration()
+    local pose0 = getPose()
     motionplanning:setTargetPose(pose0[0], pose0[1], pose0[2])
+    print('est pose:')
+    pose0 = getPose()
+    print('['..pose0[0]..', '..pose0[1]..', '..pose0[2]..']')
     while true do
         -- check if homing is finished
         if not mpBusy() then
             if targetReached() then -- succesful
+                controlLoop(fsm, false)
                 return
             else -- unsuccesful
                 rtt.log("Error", "Could not home!")
                 rfsm.send_events(fsm,'e_failed')
+                controlLoop(fsm, false)
                 return
             end
         end
@@ -176,7 +188,7 @@ function update(fsm, state, control)
     else
         snap_cnt = snap_cnt + 1
     end
-    -- send state messagesf
+    -- send state messages
     if statemsg_cnt >= max_statemsg_cnt then
         sendState(state)
         statemsg_cnt = 1
@@ -211,6 +223,8 @@ function controlLoop(fsm, control)
             referenceUpdate()
             if validReference() then
                 controllerUpdate()
+            else
+                _cmd_velocity_port:write(zero_cmd)
             end
         else
             print "Estimate not valid!"
@@ -271,33 +285,40 @@ function checkMotionPlanning(fsm)
     -- check if p2p task is finished
     if not mpBusy() then
         if targetReached() then -- succesful
+            failure_cnt = 0
             if not task_started then -- we were already there
                 sendTaskStatus(current_task, 'finished', get_sec())
             else
                 sendTaskStatus(current_task, 'finished', current_eta)
             end
+            print 'motion planning succeeded.'
             removeTask(current_task)
             current_eta = nil
+            rfsm.send_events(fsm, 'e_idle')
             return false
         else  -- unsuccesful
-            if not task_started then -- first time
+            if failure_cnt > 0 and not task_started then -- first time
+                failure_cnt = 0
                 sendTaskStatus(current_task, 'rejected', get_sec())
+                removeTask(current_task)
+                rfsm.send_events(fsm, 'e_idle')
+            elseif failure_cnt <= max_failure_cnt then
+                print 'try auto recovering motion planning.'
+                failure_cnt = failure_cnt + 1
+                rfsm.send_events(fsm, 'e_auto_recover')
             else
+                print 'motion planning failed.'
+                failure_cnt = 0
                 sendTaskStatus(current_task, 'failed', current_eta)
+                removeTask(current_task)
+                rfsm.send_events(fsm, 'e_idle')
             end
-            removeTask(current_task)
             return false
         end
     end
     -- check if task has started/update ETA
     local fs, motion_time = _motion_time_port:read()
     if fs == 'NewData' then -- new opt problem was solved
-        -- local i = 1
-        --         while i<1000 do
-        --             print "Motion time"
-        --             print(motion_time)
-        --             i=i+1
-        --         end
         local eta = get_sec() + motion_time
         if not task_started then
             current_eta = eta

@@ -16,7 +16,7 @@
 </simple>
 <simple name="maximum_failures" type="long">
   <description>Maximum allowed consecutive failures</description>
-  <value>10</value>
+  <value>1</value>
 </simple>
 <simple name="target_detection" type="boolean">
   <description>Target reached detection?</description>
@@ -25,6 +25,18 @@
 <simple name="orientation_interpolation_rate" type="double">
  <description>Rate to interpolate orientation (rad/s)</description>
    <value>0.5</value>
+</simple>
+<simple name="target_dist_tol" type="double">
+  <description>Tolerance for target position detection</description>
+  <value>0.01</value>
+</simple>
+<simple name="angle_dist_tol" type="double">
+  <description>Tolerance for target orientation detection</description>
+  <value>0.05</value>
+</simple>
+<simple name="input_norm_tol" type="double">
+  <description>Tolerance for target input detection</description>
+  <value>0.01</value>
 </simple>
 
 <struct name="configuration_x" type="array">
@@ -85,11 +97,11 @@
     <value>0.33</value>
   </simple>
 </struct>
-
+<!--
 <simple name="horizon_time" type="double">
  <description>Horizon time calculating ETA</description>
    <value>15.0</value>
-</simple>
+</simple> -->
 
 <simple name="vmax" type="double">
  <description>Max velocity calculating ETA</description>

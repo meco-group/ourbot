@@ -17,7 +17,6 @@ FlexonomyMotionPlanning::FlexonomyMotionPlanning(std::string const& name) : Moti
   addProperty("neighbor_size", _neighbor_size).doc("Neighbor ourbot size [width, height]");
 
   //For motion time calculation
-  addProperty("horizon_time", _horizon_time).doc("Trajectory horizon time");
   addProperty("vmax", _vmax).doc("Maximum velocity");
 
   //Operations
@@ -28,6 +27,7 @@ bool FlexonomyMotionPlanning::config() {
   std::vector<double> example(26, 0.0);
   _host_obstacle_trajectory_port.setDataSample(example);
   _old_estimated_pose.resize(3,0.0);
+  std::cout << "horizon time: " << _horizon_time << std::endl;
   return MotionPlanning::config();
 }
 
@@ -172,7 +172,14 @@ void FlexonomyMotionPlanning::getObstacles(std::vector<omg::obstacle_t>& obstacl
       obstacles[1].avoid = true;
       obstacles[1].radii = std::vector<double>({0.5*max(_neighbor_size[0], _neighbor_size[1])});
       obstacles[1].checkpoints = std::vector<double>({0., 0.});
-      std::cout << "received traj (rad=" << obstacles[1].radii[0] << "m): " << obstacles[1].traj_coeffs << std::endl;
+      // std::cout << "received traj (rad=" << obstacles[1].radii[0] << "m): " << std::endl;
+      // for (int k=0; k<2; k++) {
+      //   std::cout << "[";
+      //   for (int i=0; i<13; i++) {
+      //     std::cout << obstacle_trajectory[13*k+i] << " ";
+      //   }
+      //   std::cout << "]" << std::endl;
+      // }
     }
   }
 }

@@ -71,32 +71,21 @@ int fleet_center1(const real_t** arg, real_t** res, int* iw, real_t* w, int mem)
   const real_t** arg1=arg+2;
   real_t** res1=res+1;
   real_t *w0=w+0, *w1=w+98, *w2=w+137, *w3=w+163, *w4=w+176, *w5=w+361, *w6=w+369, w7;
-  /* #0: Input 0 (i0), part 0 (V) */
   if (arg[0])
     copy(arg[0], 98, w0);
   else 
     fill(w0, 98, 0);
-  /* #1: {@1, NULL, NULL, NULL, NULL} = vertsplit(@0) */
   copy(w0, 39, w1);
-  /* #2: {@2, NULL} = vertsplit(@1) */
   copy(w1, 26, w2);
-  /* #3: @2 = reshape(@2) */
-  /* #4: @3 = @2[13:26] */
   for (rr=w3, ss=w2+13; ss!=w2+26; ss+=1) *rr++ = *ss;
-  /* #5: Input 1 (i1), part 0 (V) */
   if (arg[1])
     copy(arg[1], 185, w4);
   else 
     fill(w4, 185, 0);
-  /* #6: {@5, NULL, NULL, NULL, NULL} = vertsplit(@4) */
   copy(w4, 8, w5);
-  /* #7: {@6, NULL, NULL, NULL} = vertsplit(@5) */
   copy(w5, 2, w6);
-  /* #8: @7 = @6[1] */
   for (rr=(&w7), ss=w6+1; ss!=w6+2; ss+=1) *rr++ = *ss;
-  /* #9: @3 = (@3+@7) */
   for (i=0, rr=w3; i<13; ++i) (*rr++) += w7;
-  /* #10: Output 0 (o0) */
   if (res[0]) copy(w3, 13, res[0]);
   return 0;
 }

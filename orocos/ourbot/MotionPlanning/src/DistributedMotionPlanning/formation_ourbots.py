@@ -1,5 +1,4 @@
 import sys, os
-sys.path.insert(0, os.getenv('HOME') + '/Downloads/omg-tools/')
 from omgtools import *
 
 """

@@ -25,7 +25,7 @@ local containers_to_fill = {
 local ports_to_report = {
   estimator           = {'est_pose_port'},
   reference           = {'ref_pose_port', 'ref_velocity_port'},
-  io                  = {'cal_velocity_port', 'cal_trailer_angle_port'}
+  teensy              = {'cmd_velocity_passthrough_port'}
 }
 
 -- packages to import
@@ -204,7 +204,7 @@ return rfsm.state {
         if not addIncoming('coordinator', 'coordinator_fsm_event_port', 'fsm_event') then rfsm.send_events(fsm, 'e_failed') return end
         -- estimator
         if not addIncoming('estimator', 'markers_port', 'markers_'..host) then rfsm.send_events(fsm, 'e_failed') return end
-        -- if not addOutgoing('estimator', 'est_pose_tx_port', 'est_pose_'..host, 'emperor') then rfsm.send_events(fsm, 'e_failed') return end
+        if not addOutgoing('estimator', 'est_pose_tx_port', 'est_pose_'..host, 'emperor') then rfsm.send_events(fsm, 'e_failed') return end
         -- motion planning
         -- if not addIncoming('motionplanning', 'obstacle_port', 'obstacles') then rfsm.send_events(fsm, 'e_failed') return end
         -- if not addIncoming('motionplanning', 'target_pose_port', 'target_pose') then rfsm.send_events(fsm, 'e_failed') return end
@@ -225,7 +225,7 @@ return rfsm.state {
         -- if not addOutgoing('reference', 'ref_pose_trajectory_x_tx_port', 'ref_x_'..host, 'emperor') then rfsm.send_events(fsm, 'e_failed') return end
         -- -- if not addOutgoing('reference', 'ref_pose_trajectory_y_tx_port', 'ref_y_'..host, 'emperor') then rfsm.send_events(fsm, 'e_failed') return end
         -- if obstacle_mode then
-        --   if not addOutgoing('estimator', 'est_pose_tx_port', 'robobs_pose', 'ourbots') then rfsm.send_events(fsm, 'e_failed') return end
+          -- if not addOutgoing('estimator', 'est_pose_tx_port', 'robobs_pose', 'ourbots') then rfsm.send_events(fsm, 'e_failed') return end
         --   if not addOutgoing('estimator', 'est_velocity_tx_port', 'robobs_velocity', 'ourbots') then rfsm.send_events(fsm, 'e_failed') return end
         -- end
         -- deployer

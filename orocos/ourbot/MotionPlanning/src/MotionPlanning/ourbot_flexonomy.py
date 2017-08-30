@@ -46,7 +46,7 @@ obstacle.set_options({'spline_params': spline_params})
 # create a point-to-point problem
 problem = Point2point(vehicle, environment, freeT=False)
 problem.set_options({'solver_options': {'ipopt': {'ipopt.linear_solver': 'ma57'}}})
-problem.set_options({'horizon_time': 15.})
+problem.set_options({'horizon_time': 10.})
 problem.set_options({'hard_term_con': False})
 problem.init()
 
