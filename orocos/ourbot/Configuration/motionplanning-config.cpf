@@ -38,6 +38,10 @@
   <description>Tolerance for target input detection</description>
   <value>0.01</value>
 </simple>
+<simple name="orientation_th" type="double">
+  <description>Threshold for orientation setpoint</description>
+  <value>0.07</value>
+</simple>
 
 <struct name="configuration_x" type="array">
   <description>x coordinates relative to fleet center</description>

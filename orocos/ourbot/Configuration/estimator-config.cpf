@@ -54,7 +54,7 @@
     <value>20</value>
   </simple>
 
-  <struct name="marker_locations" type="array">
+<!--   <struct name="marker_locations" type="array">
     <description>Location of markers in local frame [x1, y1, x2, y2, x3, y3] (m)</description>
     <simple name="x1" type="double">
         <value>-0.018</value>
@@ -74,10 +74,10 @@
     <simple name="y3" type="double">
         <value>0.0</value>
     </simple>
-  </struct>
+  </struct> -->
 
   <!-- laser cut -->
-<!--   <struct name="marker_locations" type="array">
+  <struct name="marker_locations" type="array">
     <description>Location of markers in local frame [x1, y1, x2, y2, x3, y3] (m)</description>
     <simple name="x1" type="double">
         <value>-0.0145</value>
@@ -97,7 +97,7 @@
     <simple name="y3" type="double">
         <value>0.0</value>
     </simple>
-  </struct> -->
+  </struct>
 
   <simple name="max_cov_det" type="double">
     <description>Maximum allowed covariance determinant</description>

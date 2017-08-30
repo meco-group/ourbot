@@ -36,6 +36,7 @@ class MotionPlanningInterface : public RTT::TaskContext{
     double _target_dist_tol;
     double _input_norm_tol;
     double _angle_dist_tol;
+    double _orientation_th;
 
     TimeService::ticks _timestamp;
     void initObstacles();

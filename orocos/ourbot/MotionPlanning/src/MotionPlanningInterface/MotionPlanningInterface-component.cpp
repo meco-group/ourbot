@@ -40,6 +40,7 @@ MotionPlanningInterface::MotionPlanningInterface(std::string const& name) : Task
   addProperty("target_dist_tol", _target_dist_tol).doc("Tolerance for target position detection");
   addProperty("angle_dist_tol", _angle_dist_tol).doc("Tolerance for target orientation detection");
   addProperty("input_norm_tol", _input_norm_tol).doc("Tolerance for target input detection");
+  addProperty("orientation_th", _orientation_th).doc("Threshold for orientation setpoint");
 
   addOperation("setTargetPose", &MotionPlanningInterface::setTargetPose, this).doc("Set target pose");
   addOperation("gotTarget", &MotionPlanningInterface::gotTarget, this).doc("Do we have a target?");
@@ -150,14 +151,7 @@ bool MotionPlanningInterface::targetReached(){
   }
   target_dist = sqrt(target_dist);
   input_norm = sqrt(input_norm);
-  // double angle_dist;
-  // if (_est_pose[2] < 0) {
-  //   angle_dist = fabs(_target_pose[2]-(M_PI+_est_pose[2]));
-  // }
-  // double angle_dist = fabs(_target_pose[2]-_est_pose[2]);
-
-  std::cout << "angle dist: " << angle_dist << std::endl;
-  std::cout << _angle_dist_tol << std::endl;
+  double angle_dist = fabs(_target_pose[2]-_est_pose[2]);
   if (target_dist < _target_dist_tol && input_norm < _input_norm_tol && angle_dist < _angle_dist_tol){
     return true;
   }
@@ -248,10 +242,11 @@ void MotionPlanningInterface::interpolateOrientation(double theta0, double theta
   if (th0 > thetaT){
     omega = -omega;
   }
-  double interpolation_time = fabs((thetaT-th0)/omega);
-  uint n_int = int(interpolation_time*_control_sample_rate);
-  double th_ref=0;
+  // double interpolation_time = fabs((thetaT-th0)/omega);
+  // uint n_int = int(interpolation_time*_control_sample_rate);
+  double th_ref = 0;
   std::cout << theta_trajectory.size() << std::endl;
+  double err;
   for (uint k=0; k<theta_trajectory.size(); k++) {
     // if (k <= n_int && fabs(thetaT - th0) > 0.1) {
     //   theta_trajectory[k] = (1./0.);
@@ -261,13 +256,12 @@ void MotionPlanningInterface::interpolateOrientation(double theta0, double theta
     //   omega_trajectory[k] = 0;
     // }
     th_ref = th0 + omega*_sample_time*k;
-    double err;
     if (th0 > thetaT) {
       err = th_ref - thetaT;
     } else {
       err = -(th_ref - thetaT);
     }
-    if (err > 0.1) {
+    if (err > _orientation_th) {
       theta_trajectory[k] = th_ref;
       omega_trajectory[k] = omega;
     } else {

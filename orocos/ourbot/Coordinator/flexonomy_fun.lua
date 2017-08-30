@@ -148,9 +148,6 @@ function home(fsm)
     -- local pose0 = motionplanning:setConfiguration()
     local pose0 = getPose()
     motionplanning:setTargetPose(pose0[0], pose0[1], pose0[2])
-    print('est pose:')
-    pose0 = getPose()
-    print('['..pose0[0]..', '..pose0[1]..', '..pose0[2]..']')
     while true do
         -- check if homing is finished
         if not mpBusy() then
@@ -159,7 +156,7 @@ function home(fsm)
                 return
             else -- unsuccesful
                 rtt.log("Error", "Could not home!")
-                rfsm.send_events(fsm,'e_failed')
+                rfsm.send_events(fsm, 'e_failed')
                 controlLoop(fsm, false)
                 return
             end
@@ -228,6 +225,7 @@ function controlLoop(fsm, control)
             end
         else
             print "Estimate not valid!"
+            _cmd_velocity_port:write(zero_cmd)
         end
     else
         _cmd_velocity_port:write(zero_cmd)
@@ -286,7 +284,7 @@ function checkMotionPlanning(fsm)
     if not mpBusy() then
         if targetReached() then -- succesful
             failure_cnt = 0
-            if not task_started then -- we were already there
+            if not task_started then -- we were already at our target
                 sendTaskStatus(current_task, 'finished', get_sec())
             else
                 sendTaskStatus(current_task, 'finished', current_eta)
@@ -297,7 +295,7 @@ function checkMotionPlanning(fsm)
             rfsm.send_events(fsm, 'e_idle')
             return false
         else  -- unsuccesful
-            if failure_cnt > 0 and not task_started then -- first time
+            if failure_cnt == 0 and not task_started then -- first time
                 failure_cnt = 0
                 sendTaskStatus(current_task, 'rejected', get_sec())
                 removeTask(current_task)
