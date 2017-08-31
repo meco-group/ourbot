@@ -67,7 +67,7 @@
 
     <simple name="video_port_name" type="string">
         <description>Path to video driver</description>
-        <value>/dev/video2</value>
+        <value>/dev/video1</value>
     </simple>
 
     <simple name="brightness" type="long">

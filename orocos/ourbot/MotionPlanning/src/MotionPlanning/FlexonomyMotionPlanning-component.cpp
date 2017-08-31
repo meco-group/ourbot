@@ -172,14 +172,14 @@ void FlexonomyMotionPlanning::getObstacles(std::vector<omg::obstacle_t>& obstacl
       obstacles[1].avoid = true;
       obstacles[1].radii = std::vector<double>({0.5*max(_neighbor_size[0], _neighbor_size[1])});
       obstacles[1].checkpoints = std::vector<double>({0., 0.});
-      // std::cout << "received traj (rad=" << obstacles[1].radii[0] << "m): " << std::endl;
-      // for (int k=0; k<2; k++) {
-      //   std::cout << "[";
-      //   for (int i=0; i<13; i++) {
-      //     std::cout << obstacle_trajectory[13*k+i] << " ";
-      //   }
-      //   std::cout << "]" << std::endl;
-      // }
+      std::cout << "received traj (rad=" << obstacles[1].radii[0] << "m): " << std::endl;
+      for (int k=0; k<2; k++) {
+        std::cout << "[";
+        for (int i=0; i<13; i++) {
+          std::cout << obstacle_trajectory[13*k+i] << " ";
+        }
+        std::cout << "]" << std::endl;
+      }
     }
   }
 }
@@ -194,7 +194,6 @@ double FlexonomyMotionPlanning::getMotionTime(){
     th0 += _ref_velocity[k+_predict_shift][2]*_sample_time;
   }
   double rotation_time = (_target_pose[2] - th0)/_orientation_interpolation_rate;
-
   double target_dist = sqrt(pow(_target_pose[0] - coeff_vector[n_cfs-1], 2) + pow(_target_pose[1] - coeff_vector[2*n_cfs-1], 2));
   if(target_dist > 0.02) { // end of trajectory is not on destination yet
     double v_mean = 0.87*_vmax;

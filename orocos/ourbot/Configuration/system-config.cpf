@@ -59,7 +59,7 @@
 
   <simple name="max_computation_periods" type="long">
     <description>Maximum allowed number of trajectory update periods to make trajectory computations</description>
-    <value>5</value>
+    <value>2</value>
   </simple>
 
   <simple name="lidar_data_length" type="long">

@@ -4,16 +4,13 @@
   <struct name="psd_state" type="array">
     <description>Acceleration-like squared noise levels for x,y,theta (m/s^2)^2</description>
     <simple name="x" type="double">
-      <!-- <value>500</value> -->
-      <value>50000</value>
+      <value>500</value>
     </simple>
     <simple name="y" type="double">
-      <!-- <value>500</value> -->
-      <value>50000</value>
+      <value>500</value>
     </simple>
     <simple name="theta" type="double">
-      <!-- <value>500</value> -->
-      <value>5000000</value>
+      <value>100000</value>
     </simple>
   </struct>
 
@@ -53,28 +50,6 @@
     <description>Frequency to transmit estimate</description>
     <value>20</value>
   </simple>
-
-<!--   <struct name="marker_locations" type="array">
-    <description>Location of markers in local frame [x1, y1, x2, y2, x3, y3] (m)</description>
-    <simple name="x1" type="double">
-        <value>-0.018</value>
-    </simple>
-    <simple name="y1" type="double">
-        <value>-0.08</value>
-    </simple>
-    <simple name="x2" type="double">
-        <value>-0.018</value>
-    </simple>
-    <simple name="y2" type="double">
-        <value>0.08</value>
-    </simple>
-    <simple name="x3" type="double">
-        <value>0.082</value>
-    </simple>
-    <simple name="y3" type="double">
-        <value>0.0</value>
-    </simple>
-  </struct> -->
 
   <!-- laser cut -->
   <struct name="marker_locations" type="array">

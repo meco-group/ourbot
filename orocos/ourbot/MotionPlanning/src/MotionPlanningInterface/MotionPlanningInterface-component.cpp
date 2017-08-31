@@ -37,6 +37,7 @@ MotionPlanningInterface::MotionPlanningInterface(std::string const& name) : Task
   addProperty("ref_tx_subsample", _tx_subsample).doc("Subsamples for transmitted reference trajectories");
   addProperty("target_detection", _target_detection).doc("Target reached detection?");
   addProperty("orientation_interpolation_rate", _orientation_interpolation_rate).doc("Rate to interpolate orientation [rad/s]");
+  addProperty("orientation_interpolation_acc", _orientation_interpolation_acc).doc("Acceleration to interpolate orientation [rad/s]");
   addProperty("target_dist_tol", _target_dist_tol).doc("Tolerance for target position detection");
   addProperty("angle_dist_tol", _angle_dist_tol).doc("Tolerance for target orientation detection");
   addProperty("input_norm_tol", _input_norm_tol).doc("Tolerance for target input detection");
@@ -81,6 +82,9 @@ void MotionPlanningInterface::disable(){
   _enable = false;
   _got_target = false;
   _valid = false;
+  for (uint k=0; k<_ref_velocity_trajectory.size(); k++) {
+    _ref_velocity_trajectory[2][k] = 0.;
+  }
   std::cout << "disabling...." << std::endl;
 }
 
@@ -204,9 +208,9 @@ void MotionPlanningInterface::updateHook(){
   } else {
     _failure_cnt = 0;
   }
-  _first_iteration = false;
   // interpolate orientation
   interpolateOrientation(_est_pose[2], _target_pose[2], _ref_pose_trajectory[2], _ref_velocity_trajectory[2]);
+  _first_iteration = false;
   // write trajectory
   for (int i=0; i<3; i++){
     _ref_pose_trajectory_port[i].write(_ref_pose_trajectory[i]);
@@ -216,7 +220,9 @@ void MotionPlanningInterface::updateHook(){
     }
   }
   // write motion time
-  _motion_time_port.write(getMotionTime());
+  if (_enable) {
+    _motion_time_port.write(getMotionTime());
+  }
   // check timing
   Seconds time_elapsed = TimeService::Instance()->secondsSince(_timestamp);
   #ifdef DEBUG
@@ -233,41 +239,79 @@ std::vector<double> MotionPlanningInterface::setConfiguration(){
 
 void MotionPlanningInterface::interpolateOrientation(double theta0, double thetaT, std::vector<double>& theta_trajectory, std::vector<double>& omega_trajectory){
   double omega = _orientation_interpolation_rate;
+  double alpha = _orientation_interpolation_acc;
   // extrapolation
   double th0 = theta0;
+  double om0 = omega_trajectory[_predict_shift + int(_update_time/_sample_time)];
   for (int k=0; k<int(_update_time/_sample_time); k++) {
     th0 += omega_trajectory[k+_predict_shift]*_sample_time;
   }
 
   if (th0 > thetaT){
     omega = -omega;
+    alpha = -alpha;
   }
-  // double interpolation_time = fabs((thetaT-th0)/omega);
-  // uint n_int = int(interpolation_time*_control_sample_rate);
-  double th_ref = 0;
-  std::cout << theta_trajectory.size() << std::endl;
+  double dth = thetaT - th0;
+  double t_rise, t_tot, t_dec;
+
+  bool increase = true;
+  double diff = (omega_trajectory[_predict_shift + int(_update_time/_sample_time)] - omega_trajectory[_predict_shift + int(_update_time/_sample_time)-1])*(omega/fabs(omega));
+  if (roundf(diff*1000.)/1000. < 0.) {
+    increase = false;
+  }
+  if (increase) {
+    double Dt = omega/alpha;
+    double dt = om0/alpha;
+    if ((Dt*fabs(omega) - 0.5*dt*fabs(om0)) < fabs(dth)) {
+      // trapezium
+      t_rise = Dt-dt;
+      t_tot = Dt + (0.5*fabs(om0/omega) -1)*dt + dth/omega;
+      t_dec = t_tot-Dt;
+    } else {
+      // triangle
+      omega = sqrt(alpha*dth+0.5*pow(om0,2))*omega/fabs(omega);
+      t_rise = omega/alpha-dt;
+      t_tot = 2*t_rise-dt;
+      t_dec = t_rise;
+    }
+  }
+  int it_dec = int(t_dec*_control_sample_rate);
+  int it_tot = int(t_tot*_control_sample_rate);
+  double th_ref = th0;
+  double om_ref = om0;
   double err;
-  for (uint k=0; k<theta_trajectory.size(); k++) {
-    // if (k <= n_int && fabs(thetaT - th0) > 0.1) {
-    //   theta_trajectory[k] = (1./0.);
-    //   omega_trajectory[k] = omega;
-    // } else {
-    //   theta_trajectory[k] = thetaT;
-    //   omega_trajectory[k] = 0;
-    // }
-    th_ref = th0 + omega*_sample_time*k;
+  for (int k=0; k<theta_trajectory.size(); k++) {
+    if (increase) {
+      if (k >= it_dec) {
+        om_ref -= alpha*_sample_time;
+        increase = false;
+      } else {
+        if (fabs(om_ref) >= fabs(omega)) {
+          om_ref = omega;
+        } else {
+          om_ref += alpha*_sample_time;
+        }
+      }
+    } else {
+      om_ref -= alpha*_sample_time;
+    }
+    if (om_ref*omega < 0) {
+      om_ref = 0;
+      th_ref = thetaT;
+    } else {
+      th_ref += om_ref*_sample_time;
+    }
     if (th0 > thetaT) {
       err = th_ref - thetaT;
     } else {
       err = -(th_ref - thetaT);
     }
-    if (err > _orientation_th) {
-      theta_trajectory[k] = th_ref;
-      omega_trajectory[k] = omega;
-    } else {
-      theta_trajectory[k] = thetaT;
-      omega_trajectory[k] = 0;
+    if (om0 == 0. && err <= _orientation_th) {
+      om_ref = 0;
+      th_ref = thetaT;
     }
+    theta_trajectory[k] = th_ref;
+    omega_trajectory[k] = om_ref;
   }
 }
 

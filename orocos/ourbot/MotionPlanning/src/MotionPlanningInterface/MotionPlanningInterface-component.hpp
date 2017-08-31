@@ -84,6 +84,7 @@ class MotionPlanningInterface : public RTT::TaskContext{
     int _n_obs;
     bool _first_iteration;
     double _orientation_interpolation_rate;
+    double _orientation_interpolation_acc;
 
   public:
     MotionPlanningInterface(std::string const& name);

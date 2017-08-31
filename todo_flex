@@ -1,12 +1,13 @@
 todo flexonomy demo
 -------------------
 
-- test/check correct marker positions
-    - influence on orientation estimate?
-    - need to retune estimator?
-- reduce orientation gain (reduced to 0.5)
-- reduce orientation threshold (reduced to 0.07)
++ test/check correct marker positions
+    + influence on orientation estimate?
+    + need to retune estimator?
++ reduce orientation gain (reduced to 0.5)
++ reduce orientation threshold (reduced to 0.07)
 - test autorecover
     - not in 'reject'-mode
-- crash when infeasible homing
++ crash when infeasible homing
 - test/check motion time
+? why is kurt sending its trajectory?

@@ -95,7 +95,7 @@ return rfsm.state {
           return
         end
         -- perform default loop update
-        if not update(fsm, 'busy', true) then
+        if not update(fsm, 'busy', true, just_started) then
           rfsm.send_events(fsm,'e_idle')
           return
         end

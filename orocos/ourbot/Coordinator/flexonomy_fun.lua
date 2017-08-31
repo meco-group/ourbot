@@ -173,7 +173,7 @@ function compute_distance(start,target)
     return dist
 end
 
-function update(fsm, state, control)
+function update(fsm, state, control, moving)
     -- control action
     if not controlLoop(fsm, control) then
         return false
@@ -195,7 +195,7 @@ function update(fsm, state, control)
     -- send host obstacle trajectory
     if nghbcom_cnt >= max_nghbcom_cnt then
         nghbcom_cnt = 1
-        if not control then
+        if not moving then
             hostObstTraj(3)
         else
             if host == 'dave' then
