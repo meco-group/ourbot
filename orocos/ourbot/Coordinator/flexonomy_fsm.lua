@@ -86,7 +86,7 @@ return rfsm.state {
       local prev_start_time = start_time
       local end_time   = start_time
       local init       = 0
-      task_started = false
+      moving = false
       while true do
         prev_start_time = start_time
         start_time = get_sec()
@@ -95,7 +95,7 @@ return rfsm.state {
           return
         end
         -- perform default loop update
-        if not update(fsm, 'busy', true, just_started) then
+        if not update(fsm, 'busy', true) then
           rfsm.send_events(fsm,'e_idle')
           return
         end

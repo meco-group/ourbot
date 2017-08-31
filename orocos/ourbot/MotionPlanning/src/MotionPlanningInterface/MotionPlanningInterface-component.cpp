@@ -208,9 +208,9 @@ void MotionPlanningInterface::updateHook(){
   } else {
     _failure_cnt = 0;
   }
-  // interpolate orientation
-  interpolateOrientation(_est_pose[2], _target_pose[2], _ref_pose_trajectory[2], _ref_velocity_trajectory[2]);
   _first_iteration = false;
+  // get orientation reference
+  double rot_time = getOrientationReference(_est_pose[2], _target_pose[2], _ref_pose_trajectory[2], _ref_velocity_trajectory[2]);
   // write trajectory
   for (int i=0; i<3; i++){
     _ref_pose_trajectory_port[i].write(_ref_pose_trajectory[i]);
@@ -221,7 +221,9 @@ void MotionPlanningInterface::updateHook(){
   }
   // write motion time
   if (_enable) {
-    _motion_time_port.write(getMotionTime());
+    double motion_time = std::max(getMotionTime(), rot_time);
+    std::cout << "motion time = " << motion_time << "s" << std::endl;
+    _motion_time_port.write(motion_time);
   }
   // check timing
   Seconds time_elapsed = TimeService::Instance()->secondsSince(_timestamp);
@@ -237,25 +239,25 @@ std::vector<double> MotionPlanningInterface::setConfiguration(){
   return est_pose;
 }
 
-void MotionPlanningInterface::interpolateOrientation(double theta0, double thetaT, std::vector<double>& theta_trajectory, std::vector<double>& omega_trajectory){
+double MotionPlanningInterface::getOrientationReference(double theta0, double thetaT, std::vector<double>& theta_trajectory, std::vector<double>& omega_trajectory){
+  // trapezium velocity trajectory
   double omega = _orientation_interpolation_rate;
   double alpha = _orientation_interpolation_acc;
-  // extrapolation
+  // get extrapolated theta0 and omega0
   double th0 = theta0;
   double om0 = omega_trajectory[_predict_shift + int(_update_time/_sample_time)];
+  double om0_prev = omega_trajectory[_predict_shift + int(_update_time/_sample_time)-1];
   for (int k=0; k<int(_update_time/_sample_time); k++) {
     th0 += omega_trajectory[k+_predict_shift]*_sample_time;
   }
-
-  if (th0 > thetaT){
+  double dth = thetaT - th0;
+  if (dth < 0) {
     omega = -omega;
     alpha = -alpha;
   }
-  double dth = thetaT - th0;
   double t_rise, t_tot, t_dec;
-
   bool increase = true;
-  double diff = (omega_trajectory[_predict_shift + int(_update_time/_sample_time)] - omega_trajectory[_predict_shift + int(_update_time/_sample_time)-1])*(omega/fabs(omega));
+  double diff = (om0-om0_prev)*(omega/fabs(omega));
   if (roundf(diff*1000.)/1000. < 0.) {
     increase = false;
   }
@@ -274,13 +276,15 @@ void MotionPlanningInterface::interpolateOrientation(double theta0, double theta
       t_tot = 2*t_rise-dt;
       t_dec = t_rise;
     }
+  } else {
+    t_dec = 0;
+    t_tot = pow(om0, 2)/alpha;
   }
   int it_dec = int(t_dec*_control_sample_rate);
-  int it_tot = int(t_tot*_control_sample_rate);
   double th_ref = th0;
   double om_ref = om0;
   double err;
-  for (int k=0; k<theta_trajectory.size(); k++) {
+  for (uint k=0; k<theta_trajectory.size(); k++) {
     if (increase) {
       if (k >= it_dec) {
         om_ref -= alpha*_sample_time;
@@ -306,13 +310,14 @@ void MotionPlanningInterface::interpolateOrientation(double theta0, double theta
     } else {
       err = -(th_ref - thetaT);
     }
-    if (om0 == 0. && err <= _orientation_th) {
+    if (om0 == 0. && err <= _orientation_th) { // when arrived, stay there
       om_ref = 0;
       th_ref = thetaT;
     }
     theta_trajectory[k] = th_ref;
     omega_trajectory[k] = om_ref;
   }
+  return t_tot;
 }
 
 void MotionPlanningInterface::initObstacles(){

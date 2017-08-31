@@ -6,8 +6,9 @@ todo flexonomy demo
     + need to retune estimator?
 + reduce orientation gain (reduced to 0.5)
 + reduce orientation threshold (reduced to 0.07)
-- test autorecover
-    - not in 'reject'-mode
++ test autorecover
+    + not in 'reject'-mode
 + crash when infeasible homing
-- test/check motion time
-? why is kurt sending its trajectory?
+- test motion time
+- why is kurt sending its trajectory? -> bug
+- enlarge soft constraint

@@ -59,7 +59,7 @@ class MotionPlanningInterface : public RTT::TaskContext{
     virtual void recover_after_fail() = 0;
     virtual bool targetReached();
     virtual double getMotionTime();
-    virtual void interpolateOrientation(double theta0, double thetaT, std::vector<double>& theta_trajectory, std::vector<double>& omega_trajectory);
+    virtual double getOrientationReference(double theta0, double thetaT, std::vector<double>& theta_trajectory, std::vector<double>& omega_trajectory);
 
     InputPort<std::vector<double> > _est_pose_port;
     std::vector<obstacle_t> _obstacles;

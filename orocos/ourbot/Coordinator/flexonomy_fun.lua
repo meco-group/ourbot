@@ -76,7 +76,7 @@ local zero_cmd = rtt.Variable('array')
 zero_cmd:resize(3)
 zero_cmd:fromtab{0, 0, 0}
 
-task_started = false
+moving = false
 
 local msg_tbl = {
     header = {
@@ -173,7 +173,7 @@ function compute_distance(start,target)
     return dist
 end
 
-function update(fsm, state, control, moving)
+function update(fsm, state, control)
     -- control action
     if not controlLoop(fsm, control) then
         return false
@@ -284,7 +284,7 @@ function checkMotionPlanning(fsm)
     if not mpBusy() then
         if targetReached() then -- succesful
             failure_cnt = 0
-            if not task_started then -- we were already at our target
+            if not moving then -- we were already at our target
                 sendTaskStatus(current_task, 'finished', get_sec())
             else
                 sendTaskStatus(current_task, 'finished', current_eta)
@@ -295,7 +295,7 @@ function checkMotionPlanning(fsm)
             rfsm.send_events(fsm, 'e_idle')
             return false
         else  -- unsuccesful
-            if failure_cnt == 0 and not task_started then -- first time
+            if failure_cnt == 0 and not moving then -- first time
                 failure_cnt = 0
                 sendTaskStatus(current_task, 'rejected', get_sec())
                 removeTask(current_task)
@@ -318,10 +318,10 @@ function checkMotionPlanning(fsm)
     local fs, motion_time = _motion_time_port:read()
     if fs == 'NewData' then -- new opt problem was solved
         local eta = get_sec() + motion_time
-        if not task_started then
+        if not moving then
             current_eta = eta
             sendTaskStatus(current_task, 'started', current_eta)
-            task_started = true
+            moving = true
         elseif math.abs(current_eta-eta) >= 1 then
             current_eta = eta
             sendTaskStatus(current_task, 'ETA changed', current_eta)

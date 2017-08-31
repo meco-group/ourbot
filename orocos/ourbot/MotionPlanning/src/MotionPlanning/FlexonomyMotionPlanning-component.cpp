@@ -188,17 +188,11 @@ double FlexonomyMotionPlanning::getMotionTime(){
   std::vector<double> coeff_vector;
   _p2p->getCoefficients(coeff_vector);
   uint n_cfs = coeff_vector.size()/2;
-  // extrapolate theta
-  double th0 = _est_pose[2];
-  for (int k=0; k<int(_update_time/_sample_time); k++) {
-    th0 += _ref_velocity[k+_predict_shift][2]*_sample_time;
-  }
-  double rotation_time = (_target_pose[2] - th0)/_orientation_interpolation_rate;
   double target_dist = sqrt(pow(_target_pose[0] - coeff_vector[n_cfs-1], 2) + pow(_target_pose[1] - coeff_vector[2*n_cfs-1], 2));
   if(target_dist > 0.02) { // end of trajectory is not on destination yet
     double v_mean = 0.87*_vmax;
     double dist = sqrt(pow(_target_pose[0]-coeff_vector[0], 2) + pow(_target_pose[1]-coeff_vector[n_cfs], 2));
-    return max(dist/v_mean, rotation_time);
+    return dist/v_mean;
   }
   else {
     int k;
@@ -207,8 +201,7 @@ double FlexonomyMotionPlanning::getMotionTime(){
         break;
       }
     }
-    std::cout << "motion time = " << k*_sample_time << "s" << std::endl;
-    return max(k*_sample_time, rotation_time);
+    return k*_sample_time;
   }
 }
 
