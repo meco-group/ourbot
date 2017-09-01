@@ -51,6 +51,7 @@ class MotionPlanningInterface : public RTT::TaskContext{
     int _failure_cnt;
 
     bool _valid;
+    bool _increase;
 
   protected:
     virtual bool trajectoryUpdate() = 0;

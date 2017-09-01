@@ -208,9 +208,9 @@ void MotionPlanningInterface::updateHook(){
   } else {
     _failure_cnt = 0;
   }
-  _first_iteration = false;
   // get orientation reference
   double rot_time = getOrientationReference(_est_pose[2], _target_pose[2], _ref_pose_trajectory[2], _ref_velocity_trajectory[2]);
+  _first_iteration = false;
   // write trajectory
   for (int i=0; i<3; i++){
     _ref_pose_trajectory_port[i].write(_ref_pose_trajectory[i]);
@@ -240,6 +240,9 @@ std::vector<double> MotionPlanningInterface::setConfiguration(){
 }
 
 double MotionPlanningInterface::getOrientationReference(double theta0, double thetaT, std::vector<double>& theta_trajectory, std::vector<double>& omega_trajectory){
+  if (_first_iteration) {
+    _increase = true;
+  }
   // trapezium velocity trajectory
   double omega = _orientation_interpolation_rate;
   double alpha = _orientation_interpolation_acc;
@@ -256,12 +259,7 @@ double MotionPlanningInterface::getOrientationReference(double theta0, double th
     alpha = -alpha;
   }
   double t_rise, t_tot, t_dec;
-  bool increase = true;
-  double diff = (om0-om0_prev)*(omega/fabs(omega));
-  if (roundf(diff*1000.)/1000. < 0.) {
-    increase = false;
-  }
-  if (increase) {
+  if (_increase) {
     double Dt = omega/alpha;
     double dt = om0/alpha;
     if ((Dt*fabs(omega) - 0.5*dt*fabs(om0)) < fabs(dth)) {
@@ -283,36 +281,39 @@ double MotionPlanningInterface::getOrientationReference(double theta0, double th
   int it_dec = int(t_dec*_control_sample_rate);
   double th_ref = th0;
   double om_ref = om0;
-  double err;
+  bool increase = _increase;
+
+  if (fabs(dth) <= _orientation_th) {
+    t_tot = 0.;
+  }
   for (uint k=0; k<theta_trajectory.size(); k++) {
-    if (increase) {
-      if (k >= it_dec) {
-        om_ref -= alpha*_sample_time;
-        increase = false;
-      } else {
-        if (fabs(om_ref) >= fabs(omega)) {
-          om_ref = omega;
+    if (fabs(th_ref-thetaT) <= _orientation_th) { // when arrived, stay there
+      om_ref = 0;
+      th_ref = thetaT;
+    } else {
+      if (increase) {
+        if (k >= it_dec) {
+          om_ref -= alpha*_sample_time;
+          increase = false;
+          if (k <= int(_update_time/_sample_time)) {
+            _increase = false;
+          }
         } else {
-          om_ref += alpha*_sample_time;
+          if (fabs(om_ref) >= fabs(omega)) {
+            om_ref = omega;
+          } else {
+            om_ref += alpha*_sample_time;
+          }
         }
+      } else {
+        om_ref -= alpha*_sample_time;
       }
-    } else {
-      om_ref -= alpha*_sample_time;
-    }
-    if (om_ref*omega < 0) {
-      om_ref = 0;
-      th_ref = thetaT;
-    } else {
-      th_ref += om_ref*_sample_time;
-    }
-    if (th0 > thetaT) {
-      err = th_ref - thetaT;
-    } else {
-      err = -(th_ref - thetaT);
-    }
-    if (om0 == 0. && err <= _orientation_th) { // when arrived, stay there
-      om_ref = 0;
-      th_ref = thetaT;
+      if (om_ref*omega < 0) {
+        om_ref = 0;
+        th_ref = thetaT;
+      } else {
+        th_ref += om_ref*_sample_time;
+      }
     }
     theta_trajectory[k] = th_ref;
     omega_trajectory[k] = om_ref;
