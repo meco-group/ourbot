@@ -109,5 +109,11 @@ while(kp != 'q'):
         msg['payload']['task_parameters'] = 'D'
         node.shout('kurt', json.dumps(msg))
         print 'sent execute msg task D'
+    elif (ord(kp) == 13): # enter
+        msg['header']['type'] = 'cancel'
+        msg['payload'] = col.OrderedDict()
+        msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4303'
+        node.shout('ourbots', json.dumps(msg))
+        print 'remove task'
     time.sleep(0.1)
 node.stop()
