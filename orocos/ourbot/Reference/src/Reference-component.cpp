@@ -214,6 +214,7 @@ void Reference::updateHook(){
       for (int i=0; i<3; i++){
         _ref_velocity_sample[i] = 0.0;
         _ref_velocity_port.write(_ref_velocity_sample);
+        _ref_pose_port.write(std::vector<double>{1./0., 1./0., 1./0.}); // no feedback
       }
       reset();
       return;

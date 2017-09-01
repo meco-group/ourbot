@@ -10,7 +10,8 @@
       <value>500</value>
     </simple>
     <simple name="theta" type="double">
-      <value>100000</value>
+      <!-- <value>100000</value> -->
+      <value>1000000</value>
     </simple>
   </struct>
 

@@ -24,7 +24,7 @@
 </simple>
 <simple name="orientation_interpolation_rate" type="double">
  <description>Rate to interpolate orientation (rad/s)</description>
-   <value>0.8</value>
+   <value>0.5</value>
 </simple>
 <simple name="orientation_interpolation_acc" type="double">
  <description>Acceleration to interpolate orientation (rad/s)</description>
@@ -36,7 +36,7 @@
 </simple>
 <simple name="angle_dist_tol" type="double">
   <description>Tolerance for target orientation detection</description>
-  <value>0.05</value>
+  <value>0.02</value>
 </simple>
 <simple name="input_norm_tol" type="double">
   <description>Tolerance for target input detection</description>
@@ -44,7 +44,7 @@
 </simple>
 <simple name="orientation_th" type="double">
   <description>Threshold for orientation setpoint</description>
-  <value>0.01</value>
+  <value>0.06</value>
 </simple>
 
 <struct name="configuration_x" type="array">
