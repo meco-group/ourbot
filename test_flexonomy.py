@@ -7,12 +7,12 @@ GROUP = 'ourbots'
 
 node = pyre.Pyre('SH1')
 node.set_interface('wlan0')
-node.set_port('5671')
+node.set_port('5670')
 node.start()
 # node.set_verbose()
 node.join(GROUP)
-node.join('kurt')
-node.join('dave')
+node.join('kurt_flex')
+node.join('dave_flex')
 
 header = col.OrderedDict()
 header['version'] = '1.0.0'
@@ -51,7 +51,7 @@ while(kp != 'q'):
         msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4302'
         msg['payload']['task_type'] = 'move_to'
         msg['payload']['task_parameters'] = 'A'
-        node.shout('dave', json.dumps(msg))
+        node.shout('dave_flex', json.dumps(msg))
         print 'sent execute msg task A'
     elif (ord(kp) == 51): # keypress 3
         msg['header']['type'] = 'execute'
@@ -59,7 +59,7 @@ while(kp != 'q'):
         msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4303'
         msg['payload']['task_type'] = 'move_to'
         msg['payload']['task_parameters'] = 'B'
-        node.shout('dave', json.dumps(msg))
+        node.shout('dave_flex', json.dumps(msg))
         print 'sent execute msg task B'
     elif (ord(kp) == 52): # keypress 4
         msg['header']['type'] = 'execute'
@@ -67,7 +67,7 @@ while(kp != 'q'):
         msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4303'
         msg['payload']['task_type'] = 'move_to'
         msg['payload']['task_parameters'] = 'C'
-        node.shout('dave', json.dumps(msg))
+        node.shout('dave_flex', json.dumps(msg))
         print 'sent execute msg task C'
     elif (ord(kp) == 53): # keypress 5
         msg['header']['type'] = 'execute'
@@ -75,7 +75,7 @@ while(kp != 'q'):
         msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4303'
         msg['payload']['task_type'] = 'move_to'
         msg['payload']['task_parameters'] = 'D'
-        node.shout('dave', json.dumps(msg))
+        node.shout('dave_flex', json.dumps(msg))
         print 'sent execute msg task D'
     elif (ord(kp) == 54): # keypress 6
         msg['header']['type'] = 'execute'
@@ -83,7 +83,7 @@ while(kp != 'q'):
         msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4302'
         msg['payload']['task_type'] = 'move_to'
         msg['payload']['task_parameters'] = 'A'
-        node.shout('kurt', json.dumps(msg))
+        node.shout('kurt_flex', json.dumps(msg))
         print 'sent execute msg task A'
     elif (ord(kp) == 55): # keypress 7
         msg['header']['type'] = 'execute'
@@ -91,7 +91,7 @@ while(kp != 'q'):
         msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4303'
         msg['payload']['task_type'] = 'move_to'
         msg['payload']['task_parameters'] = 'B'
-        node.shout('kurt', json.dumps(msg))
+        node.shout('kurt_flex', json.dumps(msg))
         print 'sent execute msg task B'
     elif (ord(kp) == 56): # keypress 8
         msg['header']['type'] = 'execute'
@@ -99,7 +99,7 @@ while(kp != 'q'):
         msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4303'
         msg['payload']['task_type'] = 'move_to'
         msg['payload']['task_parameters'] = 'C'
-        node.shout('kurt', json.dumps(msg))
+        node.shout('kurt_flex', json.dumps(msg))
         print 'sent execute msg task C'
     elif (ord(kp) == 57): # keypress 9
         msg['header']['type'] = 'execute'
@@ -107,7 +107,7 @@ while(kp != 'q'):
         msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4303'
         msg['payload']['task_type'] = 'move_to'
         msg['payload']['task_parameters'] = 'D'
-        node.shout('kurt', json.dumps(msg))
+        node.shout('kurt_flex', json.dumps(msg))
         print 'sent execute msg task D'
     elif (ord(kp) == 13): # enter
         msg['header']['type'] = 'cancel'

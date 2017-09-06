@@ -135,7 +135,7 @@ return rfsm.state {
     doo = function(fsm)
       while true do
         -- perform default loop update
-        if not update(fsm, 'ready', false) then
+        if not update(fsm, 'busy', false) then
           return
         end
         -- wait a little bit
