@@ -31,7 +31,7 @@ add_subdirectory( src )
 # The header will go in include/orocos/Controller/types/Controller/Controller-types.hpp
 # So you can #include <Controller/Controller-types.hpp>
 #
-orocos_typegen_headers(include/Controller/Controller-types.hpp) # ...you may add multiple header files
+#orocos_typegen_headers(include/Controller/Controller-types.hpp) # ...you may add multiple header files
 #
 # You may only have *ONE* orocos_typegen_headers statement in your toplevel CMakeFile.txt !
 
