@@ -474,23 +474,27 @@ function encodeTime(time)
 end
 
 function getTargetPose(task)
-    local zone = task.task_parameters
-    if zone == 'A' then
-        return {2.892, 2.22, -3.1415}
-        -- return {1.193033, 1.2002987, 0.014135}
-    elseif zone == 'B' then
-        -- return {4.1, 1., 3.1415}
-        return {3.66, 1.01, -1.5702}
-    elseif zone == 'C' then
-        return {1., 0.5, 1.5702}
-    elseif zone == 'D' then
-        if host == 'dave' then
-            return {0.4, 2.2, 1.5702}
-        else
-            return {1.2, 2.2, 1.5702}
-        end
-    else
-        print('target zone not recognized')
-        return nil
-    end
+    local pose = task.task_parameters
+    return pos
 end
+
+-- function getTargetPose(task)
+--     local zone = task.task_parameters
+--     if zone == 'A' then
+--         -- return {2.7, 2.2, 3.141}
+--         return {3.2, 2, -1.5702}
+--     elseif zone == 'B' then
+--         return {4.2, 1.2, 3.1415}
+--         -- return {3.8, 1.1, -1.5702}
+--         --return {3.8, 1.1, 0.0}
+--     elseif zone == 'C' then
+--         return {3.2, 0.5, 1.5702}
+--         -- return {1.5, 0.5, 0.0}
+--     elseif zone == 'D' then
+--         return {1, 1.2, 0}
+--         -- return {1.0, 2.0, 0.0}
+--     else
+--         print('target zone not recognized')
+--         return nil
+--     end
+-- end
