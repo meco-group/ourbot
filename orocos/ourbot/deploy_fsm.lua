@@ -23,7 +23,7 @@ local containers_to_fill = {
 
 -- ports to report
 local ports_to_report = {
-  -- estimator           = {'est_pose_port'},
+  estimator           = {'est_pose_port'},
   reference           = {'ref_pose_port', 'ref_velocity_port'},
   teensy              = {'cmd_velocity_passthrough_port'}
 }

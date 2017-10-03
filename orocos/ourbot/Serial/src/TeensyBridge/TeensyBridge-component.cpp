@@ -20,6 +20,7 @@ TeensyBridge::TeensyBridge(std::string const& name) :
 	this->addProperty("current_sensor_gain",_current_sensor_gain).doc("Gain of current sensor to get proper scaling");
 	this->addProperty("velocity_pid_soft", _velocity_pid_soft).doc("PID parameters for soft velocity control (gamepad).");
 	this->addProperty("velocity_pid_strong", _velocity_pid_strong).doc("PID parameters for strong velocity control (smooth trajectories).");
+	this->addProperty("max_velocity", _max_velocity).doc("Max velocity setpoint");
 
 	this->ports()->addPort( "cmd_velocity_port", _cmd_velocity_port ).doc("Input port for low level velocity controller. Vector contains [vx,vy,w]");
 	this->ports()->addPort( "cmd_velocity_passthrough_port", _cmd_velocity_passthrough_port ).doc("Passthrough for cmd velocity port.");
@@ -325,9 +326,25 @@ void TeensyBridge::setMotorVoltage(double voltage, int ID)
 	setMotorReference(voltage_setpoint, ID, 1);
 }
 
+double TeensyBridge::saturate(double v, double max) {
+	if (v > max) {
+		RTT::log(RTT::Warning) << "Saturating velocity " << v << RTT::endlog();
+		return max;
+	}
+	if (v < -max) {
+		RTT::log(RTT::Warning) << "Saturating velocity " << v << RTT::endlog();
+		return -max;
+	}
+	return v;
+}
+
 void TeensyBridge::setVelocity(double vx, double vy, double w)
 {
 	if(_control_mode == TEENSYBRIDGE_CONTROL_MODE_SIMPLE){
+		vx = saturate(vx, _max_velocity[0]);
+		vy = saturate(vy, _max_velocity[1]);
+		w = saturate(w, _max_velocity[2]);
+
 		mavlink_motor_command_t motor_command;
 		mavlink_message_t msg;
 		uint8_t buffer[MAVLINK_MSG_ID_MOTOR_COMMAND_LEN+MAVLINK_MSG_OVERHEAD];

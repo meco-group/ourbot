@@ -34,7 +34,7 @@ bool PoseController::controlUpdate(){
         }
         _error_loc = global2local(_error_gl, _est_pose[2]);
         for (int k=0; k<3; k++){
-            if (!isinf(_error_loc[k])){ // disable fb by setting inf ref
+            if (!(fabs(_error_loc[k]) >= 1000.)){ // disable fb by setting inf ref
                 _cmd_vel[k] = (_kp[k]+0.5*_ki[k]*_Ts)*_error_loc[k] + (_cmd_vel_prev[k] + (-_kp[k]+0.5*_ki[k]*_Ts)*_error_loc_prev[k]);
                 _cmd_vel_prev[k] = _cmd_vel[k];
                 _error_loc_prev[k] = _error_loc[k];

@@ -469,7 +469,7 @@ end
 
 function getTargetPose(task)
     local pose = task.task_parameters
-    return pose
+    return pos
 end
 
 -- function getTargetPose(task)

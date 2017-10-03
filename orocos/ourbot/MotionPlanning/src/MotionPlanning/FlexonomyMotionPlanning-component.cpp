@@ -172,14 +172,14 @@ void FlexonomyMotionPlanning::getObstacles(std::vector<omg::obstacle_t>& obstacl
       obstacles[1].avoid = true;
       obstacles[1].radii = std::vector<double>({0.5*max(_neighbor_size[0], _neighbor_size[1])});
       obstacles[1].checkpoints = std::vector<double>({0., 0.});
-      std::cout << "received traj (rad=" << obstacles[1].radii[0] << "m): " << std::endl;
-      for (int k=0; k<2; k++) {
-        std::cout << "[";
-        for (int i=0; i<13; i++) {
-          std::cout << obstacle_trajectory[13*k+i] << " ";
-        }
-        std::cout << "]" << std::endl;
-      }
+      // std::cout << "received traj (rad=" << obstacles[1].radii[0] << "m): " << std::endl;
+      // for (int k=0; k<2; k++) {
+      //   std::cout << "[";
+      //   for (int i=0; i<13; i++) {
+      //     std::cout << obstacle_trajectory[13*k+i] << " ";
+      //   }
+      //   std::cout << "]" << std::endl;
+      // }
     }
   }
 }

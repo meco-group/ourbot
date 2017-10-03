@@ -24,6 +24,7 @@ return rfsm.state {
   rfsm.trans{src = 'p2p',     tgt = 'auto_recover', events = {'e_auto_recover'}},
   rfsm.trans{src = 'auto_recover', tgt = 'p2p', events = {'e_p2p'}},
 
+  rfsm.trans{src = 'auto_recover', tgt = 'stoptask', events = {'e_stop'}},
   rfsm.trans{src = 'p2p',     tgt = 'stoptask', events = {'e_stop'}},
   rfsm.trans{src = 'stoptask',tgt = 'idle',     events = {'e_done'}},
 
@@ -119,6 +120,10 @@ return rfsm.state {
         end_time = get_sec()
         rfsm.yield(true) -- sleep until next sample period
       end
+    end,
+
+    exit = function(fsm)
+      moving = false
     end,
   },
 

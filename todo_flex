@@ -9,6 +9,7 @@ todo flexonomy demo
 + test autorecover
     + not in 'reject'-mode
 + crash when infeasible homing
-- test motion time
-- why is kurt sending its trajectory? -> bug
-- enlarge soft constraint
++ test motion time
++ why is kurt sending its trajectory? -> bug
++ enlarge soft constraint
++ end target tolerances?

@@ -3,10 +3,11 @@ from omgtools import *
 
 # create vehicle
 options = {}
-shape = Circle(0.34)
+shape = Circle(0.35)
 vehicle = Holonomic(shapes=shape, options=options, bounds={'vmin': -0.3, 'vmax': 0.3, 'amin': -0.5, 'amax': 0.5})
 # vehicle.set_options({'safety_distance': 0.05})
-vehicle.set_options({'safety_distance': 0.1})
+# vehicle.set_options({'safety_distance': 0.1})
+vehicle.set_options({'safety_distance': 0.07})
 vehicle.set_options({'stop_tol': 1e-2})
 
 A = [ 3.2, 2.]
@@ -30,8 +31,8 @@ height = 2.59
 environment = Environment(room={'shape': Rectangle(width, height), 'position': [0.5*width, 0.5*height]})
 robot_arm = Rectangle(width=2., height=2.)
 environment.add_obstacle(Obstacle({'position': [width, height]}, shape=robot_arm))
-neighbor = Obstacle({'position': C, 'velocity': [-0.15, 0.]}, shape=Circle(0.34))
-neighbor.set_options({'spline_traj': False})
+neighbor = Obstacle({'position': C}, shape=Circle(0.34))
+neighbor.set_options({'spline_traj': True})
 neighbor.set_options({'spline_params': spline_params})
 environment.add_obstacle(neighbor)
 
