@@ -16,7 +16,7 @@ Gui::Gui(const std::vector<int>& resolution, bool save_video, double sample_rate
     _mouseclick_position(2, -100),
     _black(cv::Scalar(77, 76, 75)), _pixelspermeter(1){
     if (save_video){
-        _saved_video.open("movie.avi", CV_FOURCC('F','M','P','4'), sample_rate, cv::Size(_resolution[0], _resolution[1]), true);
+        _saved_video.open("movie.avi", CV_FOURCC('M','J','P','G'), sample_rate, cv::Size(_resolution[0], _resolution[1]), true);
     }
 }
 
