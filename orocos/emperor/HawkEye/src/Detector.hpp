@@ -39,6 +39,7 @@ class Detector {
         int _max_detectable_obstacles;
         int _pixelspermeter;
         int _frame_height;
+        bool _detect_obstacles;
 
         void initDetector();
         void backgroundSubtraction(const cv::Mat& frame, std::vector<std::vector<cv::Point> >& contours, std::vector<cv::Vec4i>& hierarchy);
@@ -54,7 +55,7 @@ class Detector {
 
     public:
         Detector(const std::vector<double>& marker_params, int threshold_bgst, double threshold_kp, double threshold_top, double min_robot_area, double min_obstacle_area, int max_detectable_obstacles, int pixelspermeter);
-        bool start(const cv::Mat& background);
+        bool start(const cv::Mat& background, bool detect_obstacles);
         void update(const cv::Mat& frame, std::vector<Robot*>& robots, std::vector<double>& obstacle_data);
 };
 

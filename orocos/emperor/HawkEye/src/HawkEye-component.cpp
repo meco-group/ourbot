@@ -36,6 +36,7 @@ HawkEye::HawkEye(std::string const& name) : TaskContext(name, PreOperational), _
   addProperty("marker_params", _marker_params).doc("Parameters that define marker");
   addProperty("crop_ratio", _crop_ratio).doc("Ratio for frame cropping");
   addProperty("draw_amount", _draw_amount).doc("Amount of drawing on captured image");
+  addProperty("detect_obstacles", _detect_obstacles).doc("Enable obstacle detection");
   addProperty("hawkeye_sample_rate", _hawkeye_sample_rate).doc("Sample rate of hawkeye");
 
   // operations
@@ -78,7 +79,7 @@ bool HawkEye::startHook(){
     return false;
   }
   // start detector
-  if (!_detector->start(background)){
+  if (!_detector->start(background, _detect_obstacles)){
     return false;
   }
   return true;

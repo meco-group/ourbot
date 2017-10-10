@@ -22,7 +22,7 @@
         <simple name="blue_robot0" type="long">
             <value>138</value>
         </simple>
-<!--         <simple name="red_robot1" type="long">
+        <simple name="red_robot1" type="long">
             <value>138</value>
         </simple>
         <simple name="green_robot1" type="long">
@@ -39,12 +39,12 @@
         </simple>
         <simple name="blue_robot2" type="long">
             <value>19</value>
-        </simple> -->
+        </simple>
     </struct>
 
-    <simple name="draw_amound" type="long">
+    <simple name="draw_amount" type="long">
         <description>Amount of drawing on captured image</description>
-        <value>2</value>
+        <value>4</value>
     </simple>
 
     <!-- laser cut markers -->
@@ -115,6 +115,11 @@
           <value>0.072315805984965828</value>
         </simple>
     </struct>
+
+    <simple name="detect_obstacles" type="boolean">
+        <description>Enable obstacle detection</description>
+        <value>0</value>
+    </simple>
 
     <simple name="max_detectable_obstacles" type="long">
         <description>Maximum number of detectable obstacles</description>
