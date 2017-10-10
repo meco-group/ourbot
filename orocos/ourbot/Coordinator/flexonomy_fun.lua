@@ -54,6 +54,7 @@ if host == 'dave' then
 else
     if not addOutgoing('motionplanning', 'host_obstacle_trajectory_port', 'obstacle_trajectory', 'dave') then rfsm.send_events(fsm, 'e_failed') return end
 end
+if not addIncoming('motionplanning', 'robot_markers_port', 'markers_robot') then rfsm.send_events(fsm, 'e_failed') return end
 
 -- global vars
 current_task = nil

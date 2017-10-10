@@ -73,18 +73,7 @@
   </simple>
 </struct>
 
-<struct name="robotarm_pose" type="array">
-  <description>Robot arm position</description>
-  <simple name="x" type="double">
-    <value>4.61</value>
-  </simple>
-  <simple name="y" type="double">
-    <value>2.59</value>
-  </simple>
-  <simple name="t" type="double">
-    <value>0.</value>
-  </simple>
-</struct>
+<!-- Flexonomy related properties -->
 
 <struct name="robotarm_size" type="array">
   <description>Robot arm size [width, height]</description>
@@ -105,125 +94,10 @@
     <value>0.33</value>
   </simple>
 </struct>
-<!--
-<simple name="horizon_time" type="double">
- <description>Horizon time calculating ETA</description>
-   <value>15.0</value>
-</simple> -->
 
 <simple name="vmax" type="double">
  <description>Max velocity calculating ETA</description>
    <value>0.3</value>
 </simple>
-
-
-<!-- <struct name="robotarm_pos" type="array">
-  <description>Robot arm position</description>
-  <simple name="x" type="double">
-    <value>4.0</value>
-  </simple>
-  <simple name="y" type="double">
-    <value>2.2</value>
-  </simple>
-</struct>
- -->
-<!-- struct name="robotarm_checkpts" type="array">
-  <description>Robot arm check points</description>
-  <simple name="Element0" type="double">
-    <value>0.0</value>
-  </simple>
-  <simple name="Element1" type="double">
-    <value>0.0</value>
-  </simple>
-  <simple name="Element2" type="double">
-    <value>0.2</value>
-  </simple>
-  <simple name="Element3" type="double">
-    <value>-0.2</value>
-  </simple>
-  <simple name="Element4" type="double">
-    <value>-0.2</value>
-  </simple>
-  <simple name="Element5" type="double">
-    <value>-0.2</value>
-  </simple>
-  <simple name="Element6" type="double">
-    <value>-0.2</value>
-  </simple>
-  <simple name="Element7" type="double">
-    <value>0.2</value>
-  </simple>
-</struct> -->
-
-<!-- <struct name="obstacle_checkpts" type="array">
-  <description>Robot arm check points</description>
-  <simple name="Element0" type="double">
-    <value>0.0</value>
-  </simple>
-  <simple name="Element1" type="double">
-    <value>0.0</value>
-  </simple>
-  <simple name="Element2" type="double">
-    <value>0.0</value>
-  </simple>
-  <simple name="Element3" type="double">
-    <value>-0.0</value>
-  </simple>
-  <simple name="Element4" type="double">
-    <value>-0.0</value>
-  </simple>
-  <simple name="Element5" type="double">
-    <value>-0.0</value>
-  </simple>
-  <simple name="Element6" type="double">
-    <value>-0.0</value>
-  </simple>
-  <simple name="Element7" type="double">
-    <value>0.0</value>
-  </simple>
-</struct>
-
-<struct name="robotarm_radii" type="array">
- <description>Robotarm obstacle radius</description>
-   <simple name="Element0" type="double">
-    <value>0.30</value>
-  </simple>
-  <simple name="Element1" type="double">
-    <value>0.0</value>
-  </simple>
-  <simple name="Element2" type="double">
-    <value>0.0</value>
-  </simple>
-  <simple name="Element3" type="double">
-    <value>0.0</value>
-  </simple>
-</struct>
-
-<struct name="obstacle_radius" type="array">
- <description>Robotarm obstacle radius</description>
-   <simple name="Element0" type="double">
-    <value>0.40</value>
-  </simple>
-  <simple name="Element1" type="double">
-    <value>0.15</value>
-  </simple>
-  <simple name="Element2" type="double">
-    <value>0.1</value>
-  </simple>
-  <simple name="Element3" type="double">
-    <value>0.15</value>
-  </simple>
-</struct> -->
-
-<!-- <simple name="eps_position" type="double">
- <description>Epsilon distance calculating ETA</description>
-   <value>0.02</value>
-</simple>
- -->
-<!-- <simple name="eps_velocity" type="double">
- <description>Epsilon velocity calculating ETA</description>
-   <value>0.001</value>
-</simple>
- -->
 
 </properties>
