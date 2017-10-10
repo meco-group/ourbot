@@ -35,6 +35,7 @@ HawkEye::HawkEye(std::string const& name) : TaskContext(name, PreOperational), _
   addProperty("save_video", _save_video).doc("Save the resulting video");
   addProperty("marker_params", _marker_params).doc("Parameters that define marker");
   addProperty("crop_ratio", _crop_ratio).doc("Ratio for frame cropping");
+  addProperty("draw_amount", _draw_amount).doc("Amount of drawing on captured image");
   addProperty("hawkeye_sample_rate", _hawkeye_sample_rate).doc("Sample rate of hawkeye");
 
   // operations
@@ -224,7 +225,7 @@ void HawkEye::drawResults(cv::Mat& frame){
       }
     }
   }
-  _gui->draw(frame, _obstacles, _robots, _robot_colors);
+  _gui->draw(frame, _obstacles, _robots, _robot_colors, _draw_amount);
 }
 
 void HawkEye::setTargetPose(){

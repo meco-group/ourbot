@@ -42,7 +42,7 @@ class Robot {
         void setPose(const std::vector<double>& pose);
         void setRef(const std::vector<double>& ref_x, const std::vector<double>& ref_y);
         void getTopMarkers(std::vector<cv::Mat>& top_markers);
-        void draw(cv::Mat& frame, const cv::Scalar& color, int pixelspermeter);
+        void draw(cv::Mat& frame, const cv::Scalar& color, int pixelspermeter, int draw_amount);
 };
 
 #endif

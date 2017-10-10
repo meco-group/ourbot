@@ -42,6 +42,11 @@
         </simple> -->
     </struct>
 
+    <simple name="draw_amound" type="long">
+        <description>Amount of drawing on captured image</description>
+        <value>2</value>
+    </simple>
+
     <!-- laser cut markers -->
     <struct name="marker_locations" type="array">
         <description>Locations of markers in robot frame [x1_r1, y1_r1, x2_r1, y2_r1, x3_r1, y3_r1, x1_r2, ...] (m)</description>

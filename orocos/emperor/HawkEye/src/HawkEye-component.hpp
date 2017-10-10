@@ -69,6 +69,7 @@ class HawkEye : public RTT::TaskContext{
         double _hawkeye_sample_rate;
         std::vector<double> _marker_params;
         double _crop_ratio;
+        int _draw_amount;
 
         Gui* _gui;
         Camera* _camera;

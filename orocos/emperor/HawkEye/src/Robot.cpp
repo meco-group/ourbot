@@ -84,19 +84,13 @@ void Robot::setRef(const std::vector<double>& ref_x, const std::vector<double>& 
   _ref_y = ref_y;
 }
 
-void Robot::draw(cv::Mat& frame, const cv::Scalar& color, int pixelspermeter){
-  // // markers
+void Robot::draw(cv::Mat& frame, const cv::Scalar& color, int pixelspermeter, int draw_amount){
+  // markers
   cv::Point2f center;
   for (int i=0; i<2; i++){
     cv::circle(frame, cv::Point2f(_global_marker_locations_px[2*i], _global_marker_locations_px[2*i+1]), 3, color, -1);
   }
   cv::circle(frame, cv::Point2f(_global_marker_locations_px[4], _global_marker_locations_px[5]), 3, cv::Scalar(0,0,255), -1);
-  // box
-  // cv::Point2f vertices[4];
-  // _box.points(vertices);
-  // for (int i=0; i<4; i++){
-  //   cv::line(frame, vertices[i], vertices[(i+1)%4], color, 2);
-  // }
   // pose
   std::vector<double> point1(2), point2(2);
   double orientation = _pose[2];
@@ -126,6 +120,14 @@ void Robot::draw(cv::Mat& frame, const cv::Scalar& color, int pixelspermeter){
       if (!((points[i][0] == 0 && points[i][1] == 0) || (points[i+1][0] == 0 && points[i+1][1] == 0))){
         cv::line(frame, cv::Point2f(points[i][0], points[i][1]), cv::Point2f(points[i+1][0], points[i+1][1]), color_w, 2);
       }
+    }
+  }
+  if (draw_amount >= 4) {
+    // box
+    cv::Point2f vertices[4];
+    _box.points(vertices);
+    for (int i=0; i<4; i++){
+      cv::line(frame, vertices[i], vertices[(i+1)%4], color, 2);
     }
   }
 }
