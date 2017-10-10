@@ -32,14 +32,10 @@ void Robot::createBox(){
     if (lineside > 0){
       orientation += M_PI/2.;
     } else {
-      orientation -= M_PI/2.;
+      orientation -= M_PI/2.; // always this?
     }
     double x_bottom_px = 0.5*(x2+x3);
     double y_bottom_px = 0.5*(y2+y3);
-
-    // double dist_top_bottom = sqrt(pow(x1-x_bot_mid, 2) + pow(y1-y_bot_mid, 2));
-    // double center_x = x_bot_mid + 0.5*dist_top_bottom*cos(orientation);
-    // double center_y = y_bot_mid + 0.5*dist_top_bottom*sin(orientation);
 
     double x_bottom_m = 0.5*(_local_marker_locations_m[0]+_local_marker_locations_m[2]);
     double y_bottom_m = 0.5*(_local_marker_locations_m[1]+_local_marker_locations_m[3]);
@@ -62,6 +58,14 @@ void Robot::createBox(){
 
 cv::RotatedRect Robot::getBox(){
     return _box;
+}
+
+int Robot::getWidth(){
+    return _width;
+}
+
+int Robot::getHeight(){
+    return _height;
 }
 
 void Robot::getMarkers(std::vector<double>& marker_vector, int pixelspermeter, int height){

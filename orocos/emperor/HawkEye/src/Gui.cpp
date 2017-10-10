@@ -82,26 +82,34 @@ void Gui::draw(cv::Mat& frame, const std::vector<double>& obstacles, const std::
             }
         }
     }
-    // draw flexonomy stuff
-    std::vector<double> robot_arm_size({2., 2.});
-    std::vector<double> robot_arm_pose({4.61, 2.59, 0});
-    double w = robot_arm_size[0];
-    double h = robot_arm_size[1];
-    double x = robot_arm_pose[0];
-    double y = robot_arm_pose[1];
-    double theta = robot_arm_pose[2];
-    std::vector<cv::Point2f> verts(4);
-    verts[0] = cv::Point2f(x+0.5*w*cos(theta) - 0.5*h*sin(theta), y+0.5*w*sin(theta) + 0.5*h*cos(theta));
-    verts[1] = cv::Point2f(x+0.5*w*cos(theta) + 0.5*h*sin(theta), y+0.5*w*sin(theta) - 0.5*h*cos(theta));
-    verts[2] = cv::Point2f(x-0.5*w*cos(theta) + 0.5*h*sin(theta), y-0.5*w*sin(theta) - 0.5*h*cos(theta));
-    verts[3] = cv::Point2f(x-0.5*w*cos(theta) - 0.5*h*sin(theta), y-0.5*w*sin(theta) + 0.5*h*cos(theta));
-    std::vector<cv::Point2f> verts_px(4);
-    for (int i=0; i<4; i++) {
-        verts_px[i] = cv::Point2f(verts[i].x*_pixelspermeter, height-verts[i].y*_pixelspermeter);
+    // flexonomy debugging
+    if (robots[2]->detected()) {
+        // draw table
+        double w = robots[2]->getWidth()/_pixelspermeter;
+        double h = robots[2]->getHeight()/_pixelspermeter;
+        std::vector<double> markers;
+        robots[2]->getMarkers(markers, _pixelspermeter, height);
+        double x = (markers[0] + markers[2] + markers[4])/3.;
+        double y = (markers[1] + markers[3] + markers[5])/3.;
+        double theta = atan2(markers[5] - 0.5*(markers[1]+markers[3]), markers[4] - 0.5*(markers[0]+markers[2]));
+        std::vector<cv::Point2f> verts(4);
+        verts[0] = cv::Point2f(x+0.5*w*cos(theta) - 0.5*h*sin(theta), y+0.5*w*sin(theta) + 0.5*h*cos(theta));
+        verts[1] = cv::Point2f(x+0.5*w*cos(theta) + 0.5*h*sin(theta), y+0.5*w*sin(theta) - 0.5*h*cos(theta));
+        verts[2] = cv::Point2f(x-0.5*w*cos(theta) + 0.5*h*sin(theta), y-0.5*w*sin(theta) - 0.5*h*cos(theta));
+        verts[3] = cv::Point2f(x-0.5*w*cos(theta) - 0.5*h*sin(theta), y-0.5*w*sin(theta) + 0.5*h*cos(theta));
+        std::vector<cv::Point2f> verts_px(4);
+        for (int i=0; i<4; i++) {
+            verts_px[i] = cv::Point2f(verts[i].x*_pixelspermeter, height-verts[i].y*_pixelspermeter);
+        }
+        for (int i=0; i<4; i++) {
+            cv::line(frame, verts_px[i], verts_px[(i+1)%4], _black, 2);
+        }
+        // draw loading position
+        double x_l = x - 1.;
+        double y_l = y - 0.2;
+        cv::circle(frame, cv::Point2f(x_l*_pixelspermeter, height-y_l*_pixelspermeter), 0.1*_pixelspermeter, _black, -2);
     }
-    for (int i=0; i<4; i++) {
-        cv::line(frame, verts_px[i], verts_px[(i+1)%4], _black, 2);
-    }
+
     // show frame
     cv::Mat displayed_frame;
     cv::resize(frame, displayed_frame, cv::Size(_resolution[0], _resolution[1]), 0, 0);

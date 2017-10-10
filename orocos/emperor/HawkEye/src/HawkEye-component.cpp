@@ -140,7 +140,7 @@ void HawkEye::createRobots(){
   _robots.resize(n_robots);
   int n_sizes = _robot_sizes.size();
   std::vector<double> marker_loc(6);
-  for (uint k=0; k<_robots.size(); k++){
+  for (uint k=0; k<n_robots; k++){
     for (int i=0; i<6; i++){
       marker_loc[i] = _marker_locations[(6*k+i)%_marker_locations.size()];
     }

@@ -150,6 +150,7 @@ return rfsm.state {
         if not addOutgoing('hawkeye', 'robot9_pose_port', 'markers_kurt', 'kurt') then rfsm.send_events(fsm, 'e_failed') return end
         if not addOutgoing('hawkeye', 'robot0_pose_port', 'markers_dave', 'dave') then rfsm.send_events(fsm, 'e_failed') return end
         if not addOutgoing('hawkeye', 'robot1_pose_port', 'markers_krist', 'krist') then rfsm.send_events(fsm, 'e_failed') return end
+        if not addOutgoing('hawkeye', 'robot2_pose_port', 'markers_robot', 'ourbots') then rfsm.send_events(fsm, 'e_failed') return end
         if not addIncoming('hawkeye', 'robot9_est_pose_port', 'est_pose_kurt') then rfsm.send_events(fsm,'e_failed') return end
         if not addIncoming('hawkeye', 'robot0_est_pose_port', 'est_pose_dave') then rfsm.send_events(fsm,'e_failed') return end
         if not addIncoming('hawkeye', 'robot1_est_pose_port', 'est_pose_krist') then rfsm.send_events(fsm,'e_failed') return end
