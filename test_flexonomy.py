@@ -56,7 +56,8 @@ while(kp != 'q'):
         msg['payload'] = col.OrderedDict()
         msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4302'
         msg['payload']['task_type'] = 'move_to'
-        msg['payload']['task_parameters'] = zone_A
+        msg['payload']['task_parameter_key'] = 'robot'
+        msg['payload']['task_parameters'] = None
         node.shout('dave', json.dumps(msg))
         print 'sent execute msg task A'
     elif (ord(kp) == 51): # keypress 3
@@ -64,6 +65,7 @@ while(kp != 'q'):
         msg['payload'] = col.OrderedDict()
         msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4303'
         msg['payload']['task_type'] = 'move_to'
+        msg['payload']['task_parameter_key'] = None
         msg['payload']['task_parameters'] = zone_B
         node.shout('dave', json.dumps(msg))
         print 'sent execute msg task B'
@@ -72,6 +74,7 @@ while(kp != 'q'):
         msg['payload'] = col.OrderedDict()
         msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4303'
         msg['payload']['task_type'] = 'move_to'
+        msg['payload']['task_parameter_key'] = None
         msg['payload']['task_parameters'] = zone_C
         node.shout('dave', json.dumps(msg))
         print 'sent execute msg task C'
@@ -80,6 +83,7 @@ while(kp != 'q'):
         msg['payload'] = col.OrderedDict()
         msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4303'
         msg['payload']['task_type'] = 'move_to'
+        msg['payload']['task_parameter_key'] = None
         msg['payload']['task_parameters'] = zone_D
         node.shout('dave', json.dumps(msg))
         print 'sent execute msg task D'
@@ -88,6 +92,7 @@ while(kp != 'q'):
         msg['payload'] = col.OrderedDict()
         msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4302'
         msg['payload']['task_type'] = 'move_to'
+        msg['payload']['task_parameter_key'] = None
         msg['payload']['task_parameters'] = zone_A
         node.shout('kurt', json.dumps(msg))
         print 'sent execute msg task A'
@@ -96,6 +101,7 @@ while(kp != 'q'):
         msg['payload'] = col.OrderedDict()
         msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4303'
         msg['payload']['task_type'] = 'move_to'
+        msg['payload']['task_parameter_key'] = None
         msg['payload']['task_parameters'] = zone_B
         node.shout('kurt', json.dumps(msg))
         print 'sent execute msg task B'
@@ -104,6 +110,7 @@ while(kp != 'q'):
         msg['payload'] = col.OrderedDict()
         msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4303'
         msg['payload']['task_type'] = 'move_to'
+        msg['payload']['task_parameter_key'] = None
         msg['payload']['task_parameters'] = zone_C
         node.shout('kurt', json.dumps(msg))
         print 'sent execute msg task C'
@@ -112,6 +119,7 @@ while(kp != 'q'):
         msg['payload'] = col.OrderedDict()
         msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4303'
         msg['payload']['task_type'] = 'move_to'
+        msg['payload']['task_parameter_key'] = None
         msg['payload']['task_parameters'] = zone_D
         node.shout('kurt', json.dumps(msg))
         print 'sent execute msg task D'

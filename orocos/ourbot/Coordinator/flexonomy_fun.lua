@@ -44,6 +44,8 @@ _motion_time_port:connect(motionplanning:getPort('motion_time_port'))
 local _cmd_velocity_port = rtt.OutputPort("array")
 tc:addPort(_cmd_velocity_port, "cmd_velocity_port", "Input port for low level velocity controller. Vector contains [vx,vy,w]")
 _cmd_velocity_port:connect(teensy:getPort('cmd_velocity_port'))
+local _robot_markers_port = rtt.OutputPort("array")
+tc:addPort(_robot_markers_port, "robot_markers_port", "Markers of robot arm table")
 
 -- wireless ports
 local addIncoming = communicator:getOperation('addIncomingConnection')
@@ -55,6 +57,7 @@ else
     if not addOutgoing('motionplanning', 'host_obstacle_trajectory_port', 'obstacle_trajectory', 'dave') then rfsm.send_events(fsm, 'e_failed') return end
 end
 if not addIncoming('motionplanning', 'robot_markers_port', 'markers_robot') then rfsm.send_events(fsm, 'e_failed') return end
+if not addIncoming('coordinator', 'robot_markers_port', 'markers_robot') then rfsm.send_events(fsm, 'e_failed') return end
 
 -- global vars
 current_task = nil
@@ -71,6 +74,8 @@ local max_statemsg_cnt = 1/(statemsg_sample_rate*period)
 local statemsg_cnt = max_statemsg_cnt
 local max_nghbcom_cnt = 1/(nghbcom_sample_rate*period)
 local nghbcom_cnt = max_nghbcom_cnt
+local no_robot_marker_cnt = 0
+local max_no_robot_marker_cnt = 15
 local failure_cnt = 0
 local max_failure_cnt = 5
 local zero_cmd = rtt.Variable('array')
@@ -469,27 +474,35 @@ function encodeTime(time)
 end
 
 function getTargetPose(task)
-    local pose = task.task_parameters
-    return pose
+    local pose
+    if task.task_parameter_key == nil then
+        return task.task_parameters
+    else
+        local key = task.task_parameter_key
+        local rp = getRobotArmPose()
+        if key == 'robot' then
+            return {rp[0]-1., rp[1]-0.2, rp[2]+0.0}
+        end
+    end
+    print('target not recognized.')
+    return nil
 end
 
--- function getTargetPose(task)
---     local zone = task.task_parameters
---     if zone == 'A' then
---         -- return {2.7, 2.2, 3.141}
---         return {3.2, 2, -1.5702}
---     elseif zone == 'B' then
---         return {4.2, 1.2, 3.1415}
---         -- return {3.8, 1.1, -1.5702}
---         --return {3.8, 1.1, 0.0}
---     elseif zone == 'C' then
---         return {3.2, 0.5, 1.5702}
---         -- return {1.5, 0.5, 0.0}
---     elseif zone == 'D' then
---         return {1, 1.2, 0}
---         -- return {1.0, 2.0, 0.0}
---     else
---         print('target zone not recognized')
---         return nil
---     end
--- end
+function getRobotArmPose()
+    local fs, robot_markers = _robot_markers_port:read()
+    -- robot table still visible?
+    if fs ~= 'NewData' then
+        no_robot_marker_cnt = no_robot_marker_cnt + 1
+        if (no_robot_marker_cnt >= max_no_robot_marker_cnt) then
+            no_robot_marker_cnt = max_no_robot_marker_cnt
+            return nil
+        end
+    else
+        no_robot_marker_cnt = 0
+    end
+    -- compute robot pose
+    local x = (robot_markers[0] + robot_markers[2] + robot_markers[4])/3.
+    local y = (robot_markers[1] + robot_markers[3] + robot_markers[5])/3.
+    local theta = math.atan2(robot_markers[5] - 0.5*(robot_markers[1]+robot_markers[3]), robot_markers[4] - 0.5*(robot_markers[0]+robot_markers[2]));
+    return {x, y, theta}
+
