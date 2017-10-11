@@ -32,14 +32,10 @@ void Robot::createBox(){
     if (lineside > 0){
       orientation += M_PI/2.;
     } else {
-      orientation -= M_PI/2.;
+      orientation -= M_PI/2.; // always this?
     }
     double x_bottom_px = 0.5*(x2+x3);
     double y_bottom_px = 0.5*(y2+y3);
-
-    // double dist_top_bottom = sqrt(pow(x1-x_bot_mid, 2) + pow(y1-y_bot_mid, 2));
-    // double center_x = x_bot_mid + 0.5*dist_top_bottom*cos(orientation);
-    // double center_y = y_bot_mid + 0.5*dist_top_bottom*sin(orientation);
 
     double x_bottom_m = 0.5*(_local_marker_locations_m[0]+_local_marker_locations_m[2]);
     double y_bottom_m = 0.5*(_local_marker_locations_m[1]+_local_marker_locations_m[3]);
@@ -64,6 +60,14 @@ cv::RotatedRect Robot::getBox(){
     return _box;
 }
 
+int Robot::getWidth(){
+    return _width;
+}
+
+int Robot::getHeight(){
+    return _height;
+}
+
 void Robot::getMarkers(std::vector<double>& marker_vector, int pixelspermeter, int height){
   std::vector<double> position(2);
   for (int i=0; i<3; i++){
@@ -84,19 +88,13 @@ void Robot::setRef(const std::vector<double>& ref_x, const std::vector<double>& 
   _ref_y = ref_y;
 }
 
-void Robot::draw(cv::Mat& frame, const cv::Scalar& color, int pixelspermeter){
-  // // markers
+void Robot::draw(cv::Mat& frame, const cv::Scalar& color, int pixelspermeter, int draw_amount){
+  // markers
   cv::Point2f center;
   for (int i=0; i<2; i++){
     cv::circle(frame, cv::Point2f(_global_marker_locations_px[2*i], _global_marker_locations_px[2*i+1]), 3, color, -1);
   }
   cv::circle(frame, cv::Point2f(_global_marker_locations_px[4], _global_marker_locations_px[5]), 3, cv::Scalar(0,0,255), -1);
-  // box
-  // cv::Point2f vertices[4];
-  // _box.points(vertices);
-  // for (int i=0; i<4; i++){
-  //   cv::line(frame, vertices[i], vertices[(i+1)%4], color, 2);
-  // }
   // pose
   std::vector<double> point1(2), point2(2);
   double orientation = _pose[2];
@@ -126,6 +124,14 @@ void Robot::draw(cv::Mat& frame, const cv::Scalar& color, int pixelspermeter){
       if (!((points[i][0] == 0 && points[i][1] == 0) || (points[i+1][0] == 0 && points[i+1][1] == 0))){
         cv::line(frame, cv::Point2f(points[i][0], points[i][1]), cv::Point2f(points[i+1][0], points[i+1][1]), color_w, 2);
       }
+    }
+  }
+  if (draw_amount >= 4) {
+    // box
+    cv::Point2f vertices[4];
+    _box.points(vertices);
+    for (int i=0; i<4; i++){
+      cv::line(frame, vertices[i], vertices[(i+1)%4], color, 2);
     }
   }
 }

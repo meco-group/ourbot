@@ -35,6 +35,8 @@ HawkEye::HawkEye(std::string const& name) : TaskContext(name, PreOperational), _
   addProperty("save_video", _save_video).doc("Save the resulting video");
   addProperty("marker_params", _marker_params).doc("Parameters that define marker");
   addProperty("crop_ratio", _crop_ratio).doc("Ratio for frame cropping");
+  addProperty("draw_amount", _draw_amount).doc("Amount of drawing on captured image");
+  addProperty("detect_obstacles", _detect_obstacles).doc("Enable obstacle detection");
   addProperty("hawkeye_sample_rate", _hawkeye_sample_rate).doc("Sample rate of hawkeye");
 
   // operations
@@ -77,7 +79,7 @@ bool HawkEye::startHook(){
     return false;
   }
   // start detector
-  if (!_detector->start(background)){
+  if (!_detector->start(background, _detect_obstacles)){
     return false;
   }
   return true;
@@ -138,7 +140,7 @@ void HawkEye::createRobots(){
   _robots.resize(n_robots);
   int n_sizes = _robot_sizes.size();
   std::vector<double> marker_loc(6);
-  for (uint k=0; k<_robots.size(); k++){
+  for (uint k=0; k<n_robots; k++){
     for (int i=0; i<6; i++){
       marker_loc[i] = _marker_locations[(6*k+i)%_marker_locations.size()];
     }
@@ -224,7 +226,7 @@ void HawkEye::drawResults(cv::Mat& frame){
       }
     }
   }
-  _gui->draw(frame, _obstacles, _robots, _robot_colors);
+  _gui->draw(frame, _obstacles, _robots, _robot_colors, _draw_amount);
 }
 
 void HawkEye::setTargetPose(){

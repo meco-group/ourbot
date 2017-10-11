@@ -29,7 +29,7 @@ class Gui {
         bool start();
         void setPixelsPerMeter(int pixelspermeter);
         void stop();
-        void draw(cv::Mat& frame, const std::vector<double>& obstacles, const std::vector<Robot*>& robots, const std::vector<int>& robot_colors);
+        void draw(cv::Mat& frame, const std::vector<double>& obstacles, const std::vector<Robot*>& robots, const std::vector<int>& robot_colors, int draw_amount);
         void setMouseClickPosition(int x, int y);
         void getClickPose(std::vector<double>& pose);
 };

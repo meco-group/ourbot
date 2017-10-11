@@ -7,8 +7,10 @@ class FlexonomyMotionPlanning : public MotionPlanning{
   private:
 
     InputPort<std::vector<double> > _obstacle_trajectory_port;
+    InputPort<std::vector<double> > _robot_markers_port;
     OutputPort<std::vector<double> > _host_obstacle_trajectory_port;
 
+    std::vector<double> _robot_markers;
     std::vector<double> _robotarm_pose;
     std::vector<double> _robotarm_size;
     std::vector<double> _neighbor_size;

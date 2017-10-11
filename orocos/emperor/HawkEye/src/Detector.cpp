@@ -32,9 +32,10 @@ void Detector::initDetector(){
   _blob_detector = cv::SimpleBlobDetector::create(par);
 }
 
-bool Detector::start(const cv::Mat& background){
+bool Detector::start(const cv::Mat& background, bool detect_obstacles){
   _background = background;
   _frame_height = background.size().height;
+  _detect_obstacles = detect_obstacles;
   return true;
 }
 
@@ -47,6 +48,9 @@ void Detector::update(const cv::Mat& frame, std::vector<Robot*>& robots, std::ve
     return; // no contours were found
   }
   detectRobots(frame, contours, robots);
+  if (!_detect_obstacles) {
+    return;
+  }
   subtractRobots(contours, hierarchy, robots);
   if (hierarchy.empty()){
     return; // only robot contours were found
@@ -316,7 +320,7 @@ void Detector::filterObstacles(const std::vector<cv::RotatedRect>& rectangles, c
 
   // keep largest obstacles
   if (obstacles.size() > _max_detectable_obstacles){
-    // log(Warning) << "More obstacles detected than allowed!" << endlog();
+    log(Warning) << "More obstacles detected than allowed!" << endlog();
     for (int k=0; k<_max_detectable_obstacles; k++){
       for (int i=0; i<5; i++){
         obstacle_data.push_back(obstacles[k][i]);

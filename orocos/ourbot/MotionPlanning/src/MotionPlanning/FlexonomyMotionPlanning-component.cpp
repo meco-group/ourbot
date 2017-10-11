@@ -10,9 +10,9 @@ FlexonomyMotionPlanning::FlexonomyMotionPlanning(std::string const& name) : Moti
   //Other vehicle trajectory input port
   ports()->addPort("obstacle_trajectory_port", _obstacle_trajectory_port).doc("Other vehicle Obstacle trajectory port");
   ports()->addPort("host_obstacle_trajectory_port", _host_obstacle_trajectory_port).doc("Host vehicle Obstacle trajectory port");
+  ports()->addPort("robot_markers_port", _robot_markers_port).doc("Markers of robot arm table");
 
   //Robot arm properties
-  addProperty("robotarm_pose", _robotarm_pose).doc("Robot arm pose [x, y, t]");
   addProperty("robotarm_size", _robotarm_size).doc("Robot arm size [width, height]");
   addProperty("neighbor_size", _neighbor_size).doc("Neighbor ourbot size [width, height]");
 
@@ -118,10 +118,22 @@ void FlexonomyMotionPlanning::writeHostObstTraj(int option) {
 }
 
 void FlexonomyMotionPlanning::getObstacles(std::vector<omg::obstacle_t>& obstacles) {
+  // update pose of robot arm
+  if (_robot_markers_port.read(_robot_markers) == RTT::NewData) {
+    _robotarm_pose[0] = (_robot_markers[0] + _robot_markers[2] + _robot_markers[4])/3.;
+    _robotarm_pose[1] = (_robot_markers[1] + _robot_markers[3] + _robot_markers[5])/3.;
+    _robotarm_pose[2] = atan2(_robot_markers[5] - 0.5*(_robot_markers[1]+_robot_markers[3]), _robot_markers[4] - 0.5*(_robot_markers[0]+_robot_markers[2]));
+  } else {
+    std::cout << "No robot table position detected, putting it out of reach." << std::endl;
+    _robotarm_pose[0] = -_robotarm_size[0];
+    _robotarm_pose[1] = -_robotarm_size[1];
+    _robotarm_pose[2] = 0.;
+  }
+
   // obstacle 1 : Classical -  Robot arm
   obstacles[0].position = std::vector<double>({_robotarm_pose[0], _robotarm_pose[1]});
   obstacles[0].avoid = true;
-  double orientation = (M_PI/180.)*_robotarm_pose[2];
+  double orientation = _robotarm_pose[2];
   double width = _robotarm_size[0];
   double height = _robotarm_size[1];
   for (int i=0; i<4; i++){
