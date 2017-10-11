@@ -154,6 +154,25 @@
         <value>0.85</value>
     </simple>
 
+    <simple name="z_position_cam" type="double">
+        <description>Distance camera is placed above ground</description>
+        <value>3.1</value>
+    </simple>
+
+    <struct name="z_position_robot" type="array">
+        <description>Distance robot is placed above ground</description>
+        <value>3.1</value>
+        <simple name="z_position_robot0" type="double">
+            <value>0</value>
+        </simple>
+        <simple name="z_position_robot1" type="double">
+            <value>0</value>
+        </simple>
+        <simple name="z_position_robot2" type="double">
+            <value>0.93</value>
+        </simple>
+    </struct>
+
     <struct name="robot_sizes" type="array">
         <description>Width and height of outer rectangle of each robot [w_r0, h_r0, w_r1, h_r1, ...] (m)</description>
         <simple name="width_robot0" type="double">
@@ -169,10 +188,10 @@
             <value>0.55</value>
         </simple>
         <simple name="width_robot2" type="double">
-            <value>0.4</value>
+            <value>1.2</value>
         </simple>
         <simple name="height_robot2" type="double">
-            <value>0.55</value>
+            <value>0.9</value>
         </simple>
     </struct>
 
@@ -246,22 +265,22 @@
             <value>0.0</value>
         </simple>
         <simple name="x1_robot2" type="double">
-            <value>-0.0145</value>
+            <value>-0.179</value>
         </simple>
         <simple name="y1_robot2" type="double">
-            <value>-0.082</value>
+            <value>-0.44</value>
         </simple>
         <simple name="x2_robot2" type="double">
-            <value>-0.0145</value>
+            <value>-0.179</value>
         </simple>
         <simple name="y2_robot2" type="double">
-            <value>0.082</value>
+            <value>-0.321</value>
         </simple>
         <simple name="x3_robot2" type="double">
-            <value>0.0855</value>
+            <value>-0.105</value>
         </simple>
         <simple name="y3_robot2" type="double">
-            <value>0.0</value>
+            <value>-0.378</value>
         </simple>
     </struct>
 </properties>

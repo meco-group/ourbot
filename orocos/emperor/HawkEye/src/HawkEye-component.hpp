@@ -71,6 +71,8 @@ class HawkEye : public RTT::TaskContext{
         double _crop_ratio;
         int _draw_amount;
         bool _detect_obstacles;
+        std::vector<double> _z_position_robot;
+        double _z_position_cam;
 
         Gui* _gui;
         Camera* _camera;

@@ -38,6 +38,8 @@ HawkEye::HawkEye(std::string const& name) : TaskContext(name, PreOperational), _
   addProperty("draw_amount", _draw_amount).doc("Amount of drawing on captured image");
   addProperty("detect_obstacles", _detect_obstacles).doc("Enable obstacle detection");
   addProperty("hawkeye_sample_rate", _hawkeye_sample_rate).doc("Sample rate of hawkeye");
+  addProperty("z_position_robot", _z_position_robot).doc("Distance robot is placed above ground");
+  addProperty("z_position_cam", _z_position_cam).doc("Distance camera is placed above ground");
 
   // operations
   addOperation("captureBackground", &HawkEye::captureBackground, this);
@@ -140,11 +142,15 @@ void HawkEye::createRobots(){
   _robots.resize(n_robots);
   int n_sizes = _robot_sizes.size();
   std::vector<double> marker_loc(6);
+  double alpha;
+  double pixelspermeter_z;
   for (uint k=0; k<n_robots; k++){
     for (int i=0; i<6; i++){
       marker_loc[i] = _marker_locations[(6*k+i)%_marker_locations.size()];
     }
-    _robots[k] = new Robot(_pixelspermeter*_robot_sizes[(2*k)%n_sizes], _pixelspermeter*_robot_sizes[(2*k+1)%n_sizes], marker_loc);
+    alpha = (_z_position_cam-_z_position_robot[k%_z_position_robot.size()])/_z_position_cam;
+    pixelspermeter_z = _pixelspermeter/alpha;
+    _robots[k] = new Robot(pixelspermeter_z*_robot_sizes[(2*k)%n_sizes], pixelspermeter_z*_robot_sizes[(2*k+1)%n_sizes], _z_position_robot[k%_z_position_robot.size()], _z_position_cam, marker_loc);
   }
 }
 
@@ -205,7 +211,8 @@ void HawkEye::writeResults(){
   std::vector<double> marker_vector(7);
   for (uint k=0; k<_robots.size(); k++){
     if (_robots[k]->detected()){
-      _robots[k]->getMarkers(marker_vector, _pixelspermeter, _frame.size().height);
+      DEBUG_PRINT("robot " << k << "detected.");
+      _robots[k]->getMarkers(marker_vector, _pixelspermeter, _frame.size().height, _frame.size().width);
       marker_vector[6] = _capture_time;
       _robot_markers_port[k]->write(marker_vector);
     }

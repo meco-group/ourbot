@@ -23,22 +23,24 @@ class Robot {
         bool _detected;
         int _width;
         int _height;
+        double _z_position;
+        double _z_position_cam;
         std::vector<double> _local_marker_locations_m;
 
         void createBox();
-        std::vector<double> transform(const std::vector<double>& point, int pixelspermeter, int height);
-        std::vector<double> invtransform(const std::vector<double>& point, int pixelspermeter, int height);
+        std::vector<double> transform(const std::vector<double>& point, int pixelspermeter, int height, int width);
+        std::vector<double> invtransform(const std::vector<double>& point, int pixelspermeter, int height, int width);
         void mixWithWhite(const cv::Scalar& color, cv::Scalar& color_w, double perc_white);
 
     public:
-        Robot(int width, int height, std::vector<double>& local_marker_locations_m);
+        Robot(int width, int height, double z_position, double z_position_cam, std::vector<double>& local_marker_locations_m);
         void reset();
         void setMarkers(const std::vector<int>& marker_locations_px);
         std::string getName();
         bool detected();
         cv::RotatedRect getBox();
         double getBottomTopDistance();
-        void getMarkers(std::vector<double>& marker_vector, int pixelspermeter, int height);
+        void getMarkers(std::vector<double>& marker_vector, int pixelspermeter, int height, int width);
         void setPose(const std::vector<double>& pose);
         void setRef(const std::vector<double>& ref_x, const std::vector<double>& ref_y);
         void getTopMarkers(std::vector<cv::Mat>& top_markers);
