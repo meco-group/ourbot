@@ -12,6 +12,7 @@ class FlexonomyMotionPlanning : public MotionPlanning{
 
     std::vector<double> _robot_markers;
     std::vector<double> _robotarm_pose;
+    std::vector<double> _robotarm_marker_locations;
     std::vector<double> _robotarm_size;
     std::vector<double> _neighbor_size;
 
@@ -20,6 +21,7 @@ class FlexonomyMotionPlanning : public MotionPlanning{
     double _vmax;
 
     void getObstacles(std::vector<omg::obstacle_t>& obstacles);
+    void getRobotArmPose(std::vector<double>& robotarm_pose);
     bool config();
 
   public:

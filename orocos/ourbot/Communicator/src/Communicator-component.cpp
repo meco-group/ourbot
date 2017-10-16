@@ -333,12 +333,12 @@ bool Communicator::addOutgoingConnection(const string& component_name, const str
     ConnPolicy policy = RTT::ConnPolicy::data();
     Port anti_port = clonePort(component_name, port_name, policy);
     connection = getOutgoingConnection(anti_port, _node, id, group);
-    connection->setVerbose(_verbose);
   }
   if (connection == NULL){
     log(Error) << "Type of port is not known!" << endlog();
     return false;
   }
+  connection->setVerbose(_verbose);
   _connections.push_back(connection);
   _con_map[component_name+port_name+id] = connection;
   return true;
@@ -352,12 +352,12 @@ bool Communicator::addIncomingConnection(const string& component_name, const str
     ConnPolicy policy = RTT::ConnPolicy::data();
     Port anti_port = clonePort(component_name, port_name, policy);
     connection = getIncomingConnection(anti_port, _node, id);
-    connection->setVerbose(_verbose);
   }
   if (connection == NULL){
     log(Error) << "Type of port is not known!" << endlog();
     return false;
   }
+  connection->setVerbose(_verbose);
   _connections.push_back(connection);
   _con_map[component_name+port_name+id] = connection;
   return true;
@@ -405,6 +405,8 @@ void Communicator::wait(int ms){
 
 Connection* Communicator::getIncomingConnection(Port port, zyre_t* node, const string& id){
   string type = port->getTypeInfo()->getTypeName();
+  if (type.compare("bool") == 0)
+    return new IncomingConnection <bool> (port, node, id);
   if (type.compare("char") == 0)
     return new IncomingConnection <char> (port, node, id);
   if (type.compare("unsigned char") == 0)
@@ -446,6 +448,8 @@ Connection* Communicator::getIncomingConnection(Port port, zyre_t* node, const s
 
 Connection* Communicator::getOutgoingConnection(Port port, zyre_t* node, const string& id, const string& group){
   string type = port->getTypeInfo()->getTypeName();
+  if (type.compare("bool") == 0)
+    return new OutgoingConnection <bool> (port, node, id, group);
   if (type.compare("char") == 0)
     return new OutgoingConnection <char> (port, node, id, group);
   if (type.compare("unsigned char") == 0)

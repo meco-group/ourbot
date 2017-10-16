@@ -169,7 +169,7 @@
             <value>0</value>
         </simple>
         <simple name="z_position_robot2" type="double">
-            <value>0.93</value>
+            <value>0.</value>
         </simple>
     </struct>
 
@@ -191,7 +191,7 @@
             <value>1.2</value>
         </simple>
         <simple name="height_robot2" type="double">
-            <value>0.9</value>
+            <value>1.2</value>
         </simple>
     </struct>
 
@@ -265,22 +265,22 @@
             <value>0.0</value>
         </simple>
         <simple name="x1_robot2" type="double">
-            <value>-0.179</value>
+            <value>-0.5055</value>
         </simple>
         <simple name="y1_robot2" type="double">
-            <value>-0.44</value>
+            <value>-0.502</value>
         </simple>
         <simple name="x2_robot2" type="double">
-            <value>-0.179</value>
+            <value>-0.5055</value>
         </simple>
         <simple name="y2_robot2" type="double">
-            <value>-0.321</value>
+            <value>-0.333</value>
         </simple>
         <simple name="x3_robot2" type="double">
-            <value>-0.105</value>
+            <value>-0.4005</value>
         </simple>
         <simple name="y3_robot2" type="double">
-            <value>-0.378</value>
+            <value>-0.4175</value>
         </simple>
     </struct>
 </properties>

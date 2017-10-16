@@ -36,6 +36,12 @@ local statemsg_sample_rate = 1
 local nghbcom_sample_rate = 4
 local coordinator_name = 'SH1'
 local vmax = 0.8
+local peer
+if host == 'kurt' then
+    peer = 'krist'
+else
+    peer = 'kurt'
+end
 
 -- ports
 local _motion_time_port = rtt.InputPort("double")
@@ -44,20 +50,24 @@ _motion_time_port:connect(motionplanning:getPort('motion_time_port'))
 local _cmd_velocity_port = rtt.OutputPort("array")
 tc:addPort(_cmd_velocity_port, "cmd_velocity_port", "Input port for low level velocity controller. Vector contains [vx,vy,w]")
 _cmd_velocity_port:connect(teensy:getPort('cmd_velocity_port'))
-local _robot_markers_port = rtt.OutputPort("array")
+local _robot_markers_port = rtt.InputPort("array")
 tc:addPort(_robot_markers_port, "robot_markers_port", "Markers of robot arm table")
+local _peer_priority_port = rtt.InputPort("bool")
+tc:addPort(_peer_priority_port, "peer_priority_port", "Is peer claiming priority?")
+local _host_priority_port = rtt.OutputPort("bool")
+tc:addPort(_host_priority_port, "host_priority_port", "Am I claiming priority?")
 
 -- wireless ports
 local addIncoming = communicator:getOperation('addIncomingConnection')
 local addOutgoing = communicator:getOperation('addOutgoingConnection')
 if not addIncoming('motionplanning', 'obstacle_trajectory_port', 'obstacle_trajectory') then rfsm.send_events(fsm, 'e_failed') return end
-if host == 'dave' then
-    if not addOutgoing('motionplanning', 'host_obstacle_trajectory_port', 'obstacle_trajectory', 'kurt') then rfsm.send_events(fsm, 'e_failed') return end
-else
-    if not addOutgoing('motionplanning', 'host_obstacle_trajectory_port', 'obstacle_trajectory', 'dave') then rfsm.send_events(fsm, 'e_failed') return end
-end
-if not addIncoming('motionplanning', 'robot_markers_port', 'markers_robot') then rfsm.send_events(fsm, 'e_failed') return end
+
+if not addOutgoing('motionplanning', 'host_obstacle_trajectory_port', 'obstacle_trajectory', peer) then rfsm.send_events(fsm, 'e_failed') return end
 if not addIncoming('coordinator', 'robot_markers_port', 'markers_robot') then rfsm.send_events(fsm, 'e_failed') return end
+if not addIncoming('motionplanning', 'robot_markers_port', 'markers_robot') then rfsm.send_events(fsm, 'e_failed') return end
+if not addOutgoing('coordinator', 'host_priority_port', 'priority_'..host, peer) then rfsm.send_events(fsm, 'e_failed') return end
+if not addIncoming('coordinator', 'peer_priority_port', 'priority_kas') then rfsm.send_events(fsm, 'e_failed') return end
+
 
 -- join group host_flex
 if not communicator:joinGroup(host .. '_flex') then rfsm.send_events(fsm, 'e_failed') return end
@@ -82,6 +92,7 @@ local max_no_robot_marker_cnt = 15
 local failure_cnt = 0
 local max_failure_cnt = 5
 local zero_cmd = rtt.Variable('array')
+local priority = false
 zero_cmd:resize(3)
 zero_cmd:fromtab{0, 0, 0}
 
@@ -182,6 +193,34 @@ function compute_distance(start,target)
     return dist
 end
 
+function determine_priority()
+    local fs, peer_priority = _peer_priority_port:read()
+
+    -- resolve collisions
+    if priority and peer_priority then
+        print('<==== priority collision! ====>')
+        if host == 'kurt' then
+            priority = false
+        end
+    end
+
+    if moving then
+        if peer_priority == false then
+            priority = true
+        else
+            priority = false
+        end
+    else
+        priority = false
+    end
+    -- if priority then
+    --     print('I have priority')
+    -- else
+    --     print('I have NO priority')
+    -- end
+    _host_priority_port:write(priority)
+end
+
 function update(fsm, state, control)
     -- print pose
     -- local pose = getPose()
@@ -206,11 +245,13 @@ function update(fsm, state, control)
     end
     -- send host obstacle trajectory
     if nghbcom_cnt >= max_nghbcom_cnt then
+        -- determine who has priority
+        determine_priority()
         nghbcom_cnt = 1
         if not moving then
             hostObstTraj(3)
         else
-            if host == 'dave' then
+            if priority then
                hostObstTraj(1)
             else
                hostObstTraj(2)
@@ -428,7 +469,12 @@ function bidForTask(task, peer)
     end
     nt = table.getn(task_queue)
     local start_pose = (nt == 0) and getPose() or getTargetPose(task_queue[nt])
-    total_time = total_time + getExpectedMotionTime(start_pose, getTargetPose(task))
+    local new_target = getTargetPose(task)
+    if new_target == nil then
+        total_time = inf
+    else
+        total_time = total_time + getExpectedMotionTime(start_pose, getTargetPose(task))
+    end
     -- if os.time()+total_time > decodeTime(task.finished_by) then
     --     total_time = inf
     -- end
@@ -481,13 +527,20 @@ end
 
 function getTargetPose(task)
     local pose
-    if task.task_parameter_key == nil then
+    if task.task_parameter_key == 'None' then
         return task.task_parameters
     else
         local key = task.task_parameter_key
         local rp = getRobotArmPose()
         if key == 'robot' then
-            return {rp[0]-1., rp[1]-0.2, rp[2]+0.0}
+            local dx = -1.0
+            local dy = 0.0
+            local dt = math.pi
+
+            local x = rp[1] + dx*math.cos(rp[3]) - dy*math.sin(rp[3])
+            local y = rp[2] + dx*math.sin(rp[3]) + dy*math.cos(rp[3])
+            local t = rp[3] + dt
+            return {x, y, t}
         end
     end
     print('target not recognized.')
@@ -509,6 +562,10 @@ function getRobotArmPose()
     -- compute robot pose
     local x = (robot_markers[0] + robot_markers[2] + robot_markers[4])/3.
     local y = (robot_markers[1] + robot_markers[3] + robot_markers[5])/3.
-    local theta = math.atan2(robot_markers[5] - 0.5*(robot_markers[1]+robot_markers[3]), robot_markers[4] - 0.5*(robot_markers[0]+robot_markers[2]));
+    local theta = math.atan2((robot_markers[3] - robot_markers[1]), (robot_markers[2] - robot_markers[0])) - 0.5*math.pi;
+    local dx = 0.4705;
+    local dy = 0.4175;
+    x = x + dx*math.cos(theta) - dy*math.sin(theta)
+    y = y + dx*math.sin(theta) + dy*math.cos(theta)
     return {x, y, theta}
-
+end

@@ -83,21 +83,25 @@ void Gui::draw(cv::Mat& frame, const std::vector<double>& obstacles, const std::
         }
     }
     // flexonomy debugging
-    if (robots[2]->detected()) {
-        double h = 1.4;
+    if (false && robots[2]->detected()) {
+
+        double h = 1.2;
         double w = 1.1;
 
         std::vector<double> markers(7);
         robots[2]->getMarkers(markers, _pixelspermeter, height, width);
         double x = (markers[0] + markers[2] + markers[4])/3.;
         double y = (markers[1] + markers[3] + markers[5])/3.;
-        x += 0.1543;
-        y += 0.3797;
+        double dx = 0.4705;
+        double dy = 0.4175;
 
         double theta = atan2((markers[3] - markers[1]), (markers[2] - markers[0]));
         theta -= M_PI/2.;
+        x += dx*cos(theta) - dy*sin(theta);
+        y += dx*sin(theta) + dy*cos(theta);
 
-        std::cout << "theta: " << theta << std::endl;
+        std::cout << "pose: (" << x << "," << y << "," << theta << ")" << std::endl;
+
         std::vector<cv::Point2f> verts(4);
         verts[0] = cv::Point2f(x+0.5*w*cos(theta) - 0.5*h*sin(theta), y+0.5*w*sin(theta) + 0.5*h*cos(theta));
         verts[1] = cv::Point2f(x+0.5*w*cos(theta) + 0.5*h*sin(theta), y+0.5*w*sin(theta) - 0.5*h*cos(theta));
@@ -116,8 +120,8 @@ void Gui::draw(cv::Mat& frame, const std::vector<double>& obstacles, const std::
         cv::circle(frame, cv::Point2f(markers[4]*_pixelspermeter, height-markers[5]*_pixelspermeter), 0.01*_pixelspermeter, _black, 2);
 
         // draw loading position
-        double dx = -1.;
-        double dy = -0.2;
+        x = -1.;
+        y = -0.2;
         double x_l = x + dx*cos(theta) - dy*sin(theta);
         double y_l = y + dx*sin(theta) + dy*cos(theta);
         cv::circle(frame, cv::Point2f(x_l*_pixelspermeter, height-y_l*_pixelspermeter), 0.1*_pixelspermeter, _black, -2);

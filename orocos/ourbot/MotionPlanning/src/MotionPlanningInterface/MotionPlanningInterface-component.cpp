@@ -56,6 +56,16 @@ void MotionPlanningInterface::setTargetPose(double target_x, double target_y, do
   _target_pose[0] = target_x;
   _target_pose[1] = target_y;
   _target_pose[2] = target_t;
+
+  _est_pose_port.read(_est_pose);
+
+  _target_pose[2] += floor(_est_pose[2]/(2*M_PI))*2*M_PI;
+  if ((_target_pose[2] - _est_pose[2]) > M_PI) {
+    _target_pose[2] -= 2*M_PI;
+  }
+  if ((_target_pose[2] - _est_pose[2]) < -M_PI) {
+    _target_pose[2] += 2*M_PI;
+  }
   std::cout << "target set: (" << _target_pose[0] <<","<<_target_pose[1]<<","<<_target_pose[2]<<")"<<std::endl;
   _got_target = true;
 }
@@ -80,9 +90,12 @@ void MotionPlanningInterface::enable(){
 
 void MotionPlanningInterface::disable(){
   _enable = false;
+  _first_iteration = true;
   _got_target = false;
   _valid = false;
-  for (uint k=0; k<_ref_velocity_trajectory.size(); k++) {
+  for (uint k=0; k<_ref_velocity_trajectory[0].size(); k++) {
+    _ref_velocity_trajectory[0][k] = 0.;
+    _ref_velocity_trajectory[1][k] = 0.;
     _ref_velocity_trajectory[2][k] = 0.;
   }
   std::cout << "disabling...." << std::endl;
@@ -197,6 +210,11 @@ void MotionPlanningInterface::updateHook(){
   }
   // update trajectory
   _valid = trajectoryUpdate();
+  if (!_enable) { // someone could call disable() in the meantime
+    _valid = false;
+    return;
+  }
+  double rot_time = 0.;
   if (!_valid){
     std::cout << "recover" << std::endl;
     recover_after_fail();
@@ -207,10 +225,10 @@ void MotionPlanningInterface::updateHook(){
     }
   } else {
     _failure_cnt = 0;
+    // get orientation reference
+    rot_time = getOrientationReference(_est_pose[2], _target_pose[2], _ref_pose_trajectory[2], _ref_velocity_trajectory[2]);
+    _first_iteration = false;
   }
-  // get orientation reference
-  double rot_time = getOrientationReference(_est_pose[2], _target_pose[2], _ref_pose_trajectory[2], _ref_velocity_trajectory[2]);
-  _first_iteration = false;
   // write trajectory
   for (int i=0; i<3; i++){
     _ref_pose_trajectory_port[i].write(_ref_pose_trajectory[i]);
@@ -222,7 +240,6 @@ void MotionPlanningInterface::updateHook(){
   // write motion time
   if (_enable) {
     double motion_time = std::max(getMotionTime(), rot_time);
-    std::cout << "motion time = " << motion_time << "s" << std::endl;
     _motion_time_port.write(motion_time);
   }
   // check timing
@@ -249,7 +266,6 @@ double MotionPlanningInterface::getOrientationReference(double theta0, double th
   // get extrapolated theta0 and omega0
   double th0 = theta0;
   double om0 = omega_trajectory[_predict_shift + int(_update_time/_sample_time)];
-  double om0_prev = omega_trajectory[_predict_shift + int(_update_time/_sample_time)-1];
   for (int k=0; k<int(_update_time/_sample_time); k++) {
     th0 += omega_trajectory[k+_predict_shift]*_sample_time;
   }

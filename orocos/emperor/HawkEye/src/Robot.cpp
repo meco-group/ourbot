@@ -51,8 +51,6 @@ void Robot::createBox(){
     double center_x = (x1+x2+x3)/3. - (local_marker_center_x*cos(orientation) - local_marker_center_y*sin(orientation));
     double center_y = (y1+y2+y3)/3. - (local_marker_center_x*sin(orientation) + local_marker_center_y*cos(orientation));
 
-    std::cout << "orientation: " << orientation << std::endl;
-
     orientation += M_PI/2;
     if (orientation < 0){
       orientation += 2*M_PI;
