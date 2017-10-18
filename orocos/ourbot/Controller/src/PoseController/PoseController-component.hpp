@@ -6,7 +6,7 @@
 class PoseController : public ControllerInterface {
 
   private:
-    double _control_sample_rate;
+    double _control_rate;
     bool _enable_fb;
     bool _enable_ff;
     bool _correct_orientation;

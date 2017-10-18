@@ -10,7 +10,6 @@ class Kalman : public EstimatorInterface {
   private:
     InputPort <std::vector<double> >  _markers_port;
 
-    double _control_sample_rate;
     std::vector<double> _psd_state;
     std::vector<double> _sigma_odo;
     double _sigma_markers;

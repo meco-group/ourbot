@@ -9,7 +9,6 @@ _sigma_odo(3), _cal_velocity(3), _est_pose(3), _est_velocity(3), _marker_data(7)
 {
   ports()->addPort("markers_port", _markers_port).doc("Markers + timestamp detected by camera");
 
-  addProperty("control_sample_rate", _control_sample_rate).doc("Frequency to update the control loop");
   addProperty("psd_state", _psd_state).doc("Acceleration-like squared noise levels for x,y,theta (m/s^2)^2");
   addProperty("sigma_odo", _sigma_odo).doc("Uncertainty on measured velocity (m/s)^2");
   addProperty("sigma_markers", _sigma_markers).doc("Uncertainty on measured markers (m)^2");

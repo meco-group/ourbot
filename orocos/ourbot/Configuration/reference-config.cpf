@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE properties SYSTEM "cpf.dtd">
 <properties>
-  <simple name="trajectory_path" type="string">
-    <description>Path of offline trajectory</description>
-    <value>/home/odroid/orocos/Reference/trajectories_x.csv</value>
-  </simple>
+    <simple name="repeat_trajectory" type="boolean">
+        <description>Repeat trajectory when end is reached</description>
+        <value>0</value>
+    </simple>
 
-  <simple name="repeat_offline_trajectory" type="boolean">
-    <description>Repeat offline trajectory</description>
-    <value>0</value>
-  </simple>
+    <simple name="n_samples_plot" type="long">
+        <description>Number of samples to plot trajectory</description>
+        <value>20</value>
+    </simple>
+
 </properties>

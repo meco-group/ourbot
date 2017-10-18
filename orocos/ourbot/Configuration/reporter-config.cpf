@@ -1,9 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE properties SYSTEM "cpf.dtd">
 <properties>
-  <simple name="WriteHeader" type="boolean"><description>Set to true to start each report with a header.</description><value>1</value></simple>
-  <simple name="Decompose" type="boolean"><description>Set to false in order to create multidimensional array in netcdf</description><value>1</value></simple>
-  <simple name="Snapshot" type="boolean"><description>Set to true to enable snapshot mode. This will cause a non-periodic reporter to only report data upon the snapshot() operation.</description><value>1</value></simple>
-  <simple name="Synchronize" type="boolean"><description>Set to true if the timestamp should be synchronized with the logging</description><value>0</value></simple>
-  <simple name="ReportFile" type="string"><description>Location on disc to store the reports.</description><value>reports.nc</value></simple>
+    <simple name="WriteHeader" type="boolean">
+        <description>Set to true to start each report with a header.</description>
+        <value>1</value>
+    </simple>
+    <simple name="Decompose" type="boolean">
+        <description>Set to false in order to create multidimensional array in netcdf</description>
+        <value>1</value>
+    </simple>
+    <simple name="Snapshot" type="boolean">
+        <description>Set to true to enable snapshot mode. This will cause a non-periodic reporter to only report data upon the snapshot() operation.</description>
+        <value>1</value>
+    </simple>
+    <simple name="Synchronize" type="boolean">
+        <description>Set to true if the timestamp should be synchronized with the logging</description>
+        <value>0</value>
+    </simple>
+    <simple name="ReportFile" type="string">
+        <description>Location on disc to store the reports.</description>
+        <value>reports.nc</value>
+    </simple>
 </properties>
