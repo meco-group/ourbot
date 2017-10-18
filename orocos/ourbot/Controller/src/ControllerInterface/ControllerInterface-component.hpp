@@ -7,7 +7,8 @@
 
 using namespace RTT;
 
-class ControllerInterface : public RTT::TaskContext{
+class ControllerInterface : public RTT::TaskContext {
+
   private:
     InputPort<std::vector<double> > _ref_pose_port;
     InputPort<std::vector<double> > _ref_velocity_port;
@@ -23,7 +24,7 @@ class ControllerInterface : public RTT::TaskContext{
     std::vector<double> _cmd_velocity;
 
   protected:
-    virtual bool controlUpdate() = 0;
+    virtual bool controlHook() = 0;
     virtual bool initialize() = 0;
 
     double getControlSampleRate();
@@ -31,7 +32,7 @@ class ControllerInterface : public RTT::TaskContext{
     std::vector<double> getRefVelocity();
     std::vector<double> getEstPose();
     std::vector<double> getCmdVelocity();
-    void setCmdVelocity(std::vector<double> const&);
+    void setCmdVelocity(const std::vector<double>&);
 
   public:
     ControllerInterface(std::string const& name);
@@ -41,4 +42,5 @@ class ControllerInterface : public RTT::TaskContext{
     virtual void stopHook();
     void writeSample();
 };
+
 #endif

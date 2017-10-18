@@ -3,7 +3,8 @@
 
 #include "../ControllerInterface/ControllerInterface-component.hpp"
 
-class PoseController : public ControllerInterface{
+class PoseController : public ControllerInterface {
+
   private:
     bool _enable_fb;
     bool _enable_ff;
@@ -26,8 +27,9 @@ class PoseController : public ControllerInterface{
 
   public:
     PoseController(std::string const& name);
-    bool controlUpdate();
+    bool controlHook();
     bool initialize();
+
 };
 
 #endif

@@ -8,7 +8,7 @@ EstimatorInterface::EstimatorInterface(std::string const& name) : TaskContext(na
     _cal_imur_transacc(3), _cal_imur_orientation_3d(3), _cal_imur_orientation(0.),
     _cal_imur_dorientation_3d(3), _cal_imur_dorientation(0.),
     _cal_enc_pose(3), _cal_motor_current(4), _cal_motor_voltage(4), _cal_velocity(3),
-    _est_pose(3), _est_velocity(3), _est_acceleration(3), _transmit_cnt(0){
+    _est_pose(3), _est_velocity(3), _est_acceleration(3), _transmit_cnt(0) {
 
   _est_pose_port.keepLastWrittenValue(true);
 
@@ -34,7 +34,6 @@ EstimatorInterface::EstimatorInterface(std::string const& name) : TaskContext(na
   ports()->addPort("cal_velocity_port", _cal_velocity_port).doc("teensy: Velocity input of system");
   ports()->addPort("cmd_velocity_passthrough_port", _cmd_velocity_passthrough_port).doc("teensy: Velocity input of system");
 
-  // outputs
   ports()->addPort("est_pose_port", _est_pose_port).doc("Estimated pose wrt to initial frame");
   ports()->addPort("est_velocity_port", _est_velocity_port).doc("Estimated velocity wrt to initial frame");
   ports()->addPort("est_acceleration_port", _est_acceleration_port).doc("Estimated acceleration wrt to initial frame");

@@ -25,7 +25,6 @@
       <value>2.</value>
     </simple>
     <simple name="kp_t" type="double">
-      <!-- <value>2.</value> -->
       <value>1.</value>
     </simple>
   </struct>
