@@ -16,8 +16,6 @@ class ControllerInterface : public RTT::TaskContext {
 
     OutputPort<std::vector<double> > _cmd_velocity_port;
 
-    double _control_sample_rate;
-
     std::vector<double> _ref_pose;
     std::vector<double> _ref_velocity;
     std::vector<double> _est_pose;
@@ -27,7 +25,6 @@ class ControllerInterface : public RTT::TaskContext {
     virtual bool controlHook() = 0;
     virtual bool initialize() = 0;
 
-    double getControlSampleRate();
     std::vector<double> getRefPose();
     std::vector<double> getRefVelocity();
     std::vector<double> getEstPose();

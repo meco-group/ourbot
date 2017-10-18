@@ -8,7 +8,7 @@ EstimatorInterface::EstimatorInterface(std::string const& name) : TaskContext(na
     _cal_imur_transacc(3), _cal_imur_orientation_3d(3), _cal_imur_orientation(0.),
     _cal_imur_dorientation_3d(3), _cal_imur_dorientation(0.),
     _cal_enc_pose(3), _cal_motor_current(4), _cal_motor_voltage(4), _cal_velocity(3),
-    _est_pose(3), _est_velocity(3), _est_acceleration(3), _transmit_cnt(0) {
+    _est_pose(3), _est_velocity(3), _est_acceleration(3) {
 
   _est_pose_port.keepLastWrittenValue(true);
 
@@ -37,67 +37,54 @@ EstimatorInterface::EstimatorInterface(std::string const& name) : TaskContext(na
   ports()->addPort("est_pose_port", _est_pose_port).doc("Estimated pose wrt to initial frame");
   ports()->addPort("est_velocity_port", _est_velocity_port).doc("Estimated velocity wrt to initial frame");
   ports()->addPort("est_acceleration_port", _est_acceleration_port).doc("Estimated acceleration wrt to initial frame");
-  ports()->addPort("est_pose_tx_port", _est_pose_tx_port).doc("Estimated pose sent over wifi");
-  ports()->addPort("est_velocity_tx_port", _est_velocity_tx_port).doc("Estimated velocity sent over wifi");
 
-  addProperty("control_sample_rate", _control_sample_rate).doc("Frequency to update the control loop");
   addProperty("lidar_data_length", _lidar_data_length).doc("Length of lidar data");
-  addProperty("transmit_rate", _transmit_rate).doc("Frequency to transmit estimate");
 
-  addOperation("writeSample",&EstimatorInterface::writeSample, this).doc("Set data sample on output ports");
-  addOperation("validEstimation",&EstimatorInterface::validEstimation, this).doc("Is the last estimation valid?");
-  addOperation("getEstimatedPose",&EstimatorInterface::getEstimatedPose, this).doc("Get last estimated pose");
-  addOperation("getEstimatedVelocity",&EstimatorInterface::getEstimatedVelocity, this).doc("Get last estimated velocity");
+  addOperation("valid", &EstimatorInterface::valid, this).doc("Is the last estimation valid?");
+  addOperation("getEstimatedPose", &EstimatorInterface::getEstimatedPose, this).doc("Get last estimated pose");
+  addOperation("getEstimatedVelocity", &EstimatorInterface::getEstimatedVelocity, this).doc("Get last estimated velocity");
+  addOperation("getEstimatedAcceleration", &EstimatorInterface::getEstimatedAcceleration, this).doc("Get last estimated acceleration");
 }
 
-void EstimatorInterface::writeSample(){
-  std::vector<double> example(3, 0.0);
-  _est_pose_port.write(example);
-  _est_velocity_port.write(example);
-  _est_acceleration_port.write(example);
+bool EstimatorInterface::valid() {
+  return true;
 }
 
-bool EstimatorInterface::validEstimation(){
-  return _valid_estimation;
-}
-
-std::vector<double> EstimatorInterface::getEstimatedPose(){
+std::vector<double> EstimatorInterface::getEstimatedPose() {
   return _est_pose;
 }
 
-std::vector<double> EstimatorInterface::getEstimatedVelocity(){
+std::vector<double> EstimatorInterface::getEstimatedVelocity() {
   return _est_velocity;
 }
 
-void EstimatorInterface::setValidEstimation(bool valid_estimation){
-  _valid_estimation = valid_estimation;
+std::vector<double> EstimatorInterface::getEstimatedAcceleration() {
+  return _est_acceleration;
 }
 
-bool EstimatorInterface::configureHook(){
-  // Reserve required memory and initialize with zeros
+bool EstimatorInterface::configureHook() {
+  // reserve required memory and initialize with zeros
   _cal_lidar_x.resize(_lidar_data_length);
   _cal_lidar_y.resize(_lidar_data_length);
 
-  // Show example data sample to ports to make data flow real-time
+  // show example data sample to ports to make data flow real-time
   std::vector<double> example(3, 0.0);
   _est_pose_port.setDataSample(example);
-  _est_pose_tx_port.setDataSample(example);
   _est_velocity_port.setDataSample(example);
   _est_acceleration_port.setDataSample(example);
   return true;
 }
 
-bool EstimatorInterface::startHook(){
-  if (!initialize()){
-    log(Error) << "Error occured in initialize() !" <<endlog();
+bool EstimatorInterface::startHook() {
+  if (!initialize()) {
+    log(Error) << "Error occured in initialize()!" << endlog();
     return false;
   }
-  _transmit_cnt = 0;
   return true;
 }
 
-void EstimatorInterface::updateHook(){
-  // Read from sensors
+void EstimatorInterface::updateHook() {
+  // read from sensors
   _cal_lidar_x_port.read(_cal_lidar_x);
   _cal_lidar_y_port.read(_cal_lidar_y);
   _cal_imul_transacc_port.read(_cal_imul_transacc);
@@ -115,56 +102,91 @@ void EstimatorInterface::updateHook(){
   _cal_motor_voltage_port.read(_cal_motor_voltage);
   _cal_velocity_port.read(_cal_velocity);
   _cmd_velocity_passthrough_port.read(_cmd_velocity);
-
-  // Apply estimation update
-  estimateUpdate();
-  // Write estimated values
+  // apply estimation update
+  estimateHook();
+  // write estimated values
   _est_pose_port.write(_est_pose);
   _est_velocity_port.write(_est_velocity);
   _est_acceleration_port.write(_est_acceleration);
-
-  _transmit_cnt++;
-  if (_transmit_cnt == int(_control_sample_rate/_transmit_rate)){
-    _est_pose_tx_port.write(_est_pose);
-    _est_velocity_tx_port.write(_est_velocity);
-    _transmit_cnt = 0;
-  }
 }
 
-void EstimatorInterface::stopHook() {
-
+std::vector<std::vector<double> > EstimatorInterface::getLidarData() {
+  std::vector<std::vector<double> > lidar_data(2, std::vector<double>(_lidar_data_length));
+  lidar_data.at(0) = _cal_lidar_x;
+  lidar_data.at(1) = _cal_lidar_y;
+  return lidar_data;
 }
 
-double EstimatorInterface::getControlSampleRate(){ return _control_sample_rate; }
-int EstimatorInterface::getLidarDataLength(){ return _lidar_data_length; }
-
-std::vector<std::vector<double> > EstimatorInterface::getLidarData(){
-  std::vector<std::vector<double> > lidardata(2, std::vector<double>(_lidar_data_length));
-  lidardata.at(0) = _cal_lidar_x;
-  lidardata.at(1) = _cal_lidar_y;
-  return lidardata;
+std::vector<double> EstimatorInterface::getImuLTransAcc() {
+  return _cal_imul_transacc;
 }
 
-std::vector<double> EstimatorInterface::getImuLTransAcc(){ return _cal_imul_transacc; }
-double EstimatorInterface::getImuLOrientation(){ return _cal_imul_orientation; }
-std::vector<double> EstimatorInterface::getImuL3dOrientation(){ return _cal_imul_orientation_3d; }
-double EstimatorInterface::getImuLDOrientation(){ return _cal_imul_dorientation; }
-std::vector<double> EstimatorInterface::getImuL3dDOrientation(){ return _cal_imul_dorientation_3d; }
+double EstimatorInterface::getImuLOrientation() {
+  return _cal_imul_orientation;
+}
 
-std::vector<double> EstimatorInterface::getImuRTransAcc(){ return _cal_imur_transacc; }
-double EstimatorInterface::getImuROrientation(){ return _cal_imur_orientation; }
-std::vector<double> EstimatorInterface::getImuR3dOrientation(){ return _cal_imur_orientation_3d; }
-double EstimatorInterface::getImuRDOrientation(){ return _cal_imur_dorientation; }
-std::vector<double> EstimatorInterface::getImuR3dDOrientation(){ return _cal_imur_dorientation_3d; }
+std::vector<double> EstimatorInterface::getImuL3dOrientation() {
+  return _cal_imul_orientation_3d;
+}
 
-std::vector<double> EstimatorInterface::getEncPose(){ return _cal_enc_pose; }
-std::vector<double> EstimatorInterface::getMotorCurrent(){ return _cal_motor_current; }
-std::vector<double> EstimatorInterface::getMotorVoltage(){ return _cal_motor_voltage; }
-std::vector<double> EstimatorInterface::getCalVelocity(){ return _cal_velocity; }
-std::vector<double> EstimatorInterface::getCmdVelocity(){ return _cmd_velocity; }
+double EstimatorInterface::getImuLDOrientation() {
+  return _cal_imul_dorientation;
+}
 
-void EstimatorInterface::setEstPose(std::vector<double> const& est_pose){ _est_pose = est_pose; }
-void EstimatorInterface::setEstVelocity(std::vector<double> const& est_velocity){ _est_velocity = est_velocity; }
-void EstimatorInterface::setEstAcceleration(std::vector<double> const& est_acceleration){ _est_acceleration = est_acceleration; }
+std::vector<double> EstimatorInterface::getImuL3dDOrientation() {
+  return _cal_imul_dorientation_3d;
+}
+
+std::vector<double> EstimatorInterface::getImuRTransAcc() {
+  return _cal_imur_transacc;
+}
+
+double EstimatorInterface::getImuROrientation() {
+  return _cal_imur_orientation;
+}
+
+std::vector<double> EstimatorInterface::getImuR3dOrientation() {
+  return _cal_imur_orientation_3d;
+}
+
+double EstimatorInterface::getImuRDOrientation() {
+  return _cal_imur_dorientation;
+}
+
+std::vector<double> EstimatorInterface::getImuR3dDOrientation() {
+  return _cal_imur_dorientation_3d;
+}
+
+std::vector<double> EstimatorInterface::getEncPose() {
+  return _cal_enc_pose;
+}
+
+std::vector<double> EstimatorInterface::getMotorCurrent() {
+  return _cal_motor_current;
+}
+
+std::vector<double> EstimatorInterface::getMotorVoltage() {
+  return _cal_motor_voltage;
+}
+
+std::vector<double> EstimatorInterface::getCalVelocity() {
+  return _cal_velocity;
+}
+
+std::vector<double> EstimatorInterface::getCmdVelocity() {
+  return _cmd_velocity;
+}
+
+void EstimatorInterface::setEstPose(std::vector<double> const& est_pose) {
+  _est_pose = est_pose;
+}
+
+void EstimatorInterface::setEstVelocity(std::vector<double> const& est_velocity) {
+  _est_velocity = est_velocity;
+}
+
+void EstimatorInterface::setEstAcceleration(std::vector<double> const& est_acceleration) {
+  _est_acceleration = est_acceleration;
+}
 
 ORO_CREATE_COMPONENT_LIBRARY()

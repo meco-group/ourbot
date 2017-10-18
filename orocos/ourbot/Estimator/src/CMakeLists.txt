@@ -10,7 +10,7 @@
 # Creates a component library libEstimator-<target>.so
 # and installs in the directory lib/orocos/Estimator/
 #
-orocos_component(Estimator EstimatorInterface/EstimatorInterface-component.hpp EstimatorInterface/EstimatorInterface-component.cpp Kalman/Kalman-component.hpp Kalman/Kalman-component.cpp Kalman/kalman_odometry.cpp Kalman/kalman_odometry.hpp Kalman/kalman_odometry_impl.hpp Kalman/kalman_kinematic.hpp Kalman/kalman_filter.hpp Kalman/kalman_operations.cpp Kalman/kalman_operations.hpp)
+orocos_component(Estimator EstimatorInterface/EstimatorInterface-component.hpp EstimatorInterface/EstimatorInterface-component.cpp Kalman/Kalman-component.hpp Kalman/Kalman-component.cpp Kalman/async_kalman/kalman_odometry.cpp Kalman/async_kalman/kalman_odometry.hpp Kalman/async_kalman/kalman_odometry_impl.hpp Kalman/async_kalman/kalman_kinematic.hpp Kalman/async_kalman/kalman_filter.hpp Kalman/async_kalman/kalman_operations.cpp Kalman/async_kalman/kalman_operations.hpp)
 #
 # You may add multiple orocos_component statements.
 
@@ -19,7 +19,7 @@ orocos_component(Estimator EstimatorInterface/EstimatorInterface-component.hpp E
 #
 # Installs in the include/orocos/Estimator/ directory
 #
-orocos_install_headers(EstimatorInterface/EstimatorInterface-component.hpp Kalman/Kalman-component.hpp Kalman/kalman_odometry.hpp Kalman/kalman_odometry_impl.hpp Kalman/kalman_kinematic.hpp Kalman/kalman_filter.hpp Kalman/kalman_operations.hpp)
+orocos_install_headers(EstimatorInterface/EstimatorInterface-component.hpp Kalman/Kalman-component.hpp Kalman/async_kalman/kalman_odometry.hpp Kalman/async_kalman/kalman_odometry_impl.hpp Kalman/async_kalman/kalman_kinematic.hpp Kalman/async_kalman/kalman_filter.hpp Kalman/async_kalman/kalman_operations.hpp)
 #
 # You may add multiple orocos_install_headers statements.
 

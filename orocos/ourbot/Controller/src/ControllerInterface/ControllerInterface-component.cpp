@@ -11,8 +11,6 @@ ControllerInterface::ControllerInterface(std::string const& name) :
   ports()->addPort("ref_pose_port", _ref_pose_port).doc("Pose reference sample");
   ports()->addPort("ref_velocity_port", _ref_velocity_port).doc("Velocity reference sample");
   ports()->addPort("cmd_velocity_port", _cmd_velocity_port).doc("Velocity command for actuator");
-
-  addProperty("control_sample_rate", _control_sample_rate).doc("Frequency to update the control loop");
 }
 
 bool ControllerInterface::configureHook() {
@@ -56,10 +54,6 @@ void ControllerInterface::stopHook() {
   std::vector<double> zero_velocity(3, 0.0);
   setCmdVelocity(zero_velocity);
   _cmd_velocity_port.write(_cmd_velocity);
-}
-
-double ControllerInterface::getControlSampleRate() {
-  return _control_sample_rate;
 }
 
 std::vector<double> ControllerInterface::getEstPose() {

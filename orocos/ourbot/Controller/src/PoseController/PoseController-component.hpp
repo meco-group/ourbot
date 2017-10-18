@@ -6,12 +6,12 @@
 class PoseController : public ControllerInterface {
 
   private:
+    double _control_sample_rate;
     bool _enable_fb;
     bool _enable_ff;
     bool _correct_orientation;
     std::vector<double> _kp;
     std::vector<double> _ki;
-    double _Ts;
 
     std::vector<double> _cmd_vel;
     std::vector<double> _cmd_vel_prev;

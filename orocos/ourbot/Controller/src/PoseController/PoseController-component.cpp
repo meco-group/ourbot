@@ -6,6 +6,7 @@ PoseController::PoseController(std::string const& name) : ControllerInterface(na
     _cmd_vel(3), _cmd_vel_prev(3), _est_pose(3), _ref_pose(3),
     _error_gl(3), _error_loc(3), _error_loc_prev(3),
     _ref_vel_gl(3), _ref_vel_loc(3) {
+    addProperty("control_sample_rate", _control_sample_rate).doc("Frequency to update the control loop");
     addProperty("enable_fb", _enable_fb).doc("Enable feedback action");
     addProperty("enable_ff", _enable_ff).doc("Enable feedforward action");
     addProperty("correct_orientation", _correct_orientation).doc("Transform velocity ff reference to local frame");
@@ -18,7 +19,6 @@ bool PoseController::initialize() {
         _error_loc_prev[k] = 0.;
         _cmd_vel_prev[k] = 0.;
     }
-    _Ts = 1./getControlSampleRate();
     return true;
 }
 
@@ -36,7 +36,7 @@ bool PoseController::controlHook() {
         _error_loc = global2local(_error_gl, _est_pose[2]);
         for (int k=0; k<3; k++) {
             if (!(fabs(_error_loc[k]) >= 1000.)) { // disable fb by setting inf ref
-                _cmd_vel[k] = (_kp[k]+0.5*_ki[k]*_Ts)*_error_loc[k] + (_cmd_vel_prev[k] + (-_kp[k]+0.5*_ki[k]*_Ts)*_error_loc_prev[k]);
+                _cmd_vel[k] = (_kp[k]+0.5*_ki[k]/_control_sample_rate)*_error_loc[k] + (_cmd_vel_prev[k] + (-_kp[k]+0.5*_ki[k]/_control_sample_rate)*_error_loc_prev[k]);
                 _cmd_vel_prev[k] = _cmd_vel[k];
                 _error_loc_prev[k] = _error_loc[k];
             }

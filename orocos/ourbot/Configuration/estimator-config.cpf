@@ -10,7 +10,6 @@
       <value>500</value>
     </simple>
     <simple name="theta" type="double">
-      <!-- <value>100000</value> -->
       <value>1000000</value>
     </simple>
   </struct>
@@ -28,10 +27,6 @@
     </simple>
   </struct>
 
-  <simple name="time_offset" type="double">
-    <value>0.</value>
-  </simple>
-
   <simple name="sigma_markers" type="double">
     <description>Uncertainty on measured markers (m)^2</description>
     <value>0.1</value>
@@ -47,12 +42,6 @@
     <value>1</value>
   </simple>
 
-  <simple name="transmit_rate" type="long">
-    <description>Frequency to transmit estimate</description>
-    <value>20</value>
-  </simple>
-
-  <!-- laser cut -->
   <struct name="marker_locations" type="array">
     <description>Location of markers in local frame [x1, y1, x2, y2, x3, y3] (m)</description>
     <simple name="x1" type="double">

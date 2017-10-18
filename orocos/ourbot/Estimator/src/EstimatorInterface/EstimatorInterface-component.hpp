@@ -3,11 +3,11 @@
 
 #include <rtt/RTT.hpp>
 #include <rtt/Port.hpp>
-typedef std::vector<RTT::base::PortInterface*> Ports;
 
 using namespace RTT;
 
-class EstimatorInterface : public RTT::TaskContext{
+class EstimatorInterface : public RTT::TaskContext {
+
   private:
     InputPort<std::vector<double> > _cal_lidar_x_port;
     InputPort<std::vector<double> > _cal_lidar_y_port;
@@ -33,8 +33,6 @@ class EstimatorInterface : public RTT::TaskContext{
     OutputPort<std::vector<double> > _est_pose_port;
     OutputPort<std::vector<double> > _est_velocity_port;
     OutputPort<std::vector<double> > _est_acceleration_port;
-    OutputPort<std::vector<double> > _est_pose_tx_port;
-    OutputPort<std::vector<double> > _est_velocity_tx_port;
 
     std::vector<double> _cal_lidar_x;
     std::vector<double> _cal_lidar_y;
@@ -63,17 +61,11 @@ class EstimatorInterface : public RTT::TaskContext{
     std::vector<double> _est_velocity;
     std::vector<double> _est_acceleration;
 
-    double _control_sample_rate;
     int _lidar_data_length;
-    bool _valid_estimation;
-    double _transmit_rate;
 
   protected:
-    virtual bool estimateUpdate() = 0;
+    virtual bool estimateHook() = 0;
     virtual bool initialize() = 0;
-    int _transmit_cnt;
-    double getControlSampleRate();
-    int getLidarDataLength();
 
     std::vector<std::vector<double> > getLidarData();
     std::vector<double> getImuLTransAcc();
@@ -92,21 +84,19 @@ class EstimatorInterface : public RTT::TaskContext{
     std::vector<double> getCalVelocity();
     std::vector<double> getCmdVelocity();
 
-    std::vector<double> _est_pose_tx;
     void setEstPose(std::vector<double> const&);
     void setEstVelocity(std::vector<double> const&);
     void setEstAcceleration(std::vector<double> const&);
-    void setValidEstimation(bool valid_estimation);
 
   public:
     EstimatorInterface(std::string const& name);
     virtual bool configureHook();
     virtual bool startHook();
     virtual void updateHook();
-    virtual void stopHook();
-    void writeSample();
-    bool validEstimation();
+    virtual bool valid();
     std::vector<double> getEstimatedPose();
     std::vector<double> getEstimatedVelocity();
+    std::vector<double> getEstimatedAcceleration();
 };
+
 #endif
