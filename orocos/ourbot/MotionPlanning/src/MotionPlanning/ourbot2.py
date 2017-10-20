@@ -1,5 +1,4 @@
 import sys, os
-sys.path.insert(0, os.getenv('HOME') + '/Downloads/omg-tools/')
 from omgtools import *
 
 """
@@ -13,7 +12,7 @@ options = {}
 rect = Rectangle(0.55, 0.4)
 rect.radius = 0.02
 vehicle = Holonomic(shapes=rect, options=options, bounds={'vmin': -0.3, 'vmax': 0.3, 'amin': -0.3, 'amax': 0.3})
-vehicle.set_options({'safety_distance': 0.05})
+vehicle.set_options({'safety_distance': 0.05, 'room_constraints': False})
 
 vehicle.set_initial_conditions([0.3, 0.3])
 vehicle.set_terminal_conditions([3., 1.5])
@@ -24,7 +23,7 @@ height = 2.59
 environment = Environment(room={'shape': Rectangle(width, height), 'position': [0.5*width, 0.5*height]})
 rectangle = Rectangle(width=0.25, height=0.5)
 
-environment.add_obstacle(Obstacle({'position': [1.5, 0.5]}, shape=rectangle))
+# environment.add_obstacle(Obstacle({'position': [1.5, 0.5]}, shape=rectangle))
 
 # create a point-to-point problem
 problem = Point2point(vehicle, environment, freeT=False)

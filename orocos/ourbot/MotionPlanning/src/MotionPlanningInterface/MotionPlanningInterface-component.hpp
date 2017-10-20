@@ -1,6 +1,13 @@
 #ifndef OROCOS_MOTIONPLANNINGINTERFACE_COMPONENT_HPP
 #define OROCOS_MOTIONPLANNINGINTERFACE_COMPONENT_HPP
 
+#define DEBUG
+#ifdef DEBUG
+    #define DEBUG_PRINT(x) std::cout << x << std::endl;
+#else
+    #define DEBUG_PRINT(x) //std::cout << x << std::endl;
+#endif
+
 #include <rtt/RTT.hpp>
 #include <rtt/Port.hpp>
 #include <rtt/os/TimeService.hpp>
@@ -20,85 +27,76 @@ typedef struct obstacle {
     bool avoid;
 } obstacle_t;
 
-class MotionPlanningInterface : public RTT::TaskContext{
-  private:
-    InputPort<std::vector<double> > _target_pose_port;
-    InputPort<std::vector<double> > _mp_trigger_port;
-    InputPort<std::vector<double> > _obstacle_port;
-    InputPort<std::vector<double> > _robobs_pose_port;
-    InputPort<std::vector<double> > _robobs_velocity_port;
-    OutputPort<std::vector<double> > _ref_pose_trajectory_port[3];
-    OutputPort<std::vector<double> > _ref_pose_trajectory_ss_port[2];
-    OutputPort<std::vector<double> > _ref_velocity_trajectory_port[3];
-    OutputPort<bool> _valid_trajectories_port;
-    OutputPort<double> _motion_time_port;
+class MotionPlanningInterface : public RTT::TaskContext {
 
-    double _target_dist_tol;
-    double _input_norm_tol;
-    double _angle_dist_tol;
-    double _orientation_th;
+    private:
+        InputPort<std::vector<double> > _target_pose_port;
+        InputPort<std::vector<double> > _mp_trigger_port;
+        InputPort<std::vector<double> > _obstacle_port;
+        InputPort<std::vector<double> > _robobs_pose_port;
+        InputPort<std::vector<double> > _robobs_velocity_port;
 
-    TimeService::ticks _timestamp;
-    void initObstacles();
-    void computeObstacles();
-    bool _got_target;
-    bool _enable;
-    std::vector<double> _mp_trigger_data;
-    int _max_computation_periods;
-    int _maximum_failures;
-    bool _target_detection;
+        OutputPort<std::vector<double> > _ref_pose_trajectory_port[3];
+        OutputPort<std::vector<double> > _ref_velocity_trajectory_port[3];
+        OutputPort<double> _motion_time_port;
 
-    int _failure_cnt;
+        double _orientation_th;
 
-    bool _valid;
-    bool _increase;
+        TimeService::ticks _timestamp;
+        double updateOrientationTrajectory();
+        std::vector<double> _mp_trigger_data;
+        bool _target_set;
+        bool _ready;
+        bool _busy;
+        bool _valid;
+        bool _first_iteration;
+        bool _increase;
 
-  protected:
-    virtual bool trajectoryUpdate() = 0;
-    virtual bool initialize() = 0;
-    virtual bool config() = 0;
-    virtual void recover_after_fail() = 0;
-    virtual bool targetReached();
-    virtual double getMotionTime();
-    virtual double getOrientationReference(double theta0, double thetaT, std::vector<double>& theta_trajectory, std::vector<double>& omega_trajectory);
+    protected:
+        virtual bool initialize() = 0;
+        virtual bool config() = 0;
+        virtual double getMotionTime() = 0;
+        virtual bool targetReached();
+        virtual bool updatePoseTrajectory();
+        virtual bool updatePositionTrajectory() = 0;
+        virtual int n_obstacles() { return 0; }
+        virtual void initObstacles(std::vector<obstacle_t>& obstacles, int n_obs);
+        virtual void fillObstacles(std::vector<obstacle_t>& obstacles);
+        virtual void patchup();
 
-    InputPort<std::vector<double> > _est_pose_port;
-    std::vector<obstacle_t> _obstacles;
-    int _trajectory_length;
-    int _trajectory_length_full;
-    int _trajectory_length_tx;
-    int _tx_subsample;
-    int _update_length;
-    double _control_sample_rate;
-    double _pathupd_sample_rate;
-    double _horizon_time;
-    double _sample_time;
-    double _update_time;
-    int _predict_shift;
-    std::vector<double> _est_pose;
-    std::vector<double> _target_pose;
-    std::vector<double> _obstacle_data;
-    std::vector<std::vector<double> > _ref_pose_trajectory;
-    std::vector<std::vector<double> > _ref_velocity_trajectory;
-    std::vector<std::vector<double> > _ref_pose_trajectory_ss;
-    bool _ideal_prediction;
-    int _n_obs;
-    bool _first_iteration;
-    double _orientation_interpolation_rate;
-    double _orientation_interpolation_acc;
+        double _target_dist_tol;
+        double _input_norm_tol;
+        double _angle_dist_tol;
+        double _max_vel_position;
+        double _max_vel_orientation;
+        double _max_acc_position;
+        double _max_acc_orientation;
 
-  public:
-    MotionPlanningInterface(std::string const& name);
-    void setTargetPose(double, double, double);
-    virtual bool configureHook();
-    virtual bool startHook();
-    virtual void updateHook();
-    void writeSample();
-    bool gotTarget();
-    bool valid();
-    void enable();
-    void disable();
-    virtual std::vector<double> setConfiguration();
+        InputPort<std::vector<double> > _est_pose_port;
+        std::vector<obstacle_t> _obstacles;
+        int _trajectory_length;
+        int _update_length;
+        double _control_rate;
+        double _motionplanning_rate;
+        double _horizon_time;
+        double _sample_time;
+        double _update_time;
+        double _rotation_time;
+        int _predict_shift;
+        std::vector<double> _est_pose;
+        std::vector<double> _target_pose;
+        std::vector<std::vector<double> > _ref_pose_trajectory;
+        std::vector<std::vector<double> > _ref_velocity_trajectory;
+
+    public:
+        MotionPlanningInterface(std::string const& name);
+        virtual bool configureHook();
+        virtual void updateHook();
+        virtual void setTargetPose(const std::vector<double>& target_pose);
+        virtual bool reset();
+        virtual bool ready();
+        virtual bool busy();
+        virtual bool valid();
 };
 #endif
 

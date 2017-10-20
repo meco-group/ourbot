@@ -6,24 +6,27 @@
 #include "Holonomic_p2p.hpp"
 #include "Point2Point_p2p.hpp"
 
-class MotionPlanning : public MotionPlanningInterface{
-  private:
-    int _n_st;
-    int _n_in;
+class MotionPlanning : public MotionPlanningInterface {
 
-  protected:
-    omg::Point2Point* _p2p;
-    std::vector<std::vector<double> > _ref_velocity;
-    std::vector<std::vector<double> > _ref_pose;
+    private:
+        int _n_st;
+        int _n_in;
+        bool _ideal_prediction;
+        std::vector<std::vector<double> > _ref_velocity;
+        std::vector<std::vector<double> > _ref_pose;
 
-  public:
-    MotionPlanning(std::string const& name);
+    protected:
+        omg::Point2Point* _p2p;
+        int n_obstacles() { return _p2p->n_obs;}
+        virtual bool initialize();
+        virtual bool config();
+        virtual bool updatePositionTrajectory();
+        virtual void patchup();
+        virtual double getMotionTime();
 
-    bool trajectoryUpdate();
-    bool initialize();
-    void recover_after_fail();
-    virtual void getObstacles(std::vector<omg::obstacle_t>& obstacles);
-    virtual bool config();
+
+    public:
+        MotionPlanning(std::string const& name);
 };
 
 #endif
