@@ -66,7 +66,7 @@ if not addOutgoing('motionplanning', 'host_obstacle_trajectory_port', 'obstacle_
 if not addIncoming('coordinator', 'robot_markers_port', 'markers_robot') then rfsm.send_events(fsm, 'e_failed') return end
 if not addIncoming('motionplanning', 'robot_markers_port', 'markers_robot') then rfsm.send_events(fsm, 'e_failed') return end
 if not addOutgoing('coordinator', 'host_priority_port', 'priority_'..host, peer) then rfsm.send_events(fsm, 'e_failed') return end
-if not addIncoming('coordinator', 'peer_priority_port', 'priority_kas') then rfsm.send_events(fsm, 'e_failed') return end
+if not addIncoming('coordinator', 'peer_priority_port', 'priority_'..peer) then rfsm.send_events(fsm, 'e_failed') return end
 
 
 -- join group host_flex
@@ -175,7 +175,7 @@ function home(fsm)
                 controlLoop(fsm, false)
                 return
             else -- unsuccesful
-                rtt.log("Error", "Could not home!")
+                rtt.logl("Error", "Could not home!")
                 rfsm.send_events(fsm, 'e_failed')
                 controlLoop(fsm, false)
                 return
@@ -194,6 +194,8 @@ function compute_distance(start,target)
 end
 
 function determine_priority()
+    local priority_old = priority
+
     local fs, peer_priority = _peer_priority_port:read()
 
     -- resolve collisions
@@ -213,12 +215,16 @@ function determine_priority()
     else
         priority = false
     end
-    -- if priority then
-    --     print('I have priority')
-    -- else
-    --     print('I have NO priority')
-    -- end
-    _host_priority_port:write(priority)
+
+    if priority ~= priority_old then -- event-based sending
+        _host_priority_port:write(priority)
+        if priority then
+            rtt.logl('Warning','I take priority')
+        else
+            rtt.logl('Warning','I release my priority')
+        end
+    end
+
 end
 
 function update(fsm, state, control)
