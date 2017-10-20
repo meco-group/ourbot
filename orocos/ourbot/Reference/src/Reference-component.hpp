@@ -27,6 +27,8 @@ class Reference : public RTT::TaskContext{
 
         bool _repeat_trajectory;
         int _n_samples_plot;
+        std::string _trajectory_path;
+
         int _index;
         bool _ready;
         std::vector<double> _pose_offset;
@@ -40,7 +42,8 @@ class Reference : public RTT::TaskContext{
         void updateHook();
 
         void reset();
-        void setPoseOffset(const std::vector<double>& pose_offset);
+        bool ready();
+        void setPoseOffset(double x, double y, double t);
         bool receiveTrajectory(int index);
         bool loadTrajectory(const std::string& path);
 

@@ -1,137 +1,83 @@
+local fun = require './Coordinator/functions'
+
 local tc = rtt.getTC()
+local reference = tc:getPeer('reference')
+local teensy = tc:getPeer('teensy')
+local estimator = tc:getPeer('estimator')
 
-local communicator    = tc:getPeer('communicator')
-local controller      = tc:getPeer('controller')
-local estimator       = tc:getPeer('estimator')
-local reference       = tc:getPeer('reference')
-local reporter        = tc:getPeer('reporter')
-local io              = tc:getPeer('io')
-local teensy          = tc:getPeer('teensy')
+local ref_reset = reference:getOperation('reset')
+local ref_ready = reference:getOperation('ready')
+local load_trajectory = reference:getOperation('loadTrajectory')
 
-local estimatorUpdate              = estimator:getOperation("update")
-local referenceUpdate              = reference:getOperation("update")
-local validEstimation              = estimator:getOperation("validEstimation")
-local controllerUpdate             = controller:getOperation("update")
-local estimatorInRunTimeError      = estimator:getOperation("inRunTimeError")
-local controllerInRunTimeError     = controller:getOperation("inRunTimeError")
-local referenceInRunTimeError      = reference:getOperation("inRunTimeError")
-local snapshot                     = reporter:getOperation("snapshot")
-
--- variables for the timing diagnostics
-local jitter    = 0
-local duration  = 0
+local trajectory_path = reference:getProperty('trajectory_path'):get()
 
 return rfsm.state {
   rfsm.trans{src = 'initial', tgt = 'init'},
-  rfsm.trans{src = 'init',    tgt = 'run',    events = {'e_run'}},
-  rfsm.trans{src = 'run',     tgt = 'stop',   events = {'e_stop'}},
-  rfsm.trans{src = 'stop',    tgt = 'init',   events = {'e_restart'}},
-  rfsm.trans{src = 'stop',    tgt = 'idle',   events = {'e_reset'}},
+  rfsm.trans{src = 'init', tgt = 'idle', events = {'e_done'}},
+  rfsm.trans{src = 'idle', tgt = 'following', events = {'e_run'}},
+  rfsm.trans{src = 'following', tgt = 'idle', events = {'e_done'}},
+  rfsm.trans{src = 'idle', tgt = 'stop', events = {'e_stop'}},
+  rfsm.trans{src = 'following', tgt = 'stop', events = {'e_stop'}},
 
   initial = rfsm.conn{},
 
   init = rfsm.state{
     entry = function(fsm)
-      if not io:start() then
-        rtt.logl("Error","Could not start io component")
-        rfsm.send_events(fsm,'e_failed')
-        return
+      if not fun:start() then
+        rfsm.send_events(fsm, 'e_failed')
       end
-      if not reference:loadTrajectory() then
-        rtt.logl("Error","Could not load trajectory in reference component")
-        rfsm.send_events(fsm,'e_failed')
-        return
+      if not load_trajectory(trajectory_path) then
+        rtt.logl('Warning', 'Trajectory could not be loaded!')
+        rfsm.send_events(fsm, 'e_failed')
       end
-      if not reporter:start() then
-        rtt.logl("Error","Could not start reporter component")
-        rfsm.send_events(fsm,'e_failed')
-        return
-      end
-      if not reference:start() or not estimator:start() or not controller:start() then
-        rtt.logl("Error","Could not start reference/estimator/controller component")
-        rfsm.send_events(fsm,'e_failed')
-        return
-      end
-      teensy:strongVelocityControl()
     end,
   },
 
-  run = rfsm.state{
+  idle = rfsm.state{
     entry = function(fsm)
-      print "Ready to roll..."
+      teensy:setVelocity(0, 0, 0)
+      fun:enable_manualcommand()
+      ref_reset()
     end,
 
     doo = function(fsm)
-      period = tc:getPeriod()
-      max_cnt = 1/(reporter_sample_rate*period)
-      snapshot_cnt = max_cnt
-      start_time = get_sec()
-      prev_start_time = start_time
-      end_time   = start_time
-      init       = 0
       while true do
-        prev_start_time = start_time
-        start_time      = get_sec()
-
-        -- update reference/estimator/controller
-        estimatorUpdate()
-        if validEstimation() then
-          referenceUpdate()
-          controllerUpdate()
-        else
-          print "Estimate not valid!"
+        if not fun:control_hook(false) then
+          rfsm.send_events(fsm, 'e_failed')
         end
-
-        -- take snapshot for logger
-        if snapshot_cnt >= max_cnt then
-          snapshot:send()
-          snapshot_cnt = 1
-        else
-          snapshot_cnt = snapshot_cnt + 1
-        end
-
-        if controllerInRunTimeError() or estimatorInRunTimeError() or referenceInRunTimeError() then
-          rtt.logl("Error","RunTimeError in controller/estimator/reference component")
-          rfsm.send_events(fsm,'e_failed')
-          return
-        end
-
-        -- check timings of previous iteration
-        -- ditch the first two calculations due to the initially wrongly calculated prev_start_time
-        if init > 2 then
-          duration = (end_time - prev_start_time) * 1000
-          jitter = (start_time - prev_start_time - period) * 1000
-          if print_level >= 1 then
-            if duration > 900*period then
-              rtt.logl('Warning','ControlLoop: Duration of calculation exceeded 90% of sample period')
-            end
-            if jitter > 100.*period then
-              rtt.logl('Warning','ControlLoop: Jitter exceeded 10% of sample period')
-            end
-          end
-          _controlloop_duration:write(duration)
-          _controlloop_jitter:write(jitter)
-        else
-          init = init+1
-        end
-
-        end_time = get_sec()
-
-        rfsm.yield(true) -- sleep until next sample period
+        rfsm.yield(true)
       end
     end,
   },
 
-  stop = rfsm.state{
+  following = rfsm.state{
     entry = function(fsm)
-      reference:stop()
-      controller:stop()
-      estimator:stop()
-      reporter:stop()
-      io:stop()
-      print("System stopped. Waiting on Restart or Reset...")
+      fun:disable_manualcommand()
+      local pose = estimator:getEstimatedPose()
+      reference:setPoseOffset(-pose[0], -pose[1], -pose[2]) -- start from local pose
+    end,
+
+    doo = function(fsm)
+      local start_time = fun:get_sec()
+      local prev_start_time = start_time
+      local end_time = start_time
+      while not ref_ready() do
+        prev_start_time = start_time
+        start_time = fun:get_sec()
+        if not fun:control_hook(true) then
+          rfsm.send_events(fsm, 'e_failed')
+        end
+        fun:guard_time(start_time, prev_start_time, end_time)
+        end_time = fun:get_sec()
+        rfsm.yield(true)
+      end
     end,
   },
 
-  idle = rfsm.state{}
+  stop = rfsm.state {
+    entry = function(fsm)
+      fun:stop()
+    end,
+  },
+
 }

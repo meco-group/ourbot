@@ -1,4 +1,5 @@
 #include "Reference-component.hpp"
+#include <rtt/Component.hpp>
 #include <iostream>
 #include <fstream>
 
@@ -20,8 +21,10 @@ Reference::Reference(std::string const& name) : TaskContext(name, PreOperational
 
     addProperty("repeat_trajectory", _repeat_trajectory).doc("Repeat trajectory when end is reached");
     addProperty("n_samples_plot", _n_samples_plot).doc("Number of samples to plot trajectory");
+    addProperty("trajectory_path", _trajectory_path).doc("Path to csv file with trajectory to follow");
 
     addOperation("reset", &Reference::reset, this).doc("Reset index");
+    addOperation("ready", &Reference::ready, this).doc("Complete trajectory followed?");
     addOperation("setPoseOffset", &Reference::setPoseOffset, this).doc("Set an offset to the reference pose (i.e. to start from current position)");
     addOperation("receiveTrajectory", &Reference::receiveTrajectory, this).doc("Receive reference trajectory from input port");
     addOperation("loadTrajectory", &Reference::loadTrajectory, this).doc("Load trajectory from csv file");
@@ -40,12 +43,6 @@ bool Reference::startHook() {
     for(int i=0; i<3; i++) {
         _con_ref_pose_trajectory[i] = _ref_pose_trajectory_port[i].connected();
         _con_ref_velocity_trajectory[i] = _ref_velocity_trajectory_port[i].connected();
-        if (!_con_ref_pose_trajectory[i]) {
-            log(Warning) << "ref_pose_trajectory_port[" << i << "] is not connected!" << endlog();
-        }
-        if (!_con_ref_velocity_trajectory[i]) {
-            log(Warning) << "ref_velocity_trajectory_port[" << i << "] is not connected!" << endlog();
-        }
     }
     reset();
     return true;
@@ -68,8 +65,8 @@ void Reference::updateHook() {
         } else {
           _ref_pose[i] = 0.0 + _pose_offset[i];
         }
-        if (fabs(_ref_pose_trajectory[i].at(_index)) > 1.e-3) {
-          _ref_velocity[i] = _ref_pose_trajectory[i].at(_index);
+        if (fabs(_ref_velocity_trajectory[i].at(_index)) > 1.e-3) {
+          _ref_velocity[i] = _ref_velocity_trajectory[i].at(_index);
         } else {
           _ref_velocity[i] = 0.0;
         }
@@ -85,8 +82,12 @@ void Reference::reset() {
     _ready = false;
 }
 
-void Reference::setPoseOffset(const std::vector<double>& pose_offset) {
-    _pose_offset = pose_offset;
+bool Reference::ready() {
+    return _ready;
+}
+
+void Reference::setPoseOffset(double x, double y, double t) {
+    _pose_offset = std::vector<double>({x, y, t});
 }
 
 bool Reference::receiveTrajectory(int index) {
@@ -144,7 +145,7 @@ bool Reference::loadTrajectory(const std::string& path) {
     }
     file.close();
     for (int i=0; i<3; i++) {
-            ref_pose_trajectory[i].pop_back(); // last value is rubbish
+        ref_pose_trajectory[i].pop_back(); // last value is rubbish
         ref_velocity_trajectory[i].pop_back();
         _ref_pose_trajectory[i].resize(ref_pose_trajectory[i].size());
         _ref_velocity_trajectory[i].resize(ref_velocity_trajectory[i].size());
@@ -166,3 +167,6 @@ void Reference::updatePositionTrajectory() {
         _ref_position_trajectory_port[i].write(_ref_position_trajectory[i]);
     }
 }
+
+ORO_CREATE_COMPONENT_LIBRARY();
+ORO_LIST_COMPONENT_TYPE(Reference);
