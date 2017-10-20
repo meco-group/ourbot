@@ -23,7 +23,7 @@ return rfsm.state {
 
   init = rfsm.state{
     entry = function(fsm)
-      if not fun:start() then
+      if not fun:start_control_components() then
         rfsm.send_events(fsm, 'e_failed')
       end
       if not load_trajectory(trajectory_path) then
@@ -76,7 +76,7 @@ return rfsm.state {
 
   stop = rfsm.state {
     entry = function(fsm)
-      fun:stop()
+      fun:stop_control_components()
     end,
   },
 

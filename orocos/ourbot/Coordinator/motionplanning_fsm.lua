@@ -123,7 +123,7 @@ return rfsm.state {
       mp_busy = motionplanning:getOperation('busy')
       mp_valid = motionplanning:getOperation('valid')
       mp_ready = motionplanning:getOperation('ready')
-      if not fun:start() then
+      if not fun:start_control_components() then
         rfsm.send_events(fsm, 'e_failed')
       end
     end
@@ -278,7 +278,7 @@ return rfsm.state {
   stop = rfsm.state {
     entry = function(fsm)
       unload_motionplanner()
-      fun:stop()
+      fun:stop_control_components()
     end,
   },
 }

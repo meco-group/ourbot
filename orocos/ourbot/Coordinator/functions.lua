@@ -34,21 +34,13 @@ tc:addPort(_controlloop_jitter_port, 'controlloop_jitter_port','Jitter of the co
 
 local snapshot_cnt = 1./(reporting_rate*period)
 
-function Functions:start()
+function Functions:start_sensing_components()
   if not io:start() then
     rtt.logl('Error', 'Could not start io component!')
     -- return false
   end
   if not estimator:start() then
     rtt.logl('Error', 'Could not start estimator component!')
-    return false
-  end
-  if not reference:start() then
-    rtt.logl('Error', 'Could not start reference component!')
-    return false
-  end
-  if not controller:start() then
-    rtt.logl('Error', 'Could not start controller component!')
     return false
   end
   if not reporter:start() then
@@ -58,12 +50,27 @@ function Functions:start()
   return true
 end
 
-function Functions:stop()
+function Functions:stop_sensing_components()
   estimator:stop()
-  reference:stop()
-  controller:stop()
   reporter:stop()
   io:stop()
+end
+
+function Functions:start_control_components()
+  if not reference:start() then
+    rtt.logl('Error', 'Could not start reference component!')
+    return false
+  end
+  if not controller:start() then
+    rtt.logl('Error', 'Could not start controller component!')
+    return false
+  end
+  return true
+end
+
+function Functions:stop_control_components()
+  reference:stop()
+  controller:stop()
 end
 
 function Functions:control_hook(control)
