@@ -6,8 +6,8 @@ options = {}
 shape = Circle(0.35)
 vehicle = Holonomic(shapes=shape, options=options, bounds={'vmin': -0.3, 'vmax': 0.3, 'amin': -0.5, 'amax': 0.5})
 # vehicle.set_options({'safety_distance': 0.05})
-# vehicle.set_options({'safety_distance': 0.1})
-vehicle.set_options({'safety_distance': 0.07})
+vehicle.set_options({'safety_distance': 0.1})
+# vehicle.set_options({'safety_distance': 0.07})
 vehicle.set_options({'stop_tol': 1e-2})
 
 A = [ 3.2, 2.]

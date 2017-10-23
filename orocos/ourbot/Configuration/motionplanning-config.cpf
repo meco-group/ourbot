@@ -52,7 +52,7 @@
 </simple>
 <simple name="orientation_th" type="double">
   <description>Threshold for orientation setpoint</description>
-  <value>0.06</value>
+  <value>0.01</value>
 </simple>
 
 
