@@ -17,11 +17,8 @@ local io_update = io:getOperation('update')
 local estimator_update = estimator:getOperation('update')
 local reference_update = reference:getOperation('update')
 local controller_update = controller:getOperation('update')
-local io_error = io:getOperation('inRunTimeError')
-local estimator_error = estimator:getOperation('inRunTimeError')
-local reference_error = reference:getOperation('inRunTimeError')
-local controller_error = controller:getOperation('inRunTimeError')
 estimator_valid = estimator:getOperation('valid')
+set_velocity = teensy:getOperation('setVelocity')
 
 
 -- add ports
@@ -34,7 +31,7 @@ tc:addPort(_controlloop_jitter_port, 'controlloop_jitter_port','Jitter of the co
 function Functions:start_sensing_components()
   if not io:start() then
     rtt.logl('Error', 'Could not start io component!')
-    -- return false
+    return false
   end
   if not estimator:start() then
     rtt.logl('Error', 'Could not start estimator component!')
@@ -74,32 +71,14 @@ function Functions:control_hook(control)
   io_update()
   estimator_update()
   if control then
-    if true or estimator_valid() then
+    if estimator_valid() then
       reference_update()
       controller_update()
     else
       rtt.logl('Warning', 'Estimate not valid!')
     end
-  end
-  if tc:inRunTimeError() then
-    rtt.logl('Error', 'RunTimeError in coordinator component!')
-    return false
-  end
-  if io_error() then
-    rtt.logl('Error', 'RunTimeError in io component!')
-    return false
-  end
-  if estimator_error() then
-    rtt.logl('Error', 'RunTimeError in estimator component!')
-    return false
-  end
-  if reference_error() then
-    rtt.logl('Error', 'RunTimeError in reference component!')
-    return false
-  end
-  if controller_error() then
-    rtt.logl('Error', 'RunTimeError in controller component!')
-    return false
+  else
+    set_velocity(0., 0., 0.)
   end
   return true
 end

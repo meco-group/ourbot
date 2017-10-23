@@ -48,7 +48,7 @@ return rfsm.state {
     entry = function(fsm)
       fun:disable_manualcommand()
       local pose = estimator:getEstimatedPose()
-      reference:setPoseOffset(-pose[0], -pose[1], -pose[2]) -- start from local pose
+      reference:setPoseOffset(pose[0], pose[1], pose[2]) -- start from local pose
       print('started following trajectory')
     end,
 

@@ -19,7 +19,7 @@
       <value>0.8</value>
     </simple>
     <simple name="w" type="double">
-      <value>0.8</value>
+      <value>1.2</value>
     </simple>
   </struct>
 

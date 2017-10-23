@@ -4,7 +4,7 @@ local teensy = tc:getPeer('teensy')
 
 return rfsm.state {
   rfsm.trans{src = 'initial', tgt = 'init'},
-  rfsm.trans{src = 'init', tgt = 'idle'},
+  rfsm.trans{src = 'init', tgt = 'idle', events = {'e_done'}},
   rfsm.trans{src = 'idle', tgt = 'motionplanning', events = {'e_motionplanning'}},
   rfsm.trans{src = 'idle', tgt = 'trajectoryfollowing', events = {'e_trajectoryfollowing'}},
 

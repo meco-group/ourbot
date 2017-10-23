@@ -55,7 +55,7 @@
 
     <simple name="detect_obstacles" type="boolean">
         <description>Enable obstacle detection</description>
-        <value>0</value>
+        <value>1</value>
     </simple>
 
     <simple name="max_detectable_obstacles" type="long">

@@ -135,15 +135,13 @@ return rfsm.state {
         -- load operations
         local addIncoming = components.communicator:getOperation('addIncomingConnection')
         local addOutgoing = components.communicator:getOperation('addOutgoingConnection')
-        local setRate = components.communicator:getOperation('setConnectionRate')
         -- emperor
         if not addOutgoing('emperor', 'emperor_send_event_port', 'fsm_event', 'ourbots') then rfsm.send_events(fsm,'e_failed') return end
         if not addIncoming('emperor', 'emperor_fsm_event_port', 'fsm_event') then rfsm.send_events(fsm,'e_failed') return end
         -- gamepad
         if not addOutgoing('gamepad', 'cmd_velocity_port', 'cmd_velocity', 'ourbots') then rfsm.send_events(fsm,'e_failed') return end
         -- hawkeye
-        -- if not addOutgoing('hawkeye', 'target_pose_port', 'target_pose', 'ourbots') then rfsm.send_events(fsm, 'e_failed') return end
-        -- if not addOutgoing('hawkeye', 'obstacle_port', 'obstacles', 'ourbots') then rfsm.send_events(fsm, 'e_failed') return end
+        if not addOutgoing('hawkeye', 'target_pose_port', 'target_pose', 'ourbots') then rfsm.send_events(fsm, 'e_failed') return end
         if not addOutgoing('hawkeye', 'robot9_pose_port', 'markers_kurt', 'kurt') then rfsm.send_events(fsm, 'e_failed') return end
         if not addOutgoing('hawkeye', 'robot0_pose_port', 'markers_dave', 'dave') then rfsm.send_events(fsm, 'e_failed') return end
         if not addOutgoing('hawkeye', 'robot1_pose_port', 'markers_krist', 'krist') then rfsm.send_events(fsm, 'e_failed') return end
@@ -151,12 +149,12 @@ return rfsm.state {
         if not addIncoming('hawkeye', 'robot9_est_pose_port', 'est_pose_kurt') then rfsm.send_events(fsm,'e_failed') return end
         if not addIncoming('hawkeye', 'robot0_est_pose_port', 'est_pose_dave') then rfsm.send_events(fsm,'e_failed') return end
         if not addIncoming('hawkeye', 'robot1_est_pose_port', 'est_pose_krist') then rfsm.send_events(fsm,'e_failed') return end
-        -- if not addIncoming('hawkeye', 'robot9_ref_x_port', 'ref_x_kurt') then rfsm.send_events(fsm,'e_failed') return end
-        -- if not addIncoming('hawkeye', 'robot0_ref_x_port', 'ref_x_dave') then rfsm.send_events(fsm,'e_failed') return end
-        -- if not addIncoming('hawkeye', 'robot1_ref_x_port', 'ref_x_krist') then rfsm.send_events(fsm,'e_failed') return end
-        -- if not addIncoming('hawkeye', 'robot9_ref_y_port', 'ref_y_kurt') then rfsm.send_events(fsm,'e_failed') return end
-        -- if not addIncoming('hawkeye', 'robot0_ref_y_port', 'ref_y_dave') then rfsm.send_events(fsm,'e_failed') return end
-        -- if not addIncoming('hawkeye', 'robot1_ref_y_port', 'ref_y_krist') then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('hawkeye', 'robot9_ref_x_port', 'ref_x_kurt') then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('hawkeye', 'robot0_ref_x_port', 'ref_x_dave') then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('hawkeye', 'robot1_ref_x_port', 'ref_x_krist') then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('hawkeye', 'robot9_ref_y_port', 'ref_y_kurt') then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('hawkeye', 'robot0_ref_y_port', 'ref_y_dave') then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('hawkeye', 'robot1_ref_y_port', 'ref_y_krist') then rfsm.send_events(fsm,'e_failed') return end
         -- deployer
         if not addOutgoing('lua', 'deployer_failure_event_port', 'deployer_event', 'ourbots') then rfsm.send_events(fsm,'e_failed') return end
         if not addIncoming('lua', 'deployer_fsm_event_port', 'deployer_event') then rfsm.send_events(fsm, 'e_failed') return end
@@ -205,7 +203,7 @@ return rfsm.state {
         if not components.emperor:start() then rfsm.send_events(fsm,'e_failed') return end
         if not components.communicator:start() then rfsm.send_events(fsm, 'e_failed') return end
         components.gamepad:start() -- no failure when not connected
-        -- if not components.hawkeye:start() then rfsm.send_events(fsm, 'e_failed') return end
+        if not components.hawkeye:start() then rfsm.send_events(fsm, 'e_failed') return end
       end,
     },
   },

@@ -51,7 +51,7 @@ end
 return rfsm.state {
 
   rfsm.trans{src = 'initial', tgt = 'idle'},
-  rfsm.trans{src = 'idle', tgt = 'init'},
+  rfsm.trans{src = 'idle', tgt = 'init', events = {'e_done'}},
   rfsm.trans{src = 'init', tgt = 'state', events = {'e_done'}},
   rfsm.trans{src = 'state', tgt = 'idle', events = {'e_idle'}},
   rfsm.trans{src = 'init', tgt = 'failure', events = {'e_failure'}},

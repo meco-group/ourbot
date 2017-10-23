@@ -158,6 +158,6 @@ std::vector<double> Robot::invtransform(const std::vector<double>& point, int pi
   double alpha = (_z_position_cam-_z_position)/_z_position_cam;
   double pixelspermeter_z = pixelspermeter/alpha;
   point_tf[0] = pixelspermeter_z*(point[0] - 0.5*(1 - alpha)*(1.0/pixelspermeter)*width);
-  point_tf[1] = -pixelspermeter_z*(point[1] + height/pixelspermeter + 0.5*(1 - alpha)*(1.0/pixelspermeter)*height);
+  point_tf[1] = pixelspermeter_z*(-point[1] + (1.0/pixelspermeter)*height - 0.5*(1 - alpha)*(1.0/pixelspermeter)*height);
   return point_tf;
 }

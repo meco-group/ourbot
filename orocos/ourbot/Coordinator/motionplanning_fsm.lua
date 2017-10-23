@@ -65,6 +65,12 @@ function load_motionplanner()
   if not dp:connectPorts('motionplanning', 'coordinator') then
     return false
   end
+  if not dp:addPeer('communicator', 'motionplanning') then
+    return false
+  end
+  if not communicator:addIncomingConnection('motionplanning', 'obstacle_port', 'obstacles') then
+    return false
+  end
   if not mp:configure() then
     return false
   end
@@ -93,6 +99,7 @@ return rfsm.state {
   rfsm.trans{src = 'idle', tgt = 'p2p0', events = {'e_p2p'}},
   rfsm.trans{src = 'p2p0', tgt = 'idle', events = {'e_idle'}},
   rfsm.trans{src = 'p2p0', tgt = 'p2p', events = {'e_done'}},
+  rfsm.trans{src = 'p2p', tgt = 'idle', events = {'e_done'}},
   rfsm.trans{src = 'p2p', tgt = 'recover', events = {'e_recover'}},
   rfsm.trans{src = 'recover', tgt = 'p2p0', events = {'e_p2p'}},
   rfsm.trans{src = 'recover', tgt = 'idle', events = {'e_done'}},

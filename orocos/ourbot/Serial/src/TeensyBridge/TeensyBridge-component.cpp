@@ -248,7 +248,6 @@ void TeensyBridge::updateHook()
 	// Possible return values are: NoData, OldData and NewData.
 	if(_cmd_velocity_port.read(cmd_velocity) == RTT::NewData){
 		setVelocity(cmd_velocity[0], cmd_velocity[1], cmd_velocity[2]);
-		_cmd_velocity_passthrough_port.write(cmd_velocity);
 	}
 }
 
@@ -344,6 +343,9 @@ void TeensyBridge::setVelocity(double vx, double vy, double w)
 		vx = saturate(vx, _max_velocity[0]);
 		vy = saturate(vy, _max_velocity[1]);
 		w = saturate(w, _max_velocity[2]);
+
+		std::vector<double> vel({vx, vy, w});
+		_cmd_velocity_passthrough_port.write(vel);
 
 		mavlink_motor_command_t motor_command;
 		mavlink_message_t msg;

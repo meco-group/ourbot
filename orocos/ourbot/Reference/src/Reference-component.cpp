@@ -71,6 +71,8 @@ void Reference::updateHook() {
           _ref_velocity[i] = 0.0;
         }
     }
+    // std::cout << "[pose] (" << _ref_pose[0] << "," << _ref_pose[1] << "," << _ref_pose[2] << ")" << std::endl;
+    // std::cout << "[velocity] (" << _ref_velocity[0] << "," << _ref_velocity[1] << "," << _ref_velocity[2] << ")" << std::endl;
     _ref_pose_port.write(_ref_pose);
     _ref_velocity_port.write(_ref_velocity);
     // update index
