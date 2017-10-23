@@ -57,6 +57,8 @@ class Communicator : public RTT::TaskContext{
     std::vector<string> readMail(bool remove);
     void removeMail();
     void removeConnection(const std::string& component_name, const std::string& port_name, const std::string& id);
+    bool setConnectionGroup(const string& component_name, const string& port_name, const string& id, const string& group);
+    bool setConnectionRate(const string& component_name, const string& port_name, const string& id, double rate, double master_rate);
     void enable(const std::string& component_name, const std::string& port_name, const std::string& identifier);
     void disable(const std::string& component_name, const std::string& port_name, const std::string& identifier);
     void wait(int ms);

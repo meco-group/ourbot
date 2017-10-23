@@ -6,46 +6,46 @@ require 'os'
 tc = rtt.getTC()
 
 -- property definitions
-_print_level            = rtt.Property("int","print_level","Level of output printing")
-_velcmd_sample_rate     = rtt.Property("double","velcmd_sample_rate","Frequency to update velocity commander")
-_emperor_sample_rate    = rtt.Property("double","emperor_sample_rate","Frequency to update communicator")
-_hawkeye_sample_rate    = rtt.Property("double","hawkeye_sample_rate","Frequency to update hawkeye")
+_print_level  = rtt.Property('int', 'print_level', 'Level of output printing')
+_velcmd_rate = rtt.Property('double', 'velcmd_rate', 'Frequency to update velocity commander')
+_emperor_rate = rtt.Property('double', 'emperor_rate', 'Frequency to update communicator')
+_hawkeye_rate = rtt.Property('double', 'hawkeye_rate', 'Frequency to update hawkeye')
 
 tc:addProperty(_print_level)
-tc:addProperty(_velcmd_sample_rate)
-tc:addProperty(_emperor_sample_rate)
-tc:addProperty(_hawkeye_sample_rate)
+tc:addProperty(_velcmd_rate)
+tc:addProperty(_emperor_rate)
+tc:addProperty(_hawkeye_rate)
 
 -- ports that drive/read the FSM
-_deployer_fsm_event_port      = rtt.InputPort("string")
-_deployer_failure_event_port  = rtt.OutputPort("string")
-_deployer_current_state_port  = rtt.OutputPort("string")
+_deployer_fsm_event_port = rtt.InputPort('string')
+_deployer_failure_event_port = rtt.OutputPort('string')
+_deployer_current_state_port = rtt.OutputPort('string')
 
-tc:addEventPort(_deployer_fsm_event_port, "deployer_fsm_event_port", "Event port for driving the deployer FSM")
-tc:addPort(_deployer_failure_event_port, "deployer_failure_event_port", "Port to send indicate a failure in the deployer")
-tc:addPort(_deployer_current_state_port, "deployer_current_state_port", "current active state of the deployer FSM")
+tc:addEventPort(_deployer_fsm_event_port, 'deployer_fsm_event_port', 'Event port for driving the deployer FSM')
+tc:addPort(_deployer_failure_event_port, 'deployer_failure_event_port', 'Port to send indicate a failure in the deployer')
+tc:addPort(_deployer_current_state_port, 'deployer_current_state_port', 'current active state of the deployer FSM')
 
 function configureHook()
    -- create local copies of the property values
-   print_level          = _print_level:get()
-   velcmd_sample_rate   = _velcmd_sample_rate:get()
-   emperor_sample_rate  = _emperor_sample_rate:get()
-   hawkeye_sample_rate  = _hawkeye_sample_rate:get()
+   print_level = _print_level:get()
+   velcmd_rate = _velcmd_rate:get()
+   emperor_rate = _emperor_rate:get()
+   hawkeye_rate = _hawkeye_rate:get()
 
    -- create some variables referering to files
-   emperor_file      = 'Emperor/emperor.lua'
-   app_file          = 'app.ops'
+   emperor_file = 'Emperor/emperor.lua'
+   app_file = 'app.ops'
 
    -- initialize the deployment state machine, drop out if it fails
    fsm = rfsm.init(rfsm.load('deploy_fsm.lua'))
    if not fsm then
-      rtt.logl("Error","Could not initialize deployement state machine")
+      rtt.logl('Error','Could not initialize deployement state machine')
       return false
    end
 
    if print_level >= 2 then
       -- add console printing for the state entry and exit
-      fsm.dbg = rfsmpp.gen_dbgcolor("Deployer FSM", { STATE_ENTER=true, STATE_EXIT=true}, false)
+      fsm.dbg = rfsmpp.gen_dbgcolor('Deployer FSM', { STATE_ENTER=true, STATE_EXIT=true}, false)
       -- redirect rFSM output to rtt log
       fsm.info=function(...) rtt.logl('Info', table.concat({...}, ' ')) end
       fsm.warn=function(...) rtt.logl('Warning', table.concat({...}, ' ')) end
@@ -55,7 +55,6 @@ function configureHook()
    -- connect event ports to state machine
    fsm.getevents = rfsm_rtt.gen_read_str_events(_deployer_fsm_event_port)
    rfsm.post_step_hook_add(fsm, rfsm_rtt.gen_write_fqn(_deployer_current_state_port))
-
    return true
 end
 

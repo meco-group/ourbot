@@ -1,43 +1,23 @@
-export void VelocityControl(){
-  coordinator_send_event_port.write("e_velocitycmd")
-}
-
-export void MotionPlanning(){
+export void motionplanning(){
   coordinator_send_event_port.write("e_motionplanning")
 }
 
-export void TrajectoryFollowing(){
+export void trajectoryfollowing(){
   coordinator_send_event_port.write("e_trajectoryfollowing")
 }
 
-export void Flexonomy(){
+export void flexonomy(){
   coordinator_send_event_port.write("e_flexonomy")
 }
 
-export void Idle(){
-  coordinator_send_event_port.write("e_idle")
+export void next(){
+  coordinator_send_event_port.write("e_next")
 }
 
-export void Reset(){
-  coordinator_send_event_port.write("e_reset")
+export void back(){
+  coordinator_send_event_port.write("e_back")
 }
 
-export void Run(){
-  coordinator_send_event_port.write("e_run")
-}
-
-export void Restart(){
-  coordinator_send_event_port.write("e_restart")
-}
-
-export void Break(){
-  coordinator_send_event_port.write("e_stop")
-}
-
-export void Init(){
-  coordinator_send_event_port.write("e_init")
-}
-
-export string getState(){
+export string get_state(){
   return coordinator_current_state_port.last()
 }

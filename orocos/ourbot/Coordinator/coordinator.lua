@@ -36,6 +36,9 @@ tc:addPort(_coordinator_current_state_port, 'coordinator_current_state_port', 'c
 _coordinator_send_event_port:connect(_coordinator_fsm_event_port)
 
 function configureHook()
+   fun = require './Coordinator/functions'
+   dp = tc:getPeer('Deployer')
+
    -- create local copies of the property values
    print_level = _print_level:get()
    control_rate = _control_rate:get()
@@ -46,8 +49,22 @@ function configureHook()
 
    -- variables to use in updateHook
    communicator = tc:getPeer('communicator')
-   communicatorUpdate = communicator:getOperation('update')
-   communicatorInRunTimeError = communicator:getOperation('inRunTimeError')
+   io = tc:getPeer('io')
+   estimator = tc:getPeer('estimator')
+   reference = tc:getPeer('reference')
+   controller = tc:getPeer('controller')
+   reporter = tc:getPeer('reporter')
+   teensy = tc:getPeer('teensy')
+
+   communicator_update = communicator:getOperation('update')
+   communicator_error = communicator:getOperation('inRunTimeError')
+   io_error = io:getOperation('inRunTimeError')
+   estimator_error = estimator:getOperation('inRunTimeError')
+   reference_error = reference:getOperation('inRunTimeError')
+   controller_error = controller:getOperation('inRunTimeError')
+   reporter_snapshot = reporter:getOperation('snapshot')
+   period = tc:getPeriod()
+   snapshot_cnt = 1./(reporting_rate*period)
 
    if obstacle_mode then
       communicator:joinGroup('obstacle')
@@ -75,18 +92,63 @@ function configureHook()
    return true
 end
 
+function startHook()
+   return fun:start_sensing_components()
+end
+
 function updateHook()
    -- update communication
-   communicatorUpdate()
-   if communicatorInRunTimeError() then
-      rtt.logl('Error','RunTimeError in communicator')
-      rfsm.send_events(fsm,'e_failed')
+   communicator_update()
+   -- snapshot for reporter
+   snapshot()
+   -- error check
+   if io_error() then
+      rtt.logl('Error', 'RunTimeError in gamepad component!')
+      rfsm.send_events(fsm, 'e_failed')
       return
    end
-
+   if estimator_error() then
+      rtt.logl('Error', 'RunTimeError in hawkeye component!')
+      rfsm.send_events(fsm, 'e_failed')
+      return
+   end
+   if reference_error() then
+      rtt.logl('Error', 'RunTimeError in emperor component!')
+      rfsm.send_events(fsm, 'e_failed')
+      return
+   end
+   if controller_error() then
+      rtt.logl('Error', 'RunTimeError in emperor component!')
+      rfsm.send_events(fsm, 'e_failed')
+      return
+   end
+   if communicator_error() then
+      rtt.logl('Error','RunTimeError in communicator component!')
+      rfsm.send_events(fsm, 'e_failed')
+      return
+   end
+   if tc:inRunTimeError() then
+      rtt.logl('Error', 'RunTimeError in coordinator component!')
+      return false
+   end
+   -- run state machine
    rfsm.run(fsm)
+end
+
+function stopHook()
+   fun:stop_sensing_components()
 end
 
 function cleanupHook()
    rttlib.tc_cleanup()
 end
+
+function snapshot()
+  if snapshot_cnt >= 1./(reporting_rate*period) then
+      reporter_snapshot:send()
+      snapshot_cnt = 1
+  else
+      snapshot_cnt = snapshot_cnt + 1
+  end
+end
+

@@ -10,6 +10,8 @@ Communicator::Communicator(std::string const& name) : TaskContext(name, PreOpera
   addOperation("addIncomingConnection", &Communicator::addIncomingConnection, this).doc("Add incoming connection");
   addOperation("addBufferedIncomingConnection", &Communicator::addBufferedIncomingConnection, this).doc("Add buffered incoming connection");
   addOperation("removeConnection", &Communicator::removeConnection, this).doc("Remove connection.");
+  addOperation("setConnectionGroup", &Communicator::setConnectionGroup, this).doc("Change group of outgoing connection.");
+  addOperation("setConnectionRate", &Communicator::setConnectionRate, this).doc("Change rate of outgoing connection.");
   addOperation("joinGroup", &Communicator::joinGroup, this).doc("Join a communication group.");
   addOperation("leaveGroup", &Communicator::leaveGroup, this).doc("Leave a communication group.");
   addOperation("getGroupSize", &Communicator::getGroupSize, this).doc("Get size of a communication group.");
@@ -387,6 +389,32 @@ void Communicator::removeConnection(const string& component_name, const string& 
   Connection* connection = _con_map[component_name+port_name+id];
   _connections.erase(std::remove(_connections.begin(), _connections.end(), connection), _connections.end());
   _con_map.erase(component_name+port_name+id);
+}
+
+bool Communicator::setConnectionGroup(const string& component_name, const string& port_name, const string& id, const string& group) {
+  if (_con_map.find(component_name+port_name+id) != _con_map.end()) {
+    Connection* connection = _con_map[component_name+port_name+id];
+    connection->setGroup(group);
+    return true;
+  } else {
+    log(Error) << "Connection not known!" << endlog();
+    return false;
+  }
+}
+
+bool Communicator::setConnectionRate(const string& component_name, const string& port_name, const string& id, double rate, double master_rate) {
+  if (rate > master_rate) {
+    log(Error) << "Impossible to choose connection rate higher than " << master_rate << "Hz!" << std::endl;
+    return false;
+  }
+  if (_con_map.find(component_name+port_name+id) != _con_map.end()) {
+    Connection* connection = _con_map[component_name+port_name+id];
+    connection->setRate(rate, master_rate);
+    return true;
+  } else {
+    log(Error) << "Connection not known!" << endlog();
+    return false;
+  }
 }
 
 void Communicator::disable(const string& component_name, const string& port_name, const string& id){

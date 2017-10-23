@@ -21,7 +21,6 @@ local io_error = io:getOperation('inRunTimeError')
 local estimator_error = estimator:getOperation('inRunTimeError')
 local reference_error = reference:getOperation('inRunTimeError')
 local controller_error = controller:getOperation('inRunTimeError')
-local reporter_snapshot = reporter:getOperation('snapshot')
 estimator_valid = estimator:getOperation('valid')
 
 
@@ -31,8 +30,6 @@ local _controlloop_jitter_port = rtt.OutputPort('double')
 
 tc:addPort(_controlloop_duration_port, 'controlloop_duration_port','Duration of executing the control loop')
 tc:addPort(_controlloop_jitter_port, 'controlloop_jitter_port','Jitter of the control loop')
-
-local snapshot_cnt = 1./(reporting_rate*period)
 
 function Functions:start_sensing_components()
   if not io:start() then
@@ -84,7 +81,6 @@ function Functions:control_hook(control)
       rtt.logl('Warning', 'Estimate not valid!')
     end
   end
-  Functions:snapshot()
   if tc:inRunTimeError() then
     rtt.logl('Error', 'RunTimeError in coordinator component!')
     return false
@@ -118,6 +114,7 @@ function Functions:enable_manualcommand(fsm)
   if not communicator:addIncomingConnection('io', 'cmd_velocity_port', 'cmd_velocity') then rfsm.send_events(fsm, 'e_failed') return end
 end
 
+
 function Functions:get_sec()
   local sec, nsec = rtt.getTime()
   return sec + nsec*1e-9
@@ -134,15 +131,6 @@ function Functions:guard_time(start_time, prev_start_time, end_time)
   end
   _controlloop_duration_port:write(duration)
   _controlloop_jitter_port:write(jitter)
-end
-
-function Functions:snapshot()
-  if snapshot_cnt >= 1./(reporting_rate*period) then
-      reporter_snapshot:send()
-      snapshot_cnt = 1
-  else
-      snapshot_cnt = snapshot_cnt + 1
-  end
 end
 
 return Functions

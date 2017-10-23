@@ -33,7 +33,7 @@ local packages_to_import = {'Communicator', 'Estimator', 'Controller',
 
 -- configuration files to load
 local system_config_file = 'Configuration/system-config.cpf'
-local component_config_files  = {
+local component_config_files = {
   estimator = 'Configuration/estimator-config.cpf',
   communicator = 'Configuration/communicator-config.cpf',
   controller = 'Configuration/controller-config.cpf',
@@ -56,7 +56,6 @@ return rfsm.state {
   rfsm.transition {src = 'failure', tgt = 'deploy', events = {'e_reset'}},
 
   initial = rfsm.conn{},
-
   deployed = rfsm.conn{},
 
   failure = rfsm.state {
@@ -85,6 +84,8 @@ return rfsm.state {
     rfsm.transition {src = 'connect_remote_components', tgt = 'set_activities', events = {'e_done'}},
     rfsm.transition {src = 'set_activities', tgt = 'prepare_reporter', events = {'e_done'}},
     rfsm.transition {src = 'prepare_reporter', tgt = 'load_coordinator', events = {'e_done'}},
+
+    initial = rfsm.conn{},
 
     load_components = rfsm.state {
       entry = function(fsm)
@@ -181,6 +182,7 @@ return rfsm.state {
         local addBufferedIncoming = components.communicator:getOperation('addBufferedIncomingConnection')
         local addOutgoing = components.communicator:getOperation('addOutgoingConnection')
         -- coordinator
+        if not addOutgoing('coordinator', 'coordinator_send_event_port', 'fsm_event', 'emperor') then rfsm.send_events(fsm, 'e_failed') return end
         if not addIncoming('coordinator', 'coordinator_fsm_event_port', 'fsm_event') then rfsm.send_events(fsm, 'e_failed') return end
         -- estimator
         if not addIncoming('estimator', 'markers_port', 'markers_'..host) then rfsm.send_events(fsm, 'e_failed') return end

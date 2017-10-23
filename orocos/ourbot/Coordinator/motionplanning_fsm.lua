@@ -1,12 +1,4 @@
-local fun = require './Coordinator/functions'
-
 local tc = rtt.getTC()
-local dp = tc:getPeer('Deployer')
-
-local estimator = tc:getPeer('estimator')
-local reference = tc:getPeer('reference')
-local teensy = tc:getPeer('teensy')
-local communicator = tc:getPeer('communicator')
 
 local estimator_valid = estimator:getOperation('valid')
 local load_new_trajectory = reference:getOperation('receiveTrajectory')
@@ -104,11 +96,11 @@ return rfsm.state {
   rfsm.trans{src = 'p2p', tgt = 'recover', events = {'e_recover'}},
   rfsm.trans{src = 'recover', tgt = 'p2p0', events = {'e_p2p'}},
   rfsm.trans{src = 'recover', tgt = 'idle', events = {'e_done'}},
-  rfsm.trans{src = 'home', tgt = 'stop', events = {'e_stop'}},
-  rfsm.trans{src = 'idle', tgt = 'stop', events = {'e_stop'}},
-  rfsm.trans{src = 'p2p0', tgt = 'stop', events = {'e_stop'}},
-  rfsm.trans{src = 'p2p', tgt = 'stop', events = {'e_stop'}},
-  rfsm.trans{src = 'recover', tgt = 'stop', events = {'e_stop'}},
+  rfsm.trans{src = 'home', tgt = 'stop', events = {'e_back'}},
+  rfsm.trans{src = 'idle', tgt = 'stop', events = {'e_back'}},
+  rfsm.trans{src = 'p2p0', tgt = 'stop', events = {'e_back'}},
+  rfsm.trans{src = 'p2p', tgt = 'stop', events = {'e_back'}},
+  rfsm.trans{src = 'recover', tgt = 'stop', events = {'e_back'}},
 
   initial = rfsm.conn{},
 

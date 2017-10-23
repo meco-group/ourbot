@@ -13,7 +13,7 @@
 
     <simple name="trajectory_path" type="string">
         <description>Path to csv file with trajectory to follow</description>
-        <value>./Reference/trajectories_x.csv</value>
+        <value>./Reference/example_trajectory.csv</value>
     </simple>
 
 </properties>

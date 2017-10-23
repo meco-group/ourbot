@@ -79,6 +79,10 @@ void Reference::updateHook() {
 
 void Reference::reset() {
     _index = 0;
+    for (int i=0; i<3; i++) {
+        _ref_velocity[i] = 0.0;
+    }
+    _ref_velocity_port.write(_ref_velocity);
     _ready = false;
 }
 

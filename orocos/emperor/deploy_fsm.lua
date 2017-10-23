@@ -4,45 +4,40 @@ require 'rfsmpp'
 
 -- components to load
 local components_to_load = {
-  gamepad         = 'GamePad',
-  communicator    = 'Communicator',
-  hawkeye         = 'HawkEye',
-  emperor         = 'OCL::LuaTLSFComponent',
-  reporter        = 'OCL::NetcdfReporting'
+  emperor = 'OCL::LuaTLSFComponent',
+  gamepad = 'GamePad',
+  communicator = 'Communicator',
+  hawkeye = 'HawkEye',
+  reporter = 'OCL::NetcdfReporting'
 }
 
 -- ports to report
 local ports_to_report = {
-  gamepad         = {'cmd_velocity_port'}
+  gamepad = {'cmd_velocity_port'}
 }
 
 -- packages to import
-local packages_to_import = {
-  gamepad = 'Serial',
-  hawkeye = 'HawkEye',
-  communicator = 'Communicator'
-}
+local packages_to_import = {'Serial', 'HawkEye', 'Communicator'}
 
 -- configuration files to load
-local system_config_file      = 'Configuration/system-config.cpf'
-local component_config_files  = {
-  communicator  = '../ourbot/Configuration/communicator-config.cpf',
-  reporter      = 'Configuration/reporter-config.cpf',
-  hawkeye       = 'Configuration/hawkeye-config.cpf',
-  gamepad       = 'Configuration/gamepad-config.cpf'
+local system_config_file = 'Configuration/system-config.cpf'
+local component_config_files = {
+  communicator = '../ourbot/Configuration/communicator-config.cpf',
+  reporter = 'Configuration/reporter-config.cpf',
+  hawkeye = 'Configuration/hawkeye-config.cpf',
+  gamepad = 'Configuration/gamepad-config.cpf'
 }
 
 local components      = {}
-local remote_components = {}
 local dp = rtt.getTC():getPeer('Deployer')
 
 return rfsm.state {
 
-  rfsm.transition {src = 'initial',                  tgt = 'deploy'},
-  rfsm.transition {src = 'deploy',                   tgt = 'failure',  events = {'e_failed'}},
-  rfsm.transition {src = 'deployed',                 tgt = 'failure',  events = {'e_failed'}},
-  rfsm.transition {src = '.deploy.load_emperor',     tgt = 'deployed', events = {'e_done'}},
-  rfsm.transition {src = 'failure',                  tgt = 'deploy',   events = {'e_reset'}},
+  rfsm.transition {src = 'initial', tgt = 'deploy'},
+  rfsm.transition {src = 'deploy', tgt = 'failure', events = {'e_failed'}},
+  rfsm.transition {src = 'deployed', tgt = 'failure', events = {'e_failed'}},
+  rfsm.transition {src = '.deploy.load_emperor', tgt = 'deployed', events = {'e_done'}},
+  rfsm.transition {src = 'failure', tgt = 'deploy', events = {'e_reset'}},
 
   initial = rfsm.conn{},
   deployed = rfsm.conn{},
@@ -57,6 +52,7 @@ return rfsm.state {
         comp:cleanup()
       end
     end,
+
     exit = function()
       for name, type in pairs(components_to_load) do
           dp:unloadComponent(name)
@@ -66,13 +62,13 @@ return rfsm.state {
 
 
   deploy = rfsm.state {
-    rfsm.transition {src = 'initial',                   tgt = 'load_components'},
-    rfsm.transition {src = 'load_components',           tgt = 'configure_components',       events = {'e_done'}},
-    rfsm.transition {src = 'configure_components',      tgt = 'connect_components',         events = {'e_done'}},
-    rfsm.transition {src = 'connect_components',        tgt = 'connect_remote_components',  events = {'e_done'}},
-    rfsm.transition {src = 'connect_remote_components', tgt = 'set_activities',             events = {'e_done'}},
-    rfsm.transition {src = 'set_activities',            tgt = 'prepare_reporter',           events = {'e_done'}},
-    rfsm.transition {src = 'prepare_reporter',          tgt = 'load_emperor',               events = {'e_done'}},
+    rfsm.transition {src = 'initial', tgt = 'load_components'},
+    rfsm.transition {src = 'load_components', tgt = 'configure_components', events = {'e_done'}},
+    rfsm.transition {src = 'configure_components', tgt = 'connect_components', events = {'e_done'}},
+    rfsm.transition {src = 'connect_components', tgt = 'connect_remote_components', events = {'e_done'}},
+    rfsm.transition {src = 'connect_remote_components', tgt = 'set_activities', events = {'e_done'}},
+    rfsm.transition {src = 'set_activities', tgt = 'prepare_reporter', events = {'e_done'}},
+    rfsm.transition {src = 'prepare_reporter', tgt = 'load_emperor', events = {'e_done'}},
 
     initial = rfsm.conn{},
 
@@ -80,8 +76,8 @@ return rfsm.state {
       entry = function(fsm)
         components = {}
         -- import necessary packages
-        for name, type in pairs(packages_to_import) do
-          if not rtt.provides("ros"):import(type) then rfsm.send_events(fsm,'e_failed') return end
+        for _, package in pairs(packages_to_import) do
+          if not rtt.provides("ros"):import(package) then rfsm.send_events(fsm,'e_failed') return end
         end
         -- go through the table of components to load them
         for name, type in pairs(components_to_load) do
@@ -123,8 +119,7 @@ return rfsm.state {
         -- connect the deployer to emperor (for communicating failure events)
         if not _deployer_fsm_event_port:connect(components.emperor:getPort('emperor_failure_event_port')) then rfsm.send_events(fsm,'e_failed') return end
         if not _deployer_failure_event_port:connect(components.emperor:getPort('emperor_fsm_event_port')) then rfsm.send_events(fsm,'e_failed') return end
-
-        if not dp:connectPorts('emperor', 'gamepad') then rfsm.send_events(fsm,'e_failed') return end
+        if not dp:connectPorts('emperor', 'gamepad') then rfsm.send_events(fsm, 'e_failed') return end
       end,
     },
 
@@ -140,8 +135,10 @@ return rfsm.state {
         -- load operations
         local addIncoming = components.communicator:getOperation('addIncomingConnection')
         local addOutgoing = components.communicator:getOperation('addOutgoingConnection')
+        local setRate = components.communicator:getOperation('setConnectionRate')
         -- emperor
         if not addOutgoing('emperor', 'emperor_send_event_port', 'fsm_event', 'ourbots') then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('emperor', 'emperor_fsm_event_port', 'fsm_event') then rfsm.send_events(fsm,'e_failed') return end
         -- gamepad
         if not addOutgoing('gamepad', 'cmd_velocity_port', 'cmd_velocity', 'ourbots') then rfsm.send_events(fsm,'e_failed') return end
         -- hawkeye
@@ -168,9 +165,9 @@ return rfsm.state {
 
     set_activities = rfsm.state {
       entry = function(fsm)
-        dp:setActivity('emperor', 1./emperor_sample_rate, 0, rtt.globals.ORO_SCHED_OTHER)
-        dp:setActivity('gamepad', 1./velcmd_sample_rate, 0, rtt.globals.ORO_SCHED_OTHER)
-        dp:setActivity('hawkeye', 1./hawkeye_sample_rate, 0, rtt.globals.ORO_SCHED_OTHER)
+        dp:setActivity('emperor', 1./emperor_rate, 0, rtt.globals.ORO_SCHED_OTHER)
+        dp:setActivity('gamepad', 1./velcmd_rate, 0, rtt.globals.ORO_SCHED_OTHER)
+        dp:setActivity('hawkeye', 1./hawkeye_rate, 0, rtt.globals.ORO_SCHED_OTHER)
         dp:setActivity('reporter', 0, 0, rtt.globals.ORO_SCHED_OTHER)
         dp:setMasterSlaveActivity('emperor', 'communicator')
           --add here extra activities
@@ -208,7 +205,7 @@ return rfsm.state {
         if not components.emperor:start() then rfsm.send_events(fsm,'e_failed') return end
         if not components.communicator:start() then rfsm.send_events(fsm, 'e_failed') return end
         components.gamepad:start() -- no failure when not connected
-        if not components.hawkeye:start() then rfsm.send_events(fsm, 'e_failed') return end
+        -- if not components.hawkeye:start() then rfsm.send_events(fsm, 'e_failed') return end
       end,
     },
   },
