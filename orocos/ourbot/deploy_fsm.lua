@@ -62,17 +62,14 @@ return rfsm.state {
     entry = function()
       _deployer_failure_event_port:write('e_failed')
       components.communicator:update()
-      components.communicator:wait(500)
-      for name, comp in pairs(components) do
-        comp:stop()
-        comp:cleanup()
-      end
     end,
 
-    exit = function()
-      for name, type in pairs(components_to_load) do
-        dp:unloadComponent(name)
+    doo = function()
+      local cnt = 0
+      while (cnt <= 3) do
+        cnt = cnt+1
       end
+      dp:stopComponents()
     end,
    },
 
