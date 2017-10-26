@@ -22,7 +22,7 @@
 using namespace std;
 using namespace casadi;
 
-namespace omgf{
+namespace p2pf{
 
 FormationPoint2Point::FormationPoint2Point(Vehicle* vehicle,
     double update_time, double sample_time, double horizon_time,

@@ -164,7 +164,7 @@ bool Reference::loadTrajectory(const std::string& path) {
 }
 
 void Reference::updatePositionTrajectory() {
-    int step = _ref_pose_trajectory[0].size()/(_n_samples_plot-1);
+    int step = (_ref_pose_trajectory[0].size()-1)/(_n_samples_plot-1);
     for (int i=0; i<2; i++) {
         _ref_position_trajectory[i].resize(_n_samples_plot);
         for (int k=0; k<_n_samples_plot; k++) {

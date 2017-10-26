@@ -4,7 +4,7 @@ local communicator = tc:getPeer('communicator')
 local gamepad = tc:getPeer('gamepad')
 
 local state_index = 1
-local states = {'motionplanning', 'trajectoryfollowing'}
+local states = {'trajectoryfollowing', 'motionplanning', 'formation'}
 
 local velcmd_index = 1
 local velcmd_receivers = {'ourbots', 'dave', 'kurt', 'krist'}
@@ -48,9 +48,17 @@ function velcmd_toggle()
   end
 end
 
+local _target_pose_port = rtt.OutputPort('array')
+tc:addPort(_target_pose_port, 'target_pose_port', 'Target pose')
+if not communicator:addOutgoingConnection('emperor', 'target_pose_port', 'target_pose', 'ourbots') then
+  rfsm.send_events(fsm, 'e_failed')
+end
+
+
 return rfsm.state {
 
-  rfsm.trans{src = 'initial', tgt = 'idle'},
+  rfsm.trans{src = 'initial', tgt = 'test'},
+  rfsm.trans{src = 'test', tgt = 'idle', events = {'e_next'}},
   rfsm.trans{src = 'idle', tgt = 'init', events = {'e_done'}},
   rfsm.trans{src = 'init', tgt = 'state', events = {'e_done'}},
   rfsm.trans{src = 'state', tgt = 'idle', events = {'e_idle'}},
@@ -64,7 +72,7 @@ return rfsm.state {
   init = rfsm.state{},
 
   idle = rfsm.state{
-    doo = function()
+    doo = function(fsm)
       print('selected state: ' .. states[state_index])
       while(true) do
         velcmd_toggle()
@@ -77,13 +85,13 @@ return rfsm.state {
   },
 
   state = rfsm.state{
-    entry = function()
+    entry = function(fsm)
       if not communicator:addOutgoingConnection('hawkeye', 'obstacle_port', 'obstacles', 'ourbots') then
         rfsm.send_events(fsm, 'e_failed')
       end
     end,
 
-    doo = function()
+    doo = function(fsm)
       while(true) do
         velcmd_toggle()
         substate_toggle()
@@ -91,17 +99,38 @@ return rfsm.state {
       end
     end,
 
-    exit = function()
+    exit = function(fsm)
       communicator:removeConnection('hawkeye', 'obstacle_port', 'obstacles')
     end,
   },
 
   failure = rfsm.state{
-    entry = function()
+    entry = function(fsm)
       reporter:stop()
       _emperor_failure_event_port:write('e_failed')
       rtt.logl('Error', 'System in Failure!')
     end
+  },
+
+  test = rfsm.state{
+    entry = function(fsm)
+      _emperor_send_event_port:write('e_motionplanning')
+
+    end,
+
+    doo = function(fsm)
+      while(true) do
+        rfsm.yield(true)
+      end
+
+    end,
+
+    exit = function(fsm)
+      local pose = rtt.Variable('array')
+      pose:resize(3)
+      pose:fromtab{1, 1, math.pi}
+      _target_pose_port:write(pose)
+    end,
   },
 
 }

@@ -21,7 +21,7 @@
 
 using namespace std;
 
-namespace omg{
+namespace p2p{
 
 Vehicle::Vehicle(int n_st, int n_in, int n_spl, int degree, int knot_intervals):
 ideal_prediction(false), provide_prediction(false), predicted_state(n_st), predicted_input(n_in){

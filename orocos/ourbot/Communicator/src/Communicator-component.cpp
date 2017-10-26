@@ -15,6 +15,7 @@ Communicator::Communicator(std::string const& name) : TaskContext(name, PreOpera
   addOperation("joinGroup", &Communicator::joinGroup, this).doc("Join a communication group.");
   addOperation("leaveGroup", &Communicator::leaveGroup, this).doc("Leave a communication group.");
   addOperation("getGroupSize", &Communicator::getGroupSize, this).doc("Get size of a communication group.");
+  addOperation("getGroupPeers", &Communicator::getGroupPeers, this).doc("Get peers in group.");
   addOperation("getSender", &Communicator::getSender, this).doc("Get sender of last message on connection.");
   addOperation("getHost", &Communicator::getHost, this).doc("Get name of this host.");
   addOperation("setHost", &Communicator::setHost, this).doc("Set name of this host.");
@@ -186,6 +187,14 @@ int Communicator::getGroupSize(const std::string& group){
   }
   else {
     return _groups[group].size();
+  }
+}
+
+std::vector<std::string> Communicator::getGroupPeers(const std::string& group) {
+  if (_groups.find(group) == _groups.end()){
+    return std::vector<std::string>({});
+  } else {
+    return _groups[group];
   }
 }
 

@@ -23,7 +23,7 @@ height = 2.59
 environment = Environment(room={'shape': Rectangle(width, height), 'position': [0.5*width, 0.5*height]})
 rectangle = Rectangle(width=0.25, height=0.5)
 
-environment.add_obstacle(Obstacle({'position': [1.5, 0.5]}, shape=rectangle))
+# environment.add_obstacle(Obstacle({'position': [1.5, 0.5]}, shape=rectangle))
 
 # create a point-to-point problem
 problem = Point2point(vehicle, environment, freeT=False)
@@ -37,7 +37,7 @@ options['directory'] = os.getenv('ROS_WORKSPACE') + '/ourbot/MotionPlanning/src/
 options['casadiobj'] = '$(ROS_WORKSPACE)/ourbot/MotionPlanning/src/MotionPlanning/Toolbox/bin/'
 options['casadiinc'] = '$(CASADI_INC)'
 options['casadilib'] = '$(CASADI_LIB)'
-options['namespace'] = 'omg'
+options['namespace'] = 'p2p'
 
 # export the problem
 problem.export(options)

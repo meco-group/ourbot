@@ -65,6 +65,7 @@ class Communicator : public RTT::TaskContext{
     bool joinGroup(const std::string& group);
     bool leaveGroup(const std::string& group);
     int getGroupSize(const std::string& group);
+    std::vector<std::string>     getGroupPeers(const std::string& group);
     std::string getPeerUUID(const std::string& peer);
     std::string getSender(const string& component_name, const string& port_name, const string& id);
     std::string getHost();

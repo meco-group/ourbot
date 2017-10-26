@@ -36,8 +36,8 @@ int main()
     double sample_time = 0.01;
     double update_time = 0.1;
     int trajectory_length = 20;
-    vector<omgf::Holonomic*> vehicles(N);
-    vector<omgf::FormationPoint2Point*> problems(N);
+    vector<p2pf::Holonomic*> vehicles(N);
+    vector<p2pf::FormationPoint2Point*> problems(N);
     vector<vector<double>> state0(N, vector<double>(2));
     vector<vector<double>> stateT(N, vector<double>(2));
     // these will store the state and input trajectory
@@ -45,11 +45,11 @@ int main()
     vector<vector<vector<double>>> state_trajectory(N, vector<vector<double>>(trajectory_length, vector<double>(2)));
     vector<vector<double>> rel_pos_c(N, vector<double>(2));
     for (int v=0; v<N; v++){
-        vehicles[v] = new omgf::Holonomic();
+        vehicles[v] = new p2pf::Holonomic();
         // ideal update: prediction of initial state based on spline extrapolation
         // non-ideal update: prediction based on current state0 and model integration
         vehicles[v]->setIdealPrediction(true);
-        problems[v] = new omgf::FormationPoint2Point(vehicles[v], update_time, sample_time, horizon_time, trajectory_length, init_iter);
+        problems[v] = new p2pf::FormationPoint2Point(vehicles[v], update_time, sample_time, horizon_time, trajectory_length, init_iter);
     }
     int n_shared = problems[0]->n_shared;
 
@@ -69,7 +69,7 @@ int main()
     }
 
     // obstacles
-    vector<omgf::obstacle_t> obstacles(2);
+    vector<p2pf::obstacle_t> obstacles(2);
     double width = 3.0;
     double height = 0.2;
     double radius = 0.001;

@@ -40,8 +40,10 @@ class MotionPlanningInterface : public RTT::TaskContext {
         OutputPort<std::vector<double> > _ref_velocity_trajectory_port[3];
         OutputPort<double> _motion_time_port;
 
+        int _max_failures;
+        int _max_recovers;
+        int _max_periods;
         double _orientation_th;
-
         TimeService::ticks _timestamp;
         double updateOrientationTrajectory();
         std::vector<double> _mp_trigger_data;

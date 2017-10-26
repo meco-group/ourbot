@@ -29,11 +29,11 @@ int main()
     double sample_time = 0.01;
     double update_time = 0.1;
     int trajectory_length = 20;
-    omgf::Holonomic* vehicle = new omgf::Holonomic();
+    p2pf::Holonomic* vehicle = new p2pf::Holonomic();
     // ideal update: prediction of initial state based on spline extrapolation
     // non-ideal update: prediction based on current state0 and model integration
     vehicle->setIdealPrediction(true);
-    omgf::Point2Point p2p(vehicle, update_time, sample_time, horizon_time, trajectory_length);
+    p2pf::Point2Point p2p(vehicle, update_time, sample_time, horizon_time, trajectory_length);
 
     // set initial state and terminal state and input
     vector<double> state0(2);
@@ -48,7 +48,7 @@ int main()
     vector<vector<double>> state_trajectory(trajectory_length, vector<double>(2));
 
     // obstacles
-    vector<omgf::obstacle_t> obstacles(p2p.n_obs);
+    vector<p2pf::obstacle_t> obstacles(p2p.n_obs);
     obstacles[0].position[0] = 0.5;
     obstacles[0].position[1] = 2.0;
     obstacles[0].velocity[0] = 0.0;

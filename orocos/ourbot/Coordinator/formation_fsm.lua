@@ -5,6 +5,7 @@ local load_new_trajectory = reference:getOperation('receiveTrajectory')
 
 local motionplanning
 local motionplanning_error
+local mp_reset
 local mp_busy
 local mp_valid
 local mp_ready
@@ -23,29 +24,20 @@ if not communicator:addIncomingConnection('coordinator', 'target_pose_port', 'ta
   rfsm.send_events(fsm, 'e_failed')
 end
 
--- add properties
-local _mp_max_failure = rtt.Property('int', 'mp_max_failure', 'Maximum number of consecutive infeasible motionplanning updates')
-local _mp_max_recover = rtt.Property('int', 'mp_max_recover', 'Maximum number of consecutive motionplanning recoveries')
-local _mp_max_periods = rtt.Property('int', 'mp_max_periods', 'Maximum number of periods the motionplanning can take to compute')
-
-tc:addProperty(_mp_max_failure)
-tc:addProperty(_mp_max_recover)
-tc:addProperty(_mp_max_periods)
-
-if not tc:provides('marshalling'):updateProperties('Configuration/system-config.cpf') then rfsm.send_events(fsm, 'e_failed') return end
-if not tc:provides('marshalling'):updateProperties('Configuration/motionplanning-config.cpf') then rfsm.send_events(fsm, 'e_failed') return end
-
 -- local variables
+local n_robots = communicator:getGroupSize('ourbots')
 local ref_cnt = 0
 local mp_failure_cnt = 0
 local mp_recover_cnt = 0
-local mp_max_failure = _mp_max_failure:get()
-local mp_max_recover = _mp_max_recover:get()
-local mp_max_periods = _mp_max_periods:get()
+local mp_max_failures
+local mp_max_recovers
+local mp_max_periods
 local mp_period = math.floor(control_rate/motionplanning_rate)
 
+local pose0
+
 function load_motionplanner()
-  if not dp:loadComponent('motionplanning', 'MotionPlanning') then
+  if not dp:loadComponent('motionplanning', 'FormationMotionPlanning') then
     return false
   end
   mp = dp:getPeer('motionplanning')
@@ -54,6 +46,9 @@ function load_motionplanner()
     return false
   end
   if not mp:provides('marshalling'):updateProperties('Configuration/motionplanning-config.cpf') then
+    return false
+  end
+  if not mp:provides('marshalling'):updateProperties('Configuration/formation-config.cpf') then
     return false
   end
   if not dp:connectPorts('motionplanning', 'estimator') then
@@ -84,18 +79,66 @@ function unload_motionplanner()
   dp:unloadComponent('motionplanning')
 end
 
-function trigger_motionplanning(predict_shift)
+
+
+function build_formation()
+  local peers = communicator:getGroupPeers('ourbots')
   local _, pose0 = _est_pose_port:read()
-  local trigger_data = rtt.Variable('array')
-  trigger_data:resize(4)
-  trigger_data:fromtab{pose0[0], pose0[1], pose0[2], predict_shift}
-  _mp_trigger_port:write(trigger_data)
+  -- communicate pose
+  for k=0, peers.size-1 do
+    communicator:writeMail(string.format('%.3f,%.3f,%.3f', pose0[0], pose0[1], pose0[2]), communicator:getPeerUUID(peers[k]))
+  end
+  -- receive pose
+  local pose = rtt.Variable('array')
+  pose:resize(3)
+  local continue = true
+  for k=0, peers.size-1 do
+    while(continue) do
+      local ret = communicator:readMail(false)
+      while (ret.size == 2) do
+        -- decode message
+        local msg = ret[0]
+        local uuid = ret[1]
+        if uuid == communicator:getPeerUUID(peers[k]) then
+          local a, b, c, d, e, f = string.match(msg, '(%d+).(%d+),(%d+).(%d+),(%d+).(%d+)')
+          if a ~= nil and b ~= nil and c ~= nil and d ~= nil and e ~= nil and f ~= nil then
+            pose[0] = a + 1000*b
+            pose[1] = c + 1000*d
+            pose[2] = e + 1000*f
+            motionplanning:addNeighbor(peers[k], pose)
+            communicator:removeMail()
+            continue = false
+          end
+        end
+        ret = communicator:readMail(false)
+      end
+      rfsm.yield(true)
+    end
+  end
+  return motionplanning:buildFormation()
+end
+
+function connect_neighbors()
+  local neighbors = motionplanning:getNeighbors()
+  for k=0, 1 do
+    if (n_robots == 2) then
+      communicator:addOutgoingConnection('motionplanning', 'x_var_port_' .. tostring(k), 'x_var_' .. host .. tostring(k), neighbors[k])
+      communicator:addOutgoingConnection('motionplanning', 'zl_ij_var_port_' .. tostring(k), 'zl_var_' .. host .. tostring(k), neighbors[k])
+      communicator:addIncomingConnection('motionplanning', 'x_j_var_port_' .. tostring(k), 'x_var_' .. neighbors[k] .. tostring(k))
+      communicator:addIncomingConnection('motionplanning', 'zl_ji_var_port_' .. tostring(k), 'zl_var_' .. neighbors[k] .. tostring(k))
+    else
+      communicator:addOutgoingConnection('motionplanning', 'x_var_port_' .. tostring(k), 'x_var_' .. host, neighbors[k])
+      communicator:addOutgoingConnection('motionplanning', 'zl_ij_var_port_' .. tostring(k), 'zl_var_' .. host, neighbors[k])
+      communicator:addIncomingConnection('motionplanning', 'x_j_var_port_' .. tostring(k), 'x_var_' .. neighbors[k])
+      communicator:addIncomingConnection('motionplanning', 'zl_ji_var_port_' .. tostring(k), 'zl_var_' .. neighbors[k])
+    end
+  end
 end
 
 return rfsm.state {
   rfsm.trans{src = 'initial', tgt = 'init'},
   rfsm.trans{src = 'init', tgt = 'home', events = {'e_done'}},
-  rfsm.trans{src = 'home', tgt = 'idle', events = {'e_done'}},
+  rfsm.trans{src = 'home', tgt = 'p2p0', events = {'e_p2p'}},
   rfsm.trans{src = 'idle', tgt = 'p2p0', events = {'e_p2p'}},
   rfsm.trans{src = 'p2p0', tgt = 'idle', events = {'e_idle'}},
   rfsm.trans{src = 'p2p0', tgt = 'p2p', events = {'e_done'}},
@@ -119,24 +162,34 @@ return rfsm.state {
       end
       motionplanning = dp:getPeer('motionplanning')
       motionplanning_error = motionplanning:getOperation('inRunTimeError')
+      mp_reset = motionplanning:getOperation('reset')
       mp_busy = motionplanning:getOperation('busy')
       mp_valid = motionplanning:getOperation('valid')
       mp_ready = motionplanning:getOperation('ready')
+      mp_max_failures = motionplanning:getProperty('max_failures'):get()
+      mp_max_recovers = motionplanning:getProperty('max_recovers'):get()
+      mp_max_periods = motionplanning:getProperty('max_periods'):get()
       if not fun:start_control_components() then
         rfsm.send_events(fsm, 'e_failed')
       end
+    end,
+
+    doo = function(fsm)
+      pose0 = build_formation()
+      connect_neighbors()
     end
   },
 
   home = rfsm.state{
-    -- wait until valid estimate
     doo = function(fsm)
       while true do
         if not fun:control_hook(false) then
           rfsm.send_events(fsm, 'e_failed')
         end
-        if true or estimator_valid() then
-          return
+        if estimator_valid() then
+          motionplanning:setTargetPose(pose0)
+          mp_reset()
+          rfsm.send_events(fsm, 'e_p2p')
         end
         rfsm.yield(true)
       end
@@ -157,6 +210,7 @@ return rfsm.state {
         local fs, target_pose = _target_pose_port:read()
         if fs == 'NewData' then
           motionplanning:setTargetPose(target_pose)
+          mp_reset()
           rfsm.send_events(fsm, 'e_p2p')
         end
         rfsm.yield(true)
@@ -228,10 +282,10 @@ return rfsm.state {
           else
             -- try again
             mp_failure_cnt = mp_failure_cnt + 1
-            if mp_failure_cnt < mp_max_failure then
+            if mp_failure_cnt < mp_max_failures then
               trigger_motionplanning(math.max(0, ref_cnt - mp_period))
             else
-              rtt.logl('Error', 'Motionplanning got ' .. mp_max_failure .. ' consecutive invalid solutions. Recover...')
+              rtt.logl('Error', 'Motionplanning got ' .. mp_max_failures .. ' consecutive invalid solutions. Recover...')
               rfsm.send_events(fsm, 'e_recover')
               return
             end
@@ -255,8 +309,8 @@ return rfsm.state {
   recover = rfsm.state{
     doo = function(fsm)
       mp_recover_cnt = mp_recover_cnt + 1
-      if mp_recover_cnt >= mp_max_recover then
-        rtt.logl('Error', 'Motionplanning recovered ' .. mp_max_recover .. ' times. Giving up...')
+      if mp_recover_cnt >= mp_max_recovers then
+        rtt.logl('Error', 'Motionplanning recovered ' .. mp_max_recovers .. ' times. Giving up...')
         return
       end
       local time0 = fun:get_sec()

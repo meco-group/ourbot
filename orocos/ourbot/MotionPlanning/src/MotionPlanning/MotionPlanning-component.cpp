@@ -9,13 +9,14 @@ MotionPlanning::MotionPlanning(std::string const& name) : MotionPlanningInterfac
 }
 
 bool MotionPlanning::config() {
-    omg::Vehicle* vehicle = new omg::Holonomic();
+    p2p::Vehicle* vehicle = new p2p::Holonomic();
     if (_ideal_prediction) {
         vehicle->setIdealPrediction(true);
     }
     _n_st = vehicle->getNState();
     _n_in = vehicle->getNInput();
-    _p2p = new omg::Point2Point(vehicle, _update_time, _sample_time, _horizon_time, _trajectory_length);
+    _problem = new Problem<p2p::Point2Point>(new p2p::Point2Point(vehicle, _update_time, _sample_time, _horizon_time, _trajectory_length));
+
     _ref_pose.resize(_trajectory_length);
     _ref_velocity.resize(_trajectory_length);
     for(int k=0; k<_trajectory_length; k++) {
@@ -27,18 +28,24 @@ bool MotionPlanning::config() {
 }
 
 bool MotionPlanning::initialize() {
-    _p2p->reset();
-    _p2p->resetTime();
+    _problem->reset();
+    _problem->resetTime();
     return true;
 }
 
 void MotionPlanning::patchup() {
-    _p2p->recover();
+    _problem->recover();
 }
 
 bool MotionPlanning::updatePositionTrajectory() {
     // update motion planning algorithm
-    bool check = _p2p->update(_est_pose, _target_pose, _ref_pose, _ref_velocity, *(std::vector<omg::obstacle_t>*)&_obstacles, _predict_shift);
+    p2p::Point2Point* problem = ((Problem<p2p::Point2Point>*)_problem)->get();
+    bool check = problem->update(_est_pose, _target_pose, _ref_pose, _ref_velocity, *(std::vector<p2p::obstacle_t>*)&_obstacles, _predict_shift);
+    save(_ref_pose, _ref_velocity);
+    return check;
+}
+
+void MotionPlanning::save(const std::vector<std::vector<double> >& ref_pose, const std::vector<std::vector<double> >& ref_velocity) {
     for (int k=0; k<_trajectory_length; k++) {
         for (int j=0; j<_n_st; j++) {
             _ref_pose_trajectory[j][k] = _ref_pose[k][j];
@@ -47,13 +54,12 @@ bool MotionPlanning::updatePositionTrajectory() {
             _ref_velocity_trajectory[j][k] = _ref_velocity[k][j];
         }
     }
-    return check;
 }
 
 double MotionPlanning::getMotionTime() {
     double position_time;
     std::vector<double> coeff_vector;
-    _p2p->getCoefficients(coeff_vector);
+    _problem->getCoefficients(coeff_vector);
     uint n_cfs = coeff_vector.size()/2;
     double target_dist = sqrt(pow(_target_pose[0] - coeff_vector[n_cfs-1], 2) + pow(_target_pose[1] - coeff_vector[2*n_cfs-1], 2));
     if (target_dist > _target_dist_tol) { // end of trajectory is not on destination yet -> use heuristic

@@ -2,17 +2,17 @@
 <!DOCTYPE properties SYSTEM "cpf.dtd">
 <properties>
 
-<simple name="mp_max_failure" type="long">
+<simple name="max_failures" type="long">
   <description>Maximum number of consecutive infeasible motionplanning updates</description>
   <value>5</value>
 </simple>
 
-<simple name="mp_max_recover" type="long">
+<simple name="max_recovers" type="long">
   <description>Maximum number of consecutive motionplanning recoveries</description>
   <value>5</value>
 </simple>
 
-<simple name="mp_max_periods" type="long">
+<simple name="max_periods" type="long">
   <description>Maximum number of periods the motionplanning can take to compute</description>
   <value>5</value>
 </simple>
@@ -54,51 +54,6 @@
   <description>Threshold for orientation setpoint</description>
   <value>0.01</value>
 </simple>
-
-
-
-<simple name="init_iter" type="long">
-  <description>Number of initial ADMM iterations</description>
-  <value>5</value>
-</simple>
-<simple name="rho" type="double">
-  <description>Penalty factor for ADMM</description>
-  <value>0.2</value>
-</simple>
-<simple name="maximum_failures" type="long">
-  <description>Maximum allowed consecutive failures</description>
-  <value>1</value>
-</simple>
-<simple name="target_detection" type="boolean">
-  <description>Target reached detection?</description>
-  <value>1</value>
-</simple>
-
-<struct name="configuration_x" type="array">
-  <description>x coordinates relative to fleet center</description>
-  <simple name="Element0" type="double">
-    <value>-0.2</value>
-  </simple>
-  <simple name="Element1" type="double">
-    <value>-0.2</value>
-  </simple>
-  <simple name="Element2" type="double">
-    <value>0.35</value>
-  </simple>
-</struct>
-
-<struct name="configuration_y" type="array">
-  <description>y coordinates relative to fleet center</description>
-  <simple name="Element0" type="double">
-    <value>-0.2</value>
-  </simple>
-  <simple name="Element1" type="double">
-    <value>0.2</value>
-  </simple>
-  <simple name="Element2" type="double">
-    <value>0.0</value>
-  </simple>
-</struct>
 
 <!-- Flexonomy related properties -->
 

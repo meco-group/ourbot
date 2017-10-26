@@ -24,6 +24,9 @@ MotionPlanningInterface::MotionPlanningInterface(std::string const& name) : Task
 
     ports()->addPort("motion_time_port", _motion_time_port).doc("Motion time of computed motion trajectory");
 
+    addProperty("max_failures", _max_failures).doc("Maximum number of consecutive infeasible motionplanning updates");
+    addProperty("max_recovers", _max_recovers).doc("Maximum number of consecutive motionplanning recoveries");
+    addProperty("max_periods", _max_periods).doc("Maximum number of periods the motionplanning can take to compute");
     addProperty("control_rate", _control_rate).doc("Frequency to update the control loop");
     addProperty("motionplanning_rate", _motionplanning_rate).doc("Frequency to update the motionplanning");
     addProperty("horizon_time", _horizon_time).doc("Horizon to compute motion trajectory");
@@ -67,7 +70,7 @@ bool MotionPlanningInterface::reset() { // call this one before each p2p task
     _target_set = false;
     _ready = false;
     _first_iteration = true;
-    std::cout << "re-init motionplanning" << std::endl;
+    std::cout << "reset motionplanning" << std::endl;
     return true;
 }
 
@@ -166,8 +169,6 @@ bool MotionPlanningInterface::targetReached() {
     double input_norm = 0.;
     for (int i=0; i<2; i++) {
         target_dist += pow(_target_pose[i] - _est_pose[i], 2);
-    }
-    for (int i=0; i<3; i++) {
         input_norm += pow(_ref_velocity_trajectory[i][_predict_shift], 2);
     }
     target_dist = sqrt(target_dist);
@@ -281,7 +282,7 @@ void MotionPlanningInterface::fillObstacles(std::vector<obstacle_t>& obstacles) 
     _obstacle_port.read(obstacle_data);
     double orientation, width, height;
     for (int k=0; k<obstacles.size(); k++) {
-        if (obstacle_data[5*k] == -100) {
+        if (obstacle_data.size()/5 <= k || obstacle_data[5*k] == -100) {
             obstacles[k].avoid = false;
         } else {
             obstacles[k].avoid = true;

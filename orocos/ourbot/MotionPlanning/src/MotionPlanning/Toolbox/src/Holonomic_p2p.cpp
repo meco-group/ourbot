@@ -21,7 +21,7 @@
 
 using namespace std;
 
-namespace omg{
+namespace p2p{
 
 Holonomic::Holonomic() : Vehicle(2, 2, 2, 3), poseT(2){
 

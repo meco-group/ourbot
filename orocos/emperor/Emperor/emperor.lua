@@ -137,11 +137,11 @@ end
 
 
 function snapshot()
-  if snapshot_cnt >= 1./(reporting_rate*period) then
+   if snapshot_cnt >= 1./(reporting_rate*period) then
       reporter_snapshot:send()
       snapshot_cnt = 1
-  else
+   else
       snapshot_cnt = snapshot_cnt + 1
-  end
+   end
 end
 

@@ -3,27 +3,28 @@
 
 #include "../MotionPlanningInterface/MotionPlanningInterface-component.hpp"
 #include <vector>
+#include "Problem.hpp"
 #include "Holonomic_p2p.hpp"
 #include "Point2Point_p2p.hpp"
 
 class MotionPlanning : public MotionPlanningInterface {
 
     private:
-        int _n_st;
-        int _n_in;
-        bool _ideal_prediction;
         std::vector<std::vector<double> > _ref_velocity;
         std::vector<std::vector<double> > _ref_pose;
 
     protected:
-        omg::Point2Point* _p2p;
-        int n_obstacles() { return _p2p->n_obs;}
+        ProblemInterface* _problem;
+        bool _ideal_prediction;
+        int _n_st;
+        int _n_in;
+        virtual int n_obstacles() { return _problem->n_obstacles(); }
         virtual bool initialize();
         virtual bool config();
         virtual bool updatePositionTrajectory();
         virtual void patchup();
         virtual double getMotionTime();
-
+        void save(const std::vector<std::vector<double> >& ref_pose, const std::vector<std::vector<double> >& ref_velocity);
 
     public:
         MotionPlanning(std::string const& name);

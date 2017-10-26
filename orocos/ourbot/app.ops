@@ -1,9 +1,13 @@
+export void trajectoryfollowing(){
+  coordinator_send_event_port.write("e_trajectoryfollowing")
+}
+
 export void motionplanning(){
   coordinator_send_event_port.write("e_motionplanning")
 }
 
-export void trajectoryfollowing(){
-  coordinator_send_event_port.write("e_trajectoryfollowing")
+export void formation(){
+  coordinator_send_event_port.write("e_formation")
 }
 
 export void flexonomy(){

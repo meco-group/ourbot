@@ -17,12 +17,12 @@
 // License along with this program; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#ifndef ADMMPOINT2POINT
-#define ADMMPOINT2POINT
+#ifndef ADMMPOINT2POINT_P2PF
+#define ADMMPOINT2POINT_P2PF
 
 #include "Point2Point_p2pf.hpp"
 
-namespace omgf{
+namespace p2pf{
 
 class ADMMPoint2Point: public Point2Point{
     private:

@@ -9,3 +9,15 @@ export void back(){
 export string get_state(){
   return emperor_current_state_port.last()
 }
+
+export void trajectoryfollowing(){
+  emperor_send_event_port.write("e_trajectoryfollowing")
+}
+
+export void motionplanning(){
+  emperor_send_event_port.write("e_motionplanning")
+}
+
+export void formation(){
+  emperor_send_event_port.write("e_formation")
+}

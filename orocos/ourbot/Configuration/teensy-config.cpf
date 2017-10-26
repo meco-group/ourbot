@@ -39,15 +39,12 @@
   <struct name="velocity_pid_strong" type="array">
     <description>PID parameters for strong velocity control (smooth trajectories)</description>
     <simple name="P" type="double">
-      <!-- <value>5.</value> -->
       <value>1.</value>
     </simple>
     <simple name="I" type="double">
-      <!-- <value>15.</value> -->
       <value>1.5</value>
     </simple>
     <simple name="D" type="double">
-      <!-- <value>0.015</value> -->
       <value>0.00</value>
     </simple>
   </struct>

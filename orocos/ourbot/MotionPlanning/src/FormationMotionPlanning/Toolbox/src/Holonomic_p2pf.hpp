@@ -17,12 +17,12 @@
 // License along with this program; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#ifndef HOLONOMIC
-#define HOLONOMIC
+#ifndef HOLONOMIC_P2PF
+#define HOLONOMIC_P2PF
 
 #include "Vehicle_p2pf.hpp"
 
-namespace omgf{
+namespace p2pf{
 
 class Holonomic: public Vehicle{
     private:

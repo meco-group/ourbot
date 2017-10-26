@@ -17,8 +17,7 @@ problem.set_options({'horizon_time': 6})
 problem.init()
 
 # simulate
-# vehicle.plot('input')
-problem.plot('scene')
+vehicle.plot('input')
 simulator = Simulator(problem)
 trajectories1 = simulator.run_once()
 
