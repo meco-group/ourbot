@@ -337,12 +337,12 @@ Port Communicator::clonePort(const string& component_name, const string& port_na
 
 bool Communicator::addOutgoingConnection(const string& component_name, const string& port_name, const string& id, const string& group){
   Connection* connection;
+  ConnPolicy policy = RTT::ConnPolicy::data();
+  Port anti_port = clonePort(component_name, port_name, policy);
   if (_con_map.find(component_name+port_name+id) != _con_map.end()){
     connection = _con_map[component_name+port_name+id];
     connection->addGroup(group);
   } else {
-    ConnPolicy policy = RTT::ConnPolicy::data();
-    Port anti_port = clonePort(component_name, port_name, policy);
     connection = getOutgoingConnection(anti_port, _node, id, group);
   }
   if (connection == NULL){
@@ -357,11 +357,11 @@ bool Communicator::addOutgoingConnection(const string& component_name, const str
 
 bool Communicator::addIncomingConnection(const string& component_name, const string& port_name, const string& id){
   Connection* connection;
+  ConnPolicy policy = RTT::ConnPolicy::data();
+  Port anti_port = clonePort(component_name, port_name, policy);
   if (_con_map.find(component_name+port_name+id) != _con_map.end()){
     connection = _con_map[component_name+port_name+id];
   } else {
-    ConnPolicy policy = RTT::ConnPolicy::data();
-    Port anti_port = clonePort(component_name, port_name, policy);
     connection = getIncomingConnection(anti_port, _node, id);
   }
   if (connection == NULL){
@@ -376,11 +376,11 @@ bool Communicator::addIncomingConnection(const string& component_name, const str
 
 bool Communicator::addBufferedIncomingConnection(const string& component_name, const string& port_name, const string& id, int buffer_size){
   Connection* connection;
+  ConnPolicy policy = RTT::ConnPolicy::buffer(buffer_size);
+  Port anti_port = clonePort(component_name, port_name, policy);
   if (_con_map.find(component_name+port_name+id) != _con_map.end()){
     connection = _con_map[component_name+port_name+id];
   } else {
-    ConnPolicy policy = RTT::ConnPolicy::buffer(buffer_size);
-    Port anti_port = clonePort(component_name, port_name, policy);
     connection = getIncomingConnection(anti_port, _node, id);
     connection->setBufferSize(buffer_size);
     connection->setVerbose(_verbose);

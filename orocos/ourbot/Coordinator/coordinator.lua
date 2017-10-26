@@ -220,7 +220,7 @@ function guard_time(start_time, prev_start_time, end_time)
     rtt.logl('Warning','ControlLoop: Duration of calculation exceeded 90% of sample period!')
   end
   if jitter > 100*period then
-    rtt.logl('Warning','ControlLoop: Jitter exceeded 10% of sample period')
+    rtt.logl('Info','ControlLoop: Jitter exceeded 10% of sample period')
   end
   _controlloop_duration_port:write(duration)
   _controlloop_jitter_port:write(jitter)
