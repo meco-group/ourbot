@@ -283,7 +283,20 @@ void MotionPlanningInterface::fillObstacles(std::vector<obstacle_t>& obstacles) 
     double orientation, width, height;
     for (int k=0; k<obstacles.size(); k++) {
         if (obstacle_data.size()/5 <= k || obstacle_data[5*k] == -100) {
-            obstacles[k].avoid = false;
+            // dummy data -> put it far away
+            obstacles[k].avoid = true;
+            obstacles[k].position[0] = -1000;
+            obstacles[k].position[1] = -1000;
+            obstacles[k].velocity[0] = 0.;
+            obstacles[k].velocity[1] = 0.;
+            obstacles[k].acceleration[0] = 0.;
+            obstacles[k].acceleration[1] = 0.;
+            for (int i=0; i<4; i++) {
+                obstacles[k].radii[i] = 1.e-3;
+                for (int j=0; j<2; j++) {
+                    obstacles[k].checkpoints[2*i+j] = 0.;
+                }
+            }
         } else {
             obstacles[k].avoid = true;
             obstacles[k].position[0] = obstacle_data[5*k+0];

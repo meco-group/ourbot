@@ -96,8 +96,6 @@ function MotionPlanningCoordinator.get_fsm(self)
 
     init = rfsm.state{
       entry = function(fsm)
-        rfsm.send_events(fsm, 'e_failed')
-
         if not self:load_motionplanner() then
           rfsm.send_events(fsm, 'e_failed')
           return
