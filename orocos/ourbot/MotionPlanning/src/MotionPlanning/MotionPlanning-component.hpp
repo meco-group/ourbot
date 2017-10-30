@@ -28,6 +28,8 @@ class MotionPlanning : public MotionPlanningInterface {
 
     public:
         MotionPlanning(std::string const& name);
+        std::vector<double> getCoefficients();
+        int getBasisLength();
 };
 
 #endif

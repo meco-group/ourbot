@@ -6,6 +6,8 @@ using namespace std;
 
 MotionPlanning::MotionPlanning(std::string const& name) : MotionPlanningInterface(name) {
     addProperty("ideal_prediction", _ideal_prediction).doc("Use prediction based on computed trajectories and not on state estimation");
+    addOperation("getCoefficients", &MotionPlanning::getCoefficients, this).doc("Get spline coefficients of last trajectory");
+    addOperation("getBasisLength", &MotionPlanning::getBasisLength, this).doc("Get length of basis of spline trajectory");
 }
 
 bool MotionPlanning::config() {
@@ -58,8 +60,7 @@ void MotionPlanning::save(const std::vector<std::vector<double> >& ref_pose, con
 
 double MotionPlanning::getMotionTime() {
     double position_time;
-    std::vector<double> coeff_vector;
-    _problem->getCoefficients(coeff_vector);
+    std::vector<double> coeff_vector = getCoefficients();
     uint n_cfs = coeff_vector.size()/2;
     double target_dist = sqrt(pow(_target_pose[0] - coeff_vector[n_cfs-1], 2) + pow(_target_pose[1] - coeff_vector[2*n_cfs-1], 2));
     if (target_dist > _target_dist_tol) { // end of trajectory is not on destination yet -> use heuristic
@@ -76,6 +77,16 @@ double MotionPlanning::getMotionTime() {
         position_time = k*_sample_time;
     }
     return std::max(position_time, _rotation_time);
+}
+
+std::vector<double> MotionPlanning::getCoefficients() {
+    std::vector<double> coeffs;
+    _problem->getCoefficients(coeffs);
+    return coeffs;
+}
+
+int MotionPlanning::getBasisLength() {
+    return _problem->getLenBasis();
 }
 
 ORO_LIST_COMPONENT_TYPE(MotionPlanning);

@@ -24,6 +24,7 @@ environment = Environment(room={'shape': Rectangle(width, height), 'position': [
 rectangle = Rectangle(width=0.25, height=0.5)
 
 environment.add_obstacle(Obstacle({'position': [1.5, 0.5]}, shape=rectangle))
+environment.add_obstacle(Obstacle({'position': [1.5, 0.5]}, shape=rectangle))
 
 # create a point-to-point problem
 problem = Point2point(vehicle, environment, freeT=False)
@@ -45,4 +46,4 @@ vehicle.plot('input')
 problem.plot('scene')
 simulator = Simulator(problem, sample_time=0.01, update_time=0.5)
 trajectories, signals = simulator.run()
-problem.plot_movie('scene', number_of_frames=100)
+# problem.plot_movie('scene', number_of_frames=100)

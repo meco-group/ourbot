@@ -67,6 +67,9 @@ void FlexonomyMotionPlanning::writeHostObstTraj(int option) {
       traj_vector[i+13] = _old_estimated_pose[1]; //y-coeffs
     }
   }
+
+
+
   if (false) {
     std::cout << "host obstacle : Spline Trajectory" << std::endl;
     std::cout << "x coefficients : [";
@@ -206,27 +209,6 @@ void FlexonomyMotionPlanning::getObstacles(std::vector<omg::obstacle_t>& obstacl
       //   std::cout << "]" << std::endl;
       // }
     }
-  }
-}
-
-double FlexonomyMotionPlanning::getMotionTime(){
-  std::vector<double> coeff_vector;
-  _p2p->getCoefficients(coeff_vector);
-  uint n_cfs = coeff_vector.size()/2;
-  double target_dist = sqrt(pow(_target_pose[0] - coeff_vector[n_cfs-1], 2) + pow(_target_pose[1] - coeff_vector[2*n_cfs-1], 2));
-  if(target_dist > 0.02) { // end of trajectory is not on destination yet
-    double v_mean = 0.87*_vmax;
-    double dist = sqrt(pow(_target_pose[0]-coeff_vector[0], 2) + pow(_target_pose[1]-coeff_vector[n_cfs], 2));
-    return dist/v_mean;
-  }
-  else {
-    int k;
-    for (k=0; k<_trajectory_length_full; k++) {
-      if(sqrt(pow(_ref_pose[k][0]-_target_pose[0], 2) + pow(_ref_pose[k][1]-_target_pose[1], 2)) <= 0.02) {
-        break;
-      }
-    }
-    return k*_sample_time;
   }
 }
 

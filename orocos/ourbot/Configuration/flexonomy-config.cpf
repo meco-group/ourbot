@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "cpf.dtd">
+<properties>
+
+  <simple name="coordinator_name" type="string">
+    <description>Name of coordinating node</description>
+    <value>SH1</value>
+  </simple>
+
+  <simple name="header_version" type="string">
+    <description>Version of communication header</description>
+    <value>1.0.0</value>
+  </simple>
+
+  <simple name="statemsg_rate" type="double">
+    <description>Rate to send state messages</description>
+    <value>0.1</value>
+  </simple>
+
+  <simple name="nghbcom_rate" type="double">
+    <description>Rate to communicate trajectories to neighbor</description>
+    <value>4</value>
+  </simple>
+
+  <struct name="robot_table_size" type="array">
+    <description>Length and width of robot arm table</description>
+    <simple name="length" type="double">
+      <value>1.1</value>
+    </simple>
+    <simple name="width" type="double">
+      <value>1.2</value>
+    </simple>
+  </struct>
+
+  <simple name="no_robot_cnt_max" type="long">
+    <description>Maximum iterations to decide that robot arm is not visible</description>
+    <value>15</value>
+  </simple>
+
+</properties>
+

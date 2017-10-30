@@ -115,7 +115,6 @@ return rfsm.state {
   test = rfsm.state{
     entry = function(fsm)
       _emperor_send_event_port:write('e_motionplanning')
-
     end,
 
     doo = function(fsm)

@@ -246,6 +246,7 @@ bool Communicator::listen(){
       zmsg_t* msg = zyre_event_msg(_event);
       if (msg == NULL){
           log(Error) << "Received message is NULL." << endlog();
+          zyre_event_destroy(&_event);
           return false;
       }
       std::string peer = std::string(zyre_event_peer_name(_event));
@@ -255,6 +256,7 @@ bool Communicator::listen(){
         zframe_t* data_frame = zmsg_first(msg);
         if (!_mailbox->receive(data_frame, peer, peer_uuid)) {
           log(Error) << "Error while receiving mail." << endlog();
+          zyre_event_destroy(&_event);
           return false;
         }
       } else if (zmsg_size(msg) == 2) {
@@ -264,13 +266,14 @@ bool Communicator::listen(){
         for (uint k=0; k<_connections.size(); k++) {
           if(!_connections[k]->receive(header, data_frame, peer)) {
             log(Error) << "Error while receiving in " << _connections[k]->toString() << endlog();
+            zyre_event_destroy(&_event);
             return false;
           }
         }
       } else {
         log(Warning) << "Wrong message size, discarding." << endlog();
       }
-      zmsg_destroy(&msg);
+      zyre_event_destroy(&_event);
     }
   }
   return true;

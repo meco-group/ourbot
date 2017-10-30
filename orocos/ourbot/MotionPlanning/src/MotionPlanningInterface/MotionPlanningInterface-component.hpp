@@ -32,9 +32,6 @@ class MotionPlanningInterface : public RTT::TaskContext {
     private:
         InputPort<std::vector<double> > _target_pose_port;
         InputPort<std::vector<double> > _mp_trigger_port;
-        InputPort<std::vector<double> > _obstacle_port;
-        InputPort<std::vector<double> > _robobs_pose_port;
-        InputPort<std::vector<double> > _robobs_velocity_port;
 
         OutputPort<std::vector<double> > _ref_pose_trajectory_port[3];
         OutputPort<std::vector<double> > _ref_velocity_trajectory_port[3];
@@ -45,6 +42,7 @@ class MotionPlanningInterface : public RTT::TaskContext {
         int _max_periods;
         double _orientation_th;
         TimeService::ticks _timestamp;
+        void loadObstacles();
         double updateOrientationTrajectory();
         std::vector<double> _mp_trigger_data;
         bool _target_set;
@@ -62,8 +60,6 @@ class MotionPlanningInterface : public RTT::TaskContext {
         virtual bool updatePoseTrajectory();
         virtual bool updatePositionTrajectory() = 0;
         virtual int n_obstacles() { return 0; }
-        virtual void initObstacles(std::vector<obstacle_t>& obstacles, int n_obs);
-        virtual void fillObstacles(std::vector<obstacle_t>& obstacles);
         virtual void patchup();
 
         double _target_dist_tol;
@@ -99,6 +95,11 @@ class MotionPlanningInterface : public RTT::TaskContext {
         virtual bool ready();
         virtual bool busy();
         virtual bool valid();
+        void resetObstacles();
+        void addStaticObstacle(const std::vector<double>& pose, const std::vector<double>& size);
+        void addDynamicObstacle(const std::vector<double>& pose, const std::vector<double>& velocity, const std::vector<double>& size);
+        void addPeerObstacle(const std::vector<double>& coeff_vector, double radius);
+
 };
 #endif
 

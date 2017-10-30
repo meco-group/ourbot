@@ -5,6 +5,7 @@ class ProblemInterface {
         virtual void resetTime() = 0;
         virtual void recover() = 0;
         virtual void getCoefficients(std::vector<double>& coeff) = 0;
+        virtual int getLenBasis() = 0;
 };
 
 template <class problemtype> class Problem : public ProblemInterface {
@@ -35,6 +36,10 @@ template <class problemtype> class Problem : public ProblemInterface {
 
         void getCoefficients(std::vector<double>& coeff) {
             this->_problem->getCoefficients(coeff);
+        }
+
+        int getLenBasis() {
+            return this->_problem->getLenBasis();
         }
 
         problemtype* get() {

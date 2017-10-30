@@ -5,10 +5,7 @@ from omgtools import *
 options = {}
 shape = Circle(0.35)
 vehicle = Holonomic(shapes=shape, options=options, bounds={'vmin': -0.3, 'vmax': 0.3, 'amin': -0.5, 'amax': 0.5})
-# vehicle.set_options({'safety_distance': 0.05})
-vehicle.set_options({'safety_distance': 0.1})
-# vehicle.set_options({'safety_distance': 0.07})
-vehicle.set_options({'stop_tol': 1e-2})
+vehicle.set_options({'safety_distance': 0.1, 'room_constraints': False, 'stop_tol': 1e-2})
 
 A = [ 3.2, 2.]
 B = [4.2, 1.2]
@@ -48,7 +45,7 @@ options['directory'] = os.getenv('ROS_WORKSPACE') + '/ourbot/MotionPlanning/src/
 options['casadiobj'] = '$(ROS_WORKSPACE)/ourbot/MotionPlanning/src/MotionPlanning/Toolbox/bin/'
 options['casadiinc'] = '$(CASADI_INC)'
 options['casadilib'] = '$(CASADI_LIB)'
-options['namespace'] = 'omg'
+options['namespace'] = 'p2p'
 
 # export the problem
 problem.export(options)
@@ -56,4 +53,4 @@ vehicle.plot('input')
 problem.plot('scene')
 simulator = Simulator(problem, sample_time=0.01, update_time=0.5)
 trajectories, signals = simulator.run()
-problem.plot_movie('scene', number_of_frames=100)
+# problem.plot_movie('scene', number_of_frames=100)

@@ -15,6 +15,7 @@
     <value>erveepee</value>
   </simple>
 
+
   <simple name="print_level" type="long">
     <description>Level of output printing</description>
     <value>2</value>
@@ -51,14 +52,16 @@
     <value>10</value>
   </simple>
 
-  <simple name="platform_length" type="double">
-    <description>Length of the platform in [m]</description>
-    <value>0.3</value>
-  </simple>
-  <simple name="platform_width" type="double">
-    <description>Width of the platform in [m]</description>
-    <value>0.263</value>
-  </simple>
+  <struct name="ourbot_size" type="array">
+    <description>Size of the ourbot</description>
+    <simple name="length" type="double">
+      <value>0.3</value>
+    </simple>
+    <simple name="width" type="double">
+      <value>0.263</value>
+    </simple>
+  </struct>
+
   <simple name="wheel_radius" type="double">
     <description>Radius of the wheel in [m]</description>
     <value>0.05</value>

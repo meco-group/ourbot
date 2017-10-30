@@ -38,8 +38,7 @@ class TeensyBridge : public USBInterface
 		void writeRawDataToPorts();
 
 		// KINEMATIC HANDLERS
-		double _platform_length;
-		double _platform_width;
+		std::vector<double> _ourbot_size;
 		double _wheel_radius;
 		uint32_t _encoder_ticks_per_revolution;
 		double _current_sensor_gain;

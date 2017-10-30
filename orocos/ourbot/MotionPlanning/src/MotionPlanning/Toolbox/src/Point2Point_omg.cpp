@@ -17,7 +17,7 @@
 // License along with this program; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include "Point2Point_p2pf.hpp"
+#include "Point2Point_omg.hpp"
 #ifdef DEBUG
 #include <ctime>
 #endif
@@ -26,7 +26,7 @@
 using namespace std;
 using namespace casadi;
 
-namespace p2pf{
+namespace p2p{
 
 Point2Point::Point2Point(Vehicle* vehicle,
     double update_time, double sample_time, double horizon_time, int trajectory_length, bool initialize):
@@ -92,20 +92,19 @@ void Point2Point::generateProblem(){
 
 void Point2Point::generateSubstituteFunctions(){
 	string obj_path = CASADIOBJ;
-	substitutes["fleet_center1"] = external("fleet_center1", obj_path+"/subst_fleet_center1.so");
-	substitutes["fleet_center0"] = external("fleet_center0", obj_path+"/subst_fleet_center0.so");
 
 }
 
 void Point2Point::initSplines(){
 	splines_tf["splines0"] = SPLINES0_TF;
 	splines_tf["eps_00"] = EPS_00_TF;
+	splines_tf["eps_01"] = EPS_01_TF;
 	splines_tf["g0"] = G0_TF;
 	splines_tf["g1"] = G1_TF;
 	splines_tf["a_vehicle0_00"] = A_VEHICLE0_00_TF;
 	splines_tf["b_vehicle0_00"] = B_VEHICLE0_00_TF;
-	splines_tf["xvar_fleet_center0"] = XVAR_FLEET_CENTER0_TF;
-	splines_tf["xvar_fleet_center1"] = XVAR_FLEET_CENTER1_TF;
+	splines_tf["a_vehicle0_01"] = A_VEHICLE0_01_TF;
+	splines_tf["b_vehicle0_01"] = B_VEHICLE0_01_TF;
 
 }
 
@@ -293,11 +292,16 @@ void Point2Point::fillParameterDict(vector<obstacle_t>& obstacles, map<string, m
 		velT[j] = vel0[j] + update_time*acc0[j];
 		accT[j] = acc0[j];
 	}
-	par_dict["obstacle1"]["x"] = posT;
-	par_dict["obstacle1"]["v"] = velT;
-	par_dict["obstacle1"]["a"] = accT;
-	par_dict["obstacle1"]["checkpoints"] = obstacles[0].checkpoints;
-	par_dict["obstacle1"]["rad"] = obstacles[0].radii;
+	par_dict["obstacle0"]["x"] = posT;
+	par_dict["obstacle0"]["v"] = velT;
+	par_dict["obstacle0"]["a"] = accT;
+	par_dict["obstacle0"]["checkpoints"] = obstacles[0].checkpoints;
+	par_dict["obstacle0"]["rad"] = obstacles[0].radii;
+
+
+	par_dict["obstacle1"]["traj_coeffs"] = obstacles[1].traj_coeffs;
+	par_dict["obstacle1"]["checkpoints"] = obstacles[1].checkpoints;
+	par_dict["obstacle1"]["rad"] = obstacles[1].radii;
 
 
 }
@@ -335,47 +339,38 @@ void Point2Point::retrieveTrajectories(vector<vector<double>>& spline_coeffs){
 
 void Point2Point::getParameterVector(vector<double>& par_vect, map<string, map<string, vector<double>>>& par_dict){
 	for (int i=0; i<2; i++){
-		par_vect[0+i] = par_dict["vehicle0"]["rel_pos_c"][i];
+		par_vect[0+i] = par_dict["vehicle0"]["state0"][i];
 	}
 	for (int i=0; i<2; i++){
-		par_vect[2+i] = par_dict["vehicle0"]["state0"][i];
+		par_vect[2+i] = par_dict["vehicle0"]["input0"][i];
 	}
 	for (int i=0; i<2; i++){
-		par_vect[4+i] = par_dict["vehicle0"]["input0"][i];
+		par_vect[4+i] = par_dict["vehicle0"]["poseT"][i];
 	}
 	for (int i=0; i<2; i++){
-		par_vect[6+i] = par_dict["vehicle0"]["poseT"][i];
-	}
-	par_vect[8] = par_dict["p2p0"]["T"][0];
-	par_vect[9] = par_dict["p2p0"]["t"][0];
-	for (int i=0; i<26; i++){
-		par_vect[10+i] = par_dict["admm0"]["z_i"][i];
-	}
-	for (int i=0; i<52; i++){
-		par_vect[36+i] = par_dict["admm0"]["z_ji"][i];
-	}
-	for (int i=0; i<26; i++){
-		par_vect[88+i] = par_dict["admm0"]["l_i"][i];
-	}
-	for (int i=0; i<52; i++){
-		par_vect[114+i] = par_dict["admm0"]["l_ji"][i];
-	}
-	par_vect[166] = par_dict["admm0"]["rho"][0];
-	for (int i=0; i<2; i++){
-		par_vect[167+i] = par_dict["obstacle1"]["x"][i];
+		par_vect[6+i] = par_dict["obstacle0"]["x"][i];
 	}
 	for (int i=0; i<2; i++){
-		par_vect[169+i] = par_dict["obstacle1"]["v"][i];
+		par_vect[8+i] = par_dict["obstacle0"]["v"][i];
 	}
 	for (int i=0; i<2; i++){
-		par_vect[171+i] = par_dict["obstacle1"]["a"][i];
+		par_vect[10+i] = par_dict["obstacle0"]["a"][i];
 	}
 	for (int i=0; i<8; i++){
-		par_vect[173+i] = par_dict["obstacle1"]["checkpoints"][i];
+		par_vect[12+i] = par_dict["obstacle0"]["checkpoints"][i];
 	}
 	for (int i=0; i<4; i++){
-		par_vect[181+i] = par_dict["obstacle1"]["rad"][i];
+		par_vect[20+i] = par_dict["obstacle0"]["rad"][i];
 	}
+	for (int i=0; i<26; i++){
+		par_vect[24+i] = par_dict["obstacle1"]["traj_coeffs"][i];
+	}
+	for (int i=0; i<2; i++){
+		par_vect[50+i] = par_dict["obstacle1"]["checkpoints"][i];
+	}
+	par_vect[52] = par_dict["obstacle1"]["rad"][0];
+	par_vect[53] = par_dict["p2p0"]["T"][0];
+	par_vect[54] = par_dict["p2p0"]["t"][0];
 
 }
 
@@ -391,34 +386,49 @@ void Point2Point::getVariableVector(vector<double>& var_vect, map<string, map<st
 				var_vect[26+i] = var_dict["vehicle0"]["eps_00"][i];
 			}
 		}
+		if (var_dict["vehicle0"].find("eps_01") != var_dict["vehicle0"].end()){
+			for (int i=0; i<13; i++){
+				var_vect[39+i] = var_dict["vehicle0"]["eps_01"][i];
+			}
+		}
+	}
+	if (var_dict.find("obstacle0") != var_dict.end()){
+	}
+	if (var_dict.find("obstacle1") != var_dict.end()){
 	}
 	if (var_dict.find("p2p0") != var_dict.end()){
 		if (var_dict["p2p0"].find("g0") != var_dict["p2p0"].end()){
 			for (int i=0; i<13; i++){
-				var_vect[39+i] = var_dict["p2p0"]["g0"][i];
+				var_vect[52+i] = var_dict["p2p0"]["g0"][i];
 			}
 		}
 		if (var_dict["p2p0"].find("g1") != var_dict["p2p0"].end()){
 			for (int i=0; i<13; i++){
-				var_vect[52+i] = var_dict["p2p0"]["g1"][i];
+				var_vect[65+i] = var_dict["p2p0"]["g1"][i];
 			}
 		}
 	}
-	if (var_dict.find("environment1") != var_dict.end()){
-		if (var_dict["environment1"].find("a_vehicle0_00") != var_dict["environment1"].end()){
+	if (var_dict.find("environment0") != var_dict.end()){
+		if (var_dict["environment0"].find("a_vehicle0_00") != var_dict["environment0"].end()){
 			for (int i=0; i<22; i++){
-				var_vect[65+i] = var_dict["environment1"]["a_vehicle0_00"][i];
+				var_vect[78+i] = var_dict["environment0"]["a_vehicle0_00"][i];
 			}
 		}
-		if (var_dict["environment1"].find("b_vehicle0_00") != var_dict["environment1"].end()){
+		if (var_dict["environment0"].find("b_vehicle0_00") != var_dict["environment0"].end()){
 			for (int i=0; i<11; i++){
-				var_vect[87+i] = var_dict["environment1"]["b_vehicle0_00"][i];
+				var_vect[100+i] = var_dict["environment0"]["b_vehicle0_00"][i];
 			}
 		}
-	}
-	if (var_dict.find("admm0") != var_dict.end()){
-	}
-	if (var_dict.find("obstacle1") != var_dict.end()){
+		if (var_dict["environment0"].find("a_vehicle0_01") != var_dict["environment0"].end()){
+			for (int i=0; i<22; i++){
+				var_vect[111+i] = var_dict["environment0"]["a_vehicle0_01"][i];
+			}
+		}
+		if (var_dict["environment0"].find("b_vehicle0_01") != var_dict["environment0"].end()){
+			for (int i=0; i<11; i++){
+				var_vect[133+i] = var_dict["environment0"]["b_vehicle0_01"][i];
+			}
+		}
 	}
 
 }
@@ -438,27 +448,571 @@ void Point2Point::getVariableDict(vector<double>& var_vect, map<string, map<stri
 	for (int i=0; i<13; i++){
 		vec[i] = var_vect[39+i];
 	}
-	var_dict["p2p0"]["g0"] = vec;
+	var_dict["vehicle0"]["eps_01"] = vec;
 	vec.resize(13);
 	for (int i=0; i<13; i++){
 		vec[i] = var_vect[52+i];
 	}
+	var_dict["p2p0"]["g0"] = vec;
+	vec.resize(13);
+	for (int i=0; i<13; i++){
+		vec[i] = var_vect[65+i];
+	}
 	var_dict["p2p0"]["g1"] = vec;
 	vec.resize(22);
 	for (int i=0; i<22; i++){
-		vec[i] = var_vect[65+i];
+		vec[i] = var_vect[78+i];
 	}
-	var_dict["environment1"]["a_vehicle0_00"] = vec;
+	var_dict["environment0"]["a_vehicle0_00"] = vec;
 	vec.resize(11);
 	for (int i=0; i<11; i++){
-		vec[i] = var_vect[87+i];
+		vec[i] = var_vect[100+i];
 	}
-	var_dict["environment1"]["b_vehicle0_00"] = vec;
+	var_dict["environment0"]["b_vehicle0_00"] = vec;
+	vec.resize(22);
+	for (int i=0; i<22; i++){
+		vec[i] = var_vect[111+i];
+	}
+	var_dict["environment0"]["a_vehicle0_01"] = vec;
+	vec.resize(11);
+	for (int i=0; i<11; i++){
+		vec[i] = var_vect[133+i];
+	}
+	var_dict["environment0"]["b_vehicle0_01"] = vec;
 
 }
 
 void Point2Point::updateBounds(double current_time, vector<obstacle_t>& obstacles){
 	if(!obstacles[0].avoid){
+		lbg[226] = -inf;
+		ubg[226] = +inf;
+		lbg[227] = -inf;
+		ubg[227] = +inf;
+		lbg[228] = -inf;
+		ubg[228] = +inf;
+		lbg[229] = -inf;
+		ubg[229] = +inf;
+		lbg[230] = -inf;
+		ubg[230] = +inf;
+		lbg[231] = -inf;
+		ubg[231] = +inf;
+		lbg[232] = -inf;
+		ubg[232] = +inf;
+		lbg[233] = -inf;
+		ubg[233] = +inf;
+		lbg[234] = -inf;
+		ubg[234] = +inf;
+		lbg[235] = -inf;
+		ubg[235] = +inf;
+		lbg[236] = -inf;
+		ubg[236] = +inf;
+		lbg[237] = -inf;
+		ubg[237] = +inf;
+		lbg[238] = -inf;
+		ubg[238] = +inf;
+		lbg[239] = -inf;
+		ubg[239] = +inf;
+		lbg[240] = -inf;
+		ubg[240] = +inf;
+		lbg[241] = -inf;
+		ubg[241] = +inf;
+		lbg[242] = -inf;
+		ubg[242] = +inf;
+		lbg[243] = -inf;
+		ubg[243] = +inf;
+		lbg[244] = -inf;
+		ubg[244] = +inf;
+		lbg[245] = -inf;
+		ubg[245] = +inf;
+		lbg[246] = -inf;
+		ubg[246] = +inf;
+		lbg[247] = -inf;
+		ubg[247] = +inf;
+		lbg[248] = -inf;
+		ubg[248] = +inf;
+		lbg[249] = -inf;
+		ubg[249] = +inf;
+		lbg[250] = -inf;
+		ubg[250] = +inf;
+		lbg[251] = -inf;
+		ubg[251] = +inf;
+		lbg[252] = -inf;
+		ubg[252] = +inf;
+		lbg[253] = -inf;
+		ubg[253] = +inf;
+		lbg[254] = -inf;
+		ubg[254] = +inf;
+		lbg[255] = -inf;
+		ubg[255] = +inf;
+		lbg[256] = -inf;
+		ubg[256] = +inf;
+		lbg[257] = -inf;
+		ubg[257] = +inf;
+		lbg[258] = -inf;
+		ubg[258] = +inf;
+		lbg[259] = -inf;
+		ubg[259] = +inf;
+		lbg[260] = -inf;
+		ubg[260] = +inf;
+		lbg[261] = -inf;
+		ubg[261] = +inf;
+		lbg[262] = -inf;
+		ubg[262] = +inf;
+		lbg[263] = -inf;
+		ubg[263] = +inf;
+		lbg[264] = -inf;
+		ubg[264] = +inf;
+		lbg[265] = -inf;
+		ubg[265] = +inf;
+		lbg[266] = -inf;
+		ubg[266] = +inf;
+		lbg[267] = -inf;
+		ubg[267] = +inf;
+		lbg[268] = -inf;
+		ubg[268] = +inf;
+		lbg[269] = -inf;
+		ubg[269] = +inf;
+		lbg[270] = -inf;
+		ubg[270] = +inf;
+		lbg[271] = -inf;
+		ubg[271] = +inf;
+		lbg[272] = -inf;
+		ubg[272] = +inf;
+		lbg[273] = -inf;
+		ubg[273] = +inf;
+		lbg[274] = -inf;
+		ubg[274] = +inf;
+		lbg[275] = -inf;
+		ubg[275] = +inf;
+		lbg[276] = -inf;
+		ubg[276] = +inf;
+		lbg[277] = -inf;
+		ubg[277] = +inf;
+		lbg[278] = -inf;
+		ubg[278] = +inf;
+		lbg[279] = -inf;
+		ubg[279] = +inf;
+		lbg[280] = -inf;
+		ubg[280] = +inf;
+		lbg[281] = -inf;
+		ubg[281] = +inf;
+		lbg[282] = -inf;
+		ubg[282] = +inf;
+		lbg[283] = -inf;
+		ubg[283] = +inf;
+		lbg[284] = -inf;
+		ubg[284] = +inf;
+		lbg[285] = -inf;
+		ubg[285] = +inf;
+		lbg[286] = -inf;
+		ubg[286] = +inf;
+		lbg[287] = -inf;
+		ubg[287] = +inf;
+		lbg[288] = -inf;
+		ubg[288] = +inf;
+		lbg[289] = -inf;
+		ubg[289] = +inf;
+		lbg[290] = -inf;
+		ubg[290] = +inf;
+		lbg[291] = -inf;
+		ubg[291] = +inf;
+		lbg[292] = -inf;
+		ubg[292] = +inf;
+		lbg[293] = -inf;
+		ubg[293] = +inf;
+		lbg[294] = -inf;
+		ubg[294] = +inf;
+		lbg[295] = -inf;
+		ubg[295] = +inf;
+		lbg[296] = -inf;
+		ubg[296] = +inf;
+		lbg[297] = -inf;
+		ubg[297] = +inf;
+		lbg[298] = -inf;
+		ubg[298] = +inf;
+		lbg[299] = -inf;
+		ubg[299] = +inf;
+		lbg[300] = -inf;
+		ubg[300] = +inf;
+		lbg[301] = -inf;
+		ubg[301] = +inf;
+		lbg[302] = -inf;
+		ubg[302] = +inf;
+		lbg[303] = -inf;
+		ubg[303] = +inf;
+		lbg[304] = -inf;
+		ubg[304] = +inf;
+		lbg[305] = -inf;
+		ubg[305] = +inf;
+		lbg[306] = -inf;
+		ubg[306] = +inf;
+		lbg[307] = -inf;
+		ubg[307] = +inf;
+		lbg[308] = -inf;
+		ubg[308] = +inf;
+		lbg[309] = -inf;
+		ubg[309] = +inf;
+		lbg[310] = -inf;
+		ubg[310] = +inf;
+		lbg[311] = -inf;
+		ubg[311] = +inf;
+		lbg[312] = -inf;
+		ubg[312] = +inf;
+		lbg[313] = -inf;
+		ubg[313] = +inf;
+		lbg[314] = -inf;
+		ubg[314] = +inf;
+		lbg[315] = -inf;
+		ubg[315] = +inf;
+		lbg[316] = -inf;
+		ubg[316] = +inf;
+		lbg[317] = -inf;
+		ubg[317] = +inf;
+		lbg[318] = -inf;
+		ubg[318] = +inf;
+		lbg[319] = -inf;
+		ubg[319] = +inf;
+		lbg[320] = -inf;
+		ubg[320] = +inf;
+		lbg[321] = -inf;
+		ubg[321] = +inf;
+		lbg[322] = -inf;
+		ubg[322] = +inf;
+		lbg[323] = -inf;
+		ubg[323] = +inf;
+		lbg[324] = -inf;
+		ubg[324] = +inf;
+		lbg[325] = -inf;
+		ubg[325] = +inf;
+		lbg[326] = -inf;
+		ubg[326] = +inf;
+		lbg[327] = -inf;
+		ubg[327] = +inf;
+		lbg[328] = -inf;
+		ubg[328] = +inf;
+		lbg[329] = -inf;
+		ubg[329] = +inf;
+		lbg[330] = -inf;
+		ubg[330] = +inf;
+		lbg[331] = -inf;
+		ubg[331] = +inf;
+		lbg[332] = -inf;
+		ubg[332] = +inf;
+		lbg[333] = -inf;
+		ubg[333] = +inf;
+		lbg[334] = -inf;
+		ubg[334] = +inf;
+		lbg[335] = -inf;
+		ubg[335] = +inf;
+		lbg[336] = -inf;
+		ubg[336] = +inf;
+		lbg[337] = -inf;
+		ubg[337] = +inf;
+		lbg[338] = -inf;
+		ubg[338] = +inf;
+		lbg[339] = -inf;
+		ubg[339] = +inf;
+		lbg[340] = -inf;
+		ubg[340] = +inf;
+		lbg[341] = -inf;
+		ubg[341] = +inf;
+		lbg[342] = -inf;
+		ubg[342] = +inf;
+		lbg[343] = -inf;
+		ubg[343] = +inf;
+		lbg[344] = -inf;
+		ubg[344] = +inf;
+		lbg[345] = -inf;
+		ubg[345] = +inf;
+		lbg[346] = -inf;
+		ubg[346] = +inf;
+		lbg[347] = -inf;
+		ubg[347] = +inf;
+		lbg[348] = -inf;
+		ubg[348] = +inf;
+		lbg[349] = -inf;
+		ubg[349] = +inf;
+	}else{
+		lbg[226] = -inf;
+		ubg[226] = 0;
+		lbg[227] = -inf;
+		ubg[227] = 0;
+		lbg[228] = -inf;
+		ubg[228] = 0;
+		lbg[229] = -inf;
+		ubg[229] = 0;
+		lbg[230] = -inf;
+		ubg[230] = 0;
+		lbg[231] = -inf;
+		ubg[231] = 0;
+		lbg[232] = -inf;
+		ubg[232] = 0;
+		lbg[233] = -inf;
+		ubg[233] = 0;
+		lbg[234] = -inf;
+		ubg[234] = 0;
+		lbg[235] = -inf;
+		ubg[235] = 0;
+		lbg[236] = -inf;
+		ubg[236] = 0;
+		lbg[237] = -inf;
+		ubg[237] = 0;
+		lbg[238] = -inf;
+		ubg[238] = 0;
+		lbg[239] = -inf;
+		ubg[239] = 0;
+		lbg[240] = -inf;
+		ubg[240] = 0;
+		lbg[241] = -inf;
+		ubg[241] = 0;
+		lbg[242] = -inf;
+		ubg[242] = 0;
+		lbg[243] = -inf;
+		ubg[243] = 0;
+		lbg[244] = -inf;
+		ubg[244] = 0;
+		lbg[245] = -inf;
+		ubg[245] = 0;
+		lbg[246] = -inf;
+		ubg[246] = 0;
+		lbg[247] = -inf;
+		ubg[247] = 0;
+		lbg[248] = -inf;
+		ubg[248] = 0;
+		lbg[249] = -inf;
+		ubg[249] = 0;
+		lbg[250] = -inf;
+		ubg[250] = 0;
+		lbg[251] = -inf;
+		ubg[251] = 0;
+		lbg[252] = -inf;
+		ubg[252] = 0;
+		lbg[253] = -inf;
+		ubg[253] = 0;
+		lbg[254] = -inf;
+		ubg[254] = 0;
+		lbg[255] = -inf;
+		ubg[255] = 0;
+		lbg[256] = -inf;
+		ubg[256] = 0;
+		lbg[257] = -inf;
+		ubg[257] = 0;
+		lbg[258] = -inf;
+		ubg[258] = 0;
+		lbg[259] = -inf;
+		ubg[259] = 0;
+		lbg[260] = -inf;
+		ubg[260] = 0;
+		lbg[261] = -inf;
+		ubg[261] = 0;
+		lbg[262] = -inf;
+		ubg[262] = 0;
+		lbg[263] = -inf;
+		ubg[263] = 0;
+		lbg[264] = -inf;
+		ubg[264] = 0;
+		lbg[265] = -inf;
+		ubg[265] = 0;
+		lbg[266] = -inf;
+		ubg[266] = 0;
+		lbg[267] = -inf;
+		ubg[267] = 0;
+		lbg[268] = -inf;
+		ubg[268] = 0;
+		lbg[269] = -inf;
+		ubg[269] = 0;
+		lbg[270] = -inf;
+		ubg[270] = 0;
+		lbg[271] = -inf;
+		ubg[271] = 0;
+		lbg[272] = -inf;
+		ubg[272] = 0;
+		lbg[273] = -inf;
+		ubg[273] = 0;
+		lbg[274] = -inf;
+		ubg[274] = 0;
+		lbg[275] = -inf;
+		ubg[275] = 0;
+		lbg[276] = -inf;
+		ubg[276] = 0;
+		lbg[277] = -inf;
+		ubg[277] = 0;
+		lbg[278] = -inf;
+		ubg[278] = 0;
+		lbg[279] = -inf;
+		ubg[279] = 0;
+		lbg[280] = -inf;
+		ubg[280] = 0;
+		lbg[281] = -inf;
+		ubg[281] = 0;
+		lbg[282] = -inf;
+		ubg[282] = 0;
+		lbg[283] = -inf;
+		ubg[283] = 0;
+		lbg[284] = -inf;
+		ubg[284] = 0;
+		lbg[285] = -inf;
+		ubg[285] = 0;
+		lbg[286] = -inf;
+		ubg[286] = 0;
+		lbg[287] = -inf;
+		ubg[287] = 0;
+		lbg[288] = -inf;
+		ubg[288] = 0;
+		lbg[289] = -inf;
+		ubg[289] = 0;
+		lbg[290] = -inf;
+		ubg[290] = 0;
+		lbg[291] = -inf;
+		ubg[291] = 0;
+		lbg[292] = -inf;
+		ubg[292] = 0;
+		lbg[293] = -inf;
+		ubg[293] = 0;
+		lbg[294] = -inf;
+		ubg[294] = 0;
+		lbg[295] = -inf;
+		ubg[295] = 0;
+		lbg[296] = -inf;
+		ubg[296] = 0;
+		lbg[297] = -inf;
+		ubg[297] = 0;
+		lbg[298] = -inf;
+		ubg[298] = 0;
+		lbg[299] = -inf;
+		ubg[299] = 0;
+		lbg[300] = -inf;
+		ubg[300] = 0;
+		lbg[301] = -inf;
+		ubg[301] = 0;
+		lbg[302] = -inf;
+		ubg[302] = 0;
+		lbg[303] = -inf;
+		ubg[303] = 0;
+		lbg[304] = -inf;
+		ubg[304] = 0;
+		lbg[305] = -inf;
+		ubg[305] = 0;
+		lbg[306] = -inf;
+		ubg[306] = 0;
+		lbg[307] = -inf;
+		ubg[307] = 0;
+		lbg[308] = -inf;
+		ubg[308] = 0;
+		lbg[309] = -inf;
+		ubg[309] = 0;
+		lbg[310] = -inf;
+		ubg[310] = 0;
+		lbg[311] = -inf;
+		ubg[311] = 0;
+		lbg[312] = -inf;
+		ubg[312] = 0;
+		lbg[313] = -inf;
+		ubg[313] = 0;
+		lbg[314] = -inf;
+		ubg[314] = 0;
+		lbg[315] = -inf;
+		ubg[315] = 0;
+		lbg[316] = -inf;
+		ubg[316] = 0;
+		lbg[317] = -inf;
+		ubg[317] = 0;
+		lbg[318] = -inf;
+		ubg[318] = 0;
+		lbg[319] = -inf;
+		ubg[319] = 0;
+		lbg[320] = -inf;
+		ubg[320] = 0;
+		lbg[321] = -inf;
+		ubg[321] = 0;
+		lbg[322] = -inf;
+		ubg[322] = 0;
+		lbg[323] = -inf;
+		ubg[323] = 0;
+		lbg[324] = -inf;
+		ubg[324] = 0;
+		lbg[325] = -inf;
+		ubg[325] = 0;
+		lbg[326] = -inf;
+		ubg[326] = 0;
+		lbg[327] = -inf;
+		ubg[327] = 0;
+		lbg[328] = -inf;
+		ubg[328] = 0;
+		lbg[329] = -inf;
+		ubg[329] = 0;
+		lbg[330] = -inf;
+		ubg[330] = 0;
+		lbg[331] = -inf;
+		ubg[331] = 0;
+		lbg[332] = -inf;
+		ubg[332] = 0;
+		lbg[333] = -inf;
+		ubg[333] = 0;
+		lbg[334] = -inf;
+		ubg[334] = 0;
+		lbg[335] = -inf;
+		ubg[335] = 0;
+		lbg[336] = -inf;
+		ubg[336] = 0;
+		lbg[337] = -inf;
+		ubg[337] = 0;
+		lbg[338] = -inf;
+		ubg[338] = 0;
+		lbg[339] = -inf;
+		ubg[339] = 0;
+		lbg[340] = -inf;
+		ubg[340] = 0;
+		lbg[341] = -inf;
+		ubg[341] = 0;
+		lbg[342] = -inf;
+		ubg[342] = 0;
+		lbg[343] = -inf;
+		ubg[343] = 0;
+		lbg[344] = -inf;
+		ubg[344] = 0;
+		lbg[345] = -inf;
+		ubg[345] = 0;
+		lbg[346] = -inf;
+		ubg[346] = 0;
+		lbg[347] = -inf;
+		ubg[347] = 0;
+		lbg[348] = -inf;
+		ubg[348] = 0;
+		lbg[349] = -inf;
+		ubg[349] = 0;
+	}
+	if(!obstacles[1].avoid){
+		lbg[350] = -inf;
+		ubg[350] = +inf;
+		lbg[351] = -inf;
+		ubg[351] = +inf;
+		lbg[352] = -inf;
+		ubg[352] = +inf;
+		lbg[353] = -inf;
+		ubg[353] = +inf;
+		lbg[354] = -inf;
+		ubg[354] = +inf;
+		lbg[355] = -inf;
+		ubg[355] = +inf;
+		lbg[356] = -inf;
+		ubg[356] = +inf;
+		lbg[357] = -inf;
+		ubg[357] = +inf;
+		lbg[358] = -inf;
+		ubg[358] = +inf;
+		lbg[359] = -inf;
+		ubg[359] = +inf;
+		lbg[360] = -inf;
+		ubg[360] = +inf;
+		lbg[361] = -inf;
+		ubg[361] = +inf;
+		lbg[362] = -inf;
+		ubg[362] = +inf;
+		lbg[363] = -inf;
+		ubg[363] = +inf;
+		lbg[364] = -inf;
+		ubg[364] = +inf;
 		lbg[365] = -inf;
 		ubg[365] = +inf;
 		lbg[366] = -inf;
@@ -511,203 +1065,37 @@ void Point2Point::updateBounds(double current_time, vector<obstacle_t>& obstacle
 		ubg[389] = +inf;
 		lbg[390] = -inf;
 		ubg[390] = +inf;
-		lbg[391] = -inf;
-		ubg[391] = +inf;
-		lbg[392] = -inf;
-		ubg[392] = +inf;
-		lbg[393] = -inf;
-		ubg[393] = +inf;
-		lbg[394] = -inf;
-		ubg[394] = +inf;
-		lbg[395] = -inf;
-		ubg[395] = +inf;
-		lbg[396] = -inf;
-		ubg[396] = +inf;
-		lbg[397] = -inf;
-		ubg[397] = +inf;
-		lbg[398] = -inf;
-		ubg[398] = +inf;
-		lbg[399] = -inf;
-		ubg[399] = +inf;
-		lbg[400] = -inf;
-		ubg[400] = +inf;
-		lbg[401] = -inf;
-		ubg[401] = +inf;
-		lbg[402] = -inf;
-		ubg[402] = +inf;
-		lbg[403] = -inf;
-		ubg[403] = +inf;
-		lbg[404] = -inf;
-		ubg[404] = +inf;
-		lbg[405] = -inf;
-		ubg[405] = +inf;
-		lbg[406] = -inf;
-		ubg[406] = +inf;
-		lbg[407] = -inf;
-		ubg[407] = +inf;
-		lbg[408] = -inf;
-		ubg[408] = +inf;
-		lbg[409] = -inf;
-		ubg[409] = +inf;
-		lbg[410] = -inf;
-		ubg[410] = +inf;
-		lbg[411] = -inf;
-		ubg[411] = +inf;
-		lbg[412] = -inf;
-		ubg[412] = +inf;
-		lbg[413] = -inf;
-		ubg[413] = +inf;
-		lbg[414] = -inf;
-		ubg[414] = +inf;
-		lbg[415] = -inf;
-		ubg[415] = +inf;
-		lbg[416] = -inf;
-		ubg[416] = +inf;
-		lbg[417] = -inf;
-		ubg[417] = +inf;
-		lbg[418] = -inf;
-		ubg[418] = +inf;
-		lbg[419] = -inf;
-		ubg[419] = +inf;
-		lbg[420] = -inf;
-		ubg[420] = +inf;
-		lbg[421] = -inf;
-		ubg[421] = +inf;
-		lbg[422] = -inf;
-		ubg[422] = +inf;
-		lbg[423] = -inf;
-		ubg[423] = +inf;
-		lbg[424] = -inf;
-		ubg[424] = +inf;
-		lbg[425] = -inf;
-		ubg[425] = +inf;
-		lbg[426] = -inf;
-		ubg[426] = +inf;
-		lbg[427] = -inf;
-		ubg[427] = +inf;
-		lbg[428] = -inf;
-		ubg[428] = +inf;
-		lbg[429] = -inf;
-		ubg[429] = +inf;
-		lbg[430] = -inf;
-		ubg[430] = +inf;
-		lbg[431] = -inf;
-		ubg[431] = +inf;
-		lbg[432] = -inf;
-		ubg[432] = +inf;
-		lbg[433] = -inf;
-		ubg[433] = +inf;
-		lbg[434] = -inf;
-		ubg[434] = +inf;
-		lbg[435] = -inf;
-		ubg[435] = +inf;
-		lbg[436] = -inf;
-		ubg[436] = +inf;
-		lbg[437] = -inf;
-		ubg[437] = +inf;
-		lbg[438] = -inf;
-		ubg[438] = +inf;
-		lbg[439] = -inf;
-		ubg[439] = +inf;
-		lbg[440] = -inf;
-		ubg[440] = +inf;
-		lbg[441] = -inf;
-		ubg[441] = +inf;
-		lbg[442] = -inf;
-		ubg[442] = +inf;
-		lbg[443] = -inf;
-		ubg[443] = +inf;
-		lbg[444] = -inf;
-		ubg[444] = +inf;
-		lbg[445] = -inf;
-		ubg[445] = +inf;
-		lbg[446] = -inf;
-		ubg[446] = +inf;
-		lbg[447] = -inf;
-		ubg[447] = +inf;
-		lbg[448] = -inf;
-		ubg[448] = +inf;
-		lbg[449] = -inf;
-		ubg[449] = +inf;
-		lbg[450] = -inf;
-		ubg[450] = +inf;
-		lbg[451] = -inf;
-		ubg[451] = +inf;
-		lbg[452] = -inf;
-		ubg[452] = +inf;
-		lbg[453] = -inf;
-		ubg[453] = +inf;
-		lbg[454] = -inf;
-		ubg[454] = +inf;
-		lbg[455] = -inf;
-		ubg[455] = +inf;
-		lbg[456] = -inf;
-		ubg[456] = +inf;
-		lbg[457] = -inf;
-		ubg[457] = +inf;
-		lbg[458] = -inf;
-		ubg[458] = +inf;
-		lbg[459] = -inf;
-		ubg[459] = +inf;
-		lbg[460] = -inf;
-		ubg[460] = +inf;
-		lbg[461] = -inf;
-		ubg[461] = +inf;
-		lbg[462] = -inf;
-		ubg[462] = +inf;
-		lbg[463] = -inf;
-		ubg[463] = +inf;
-		lbg[464] = -inf;
-		ubg[464] = +inf;
-		lbg[465] = -inf;
-		ubg[465] = +inf;
-		lbg[466] = -inf;
-		ubg[466] = +inf;
-		lbg[467] = -inf;
-		ubg[467] = +inf;
-		lbg[468] = -inf;
-		ubg[468] = +inf;
-		lbg[469] = -inf;
-		ubg[469] = +inf;
-		lbg[470] = -inf;
-		ubg[470] = +inf;
-		lbg[471] = -inf;
-		ubg[471] = +inf;
-		lbg[472] = -inf;
-		ubg[472] = +inf;
-		lbg[473] = -inf;
-		ubg[473] = +inf;
-		lbg[474] = -inf;
-		ubg[474] = +inf;
-		lbg[475] = -inf;
-		ubg[475] = +inf;
-		lbg[476] = -inf;
-		ubg[476] = +inf;
-		lbg[477] = -inf;
-		ubg[477] = +inf;
-		lbg[478] = -inf;
-		ubg[478] = +inf;
-		lbg[479] = -inf;
-		ubg[479] = +inf;
-		lbg[480] = -inf;
-		ubg[480] = +inf;
-		lbg[481] = -inf;
-		ubg[481] = +inf;
-		lbg[482] = -inf;
-		ubg[482] = +inf;
-		lbg[483] = -inf;
-		ubg[483] = +inf;
-		lbg[484] = -inf;
-		ubg[484] = +inf;
-		lbg[485] = -inf;
-		ubg[485] = +inf;
-		lbg[486] = -inf;
-		ubg[486] = +inf;
-		lbg[487] = -inf;
-		ubg[487] = +inf;
-		lbg[488] = -inf;
-		ubg[488] = +inf;
 	}else{
+		lbg[350] = -inf;
+		ubg[350] = 0;
+		lbg[351] = -inf;
+		ubg[351] = 0;
+		lbg[352] = -inf;
+		ubg[352] = 0;
+		lbg[353] = -inf;
+		ubg[353] = 0;
+		lbg[354] = -inf;
+		ubg[354] = 0;
+		lbg[355] = -inf;
+		ubg[355] = 0;
+		lbg[356] = -inf;
+		ubg[356] = 0;
+		lbg[357] = -inf;
+		ubg[357] = 0;
+		lbg[358] = -inf;
+		ubg[358] = 0;
+		lbg[359] = -inf;
+		ubg[359] = 0;
+		lbg[360] = -inf;
+		ubg[360] = 0;
+		lbg[361] = -inf;
+		ubg[361] = 0;
+		lbg[362] = -inf;
+		ubg[362] = 0;
+		lbg[363] = -inf;
+		ubg[363] = 0;
+		lbg[364] = -inf;
+		ubg[364] = 0;
 		lbg[365] = -inf;
 		ubg[365] = 0;
 		lbg[366] = -inf;
@@ -760,202 +1148,6 @@ void Point2Point::updateBounds(double current_time, vector<obstacle_t>& obstacle
 		ubg[389] = 0;
 		lbg[390] = -inf;
 		ubg[390] = 0;
-		lbg[391] = -inf;
-		ubg[391] = 0;
-		lbg[392] = -inf;
-		ubg[392] = 0;
-		lbg[393] = -inf;
-		ubg[393] = 0;
-		lbg[394] = -inf;
-		ubg[394] = 0;
-		lbg[395] = -inf;
-		ubg[395] = 0;
-		lbg[396] = -inf;
-		ubg[396] = 0;
-		lbg[397] = -inf;
-		ubg[397] = 0;
-		lbg[398] = -inf;
-		ubg[398] = 0;
-		lbg[399] = -inf;
-		ubg[399] = 0;
-		lbg[400] = -inf;
-		ubg[400] = 0;
-		lbg[401] = -inf;
-		ubg[401] = 0;
-		lbg[402] = -inf;
-		ubg[402] = 0;
-		lbg[403] = -inf;
-		ubg[403] = 0;
-		lbg[404] = -inf;
-		ubg[404] = 0;
-		lbg[405] = -inf;
-		ubg[405] = 0;
-		lbg[406] = -inf;
-		ubg[406] = 0;
-		lbg[407] = -inf;
-		ubg[407] = 0;
-		lbg[408] = -inf;
-		ubg[408] = 0;
-		lbg[409] = -inf;
-		ubg[409] = 0;
-		lbg[410] = -inf;
-		ubg[410] = 0;
-		lbg[411] = -inf;
-		ubg[411] = 0;
-		lbg[412] = -inf;
-		ubg[412] = 0;
-		lbg[413] = -inf;
-		ubg[413] = 0;
-		lbg[414] = -inf;
-		ubg[414] = 0;
-		lbg[415] = -inf;
-		ubg[415] = 0;
-		lbg[416] = -inf;
-		ubg[416] = 0;
-		lbg[417] = -inf;
-		ubg[417] = 0;
-		lbg[418] = -inf;
-		ubg[418] = 0;
-		lbg[419] = -inf;
-		ubg[419] = 0;
-		lbg[420] = -inf;
-		ubg[420] = 0;
-		lbg[421] = -inf;
-		ubg[421] = 0;
-		lbg[422] = -inf;
-		ubg[422] = 0;
-		lbg[423] = -inf;
-		ubg[423] = 0;
-		lbg[424] = -inf;
-		ubg[424] = 0;
-		lbg[425] = -inf;
-		ubg[425] = 0;
-		lbg[426] = -inf;
-		ubg[426] = 0;
-		lbg[427] = -inf;
-		ubg[427] = 0;
-		lbg[428] = -inf;
-		ubg[428] = 0;
-		lbg[429] = -inf;
-		ubg[429] = 0;
-		lbg[430] = -inf;
-		ubg[430] = 0;
-		lbg[431] = -inf;
-		ubg[431] = 0;
-		lbg[432] = -inf;
-		ubg[432] = 0;
-		lbg[433] = -inf;
-		ubg[433] = 0;
-		lbg[434] = -inf;
-		ubg[434] = 0;
-		lbg[435] = -inf;
-		ubg[435] = 0;
-		lbg[436] = -inf;
-		ubg[436] = 0;
-		lbg[437] = -inf;
-		ubg[437] = 0;
-		lbg[438] = -inf;
-		ubg[438] = 0;
-		lbg[439] = -inf;
-		ubg[439] = 0;
-		lbg[440] = -inf;
-		ubg[440] = 0;
-		lbg[441] = -inf;
-		ubg[441] = 0;
-		lbg[442] = -inf;
-		ubg[442] = 0;
-		lbg[443] = -inf;
-		ubg[443] = 0;
-		lbg[444] = -inf;
-		ubg[444] = 0;
-		lbg[445] = -inf;
-		ubg[445] = 0;
-		lbg[446] = -inf;
-		ubg[446] = 0;
-		lbg[447] = -inf;
-		ubg[447] = 0;
-		lbg[448] = -inf;
-		ubg[448] = 0;
-		lbg[449] = -inf;
-		ubg[449] = 0;
-		lbg[450] = -inf;
-		ubg[450] = 0;
-		lbg[451] = -inf;
-		ubg[451] = 0;
-		lbg[452] = -inf;
-		ubg[452] = 0;
-		lbg[453] = -inf;
-		ubg[453] = 0;
-		lbg[454] = -inf;
-		ubg[454] = 0;
-		lbg[455] = -inf;
-		ubg[455] = 0;
-		lbg[456] = -inf;
-		ubg[456] = 0;
-		lbg[457] = -inf;
-		ubg[457] = 0;
-		lbg[458] = -inf;
-		ubg[458] = 0;
-		lbg[459] = -inf;
-		ubg[459] = 0;
-		lbg[460] = -inf;
-		ubg[460] = 0;
-		lbg[461] = -inf;
-		ubg[461] = 0;
-		lbg[462] = -inf;
-		ubg[462] = 0;
-		lbg[463] = -inf;
-		ubg[463] = 0;
-		lbg[464] = -inf;
-		ubg[464] = 0;
-		lbg[465] = -inf;
-		ubg[465] = 0;
-		lbg[466] = -inf;
-		ubg[466] = 0;
-		lbg[467] = -inf;
-		ubg[467] = 0;
-		lbg[468] = -inf;
-		ubg[468] = 0;
-		lbg[469] = -inf;
-		ubg[469] = 0;
-		lbg[470] = -inf;
-		ubg[470] = 0;
-		lbg[471] = -inf;
-		ubg[471] = 0;
-		lbg[472] = -inf;
-		ubg[472] = 0;
-		lbg[473] = -inf;
-		ubg[473] = 0;
-		lbg[474] = -inf;
-		ubg[474] = 0;
-		lbg[475] = -inf;
-		ubg[475] = 0;
-		lbg[476] = -inf;
-		ubg[476] = 0;
-		lbg[477] = -inf;
-		ubg[477] = 0;
-		lbg[478] = -inf;
-		ubg[478] = 0;
-		lbg[479] = -inf;
-		ubg[479] = 0;
-		lbg[480] = -inf;
-		ubg[480] = 0;
-		lbg[481] = -inf;
-		ubg[481] = 0;
-		lbg[482] = -inf;
-		ubg[482] = 0;
-		lbg[483] = -inf;
-		ubg[483] = 0;
-		lbg[484] = -inf;
-		ubg[484] = 0;
-		lbg[485] = -inf;
-		ubg[485] = 0;
-		lbg[486] = -inf;
-		ubg[486] = 0;
-		lbg[487] = -inf;
-		ubg[487] = 0;
-		lbg[488] = -inf;
-		ubg[488] = 0;
 	}
 
 }
@@ -991,7 +1183,7 @@ void Point2Point::transformSplines(double current_time, double current_time_prev
 			for(int i=0; i<13; i++){
 			spline_tf[i] = 0.0;
 				for(int j=0; j<13; j++){
-					spline_tf[i] += splines_tf["g0"][i][j]*variables[26+k*13+j];
+					spline_tf[i] += splines_tf["eps_01"][i][j]*variables[26+k*13+j];
 				}
 			}
 			for(int i=0; i<13; i++){
@@ -1002,33 +1194,66 @@ void Point2Point::transformSplines(double current_time, double current_time_prev
 			for(int i=0; i<13; i++){
 			spline_tf[i] = 0.0;
 				for(int j=0; j<13; j++){
-					spline_tf[i] += splines_tf["g1"][i][j]*variables[39+k*13+j];
+					spline_tf[i] += splines_tf["g0"][i][j]*variables[39+k*13+j];
 				}
 			}
 			for(int i=0; i<13; i++){
 				variables[39+k*13+i] = spline_tf[i];
 			}
 		}
+		for(int k=0; k<1; k++){
+			for(int i=0; i<13; i++){
+			spline_tf[i] = 0.0;
+				for(int j=0; j<13; j++){
+					spline_tf[i] += splines_tf["g1"][i][j]*variables[52+k*13+j];
+				}
+			}
+			for(int i=0; i<13; i++){
+				variables[52+k*13+i] = spline_tf[i];
+			}
+		}
 		for(int k=0; k<2; k++){
 			for(int i=0; i<11; i++){
 			spline_tf[i] = 0.0;
 				for(int j=0; j<11; j++){
-					spline_tf[i] += splines_tf["a_vehicle0_00"][i][j]*variables[52+k*11+j];
+					spline_tf[i] += splines_tf["a_vehicle0_00"][i][j]*variables[65+k*11+j];
 				}
 			}
 			for(int i=0; i<11; i++){
-				variables[52+k*11+i] = spline_tf[i];
+				variables[65+k*11+i] = spline_tf[i];
 			}
 		}
 		for(int k=0; k<1; k++){
 			for(int i=0; i<11; i++){
 			spline_tf[i] = 0.0;
 				for(int j=0; j<11; j++){
-					spline_tf[i] += splines_tf["b_vehicle0_00"][i][j]*variables[63+k*11+j];
+					spline_tf[i] += splines_tf["b_vehicle0_00"][i][j]*variables[76+k*11+j];
 				}
 			}
 			for(int i=0; i<11; i++){
-				variables[63+k*11+i] = spline_tf[i];
+				variables[76+k*11+i] = spline_tf[i];
+			}
+		}
+		for(int k=0; k<2; k++){
+			for(int i=0; i<11; i++){
+			spline_tf[i] = 0.0;
+				for(int j=0; j<11; j++){
+					spline_tf[i] += splines_tf["a_vehicle0_01"][i][j]*variables[87+k*11+j];
+				}
+			}
+			for(int i=0; i<11; i++){
+				variables[87+k*11+i] = spline_tf[i];
+			}
+		}
+		for(int k=0; k<1; k++){
+			for(int i=0; i<11; i++){
+			spline_tf[i] = 0.0;
+				for(int j=0; j<11; j++){
+					spline_tf[i] += splines_tf["b_vehicle0_01"][i][j]*variables[98+k*11+j];
+				}
+			}
+			for(int i=0; i<11; i++){
+				variables[98+k*11+i] = spline_tf[i];
 			}
 		}
 	}

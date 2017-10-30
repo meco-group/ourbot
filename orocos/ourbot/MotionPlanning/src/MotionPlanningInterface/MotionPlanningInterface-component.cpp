@@ -8,11 +8,8 @@ MotionPlanningInterface::MotionPlanningInterface(std::string const& name) : Task
     _mp_trigger_data(4), _est_pose(3), _target_pose(3),
     _ref_pose_trajectory(3), _ref_velocity_trajectory(3) {
 
-    ports()->addPort("obstacle_port", _obstacle_port).doc("Detected obstacles");
     ports()->addPort("est_pose_port", _est_pose_port).doc("Estimated pose wrt to initial frame");
     ports()->addEventPort("mp_trigger_port", _mp_trigger_port).doc("Trigger for motion planning: is composed of current estimated pose and start index of internal reference input vector");
-    ports()->addPort("robobs_pose_port", _robobs_pose_port).doc("Pose information of a robot obstacle");
-    ports()->addPort("robobs_velocity_port", _robobs_velocity_port).doc("Velocity information of a robot obstacle");
 
     ports()->addPort("ref_pose_trajectory_x_port", _ref_pose_trajectory_port[0]).doc("x reference trajectory");
     ports()->addPort("ref_pose_trajectory_y_port", _ref_pose_trajectory_port[1]).doc("y reference trajectory");
@@ -43,6 +40,11 @@ MotionPlanningInterface::MotionPlanningInterface(std::string const& name) : Task
     addOperation("ready", &MotionPlanningInterface::ready, this).doc("We reached the target, p2p task ready");
     addOperation("busy", &MotionPlanningInterface::busy, this).doc("Busy with computing a trajectory");
     addOperation("valid", &MotionPlanningInterface::valid, this).doc("Last computed trajectory is valid (i.e. not infeasible)");
+    addOperation("resetObstacles", &MotionPlanningInterface::resetObstacles, this).doc("Reset obstacle list");
+    addOperation("addStaticObstacle", &MotionPlanningInterface::addStaticObstacle, this).doc("Add static obstacle to obstacle list");
+    addOperation("addDynamicObstacle", &MotionPlanningInterface::addDynamicObstacle, this).doc("Add dynamic constant velocity obstacle to obstacle list");
+    addOperation("addPeerObstacle", &MotionPlanningInterface::addPeerObstacle, this).doc("Add peer trajectory as obstacle to obstacle list");
+    addOperation("getMotionTime", &MotionPlanningInterface::getMotionTime, this).doc("Get last motion time update");
 }
 
 void MotionPlanningInterface::setTargetPose(const std::vector<double>& target_pose) {
@@ -107,8 +109,6 @@ bool MotionPlanningInterface::configureHook() {
         log(Error) << "Error occured in configure() !" << endlog();
         return false;
     }
-    // init obstacles
-    initObstacles(_obstacles, n_obstacles());
     reset();
     return true;
 }
@@ -138,7 +138,7 @@ void MotionPlanningInterface::updateHook() {
         return;
     }
     // set obstacle data
-    fillObstacles(_obstacles);
+    loadObstacles();
     // update trajectory
     _valid = updatePoseTrajectory();
     _first_iteration = false;
@@ -266,103 +266,76 @@ double MotionPlanningInterface::updateOrientationTrajectory() {
     return t_tot;
 }
 
-void MotionPlanningInterface::initObstacles(std::vector<obstacle_t>& obstacles, int n_obs) {
-    obstacles.resize(n_obs);
-    for (int k=0; k<n_obs; k++){
-        obstacles[k].position.resize(2, 0.0);
-        obstacles[k].velocity.resize(2, 0.0);
-        obstacles[k].acceleration.resize(2, 0.0);
-        obstacles[k].checkpoints.resize(2*4, 0.0);
-        obstacles[k].radii.resize(4, 0.0);
-    }
+void MotionPlanningInterface::resetObstacles() {
+    _obstacles.clear();
 }
 
-void MotionPlanningInterface::fillObstacles(std::vector<obstacle_t>& obstacles) {
-    std::vector<double> obstacle_data;
-    _obstacle_port.read(obstacle_data);
-    double orientation, width, height;
-    for (int k=0; k<obstacles.size(); k++) {
-        if (obstacle_data.size()/5 <= k || obstacle_data[5*k] == -100) {
-            // dummy data -> put it far away
-            obstacles[k].avoid = true;
-            obstacles[k].position[0] = -1000;
-            obstacles[k].position[1] = -1000;
-            obstacles[k].velocity[0] = 0.;
-            obstacles[k].velocity[1] = 0.;
-            obstacles[k].acceleration[0] = 0.;
-            obstacles[k].acceleration[1] = 0.;
-            for (int i=0; i<4; i++) {
-                obstacles[k].radii[i] = 1.e-3;
-                for (int j=0; j<2; j++) {
-                    obstacles[k].checkpoints[2*i+j] = 0.;
-                }
-            }
-        } else {
-            obstacles[k].avoid = true;
-            obstacles[k].position[0] = obstacle_data[5*k+0];
-            obstacles[k].position[1] = obstacle_data[5*k+1];
-            obstacles[k].velocity[0] = 0.;
-            obstacles[k].velocity[1] = 0.;
-            obstacles[k].acceleration[0] = 0.;
-            obstacles[k].acceleration[1] = 0.;
-            // set checkpoints
-            if (obstacle_data[5*k+3] == -100) {
-                // circle
-                for (int i=0; i<4; i++) {
-                    obstacles[k].radii[i] = obstacle_data[5*k+2];
-                    for (int j=0; j<2; j++) {
-                        obstacles[k].checkpoints[2*i+j] = obstacle_data[5*k+j];
-                    }
-                }
-            } else {
-                // rectangle
-                orientation = (M_PI/180.)*obstacle_data[5*k+2];
-                width = obstacle_data[5*k+3];
-                height = obstacle_data[5*k+4];
-                for (int i=0; i<4; i++) {
-                    obstacles[k].radii[i] = 0.001;
-                }
-                obstacles[k].checkpoints[0] = 0.5*width*cos(orientation) - 0.5*height*sin(orientation);
-                obstacles[k].checkpoints[1] = 0.5*width*sin(orientation) + 0.5*height*cos(orientation);
-                obstacles[k].checkpoints[2] = 0.5*width*cos(orientation) + 0.5*height*sin(orientation);
-                obstacles[k].checkpoints[3] = 0.5*width*sin(orientation) - 0.5*height*cos(orientation);
-                obstacles[k].checkpoints[4] = -0.5*width*cos(orientation) + 0.5*height*sin(orientation);
-                obstacles[k].checkpoints[5] = -0.5*width*sin(orientation) - 0.5*height*cos(orientation);
-                obstacles[k].checkpoints[6] = -0.5*width*cos(orientation) - 0.5*height*sin(orientation);
-                obstacles[k].checkpoints[7] = -0.5*width*sin(orientation) + 0.5*height*cos(orientation);
-            }
-        }
+void MotionPlanningInterface::addStaticObstacle(const std::vector<double>& pose, const std::vector<double>& size) {
+    // only rectangular obstacles
+    obstacle_t obstacle;
+    obstacle.avoid = true;
+    obstacle.position = std::vector<double>({pose[0], pose[1]});
+    obstacle.velocity = std::vector<double>(2, 0);
+    obstacle.acceleration = std::vector<double>(2, 0);
+    double width = size[0];
+    double height = size[1];
+    obstacle.radii = std::vector<double>(4);
+    obstacle.checkpoints = std::vector<double>(8);
+    for (int i=0; i<4; i++) {
+        obstacle.radii[i] = 1e-3;
+        obstacle.checkpoints[0] = 0.5*width*cos(pose[2]) - 0.5*height*sin(pose[2]);
+        obstacle.checkpoints[1] = 0.5*width*sin(pose[2]) + 0.5*height*cos(pose[2]);
+        obstacle.checkpoints[2] = 0.5*width*cos(pose[2]) + 0.5*height*sin(pose[2]);
+        obstacle.checkpoints[3] = 0.5*width*sin(pose[2]) - 0.5*height*cos(pose[2]);
+        obstacle.checkpoints[4] = -0.5*width*cos(pose[2]) + 0.5*height*sin(pose[2]);
+        obstacle.checkpoints[5] = -0.5*width*sin(pose[2]) - 0.5*height*cos(pose[2]);
+        obstacle.checkpoints[6] = -0.5*width*cos(pose[2]) - 0.5*height*sin(pose[2]);
+        obstacle.checkpoints[7] = -0.5*width*sin(pose[2]) + 0.5*height*cos(pose[2]);
     }
-    std::vector<double> obst_pose;
-    std::vector<double> obst_velocity;
-    if (_robobs_pose_port.read(obst_pose) == RTT::NewData) {
-        int index = obstacles.size()-1;
-        obstacles[index].avoid = true;
-        obstacles[index].position[0] = obst_pose[0];
-        obstacles[index].position[1] = obst_pose[1];
-        orientation = obst_pose[2];
-        if (_robobs_velocity_port.read(obst_velocity) == RTT::NewData) {
-            obstacles[index].velocity[0] = obst_velocity[0];
-            obstacles[index].velocity[1] = obst_velocity[1];
-        } else {
-            obstacles[index].velocity[0] = 0.;
-            obstacles[index].velocity[1] = 0.;
-        }
-        obstacles[index].acceleration[0] = 0.;
-        obstacles[index].acceleration[1] = 0.;
-        width = 0.55;
-        height = 0.4;
+    _obstacles.push_back(obstacle);
+}
+
+void MotionPlanningInterface::addDynamicObstacle(const std::vector<double>& pose, const std::vector<double>& velocity, const std::vector<double>& size) {
+    // only rectangular obstacles
+    addStaticObstacle(pose, size);
+    int ind = _obstacles.size()-1;
+    _obstacles[ind].velocity[0] = velocity[0];
+    _obstacles[ind].velocity[1] = velocity[1];
+}
+
+void MotionPlanningInterface::addPeerObstacle(const std::vector<double>& coeff_vector, double radius) {
+    // only circular peers
+    obstacle_t obstacle;
+    obstacle.avoid = true;
+    obstacle.traj_coeffs = coeff_vector;
+    obstacle.radii = std::vector<double>({radius});
+    obstacle.checkpoints = std::vector<double>({0., 0.});
+    _obstacles.push_back(obstacle);
+}
+
+void MotionPlanningInterface::loadObstacles() {
+    int obst_size = _obstacles.size();
+    if (obst_size > n_obstacles()) {
+        log(Warning) << "Motion Planning got too much obstacles (" << _obstacles.size() << "), only accounting for first " << n_obstacles() << "!" << endlog();
+        _obstacles.resize(n_obstacles());
+        return;
+    }
+    for (int k=obst_size; k<n_obstacles(); k++) {
+        // fill with dummy data -> far away
+        obstacle_t obstacle;
+        obstacle.avoid = true;
+        obstacle.position = std::vector<double>({-1000, -1000});
+        obstacle.velocity = std::vector<double>(2, 0);
+        obstacle.acceleration = std::vector<double>(2, 0);
+        obstacle.radii = std::vector<double>(4);
+        obstacle.checkpoints = std::vector<double>(8);
         for (int i=0; i<4; i++) {
-            obstacles[index].radii[i] = 0.001;
+            obstacle.radii[i] = 1.e-3;
+            for (int j=0; j<2; j++) {
+                obstacle.checkpoints[2*i+j] = 0.;
+            }
         }
-        obstacles[index].checkpoints[0] = 0.5*width*cos(orientation) - 0.5*height*sin(orientation);
-        obstacles[index].checkpoints[1] = 0.5*width*sin(orientation) + 0.5*height*cos(orientation);
-        obstacles[index].checkpoints[2] = 0.5*width*cos(orientation) + 0.5*height*sin(orientation);
-        obstacles[index].checkpoints[3] = 0.5*width*sin(orientation) - 0.5*height*cos(orientation);
-        obstacles[index].checkpoints[4] = -0.5*width*cos(orientation) + 0.5*height*sin(orientation);
-        obstacles[index].checkpoints[5] = -0.5*width*sin(orientation) - 0.5*height*cos(orientation);
-        obstacles[index].checkpoints[6] = -0.5*width*cos(orientation) - 0.5*height*sin(orientation);
-        obstacles[index].checkpoints[7] = -0.5*width*sin(orientation) + 0.5*height*cos(orientation);
+        _obstacles.push_back(obstacle);
     }
 }
 

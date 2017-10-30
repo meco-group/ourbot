@@ -131,6 +131,7 @@ class Point2Point{
         bool update(std::vector<double>&, std::vector<double>&, std::vector<std::vector<double>>&, std::vector<std::vector<double>>&, std::vector<obstacle_t>&);
         bool update(std::vector<double>&, std::vector<double>&, std::vector<std::vector<double>>&, std::vector<std::vector<double>>&, std::vector<obstacle_t>&, int);
         void getCoefficients(std::vector<double>& coeffs);
+        int getLenBasis();
     };
 }
 

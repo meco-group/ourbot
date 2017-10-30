@@ -132,6 +132,7 @@ template <class C, typename T=void> class OutgoingConnection : public Connection
                     _peers = zyre_peers_by_group(_node, _groups[k].c_str());
                     if (_peers != NULL && zlist_size(_peers) > 0){
                         if (zyre_shout(_node, _groups[k].c_str(), &msg) != 0) {
+                            zmsg_destroy(&msg);
                             return false;
                         }
                         if (_verbose >= 1) {
@@ -199,6 +200,7 @@ template <class C> class OutgoingConnection<C, void> : public Connection {
                     _peers = zyre_peers_by_group(_node, _groups[k].c_str());
                     if (_peers != NULL && zlist_size(_peers) > 0){
                         if (zyre_shout(_node, _groups[k].c_str(), &msg) != 0) {
+                            zmsg_destroy(&msg);
                             return false;
                         }
                         if (_verbose >= 1) {

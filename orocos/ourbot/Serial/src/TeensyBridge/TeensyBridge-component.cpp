@@ -6,15 +6,14 @@
 #define MAVLINK_MSG_OVERHEAD			8
 
 TeensyBridge::TeensyBridge(std::string const& name) :
-	USBInterface(name), _platform_length(0.3), _platform_width(0.265), _wheel_radius(0.05), _encoder_ticks_per_revolution(35840),
+	USBInterface(name), _ourbot_size(2), _wheel_radius(0.05), _encoder_ticks_per_revolution(35840),
 	_current_sensor_gain(1.0), _current_sensor_offset(0.0),
 	_kinematic_conversion_position(0.0), _kinematic_conversion_orientation(0.0), _kinematic_conversion_wheel(0.0), _pose(3,0.0), _velocity(3,0.0),
 	_control_mode(TEENSYBRIDGE_CONTROL_MODE_SIMPLE), _velocity_pid_soft(3, 0.0), _velocity_pid_strong(3, 0.0),
 	_imus{new IMU(std::string("left_imu")), new IMU(std::string("right_imu"))}
 {
 	// SETUP KINEMATICS
-	this->addProperty("platform_length",_platform_length).doc("Property containing the platform length in [m].");
-	this->addProperty("platform_width",_platform_width).doc("Property containing the platform width in [m].");
+	this->addProperty("ourbot_size", _ourbot_size).doc("Length and width of ourbot [m x m]");
 	this->addProperty("wheel_radius",_wheel_radius).doc("Property containing the wheel radius in [m].");
 	this->addProperty("encoder_ticks_per_revolution",_encoder_ticks_per_revolution).doc("Property containing the encoder ticks per revolution in [-].");
 	this->addProperty("current_sensor_gain",_current_sensor_gain).doc("Gain of current sensor to get proper scaling");
@@ -196,7 +195,7 @@ bool TeensyBridge::configureHook()
 
 	//calculate kinematic conversion
   	_kinematic_conversion_position = _wheel_radius*M_PI/_encoder_ticks_per_revolution; //2*R*pi/enc_res
-	_kinematic_conversion_orientation = _wheel_radius*M_PI/_encoder_ticks_per_revolution/(_platform_length/2.0 + _platform_width/2.0);
+	_kinematic_conversion_orientation = _wheel_radius*M_PI/_encoder_ticks_per_revolution/(_ourbot_size[0]/2.0 + _ourbot_size[1]/2.0);
 	_kinematic_conversion_wheel = _encoder_ticks_per_revolution/(2.0*M_PI*_wheel_radius);
 
 	//setup imus
@@ -352,7 +351,7 @@ void TeensyBridge::setVelocity(double vx, double vy, double w)
 		uint8_t buffer[MAVLINK_MSG_ID_MOTOR_COMMAND_LEN+MAVLINK_MSG_OVERHEAD];
 		uint8_t numbytes = 0;
 
-		w = (_platform_length + _platform_width)*w/2.0;
+		w = (_ourbot_size[0] + _ourbot_size[1])*w/2.0;
 
 		// UPDATE 14/07/2015: To have the same reference frame as the youbot, the y-axis has been changed
 		motor_command.command_left_front = (vx - vy - w)*_kinematic_conversion_wheel;

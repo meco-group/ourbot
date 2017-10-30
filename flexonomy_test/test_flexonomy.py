@@ -12,6 +12,7 @@ node.set_port('5670')
 node.start()
 # node.set_verbose()
 node.join(GROUP)
+node.join('erveepee_flex')
 node.join('kurt_flex')
 node.join('dave_flex')
 
@@ -30,7 +31,7 @@ kp = 0
 
 current_task_id = '71c7e94b-6ac0-4912-b707-5ef9df7b4302'
 
-host1 = 'kurt'
+host1 = 'erveepee'
 host2 = 'krist'
 
 # zones
@@ -44,9 +45,10 @@ while(kp != 'q'):
     if (ord(kp) == 49): # keypress 1
         msg['header']['type'] = 'task_request'
         msg['payload'] = col.OrderedDict()
-        msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4302'
+        msg['payload']['task_uuid'] = current_task_id
         msg['payload']['task_type'] = 'move_to'
-        msg['payload']['task_parameters'] = 'A'
+        msg['payload']['task_parameter_key'] = 'robot'
+        msg['payload']['task_parameters'] = 'None'
         msg['payload']['finished_by'] = '2017-08-07T02:20:00.000Z'
         node.shout(GROUP, json.dumps(msg))
         print 'sent task_request msg'
@@ -58,7 +60,7 @@ while(kp != 'q'):
     elif (ord(kp) == 50): # keypress 2
         msg['header']['type'] = 'execute'
         msg['payload'] = col.OrderedDict()
-        msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4302'
+        msg['payload']['task_uuid'] = current_task_id
         msg['payload']['task_type'] = 'move_to'
         msg['payload']['task_parameter_key'] = 'robot'
         msg['payload']['task_parameters'] = 'None'
@@ -67,7 +69,7 @@ while(kp != 'q'):
     elif (ord(kp) == 51): # keypress 3
         msg['header']['type'] = 'execute'
         msg['payload'] = col.OrderedDict()
-        msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4303'
+        msg['payload']['task_uuid'] = current_task_id
         msg['payload']['task_type'] = 'move_to'
         msg['payload']['task_parameter_key'] = 'None'
         msg['payload']['task_parameters'] = zone_B
@@ -76,7 +78,7 @@ while(kp != 'q'):
     elif (ord(kp) == 52): # keypress 4
         msg['header']['type'] = 'execute'
         msg['payload'] = col.OrderedDict()
-        msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4303'
+        msg['payload']['task_uuid'] = current_task_id
         msg['payload']['task_type'] = 'move_to'
         msg['payload']['task_parameter_key'] = 'None'
         msg['payload']['task_parameters'] = zone_C
@@ -85,7 +87,7 @@ while(kp != 'q'):
     elif (ord(kp) == 53): # keypress 5
         msg['header']['type'] = 'execute'
         msg['payload'] = col.OrderedDict()
-        msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4303'
+        msg['payload']['task_uuid'] = current_task_id
         msg['payload']['task_type'] = 'move_to'
         msg['payload']['task_parameter_key'] = 'None'
         msg['payload']['task_parameters'] = zone_D
@@ -94,7 +96,7 @@ while(kp != 'q'):
     elif (ord(kp) == 54): # keypress 6
         msg['header']['type'] = 'execute'
         msg['payload'] = col.OrderedDict()
-        msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4302'
+        msg['payload']['task_uuid'] = current_task_id
         msg['payload']['task_type'] = 'move_to'
         msg['payload']['task_parameter_key'] = 'robot'
         msg['payload']['task_parameters'] = 'None'
@@ -103,7 +105,7 @@ while(kp != 'q'):
     elif (ord(kp) == 55): # keypress 7
         msg['header']['type'] = 'execute'
         msg['payload'] = col.OrderedDict()
-        msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4303'
+        msg['payload']['task_uuid'] = current_task_id
         msg['payload']['task_type'] = 'move_to'
         msg['payload']['task_parameter_key'] = 'None'
         msg['payload']['task_parameters'] = zone_B
@@ -112,7 +114,7 @@ while(kp != 'q'):
     elif (ord(kp) == 56): # keypress 8
         msg['header']['type'] = 'execute'
         msg['payload'] = col.OrderedDict()
-        msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4303'
+        msg['payload']['task_uuid'] = current_task_id
         msg['payload']['task_type'] = 'move_to'
         msg['payload']['task_parameter_key'] = 'None'
         msg['payload']['task_parameters'] = zone_C
@@ -121,7 +123,7 @@ while(kp != 'q'):
     elif (ord(kp) == 57): # keypress 9
         msg['header']['type'] = 'execute'
         msg['payload'] = col.OrderedDict()
-        msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4303'
+        msg['payload']['task_uuid'] = current_task_id
         msg['payload']['task_type'] = 'move_to'
         msg['payload']['task_parameter_key'] = 'None'
         msg['payload']['task_parameters'] = zone_D
@@ -130,8 +132,8 @@ while(kp != 'q'):
     elif (ord(kp) == 13): # enter
         msg['header']['type'] = 'cancel'
         msg['payload'] = col.OrderedDict()
-        msg['payload']['task_uuid'] = '71c7e94b-6ac0-4912-b707-5ef9df7b4303'
+        msg['payload']['task_uuid'] = current_task_id
         node.shout('ourbots', json.dumps(msg))
         print 'remove task'
-    time.sleep(0.1)
+    time.sleep(0.2)
 node.stop()
