@@ -58,7 +58,7 @@ end
 function start_sensing_components()
   if not io:start() then
     rtt.logl('Error', 'Could not start io component!')
-    -- return false
+    return false
   end
   if not estimator:start() then
     rtt.logl('Error', 'Could not start estimator component!')
@@ -78,17 +78,16 @@ function stop_sensing_components()
 end
 
 function control_hook(control)
-  -- print('in global control hook')
-  io_update()
   estimator_update()
   if control then
-    if true or estimator_valid() then
+    if estimator_valid() then
       reference_update()
       controller_update()
     else
       rtt.logl('Warning', 'Estimate not valid!')
     end
   end
+  io_update()
   return true
 end
 

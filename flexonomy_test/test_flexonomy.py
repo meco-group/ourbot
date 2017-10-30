@@ -7,8 +7,8 @@ GROUP = 'ourbots'
 
 node = pyre.Pyre('SH1')
 node.set_interface('wlan0')
-node.set_port('5670')
-# node.set_port('5671')
+# node.set_port('5670')
+node.set_port('5671')
 node.start()
 # node.set_verbose()
 node.join(GROUP)
@@ -31,7 +31,7 @@ kp = 0
 
 current_task_id = '71c7e94b-6ac0-4912-b707-5ef9df7b4302'
 
-host1 = 'erveepee'
+host1 = 'kurt'
 host2 = 'krist'
 
 # zones

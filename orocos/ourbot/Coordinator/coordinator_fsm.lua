@@ -9,10 +9,11 @@ return rfsm.state {
   rfsm.trans{src = 'idle', tgt = 'failure', events = {'e_failed'}},
   rfsm.trans{src = 'trajectoryfollowing', tgt = 'failure', events = {'e_failed'}},
   rfsm.trans{src = 'motionplanning.failure', tgt = 'failure', events = {'e_failed'}},
-  rfsm.trans{src = 'flexonomy', tgt = 'failure', events = {'e_failed'}},
+  rfsm.trans{src = 'flexonomy.failure', tgt = 'failure', events = {'e_failed'}},
 
   rfsm.trans{src = 'trajectoryfollowing.stop', tgt = 'idle', events = {'e_done'}},
   rfsm.trans{src = 'motionplanning.stop', tgt = 'idle', events = {'e_done'}},
+  rfsm.trans{src = 'flexonomy.stop', tgt = 'idle', events = {'e_done'}},
 
   initial = rfsm.conn{},
 

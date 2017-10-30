@@ -94,6 +94,7 @@ bool Reference::ready() {
 
 void Reference::setPoseOffset(double x, double y, double t) {
     _pose_offset = std::vector<double>({x, y, t});
+    updatePositionTrajectory();
 }
 
 bool Reference::receiveTrajectory(int index) {
@@ -168,7 +169,7 @@ void Reference::updatePositionTrajectory() {
     for (int i=0; i<2; i++) {
         _ref_position_trajectory[i].resize(_n_samples_plot);
         for (int k=0; k<_n_samples_plot; k++) {
-            _ref_position_trajectory[i][k] = _ref_pose_trajectory[i][k*step];
+            _ref_position_trajectory[i][k] = _ref_pose_trajectory[i][k*step] + _pose_offset[i];
         }
         _ref_position_trajectory_port[i].write(_ref_position_trajectory[i]);
     }

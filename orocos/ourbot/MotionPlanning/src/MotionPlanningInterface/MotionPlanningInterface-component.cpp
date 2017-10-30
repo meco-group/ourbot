@@ -308,6 +308,8 @@ void MotionPlanningInterface::addPeerObstacle(const std::vector<double>& coeff_v
     obstacle_t obstacle;
     obstacle.avoid = true;
     obstacle.traj_coeffs = coeff_vector;
+
+    std::cout << obstacle.traj_coeffs.size() << std::endl;
     obstacle.radii = std::vector<double>({radius});
     obstacle.checkpoints = std::vector<double>({0., 0.});
     _obstacles.push_back(obstacle);

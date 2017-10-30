@@ -6,7 +6,7 @@ mp_recover_cnt = 0
 predict_shift = 0
 busy = false
 
-function set_motionplanner(mp, load_obstacles)
+function set_motionplanner(mp, load_obstacles_fun)
   motionplanning = mp
   motionplanning:loadService('marshalling')
   if not motionplanning:provides('marshalling'):updateProperties('Configuration/system-config.cpf') then
@@ -22,6 +22,7 @@ function set_motionplanner(mp, load_obstacles)
   if not communicator:addIncomingConnection('coordinator', 'target_pose_port', 'target_pose') then
     rfsm.send_events(fsm, 'e_failed')
   end
+  local fs, tgt = target_pose_port:read() -- flush port
   if not deployer:connectPorts('motionplanning', 'estimator') then
     return false
   end
@@ -53,17 +54,20 @@ function set_motionplanner(mp, load_obstacles)
   mp_max_failures = motionplanning:getProperty('max_failures'):get()
   mp_max_recovers = motionplanning:getProperty('max_recovers'):get()
   mp_max_periods = motionplanning:getProperty('max_periods'):get()
-  load_obstacles = load_obstacles
+  load_obstacles = load_obstacles_fun
   return true
 end
 
 function rm_motionplanner()
   motionplanning:stop()
+  motionplanning:cleanup()
   deployer:unloadComponent('motionplanning')
 end
 
 function trigger_motionplanning(predict_shift)
+  load_obstacles()
   local _, pose0 = est_pose_port:read()
+  -- print('('..pose0[0]..','..pose0[1]..','..pose0[2]..')')
   local trigger_data = rtt.Variable('array')
   trigger_data:resize(4)
   trigger_data:fromtab{pose0[0], pose0[1], pose0[2], predict_shift}
@@ -71,6 +75,7 @@ function trigger_motionplanning(predict_shift)
 end
 
 local load_obstacles_fun = function()
+  print('in load obstacles basic')
   reset_obstacles()
   -- self.add_static_obstacle()
 end
@@ -83,6 +88,9 @@ function p2p0_init(fsm)
   mp_failure_cnt = 0
   mp_recover_cnt = 0
   predict_shift = 0
+  if not motionplanning:isRunning() then
+    motionplanning:start()
+  end
 end
 
 function p2p0_hook(fsm)
@@ -186,14 +194,14 @@ end
 return rfsm.state {
   rfsm.trans{src = 'initial', tgt = 'init'},
   rfsm.trans{src = 'init', tgt = 'home', events = {'e_done'}},
-  rfsm.trans{src = 'home', tgt = 'idle', events = {'e_done'}},
+  rfsm.trans{src = 'home', tgt = 'idle', events = {'e_done', 'e_back'}},
   rfsm.trans{src = 'idle', tgt = 'p2p0', events = {'e_p2p'}},
-  rfsm.trans{src = 'p2p0', tgt = 'idle', events = {'e_idle'}},
+  rfsm.trans{src = 'p2p0', tgt = 'idle', events = {'e_idle', 'e_back'}},
   rfsm.trans{src = 'p2p0', tgt = 'p2p', events = {'e_p2p'}},
-  rfsm.trans{src = 'p2p', tgt = 'idle', events = {'e_idle'}},
+  rfsm.trans{src = 'p2p', tgt = 'idle', events = {'e_idle', 'e_back'}},
   rfsm.trans{src = 'p2p', tgt = 'recover', events = {'e_recover'}},
   rfsm.trans{src = 'recover', tgt = 'p2p0', events = {'e_p2p'}},
-  rfsm.trans{src = 'recover', tgt = 'idle', events = {'e_idle'}},
+  rfsm.trans{src = 'recover', tgt = 'idle', events = {'e_idle', 'e_back'}},
   rfsm.trans{src = 'home', tgt = 'stop', events = {'e_back'}},
   rfsm.trans{src = 'idle', tgt = 'stop', events = {'e_back'}},
   rfsm.trans{src = 'home', tgt = 'failure', events = {'e_failed'}},
@@ -213,7 +221,6 @@ return rfsm.state {
         rfsm.send_events(fsm, 'e_failed')
         return
       end
-      motionplanning:start()
       if not start_control_components() then
         rfsm.send_events(fsm, 'e_failed')
       end
@@ -227,7 +234,7 @@ return rfsm.state {
         if not control_hook(false) then
           rfsm.send_events(fsm, 'e_failed')
         end
-        if true or estimator_valid() then
+        if estimator_valid() then
           return
         end
         rfsm.yield(true)
@@ -237,8 +244,9 @@ return rfsm.state {
 
   idle = rfsm.state{
     entry = function(fsm)
-      zero_velocity()
       enable_manualcommand()
+      zero_velocity()
+
     end,
 
     doo = function(fsm)

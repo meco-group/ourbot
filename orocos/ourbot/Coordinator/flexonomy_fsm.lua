@@ -69,7 +69,7 @@ end
 
 function flex_update(fsm, control)
   -- send state to coordinator
-  send_state(status)
+  -- send_state(status)
   -- send trajectory to neighbor
   communicate_trajectory(control)
   -- check if current task was canceled
@@ -98,9 +98,12 @@ local load_obstacles_fun = function ()
   -- add robot table
   local robot_pose = get_robot_pose()
   add_static_obstacle(robot_pose, robot_table_size)
+  print('robot pose: (' ..robot_pose[0]..','..robot_pose[1]..','..robot_pose[2]..')')
   -- add peer
   local fs, peer_coeffs = peer_trajectory_port:read()
+  local n_coeffs = get_basis_length()
   local coeffs = rtt.Variable('array')
+  coeffs:resize(2*n_coeffs)
   if fs ~= 'NewData' then
     print('No trajectory received from peer, using robot arm position!')
     for k=0, n_coeffs-1 do
@@ -217,7 +220,7 @@ end
 
 function remove_task(task)
   print('removing task ' .. task.task_uuid)
-  if task.task_uuid == current_task.task_uuid then
+  if current_task ~= nil and task.task_uuid == current_task.task_uuid then
     current_task = nil
     current_eta = nil
   end
@@ -247,7 +250,6 @@ end
 
 function send_state(state)
   if statemsg_cnt >= 1./(statemsg_rate*period) then
-    print("HERERER1")
     local _, pose = est_pose_port:read()
     msg_tbl.header.type = 'state'
     msg_tbl.header.timestamp = encode_time(get_sec())
@@ -260,7 +262,6 @@ function send_state(state)
       write_mail(json.encode(msg_tbl), coordinator_uuid)
     end
     statemsg_cnt = 1
-    print("HERERER2")
   else
     statemsg_cnt = statemsg_cnt + 1
   end
@@ -337,9 +338,9 @@ function get_target_pose(task)
         local dy = 0.0
         local dt = math.pi
 
-        pose[0] = rp[1] + dx*math.cos(rp[3]) - dy*math.sin(rp[3])
-        pose[1] = rp[2] + dx*math.sin(rp[3]) + dy*math.cos(rp[3])
-        pose[2] = rp[3] + dt
+        pose[0] = rp[0] + dx*math.cos(rp[2]) - dy*math.sin(rp[2])
+        pose[1] = rp[1] + dx*math.sin(rp[2]) + dy*math.cos(rp[2])
+        pose[2] = rp[2] + dt
         return pose
     end
   end
@@ -367,7 +368,10 @@ function get_robot_pose()
   local dy = 0.4175;
   x = x + dx*math.cos(theta) - dy*math.sin(theta)
   y = y + dx*math.sin(theta) + dy*math.cos(theta)
-  return {x, y, theta}
+  local robot_pose = rtt.Variable('array')
+  robot_pose:resize(3)
+  robot_pose:fromtab{x, y, theta}
+  return robot_pose
 end
 
 function motion_time_guess(start, target)
@@ -412,7 +416,6 @@ flex_fsm.init = rfsm.state{
       return
     end
     initialize()
-    motionplanning:start()
     if not start_control_components() then
       rfsm.send_events(fsm, 'e_failed')
     end
@@ -467,7 +470,7 @@ flex_fsm.p2p0 = rfsm.state{
   exit = function(fsm)
     if not mp_valid() then
       send_task_status(current_task, 'rejected', get_sec())
-      remove_task(self.current_task)
+      remove_task(current_task)
       return
     elseif not current_task.started then
       local fs, motion_time = motion_time_port:read()

@@ -17,8 +17,8 @@
 // License along with this program; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#ifndef VEHICLE_OMG_P2P_P2P
-#define VEHICLE_OMG_P2P_P2P
+#ifndef VEHICLE_OMG_P2P_P2P_P2P_P2P
+#define VEHICLE_OMG_P2P_P2P_P2P_P2P
 
 #include <math.h>
 #include <vector>

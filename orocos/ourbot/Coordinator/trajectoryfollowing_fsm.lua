@@ -60,6 +60,7 @@ return rfsm.state {
     end,
 
     exit = function(fsm)
+      reference:setPoseOffset(0, 0, 0)
       print('stopped following trajectory')
     end,
   },

@@ -149,6 +149,7 @@ return rfsm.state {
         if not dp:connectPorts('estimator', 'controller') then rfsm.send_events(fsm,'e_failed') return end
         if not dp:connectPorts('reference', 'controller') then rfsm.send_events(fsm,'e_failed') return end
         if not dp:connectPorts('estimator', 'reference') then rfsm.send_events(fsm,'e_failed') return end
+        if not dp:connectPorts('estimator', 'coordinator') then rfsm.send_events(fsm,'e_failed') return end
         if not dp:connectPorts('io', 'controller') then rfsm.send_events(fsm,'e_failed') return end
           --add more connections here
 
@@ -187,8 +188,8 @@ return rfsm.state {
         -- io
         if not addIncoming('io', 'cmd_velocity_port', 'cmd_velocity') then rfsm.send_events(fsm, 'e_failed') return end
         -- estimator
-        -- if not addOutgoing('estimator', 'est_pose_port', 'est_pose_'..host, 'emperor') then rfsm.send_events(fsm, 'e_failed') return end
-        -- if not setRate('estimator', 'est_pose_port', 'est_pose_'..host, 20, control_rate) then rfsm.send_events(fsm, 'e_failed') return end
+        if not addOutgoing('estimator', 'est_pose_port', 'est_pose_'..host, 'emperor') then rfsm.send_events(fsm, 'e_failed') return end
+        if not setRate('estimator', 'est_pose_port', 'est_pose_'..host, 20, control_rate) then rfsm.send_events(fsm, 'e_failed') return end
         -- reference
         if not addOutgoing('reference', 'ref_position_trajectory_x_port', 'ref_x_'..host, 'emperor') then rfsm.send_events(fsm, 'e_failed') return end
         if not addOutgoing('reference', 'ref_position_trajectory_y_port', 'ref_y_'..host, 'emperor') then rfsm.send_events(fsm, 'e_failed') return end
