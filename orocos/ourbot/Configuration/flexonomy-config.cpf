@@ -14,7 +14,7 @@
 
   <simple name="statemsg_rate" type="double">
     <description>Rate to send state messages</description>
-    <value>0.1</value>
+    <value>0.5</value>
   </simple>
 
   <simple name="nghbcom_rate" type="double">

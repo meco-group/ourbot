@@ -1,10 +1,10 @@
-load_new_trajectory = reference:getOperation('receiveTrajectory')
-mp_period = math.floor(control_rate/motionplanning_rate)
-ref_cnt = 0
-mp_failure_cnt = 0
-mp_recover_cnt = 0
-predict_shift = 0
-busy = false
+local load_new_trajectory = reference:getOperation('receiveTrajectory')
+local mp_period = math.floor(control_rate/motionplanning_rate)
+local ref_cnt = 0
+local mp_failure_cnt = 0
+local mp_recover_cnt = 0
+local predict_shift = 0
+local busy = false
 
 function set_motionplanner(mp, load_obstacles_fun)
   motionplanning = mp
@@ -75,7 +75,6 @@ function trigger_motionplanning(predict_shift)
 end
 
 local load_obstacles_fun = function()
-  print('in load obstacles basic')
   reset_obstacles()
   -- self.add_static_obstacle()
 end
@@ -266,7 +265,6 @@ return rfsm.state {
   },
 
   p2p0 = rfsm.state{
-
     doo = function(fsm)
       p2p0_init(fsm)
       while true do

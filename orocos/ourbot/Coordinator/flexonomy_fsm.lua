@@ -1,19 +1,19 @@
 local json = require "cjson"
 
 -- local variables
-current_task = nil
-current_eta = nil
-task_queue = {}
-time_tbl = {}
-current_task_canceled = false
-priority = false
-state = 'busy'
+local current_task = nil
+local current_eta = nil
+local task_queue = {}
+local time_tbl = {}
+local current_task_canceled = false
+local priority = false
+local state = 'busy'
 
-peer_uuid = communicator:getOperation('getPeerUUID')
-write_mail = communicator:getOperation('writeMail')
-read_mail = communicator:getOperation('readMail')
-remove_mail = communicator:getOperation('removeMail')
-msg_tbl = {
+local peer_uuid = communicator:getOperation('getPeerUUID')
+local write_mail = communicator:getOperation('writeMail')
+local read_mail = communicator:getOperation('readMail')
+local remove_mail = communicator:getOperation('removeMail')
+local msg_tbl = {
   header = {
     version = header_version,
     type = '',
@@ -46,7 +46,7 @@ function initialize()
   ourbot_radius = 1.1*math.sqrt(math.pow(0.5*ourbot_size[0]+0.13, 2) + math.pow(0.5*ourbot_size[1], 2))
   statemsg_cnt = 1./(statemsg_rate*period)
   nghbcom_cnt = 1./(nghbcom_rate*period)
-  no_robot_cnt = 0
+  no_robot_cnt = no_robot_cnt_max
   max_vel_position = motionplanning:getProperty('max_vel_position'):get()
   max_vel_orientation = motionplanning:getProperty('max_vel_orientation'):get()
   -- add ports
@@ -93,12 +93,11 @@ function flex_update(fsm, control)
 end
 
 local load_obstacles_fun = function ()
-  print('in flex load_obstacles')
   reset_obstacles()
   -- add robot table
   local robot_pose = get_robot_pose()
   add_static_obstacle(robot_pose, robot_table_size)
-  print('robot pose: (' ..robot_pose[0]..','..robot_pose[1]..','..robot_pose[2]..')')
+  -- print('robot pose: (' ..robot_pose[0]..','..robot_pose[1]..','..robot_pose[2]..')')
   -- add peer
   local fs, peer_coeffs = peer_trajectory_port:read()
   local n_coeffs = get_basis_length()
@@ -349,13 +348,17 @@ function get_target_pose(task)
 end
 
 function get_robot_pose()
+  local robot_pose = rtt.Variable('array')
+  robot_pose:resize(3)
   local fs, robot_markers = robot_markers_port:read()
   -- robot table still visible?
   if fs ~= 'NewData' then
     no_robot_cnt = no_robot_cnt + 1
     if (no_robot_cnt >= no_robot_cnt_max) then
       no_robot_cnt = no_robot_cnt_max
-      return nil
+      rtt.logl('Warning', 'Robot table not detected! Putting it far away!')
+      robot_pose:fromtab{-100, -100, 0}
+      return robot_pose
     end
   else
     no_robot_cnt = 0
@@ -368,8 +371,6 @@ function get_robot_pose()
   local dy = 0.4175;
   x = x + dx*math.cos(theta) - dy*math.sin(theta)
   y = y + dx*math.sin(theta) + dy*math.cos(theta)
-  local robot_pose = rtt.Variable('array')
-  robot_pose:resize(3)
   robot_pose:fromtab{x, y, theta}
   return robot_pose
 end
@@ -408,7 +409,7 @@ local flex_fsm = rfsm.load('Coordinator/motionplanning_fsm.lua')
 
 flex_fsm.init = rfsm.state{
   entry = function(fsm)
-    if not deployer:loadComponent('motionplanning', 'MotionPlanning') then
+    if not deployer:loadComponent('motionplanning', 'FlexonomyMotionPlanning') then
       rfsm.send_events(fsm, 'e_failed')
     end
     if not set_motionplanner(deployer:getPeer('motionplanning'), load_obstacles_fun) then

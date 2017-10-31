@@ -17,7 +17,7 @@
 // License along with this program; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include "Point2Point_omg.hpp"
+#include "Point2Point_p2pflex.hpp"
 #ifdef DEBUG
 #include <ctime>
 #endif
@@ -26,7 +26,7 @@
 using namespace std;
 using namespace casadi;
 
-namespace p2p{
+namespace p2pflex{
 
 Point2Point::Point2Point(Vehicle* vehicle,
     double update_time, double sample_time, double horizon_time, int trajectory_length, bool initialize):

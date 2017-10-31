@@ -17,16 +17,16 @@
 // License along with this program; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#ifndef POINT2POINT_OMG_P2P_P2P_P2P_P2P
-#define POINT2POINT_OMG_P2P_P2P_P2P_P2P
+#ifndef POINT2POINT_P2PFLEX
+#define POINT2POINT_P2PFLEX
 
-#include "Vehicle_omg.hpp"
+#include "Vehicle_p2pflex.hpp"
 #include <casadi/casadi.hpp>
 #include <math.h>
 #include <memory.h>
 #include <iostream>
 
-namespace p2p{
+namespace p2pflex{
 
 const double inf = std::numeric_limits<double>::infinity();
 const int N_PAR = 55;

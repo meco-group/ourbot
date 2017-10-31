@@ -17,11 +17,11 @@
 // License along with this program; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include "Holonomic_omg.hpp"
+#include "Holonomic_p2pflex.hpp"
 
 using namespace std;
 
-namespace p2p{
+namespace p2pflex{
 
 Holonomic::Holonomic() : Vehicle(2, 2, 2, 3), poseT(2){
 

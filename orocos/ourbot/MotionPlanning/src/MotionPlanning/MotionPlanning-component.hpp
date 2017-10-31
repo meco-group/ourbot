@@ -9,11 +9,9 @@
 
 class MotionPlanning : public MotionPlanningInterface {
 
-    private:
+    protected:
         std::vector<std::vector<double> > _ref_velocity;
         std::vector<std::vector<double> > _ref_pose;
-
-    protected:
         ProblemInterface* _problem;
         bool _ideal_prediction;
         int _n_st;

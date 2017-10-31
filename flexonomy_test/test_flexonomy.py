@@ -31,7 +31,7 @@ kp = 0
 
 current_task_id = '71c7e94b-6ac0-4912-b707-5ef9df7b4302'
 
-host1 = 'kurt'
+host1 = 'erveepee'
 host2 = 'krist'
 
 # zones

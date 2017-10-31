@@ -17,8 +17,8 @@
 // License along with this program; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include "Point2Point_omg.hpp"
-#include "Holonomic_omg.hpp"
+#include "Point2Point_p2pflex.hpp"
+#include "Holonomic_p2pflex.hpp"
 #include <ctime>
 #include <iostream>
 #include <fstream>
@@ -33,11 +33,11 @@ int main()
     double sample_time = 0.01;
     double update_time = 0.1;
     int trajectory_length = 5;
-    p2p::Holonomic* vehicle = new p2p::Holonomic();
+    p2pflex::Holonomic* vehicle = new p2pflex::Holonomic();
     // ideal update: prediction of initial state based on spline extrapolation
     // non-ideal update: prediction based on current state0 and model integration
     vehicle->setIdealPrediction(true);
-    p2p::Point2Point p2p(vehicle, update_time, sample_time, horizon_time, trajectory_length);
+    p2pflex::Point2Point p2p(vehicle, update_time, sample_time, horizon_time, trajectory_length);
 
     // set initial state and terminal state and input
     vector<double> state0(2);
@@ -52,7 +52,7 @@ int main()
     vector<vector<double>> state_trajectory(trajectory_length, vector<double>(2));
 
     // obstacles
-    vector<p2p::obstacle_t> obstacles(p2p.n_obs);
+    vector<p2pflex::obstacle_t> obstacles(p2p.n_obs);
     double width = 3.0;
     double height = 0.2;
     double radius = 0.001;

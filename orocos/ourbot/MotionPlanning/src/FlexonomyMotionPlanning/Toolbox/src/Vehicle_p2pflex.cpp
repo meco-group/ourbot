@@ -17,11 +17,11 @@
 // License along with this program; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include "Vehicle_omg.hpp"
+#include "Vehicle_p2pflex.hpp"
 
 using namespace std;
 
-namespace p2p{
+namespace p2pflex{
 
 Vehicle::Vehicle(int n_st, int n_in, int n_spl, int degree, int knot_intervals):
 ideal_prediction(false), provide_prediction(false), predicted_state(n_st), predicted_input(n_in){

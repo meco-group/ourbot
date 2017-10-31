@@ -41,11 +41,11 @@ problem.set_options({'hard_term_con': False})
 problem.init()
 
 options = {}
-options['directory'] = os.getenv('ROS_WORKSPACE') + '/ourbot/MotionPlanning/src/MotionPlanning/Toolbox/'
-options['casadiobj'] = '$(ROS_WORKSPACE)/ourbot/MotionPlanning/src/MotionPlanning/Toolbox/bin/'
+options['directory'] = os.getenv('ROS_WORKSPACE') + '/ourbot/MotionPlanning/src/FlexonomyMotionPlanning/Toolbox/'
+options['casadiobj'] = '$(ROS_WORKSPACE)/ourbot/MotionPlanning/src/FlexonomyMotionPlanning/Toolbox/bin/'
 options['casadiinc'] = '$(CASADI_INC)'
 options['casadilib'] = '$(CASADI_LIB)'
-options['namespace'] = 'p2p'
+options['namespace'] = 'p2pflex'
 
 # export the problem
 problem.export(options)

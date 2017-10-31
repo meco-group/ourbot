@@ -77,11 +77,13 @@ end
 function updateHook()
   prev_start_time = start_time
   start_time = get_sec()
+  -- collectgarbage("collect")
+  -- print(collectgarbage("count")*1024)
   -- update communication
   communicator_update()
   -- snapshot for reporter
   snapshot()
-  -- error check
+  -- -- error check
   if io_error() then
     rtt.logl('Error', 'RunTimeError in gamepad component!')
     rfsm.send_events(fsm, 'e_failed')
