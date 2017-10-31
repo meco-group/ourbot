@@ -128,6 +128,7 @@ void MotionPlanningInterface::updateHook() {
     if (!_target_set) {
         log(Error) << "No target set!" << endlog();
         _busy = false;
+        DEBUG_PRINT("stopped mp update");
         return;
     }
     // target-reached detection
@@ -135,6 +136,7 @@ void MotionPlanningInterface::updateHook() {
         _ready = true;
         _valid = true;
         _busy = false;
+        DEBUG_PRINT("stopped mp update");
         return;
     }
     // set obstacle data
@@ -309,7 +311,6 @@ void MotionPlanningInterface::addPeerObstacle(const std::vector<double>& coeff_v
     obstacle.avoid = true;
     obstacle.traj_coeffs = coeff_vector;
 
-    std::cout << obstacle.traj_coeffs.size() << std::endl;
     obstacle.radii = std::vector<double>({radius});
     obstacle.checkpoints = std::vector<double>({0., 0.});
     _obstacles.push_back(obstacle);

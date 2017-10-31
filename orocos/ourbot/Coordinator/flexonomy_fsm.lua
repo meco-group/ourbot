@@ -49,6 +49,11 @@ function initialize()
   no_robot_cnt = no_robot_cnt_max
   max_vel_position = motionplanning:getProperty('max_vel_position'):get()
   max_vel_orientation = motionplanning:getProperty('max_vel_orientation'):get()
+  if host == 'kurt' then
+    peer = 'krist'
+  else
+    peer = 'kurt'
+  end
   -- add ports
   motion_time_port = rtt.InputPort('double')
   host_trajectory_port = rtt.OutputPort('array')
@@ -63,13 +68,18 @@ function initialize()
   tc:addPort(peer_priority_port, 'peer_priority_port', 'Is my peer claiming priority?')
   tc:addPort(robot_markers_port, 'robot_markers_port', 'Markers of robot arm table')
   if not communicator:addIncomingConnection('coordinator', 'robot_markers_port', 'markers_robot') then rfsm.send_events(fsm, 'e_failed') return end
+  if not communicator:addOutgoingConnection('coordinator', 'host_trajectory_port', 'trajectory_'..host, peer) then rfsm.send_events(fsm, 'e_failed') return end
+  if not communicator:addIncomingConnection('coordinator', 'peer_trajectory_port', 'trajectory_'..peer) then rfsm.send_events(fsm, 'e_failed') return end
+  if not communicator:addOutgoingConnection('coordinator', 'host_priority_port', 'priority_'..host, peer) then rfsm.send_events(fsm, 'e_failed') return end
+  if not communicator:addIncomingConnection('coordinator', 'peer_priority_port', 'priority_'..peer) then rfsm.send_events(fsm, 'e_failed') return end
+
   -- join group
   if not communicator:joinGroup(host .. '_flex') then rfsm.send_events(fsm, 'e_failed') return end
 end
 
 function flex_update(fsm, control)
   -- send state to coordinator
-  -- send_state(status)
+  send_state(status)
   -- send trajectory to neighbor
   communicate_trajectory(control)
   -- check if current task was canceled
@@ -288,8 +298,8 @@ function communicate_trajectory(control)
           coeffs[k+n_coeffs] = robot_pose[1]
         end
       end
-      host_trajectory_port:write(coeffs)
     end
+    host_trajectory_port:write(coeffs)
     nghbcom_cnt = 1
   else
     nghbcom_cnt = nghbcom_cnt + 1

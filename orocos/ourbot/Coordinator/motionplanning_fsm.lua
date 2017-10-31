@@ -81,7 +81,7 @@ end
 
 function p2p0_init(fsm)
   disable_manualcommand()
-  busy = mp_busy()
+  busy = true
   trigger_motionplanning(0)
   ref_cnt = 0
   mp_failure_cnt = 0
@@ -100,7 +100,7 @@ function p2p0_hook(fsm)
   end
   -- check motion planning
   local busy_n = mp_busy()
-  if (busy or busy_n and busy ~= busy_n) and not busy_n then -- decreasing flank detection
+  if (busy ~= busy_n) and not busy_n then -- decreasing flank detection
     if mp_ready() then
       print 'Target reached.'
       rfsm.send_events(fsm, 'e_idle')

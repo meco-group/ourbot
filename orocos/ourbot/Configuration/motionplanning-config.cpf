@@ -4,7 +4,7 @@
 
 <simple name="max_failures" type="long">
   <description>Maximum number of consecutive infeasible motionplanning updates</description>
-  <value>5</value>
+  <value>1</value>
 </simple>
 
 <simple name="max_recovers" type="long">

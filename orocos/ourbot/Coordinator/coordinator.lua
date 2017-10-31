@@ -14,6 +14,7 @@ tc:addProperty(rtt.Property('int', 'print_level','Level of output printing'))
 tc:addProperty(rtt.Property('double', 'control_rate', 'Frequency to update controller'))
 tc:addProperty(rtt.Property('double', 'motionplanning_rate', 'Frequency to update motion planning'))
 tc:addProperty(rtt.Property('double', 'reporting_rate', 'Frequency to take snapshots for the reporter'))
+tc:addProperty(rtt.Property('double', 'garbagecollect_rate', 'Frequency to collect garbage'))
 tc:addProperty(rtt.Property('bool', 'obstacle_mode','Robot is acting as a moving obstacle'))
 tc:addProperty(rtt.Property('string','host', 'Name of host'))
 tc:addProperty(rtt.Property('array', 'ourbot_size'))
@@ -77,8 +78,8 @@ end
 function updateHook()
   prev_start_time = start_time
   start_time = get_sec()
-  -- collectgarbage("collect")
-  -- print(collectgarbage("count")*1024)
+  -- manual garbage collection is necessary for omitting mem leaks!!
+  garbage_collect()
   -- update communication
   communicator_update()
   -- snapshot for reporter

@@ -35,7 +35,9 @@ function init_globals()
   control_rate = tc:getProperty('control_rate'):get()
   motionplanning_rate = tc:getProperty('motionplanning_rate'):get()
   reporting_rate = tc:getProperty('reporting_rate'):get()
+  garbagecollect_rate = tc:getProperty('garbagecollect_rate'):get()
   snapshot_cnt = 1./(reporting_rate*period)
+  garbagecollect_cnt = 1./(garbagecollect_rate*period)
 end
 
 function start_control_components()
@@ -108,6 +110,15 @@ function zero_velocity(self)
   teensy:setVelocity(0, 0, 0)
 end
 
+function garbage_collect()
+  if garbagecollect_cnt >= 1./(garbagecollect_rate*period) then
+    -- print(collectgarbage("count")*1024)
+    collectgarbage("collect")
+    garbagecollect_cnt = 1
+  else
+    garbagecollect_cnt = garbagecollect_cnt + 1
+  end
+end
 
 function snapshot()
   if snapshot_cnt >= 1./(reporting_rate*period) then
