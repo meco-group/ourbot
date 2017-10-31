@@ -1,17 +1,18 @@
 tc:addProperty(rtt.Property('string', 'dynamic_obstacle', 'Name of ourbot that plays dynamic obstacle'))
+if not tc:provides('marshalling'):updateProperties('Configuration/system-config.cpf') then
+  return false
+end
 local dynamic_obstacle = tc:getProperty('dynamic_obstacle'):get()
 local host_obstacle = (host == dynamic_obstacle)
 local ourbot_size = tc:getProperty('ourbot_size')
 local ourbot_radius = 1.1*math.sqrt(math.pow(0.5*ourbot_size[0], 2) + math.pow(0.5*ourbot_size[1], 2))
 
-function initialize()
+local initialize = function()
   -- create properties
   -- read properties
-  if not tc:provides('marshalling'):updateProperties('Configuration/system-config.cpf') then
-    return false
-  end
   -- add ports
   if host_obstacle then
+    print('i am obstacle')
     if not communicator:addOutgoingConnection('estimator', 'est_pose_port', 'dynamic_obstacle_pose', 'ourbots') then rfsm.send_events(fsm, 'e_failed') return end
     if not communicator:addOutgoingConnection('estimator', 'est_velocity_port', 'dynamic_obstacle_velocity', 'ourbots') then rfsm.send_events(fsm, 'e_failed') return end
   else
@@ -24,7 +25,7 @@ function initialize()
   end
 end
 
-function release()
+local release = function()
   if host_obstacle then
     communicator:removeConnection('estimator', 'est_pose_port', 'dynamic_obstacle_pose')
     communicator:removeConnection('estimator', 'est_velocity_port', 'dynamic_obstacle_velocity')
@@ -51,12 +52,22 @@ local load_obstacles_fun = function ()
   end
 end
 
+print('host_obstacle: ')
+print(dynamic_obstacle)
+
 if host_obstacle then
   return rfsm.state {
-    rfsm.trans{src = 'initial', tgt = 'idle'},
+    rfsm.trans{src = 'initial', tgt = 'init'},
+    rfsm.trans{src = 'init', tgt = 'idle', events = {'e_done'}},
     rfsm.trans{src = 'idle', tgt = 'stop', events = {'e_back'}},
 
     initial = rfsm.conn{},
+
+    init = rfsm.state{
+      entry = function(fsm)
+        initialize()
+      end
+    },
 
     idle = rfsm.state{
       entry = function(fsm)
@@ -73,13 +84,19 @@ if host_obstacle then
         end
       end,
     },
+
+    stop = rfsm.state{
+      entry = function(fsm)
+        release()
+      end,
+    },
   }
 else
   local mp_fsm = rfsm.load('Coordinator/motionplanning_fsm.lua')
 
   mp_fsm.init = rfsm.state{
     entry = function(fsm)
-      if not deployer:loadComponent('motionplanning', 'MotionPlanning') then
+      if not deployer:loadComponent('motionplanning', 'MotionPlanningDynamicObstacle') then
         rfsm.send_events(fsm, 'e_failed')
       end
       if not set_motionplanner(deployer:getPeer('motionplanning'), load_obstacles_fun) then

@@ -24,7 +24,7 @@ local msg_tbl = {
   payload = {}
 }
 
-function initialize()
+local initialize = function()
   -- create properties
   tc:addProperty(rtt.Property('string', 'coordinator_name', 'Name of coordinating node'))
   tc:addProperty(rtt.Property('string', 'header_version', 'Version of communication header'))
@@ -77,7 +77,7 @@ function initialize()
   if not communicator:joinGroup(host .. '_flex') then rfsm.send_events(fsm, 'e_failed') return end
 end
 
-function release()
+local release = function()
   communicator:removeConnection('coordinator', 'robot_markers_port', 'markers_robot')
   communicator:removeConnection('coordinator', 'host_trajectory_port', 'trajectory_'..host, peer)
   communicator:removeConnection('coordinator', 'peer_trajectory_port', 'trajectory_'..peer)

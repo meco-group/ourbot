@@ -4,7 +4,7 @@ local communicator = tc:getPeer('communicator')
 local gamepad = tc:getPeer('gamepad')
 
 local state_index = 1
-local states = {'trajectoryfollowing', 'motionplanning', 'motionplanning_dynamic_obstacle' 'flexonomy'}
+local states = {'trajectoryfollowing', 'motionplanning', 'motionplanning_dynamic_obstacle', 'flexonomy'}
 
 local velcmd_index = 1
 local velcmd_receivers = {'ourbots', 'dave', 'kurt', 'krist'}

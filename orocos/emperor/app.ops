@@ -19,7 +19,7 @@ export void motionplanning(){
 }
 
 export void motionplanning_dynamic_obstacle(){
-  coordinator_send_event_port.write("e_motionplanning_dynamic_obstacle")
+  emperor_send_event_port.write("e_motionplanning_dynamic_obstacle")
 }
 
 export void formation(){
