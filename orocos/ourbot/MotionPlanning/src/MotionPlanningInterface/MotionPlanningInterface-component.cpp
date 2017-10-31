@@ -41,9 +41,12 @@ MotionPlanningInterface::MotionPlanningInterface(std::string const& name) : Task
     addOperation("busy", &MotionPlanningInterface::busy, this).doc("Busy with computing a trajectory");
     addOperation("valid", &MotionPlanningInterface::valid, this).doc("Last computed trajectory is valid (i.e. not infeasible)");
     addOperation("resetObstacles", &MotionPlanningInterface::resetObstacles, this).doc("Reset obstacle list");
-    addOperation("addStaticObstacle", &MotionPlanningInterface::addStaticObstacle, this).doc("Add static obstacle to obstacle list");
-    addOperation("addDynamicObstacle", &MotionPlanningInterface::addDynamicObstacle, this).doc("Add dynamic constant velocity obstacle to obstacle list");
-    addOperation("addPeerObstacle", &MotionPlanningInterface::addPeerObstacle, this).doc("Add peer trajectory as obstacle to obstacle list");
+    addOperation("addStaticRectObstacle", &MotionPlanningInterface::addStaticRectObstacle, this).doc("Add static rectangular obstacle to obstacle list");
+    addOperation("addStaticCircObstacle", &MotionPlanningInterface::addStaticCircObstacle, this).doc("Add static circular obstacle to obstacle list");
+    addOperation("addDynamicRectObstacle", &MotionPlanningInterface::addDynamicRectObstacle, this).doc("Add dynamic constant velocity rectangular obstacle to obstacle list");
+    addOperation("addDynamicCircObstacle", &MotionPlanningInterface::addDynamicCircObstacle, this).doc("Add dynamic constant velocity circular obstacle to obstacle list");
+    addOperation("addPeerRectObstacle", &MotionPlanningInterface::addPeerRectObstacle, this).doc("Add peer trajectory as rectangular obstacle to obstacle list");
+    addOperation("addPeerCircObstacle", &MotionPlanningInterface::addPeerCircObstacle, this).doc("Add peer trajectory as circular obstacle to obstacle list");
     addOperation("getMotionTime", &MotionPlanningInterface::getMotionTime, this).doc("Get last motion time update");
 }
 
@@ -272,8 +275,7 @@ void MotionPlanningInterface::resetObstacles() {
     _obstacles.clear();
 }
 
-void MotionPlanningInterface::addStaticObstacle(const std::vector<double>& pose, const std::vector<double>& size) {
-    // only rectangular obstacles
+void MotionPlanningInterface::addStaticRectObstacle(const std::vector<double>& pose, const std::vector<double>& size) {
     obstacle_t obstacle;
     obstacle.avoid = true;
     obstacle.position = std::vector<double>({pose[0], pose[1]});
@@ -297,16 +299,56 @@ void MotionPlanningInterface::addStaticObstacle(const std::vector<double>& pose,
     _obstacles.push_back(obstacle);
 }
 
-void MotionPlanningInterface::addDynamicObstacle(const std::vector<double>& pose, const std::vector<double>& velocity, const std::vector<double>& size) {
-    // only rectangular obstacles
-    addStaticObstacle(pose, size);
+void MotionPlanningInterface::addStaticCircObstacle(const std::vector<double>& pose, double radius) {
+    obstacle_t obstacle;
+    obstacle.avoid = true;
+    obstacle.position = std::vector<double>({pose[0], pose[1]});
+    obstacle.velocity = std::vector<double>(2, 0);
+    obstacle.acceleration = std::vector<double>(2, 0);
+    obstacle.radii = std::vector<double>({radius});
+    obstacle.checkpoints = std::vector<double>({0., 0.});
+    _obstacles.push_back(obstacle);
+}
+
+
+void MotionPlanningInterface::addDynamicRectObstacle(const std::vector<double>& pose, const std::vector<double>& velocity, const std::vector<double>& size) {
+    addStaticRectObstacle(pose, size);
     int ind = _obstacles.size()-1;
     _obstacles[ind].velocity[0] = velocity[0];
     _obstacles[ind].velocity[1] = velocity[1];
 }
 
-void MotionPlanningInterface::addPeerObstacle(const std::vector<double>& coeff_vector, double radius) {
-    // only circular peers
+void MotionPlanningInterface::addDynamicCircObstacle(const std::vector<double>& pose, const std::vector<double>& velocity, double radius) {
+    addStaticCircObstacle(pose, radius);
+    int ind = _obstacles.size()-1;
+    _obstacles[ind].velocity[0] = velocity[0];
+    _obstacles[ind].velocity[1] = velocity[1];
+}
+
+void MotionPlanningInterface::addPeerRectObstacle(const std::vector<double>& coeff_vector, const std::vector<double>& size) {
+    obstacle_t obstacle;
+    obstacle.avoid = true;
+    obstacle.traj_coeffs = coeff_vector;
+
+    double width = size[0];
+    double height = size[1];
+    obstacle.radii = std::vector<double>(4);
+    obstacle.checkpoints = std::vector<double>(8);
+    for (int i=0; i<4; i++) {
+        obstacle.radii[i] = 1e-3;
+        obstacle.checkpoints[0] = 0.5*width*cos(0.) - 0.5*height*sin(0.);
+        obstacle.checkpoints[1] = 0.5*width*sin(0.) + 0.5*height*cos(0.);
+        obstacle.checkpoints[2] = 0.5*width*cos(0.) + 0.5*height*sin(0.);
+        obstacle.checkpoints[3] = 0.5*width*sin(0.) - 0.5*height*cos(0.);
+        obstacle.checkpoints[4] = -0.5*width*cos(0.) + 0.5*height*sin(0.);
+        obstacle.checkpoints[5] = -0.5*width*sin(0.) - 0.5*height*cos(0.);
+        obstacle.checkpoints[6] = -0.5*width*cos(0.) - 0.5*height*sin(0.);
+        obstacle.checkpoints[7] = -0.5*width*sin(0.) + 0.5*height*cos(0.);
+    }
+    _obstacles.push_back(obstacle);
+}
+
+void MotionPlanningInterface::addPeerCircObstacle(const std::vector<double>& coeff_vector, double radius) {
     obstacle_t obstacle;
     obstacle.avoid = true;
     obstacle.traj_coeffs = coeff_vector;

@@ -3,16 +3,19 @@ return rfsm.state {
   rfsm.trans{src = 'init', tgt = 'idle', events = {'e_done'}},
   rfsm.trans{src = 'idle', tgt = 'trajectoryfollowing', events = {'e_trajectoryfollowing'}},
   rfsm.trans{src = 'idle', tgt = 'motionplanning', events = {'e_motionplanning'}},
+  rfsm.trans{src = 'idle', tgt = 'motionplanning_dynamic_obstacle', events = {'e_motionplanning_dynamic_obstacle'}},
   rfsm.trans{src = 'idle', tgt = 'flexonomy', events = {'e_flexonomy'}},
 
   rfsm.trans{src = 'init', tgt = 'failure', events = {'e_failed'}},
   rfsm.trans{src = 'idle', tgt = 'failure', events = {'e_failed'}},
   rfsm.trans{src = 'trajectoryfollowing', tgt = 'failure', events = {'e_failed'}},
   rfsm.trans{src = 'motionplanning.failure', tgt = 'failure', events = {'e_failed'}},
+  rfsm.trans{src = 'motionplanning_dynamic_obstacle.failure', tgt = 'failure', events = {'e_failed'}},
   rfsm.trans{src = 'flexonomy.failure', tgt = 'failure', events = {'e_failed'}},
 
   rfsm.trans{src = 'trajectoryfollowing.stop', tgt = 'idle', events = {'e_done'}},
   rfsm.trans{src = 'motionplanning.stop', tgt = 'idle', events = {'e_done'}},
+  rfsm.trans{src = 'motionplanning_dynamic_obstacle.stop', tgt = 'idle', events = {'e_done'}},
   rfsm.trans{src = 'flexonomy.stop', tgt = 'idle', events = {'e_done'}},
 
   initial = rfsm.conn{},
@@ -47,6 +50,7 @@ return rfsm.state {
 
   trajectoryfollowing = rfsm.load('Coordinator/trajectoryfollowing_fsm.lua'),
   motionplanning = rfsm.load('Coordinator/motionplanning_fsm.lua'),
+  motionplanning_dynamic_obstacle = rfsm.load('Coordinator/motionplanning_dynamic_obstacle_fsm.lua')
   flexonomy = rfsm.load('Coordinator/flexonomy_fsm.lua'),
 }
 

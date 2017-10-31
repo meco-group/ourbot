@@ -12,13 +12,13 @@
 #
 
 orocos_component(
-MotionPlanning MotionPlanningInterface/MotionPlanningInterface-component.cpp MotionPlanningInterface/MotionPlanningInterface-component.hpp MotionPlanning/MotionPlanning-component.cpp MotionPlanning/MotionPlanning-component.hpp MotionPlanning/Problem.hpp FormationMotionPlanning/FormationMotionPlanning-component.hpp FormationMotionPlanning/FormationMotionPlanning-component.cpp FlexonomyMotionPlanning/FlexonomyMotionPlanning-component.hpp FlexonomyMotionPlanning/FlexonomyMotionPlanning-component.cpp)
+MotionPlanning MotionPlanningInterface/MotionPlanningInterface-component.cpp MotionPlanningInterface/MotionPlanningInterface-component.hpp MotionPlanning/MotionPlanning-component.cpp MotionPlanning/MotionPlanning-component.hpp MotionPlanning/Problem.hpp FormationMotionPlanning/FormationMotionPlanning-component.hpp FormationMotionPlanning/FormationMotionPlanning-component.cpp FlexonomyMotionPlanning/FlexonomyMotionPlanning-component.hpp FlexonomyMotionPlanning/FlexonomyMotionPlanning-component.cpp MotionPlanningDynamicObstacle/MotionPlanningDynamicObstacle-component.hpp MotionPlanningDynamicObstacle/MotionPlanningDynamicObstacle-component.cpp)
 
 
 #
 # You may add multiple orocos_component statements.
 
-target_link_libraries(MotionPlanning -lomg_p2p -lomg_p2pflex -lomg_p2pf -lcasadi) # Link libraries to Orocos component here
+target_link_libraries(MotionPlanning -lomg_p2p -lomg_p2pflex -lomg_p2pf -lomg_p2pdynobst -lcasadi) # Link libraries to Orocos component here
 
 #
 # Additional headers:
@@ -26,7 +26,7 @@ target_link_libraries(MotionPlanning -lomg_p2p -lomg_p2pflex -lomg_p2pf -lcasadi
 # Installs in the include/orocos/MotionPlanning/ directory
 #
 
-orocos_install_headers(MotionPlanningInterface/MotionPlanningInterface-component.hpp MotionPlanning/MotionPlanning-component.hpp MotionPlanning/Problem.hpp FormationMotionPlanning/FormationMotionPlanning-component.hpp FlexonomyMotionPlanning/FlexonomyMotionPlanning-component.hpp)
+orocos_install_headers(MotionPlanningInterface/MotionPlanningInterface-component.hpp MotionPlanning/MotionPlanning-component.hpp MotionPlanning/Problem.hpp FormationMotionPlanning/FormationMotionPlanning-component.hpp FlexonomyMotionPlanning/FlexonomyMotionPlanning-component.hpp MotionPlanningDynamicObstacle/MotionPlanningDynamicObstacle-component.hpp)
 
 #
 # You may add multiple orocos_install_headers statements.

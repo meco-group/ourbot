@@ -77,6 +77,18 @@ function initialize()
   if not communicator:joinGroup(host .. '_flex') then rfsm.send_events(fsm, 'e_failed') return end
 end
 
+function release()
+  communicator:removeConnection('coordinator', 'robot_markers_port', 'markers_robot')
+  communicator:removeConnection('coordinator', 'host_trajectory_port', 'trajectory_'..host, peer)
+  communicator:removeConnection('coordinator', 'peer_trajectory_port', 'trajectory_'..peer)
+  communicator:removeConnection('coordinator', 'host_priority_port', 'priority_'..host, peer)
+  communicator:removeConnection('coordinator', 'peer_priority_port', 'priority_'..peer)
+  motion_time_port:delete()
+  host_trajectory_port:delete()
+  peer_priority_port:delete()
+  robot_markers_port:delete()
+end
+
 function flex_update(fsm, control)
   -- send state to coordinator
   send_state(status)
@@ -106,7 +118,7 @@ local load_obstacles_fun = function ()
   reset_obstacles()
   -- add robot table
   local robot_pose = get_robot_pose()
-  add_static_obstacle(robot_pose, robot_table_size)
+  add_static_rect_obstacle(robot_pose, robot_table_size)
   -- print('robot pose: (' ..robot_pose[0]..','..robot_pose[1]..','..robot_pose[2]..')')
   -- add peer
   local fs, peer_coeffs = peer_trajectory_port:read()
@@ -122,7 +134,7 @@ local load_obstacles_fun = function ()
   else
     coeffs = peer_coeffs
   end
-  add_peer_obstacle(coeffs, ourbot_radius)
+  add_peer_circ_obstacle(coeffs, ourbot_radius)
 end
 
 function next_task()
@@ -526,10 +538,12 @@ flex_fsm.recover = rfsm.state{
   end,
 }
 
-flex_fsm.failure = rfsm.state {
-  exit = function(fsm)
-    send_task_status(current_task, 'failed', get_sec())
-  end,
-}
+flex_fsm.stop.exit = function(fsm)
+  release()
+end
+
+flex_fsm.failure.exit = function(fsm)
+  release()
+end
 
 return flex_fsm

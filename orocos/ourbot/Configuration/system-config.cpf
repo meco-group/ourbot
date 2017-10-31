@@ -1,14 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE properties SYSTEM "cpf.dtd">
 <properties>
-  <simple name="obstacle_mode" type="boolean">
-    <description>Robot is acting as a moving obstacle</description>
-    <value>0</value>
-  </simple>
-  <simple name="robobs_index" type="long">
-    <description>Index of obstacle-acting robot</description>
-    <value>0</value>
-  </simple>
 
   <simple name="host" type="string">
     <description>Name of this host</description>
@@ -38,6 +30,10 @@
     <value>10.</value>
   </simple>
 
+  <simple name="dynamic_obstacle" type="string">
+    <description>Name of ourbot that plays dynamic obstacle</description>
+    <value>kurt</value>
+  </simple>
 
   <simple name="horizon_time" type="double">
     <description>Horizon to compute motion trajectory</description>
@@ -77,10 +73,6 @@
     <value>0.10738</value>
   </simple>
 
-  <simple name="distributed_mp" type="boolean">
-    <description>Distributed motion planning?</description>
-    <value>false</value>
-  </simple>
   <simple name="index" type="long">
     <description>Index of agent</description>
     <value>0</value>

@@ -25,6 +25,8 @@ include_directories($ENV{ROS_WORKSPACE}/ourbot/MotionPlanning/src/FormationMotio
 link_directories($ENV{ROS_WORKSPACE}/ourbot/MotionPlanning/src/FormationMotionPlanning/Toolbox/bin/)
 include_directories($ENV{ROS_WORKSPACE}/ourbot/MotionPlanning/src/FlexonomyMotionPlanning/Toolbox/src/)
 link_directories($ENV{ROS_WORKSPACE}/ourbot/MotionPlanning/src/FlexonomyMotionPlanning/Toolbox/bin/)
+include_directories($ENV{ROS_WORKSPACE}/ourbot/MotionPlanning/src/MotionPlanningDynamicObstacle/Toolbox/src/)
+link_directories($ENV{ROS_WORKSPACE}/ourbot/MotionPlanning/src/MotionPlanningDynamicObstacle/Toolbox/bin/)
 
 add_definitions(-std=c++11)
 # nothing should be changed in the Makefile!

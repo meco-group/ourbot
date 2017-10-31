@@ -96,9 +96,12 @@ class MotionPlanningInterface : public RTT::TaskContext {
         virtual bool busy();
         virtual bool valid();
         void resetObstacles();
-        void addStaticObstacle(const std::vector<double>& pose, const std::vector<double>& size);
-        void addDynamicObstacle(const std::vector<double>& pose, const std::vector<double>& velocity, const std::vector<double>& size);
-        void addPeerObstacle(const std::vector<double>& coeff_vector, double radius);
+        void addStaticRectObstacle(const std::vector<double>& pose, const std::vector<double>& size);
+        void addStaticCircObstacle(const std::vector<double>& pose, double radius);
+        void addDynamicRectObstacle(const std::vector<double>& pose, const std::vector<double>& velocity, const std::vector<double>& size);
+        void addDynamicCircObstacle(const std::vector<double>& pose, const std::vector<double>& velocity, double radius);
+        void addPeerRectObstacle(const std::vector<double>& coeff_vector, const std::vector<double>& size);
+        void addPeerCircObstacle(const std::vector<double>& coeff_vector, double radius);
 
 };
 #endif
