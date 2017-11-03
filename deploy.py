@@ -20,15 +20,12 @@ import socket
 
 # parameters
 user = os.getenv('USER') # default: user with same name as on emperor
-# user = 'ourbot'
 password = user
 remote_root = os.path.join('/home/' + user, 'orocos/ourbot/')
 current_dir = os.path.dirname(os.path.realpath(__file__))
 local_root = os.path.join(current_dir, 'orocos/emperor')
 
 hosts = ['dave', 'kurt', 'krist']
-obstacle = None
-
 addresses = col.OrderedDict([('kurt', '192.168.11.121'), ('krist', '192.168.11.122'), ('dave', '192.168.11.120')])
 
 
@@ -79,9 +76,6 @@ def modify_host_config(host):
     for elem in root.findall('simple'):
         if elem.attrib['name'] == 'host':
             elem.find('value').text = host
-        if host == obstacle:
-            if elem.attrib['name'] == 'obstacle_mode':
-                elem.find('value').text = str(1)
     file = open(local_files[-1]+'_', 'w')
     file.write('<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE properties SYSTEM "cpf.dtd">\n')
     tree.write(file)

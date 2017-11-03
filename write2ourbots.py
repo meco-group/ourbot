@@ -22,7 +22,6 @@ import socket
 
 # parameters
 user = os.getenv('USER') # default: user with same name as on emperor
-# user = 'ourbot'
 password = user
 remote_root = os.path.join('/home/' + user, 'orocos/ourbot/')
 current_dir = os.path.dirname(os.path.realpath(__file__))
@@ -214,4 +213,4 @@ if __name__ == "__main__":
         send_files(ftp, ssh, loc_files, rem_files)
         ftp.close()
         ssh.close()
-    os.system('clear')
+    # os.system('clear')

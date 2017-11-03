@@ -25,9 +25,9 @@ import optparse, os, paramiko
 from netCDF4 import Dataset
 import matplotlib
 import matplotlib.pyplot as plt
-matplotlib.use('TKAgg')
 import socket
 import collections as col
+matplotlib.use('TKAgg')
 
 # parameters
 user = os.getenv('USER') # default: user with same name as on emperor
