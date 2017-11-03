@@ -22,8 +22,8 @@ _target_reached(false), _neighbors(2), _residuals(3), _rel_pos_c(2){
     addProperty("init_admm_iter", _init_admm_iter).doc("Number of initial ADMM iterations");
     addProperty("rho", _rho).doc("Penalty factor for ADMM");
 
-    addOperation("resetNeighbors", &FormationMotionPlanning::resetNeighbors, this);
-    addOperation("addNeighbor", &FormationMotionPlanning::addNeighbor, this);
+    addOperation("resetRobotos", &FormationMotionPlanning::resetRobots, this);
+    addOperation("addRobot", &FormationMotionPlanning::addRobot, this);
     addOperation("getNeighbors", &FormationMotionPlanning::getNeighbors, this);
     addOperation("buildFormation", &FormationMotionPlanning::buildFormation, this);
 }
@@ -35,17 +35,11 @@ void FormationMotionPlanning::setTargetPose(const std::vector<double>& target_po
     }
 }
 
-void FormationMotionPlanning::resetNeighbors(){
-    std::vector<double> est_pose(3);
-    _est_pose_port.read(est_pose);
+void FormationMotionPlanning::resetRobots(){
     _robots.resize(0);
-    robot_t self;
-    self.pose = est_pose;
-    self.name = _host;
-    _robots.push_back(self);
 }
 
-void FormationMotionPlanning::addNeighbor(const std::string& name, const std::vector<double>& pose) {
+void FormationMotionPlanning::addRobot(const std::string& name, const std::vector<double>& pose) {
     robot_t nghb;
     nghb.name = name;
     nghb.pose = pose;
@@ -93,7 +87,6 @@ std::vector<double> FormationMotionPlanning::buildFormation() {
     for (int k=0; k<n_robots; k++) {
         if (formation_indices[k] == 0) {
             host_index = k;
-            std::cout << "host index: " << host_index << std::endl;
             break;
         }
     }
@@ -108,7 +101,7 @@ std::vector<double> FormationMotionPlanning::buildFormation() {
 }
 
 bool FormationMotionPlanning::config() {
-    resetNeighbors();
+    resetRobots();
     p2pf::Vehicle* vehicle = new p2pf::Holonomic();
     if (_ideal_prediction) {
         vehicle->setIdealPrediction(true);
@@ -171,6 +164,7 @@ void FormationMotionPlanning::emptyPorts() {
 }
 
 double FormationMotionPlanning::encode(int index, bool valid) {
+    std::cout << "encode with index " << index << std::endl;
     code_t code;
     code.index = index;
     code.target_reached = _target_reached;
@@ -183,6 +177,7 @@ double FormationMotionPlanning::encode(int index, bool valid) {
 code_t FormationMotionPlanning::decode(double number) {
     code_t code;
     memcpy((char*)(&code), (char*)(&number), sizeof(code));
+    std::cout << "code with index " << code.index << std::endl;
     return code;
 }
 

@@ -26,10 +26,6 @@ export void formation(){
   emperor_send_event_port.write("e_formation")
 }
 
-export void formation(){
-  emperor_send_event_port.write("e_formation")
-}
-
 export void flexonomy(){
   emperor_send_event_port.write("e_flexonomy")
 }

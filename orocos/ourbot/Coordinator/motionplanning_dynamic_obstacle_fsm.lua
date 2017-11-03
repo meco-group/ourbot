@@ -12,7 +12,6 @@ local ourbot_radius = 1.1*math.sqrt(math.pow(0.5*ourbot_size[0], 2) + math.pow(0
 local initialize = function()
   -- add ports
   if host_obstacle then
-    print('I am obstacle')
     if not communicator:addOutgoingConnection('estimator', 'est_pose_port', 'dynamic_obstacle_pose', 'ourbots') then rfsm.send_events(fsm, 'e_failed') return false end
     if not communicator:addOutgoingConnection('estimator', 'est_velocity_port', 'dynamic_obstacle_velocity', 'ourbots') then rfsm.send_events(fsm, 'e_failed') return false end
   else
@@ -53,9 +52,6 @@ local load_obstacles_fun = function ()
   end
 end
 
-print('host_obstacle: ')
-print(dynamic_obstacle)
-
 if host_obstacle then
   return rfsm.state {
     rfsm.trans{src = 'initial', tgt = 'init'},
@@ -89,6 +85,12 @@ if host_obstacle then
     },
 
     stop = rfsm.state{
+      entry = function(fsm)
+        release()
+      end,
+    },
+
+    failure = rfsm.state{
       entry = function(fsm)
         release()
       end,

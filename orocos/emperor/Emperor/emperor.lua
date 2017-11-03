@@ -12,10 +12,10 @@ tc:addProperty(rtt.Property('int', 'print_level', 'Level of output printing'))
 tc:addProperty(rtt.Property('double', 'reporting_rate', 'Frequency to take snapshots for the reporter'))
 
 -- create/connect ports
-local emperor_fsm_event_port = rtt.InputPort('string')
-local emperor_send_event_port = rtt.OutputPort('string')
-local emperor_failure_event_port = rtt.OutputPort('string')
-local emperor_current_state_port = rtt.OutputPort('string')
+emperor_fsm_event_port = rtt.InputPort('string')
+emperor_send_event_port = rtt.OutputPort('string')
+emperor_failure_event_port = rtt.OutputPort('string')
+emperor_current_state_port = rtt.OutputPort('string')
 
 gamepad_A_port = rtt.InputPort('bool')
 gamepad_B_port = rtt.InputPort('bool')
@@ -38,8 +38,8 @@ local fsm
 
 function configureHook()
    -- create local copies of the property values
-   print_level = _print_level:get()
-   reporting_rate = _reporting_rate:get()
+   print_level = tc:getProperty('print_level'):get()
+   reporting_rate = tc:getProperty('reporting_rate'):get()
 
    -- variables to use in updateHook
    communicator = tc:getPeer('communicator')

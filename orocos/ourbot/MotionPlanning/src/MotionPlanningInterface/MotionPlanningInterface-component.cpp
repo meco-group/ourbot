@@ -52,9 +52,10 @@ MotionPlanningInterface::MotionPlanningInterface(std::string const& name) : Task
 
 void MotionPlanningInterface::setTargetPose(const std::vector<double>& target_pose) {
     _target_pose = target_pose;
-    std::vector<double> est_pose;
+    std::vector<double> est_pose(3);
     _est_pose_port.read(est_pose);
-
+    std::cout << est_pose.size() << std::endl;
+    std::cout << "(" << est_pose[0] << "," << est_pose[1] << "," << est_pose[2] << ")" << std::endl;
     _target_pose[2] += floor(est_pose[2]/(2*M_PI))*2*M_PI;
     if ((_target_pose[2] - est_pose[2]) > M_PI) {
         _target_pose[2] -= 2*M_PI;
@@ -154,7 +155,7 @@ void MotionPlanningInterface::updateHook() {
             _ref_velocity_trajectory_port[i].write(_ref_velocity_trajectory[i]);
         }
         // write motion time
-        _motion_time_port.write(getMotionTime());
+        // _motion_time_port.write(getMotionTime());
     } else {
         patchup();
     }

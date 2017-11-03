@@ -28,7 +28,7 @@ height = 2.59
 environment = Environment(room={'shape': Rectangle(width, height), 'position': [0.5*width, 0.5*height]})
 rectangle = Rectangle(width=0.3, height=0.8)
 
-environment.add_obstacle(Obstacle({'position': [0.5*width, 0.5*height]}, shape=rectangle))
+# environment.add_obstacle(Obstacle({'position': [0.5*width, 0.5*height]}, shape=rectangle))
 # environment.add_obstacle(Obstacle({'position': [2.5, 2]}, shape=rectangle))
 
 # create a point-to-point problem
@@ -52,4 +52,4 @@ fleet.plot('input')
 problem.plot('scene')
 simulator = Simulator(problem, sample_time=0.01, update_time=0.5)
 trajectories, signals = simulator.run()
-problem.plot_movie('scene', repeat=True, number_of_frames=100)
+# problem.plot_movie('scene', repeat=True, number_of_frames=100)

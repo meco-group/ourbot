@@ -50,10 +50,10 @@ bool MotionPlanning::updatePositionTrajectory() {
 void MotionPlanning::save(const std::vector<std::vector<double> >& ref_pose, const std::vector<std::vector<double> >& ref_velocity) {
     for (int k=0; k<_trajectory_length; k++) {
         for (int j=0; j<_n_st; j++) {
-            _ref_pose_trajectory[j][k] = _ref_pose[k][j];
+            _ref_pose_trajectory[j][k] = ref_pose[k][j];
         }
         for (int j=0; j<_n_in; j++) {
-            _ref_velocity_trajectory[j][k] = _ref_velocity[k][j];
+            _ref_velocity_trajectory[j][k] = ref_velocity[k][j];
         }
     }
 }
