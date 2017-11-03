@@ -1,4 +1,6 @@
+-- create properties
 tc:addProperty(rtt.Property('string', 'dynamic_obstacle', 'Name of ourbot that plays dynamic obstacle'))
+-- read properties
 if not tc:provides('marshalling'):updateProperties('Configuration/system-config.cpf') then
   return false
 end
@@ -8,21 +10,20 @@ local ourbot_size = tc:getProperty('ourbot_size')
 local ourbot_radius = 1.1*math.sqrt(math.pow(0.5*ourbot_size[0], 2) + math.pow(0.5*ourbot_size[1], 2))
 
 local initialize = function()
-  -- create properties
-  -- read properties
   -- add ports
   if host_obstacle then
-    print('i am obstacle')
-    if not communicator:addOutgoingConnection('estimator', 'est_pose_port', 'dynamic_obstacle_pose', 'ourbots') then rfsm.send_events(fsm, 'e_failed') return end
-    if not communicator:addOutgoingConnection('estimator', 'est_velocity_port', 'dynamic_obstacle_velocity', 'ourbots') then rfsm.send_events(fsm, 'e_failed') return end
+    print('I am obstacle')
+    if not communicator:addOutgoingConnection('estimator', 'est_pose_port', 'dynamic_obstacle_pose', 'ourbots') then rfsm.send_events(fsm, 'e_failed') return false end
+    if not communicator:addOutgoingConnection('estimator', 'est_velocity_port', 'dynamic_obstacle_velocity', 'ourbots') then rfsm.send_events(fsm, 'e_failed') return false end
   else
     dynamic_obstacle_pose_port = rtt.InputPort('array')
     dynamic_obstacle_velocity_port = rtt.InputPort('array')
     tc:addPort(dynamic_obstacle_pose_port, 'dynamic_obstacle_pose_port', 'Pose of dynamic obstacle')
     tc:addPort(dynamic_obstacle_velocity_port, 'dynamic_obstacle_velocity_port', 'Velocity of dynamic obstacle')
-    if not communicator:addIncomingConnection('coordinator', 'dynamic_obstacle_pose_port', 'dynamic_obstacle_pose') then rfsm.send_events(fsm, 'e_failed') return end
-    if not communicator:addIncomingConnection('coordinator', 'dynamic_obstacle_velocity_port', 'dynamic_obstacle_velocity') then rfsm.send_events(fsm, 'e_failed') return end
+    if not communicator:addIncomingConnection('coordinator', 'dynamic_obstacle_pose_port', 'dynamic_obstacle_pose') then rfsm.send_events(fsm, 'e_failed') return false end
+    if not communicator:addIncomingConnection('coordinator', 'dynamic_obstacle_velocity_port', 'dynamic_obstacle_velocity') then rfsm.send_events(fsm, 'e_failed') return false end
   end
+  return true
 end
 
 local release = function()
@@ -65,7 +66,9 @@ if host_obstacle then
 
     init = rfsm.state{
       entry = function(fsm)
-        initialize()
+        if not initialize() then
+          rfsm.send_events(fsm, 'e_failed')
+        end
       end
     },
 

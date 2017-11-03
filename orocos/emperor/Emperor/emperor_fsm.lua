@@ -4,7 +4,7 @@ local communicator = tc:getPeer('communicator')
 local gamepad = tc:getPeer('gamepad')
 
 local state_index = 1
-local states = {'trajectoryfollowing', 'motionplanning', 'motionplanning_dynamic_obstacle', 'flexonomy'}
+local states = {'trajectoryfollowing', 'motionplanning', 'motionplanning_dynamic_obstacle', 'formation', 'flexonomy'}
 
 local velcmd_index = 1
 local velcmd_receivers = {'ourbots', 'dave', 'kurt', 'krist'}
@@ -58,7 +58,6 @@ end
 return rfsm.state {
 
   rfsm.trans{src = 'initial', tgt = 'idle'},
-  -- rfsm.trans{src = 'test', tgt = 'idle', events = {'e_next'}},
   rfsm.trans{src = 'idle', tgt = 'init', events = {'e_done'}},
   rfsm.trans{src = 'init', tgt = 'state', events = {'e_done'}},
   rfsm.trans{src = 'state', tgt = 'idle', events = {'e_idle'}},
@@ -111,25 +110,5 @@ return rfsm.state {
       rtt.logl('Error', 'System in Failure!')
     end
   },
-
-  -- test = rfsm.state{
-  --   entry = function(fsm)
-  --     _emperor_send_event_port:write('e_motionplanning')
-  --   end,
-
-  --   doo = function(fsm)
-  --     while(true) do
-  --       rfsm.yield(true)
-  --     end
-
-  --   end,
-
-  --   exit = function(fsm)
-  --     local pose = rtt.Variable('array')
-  --     pose:resize(3)
-  --     pose:fromtab{1, 1, math.pi}
-  --     _target_pose_port:write(pose)
-  --   end,
-  -- },
 
 }

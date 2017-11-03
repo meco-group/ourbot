@@ -7,43 +7,34 @@ local tc = rtt.getTC();
 local fsm
 local fqn_out, events_in
 
-state = ''
-main_state = ''
-local menu_options         = {'VelocityControl','MotionPlanning', 'TrajectoryFollowing'}
-local main_states          = {'velocitycmd', 'motionplanning', 'trajectoryfollowing'}
-local sub_states           = {'idle', 'init', 'run', 'stop'}
-local menu_option_ind      = 1
-
 -- create properties
-_print_level = rtt.Property('int', 'print_level', 'Level of output printing')
-_reporting_rate = rtt.Property('double', 'reporting_rate', 'Frequency to take snapshots for the reporter')
+tc:addProperty(rtt.Property('int', 'print_level', 'Level of output printing'))
+tc:addProperty(rtt.Property('double', 'reporting_rate', 'Frequency to take snapshots for the reporter'))
 
-tc:addProperty(_print_level)
-tc:addProperty(_reporting_rate)
+-- create/connect ports
+local emperor_fsm_event_port = rtt.InputPort('string')
+local emperor_send_event_port = rtt.OutputPort('string')
+local emperor_failure_event_port = rtt.OutputPort('string')
+local emperor_current_state_port = rtt.OutputPort('string')
 
--- ports which drive/read the FSM
-_emperor_fsm_event_port = rtt.InputPort('string')
-_emperor_send_event_port = rtt.OutputPort('string')
-_emperor_failure_event_port = rtt.OutputPort('string')
-_emperor_current_state_port = rtt.OutputPort('string')
--- ports to connect gamepad
-_gamepad_A_port = rtt.InputPort('bool')
-_gamepad_B_port = rtt.InputPort('bool')
-_gamepad_up_port = rtt.InputPort('bool')
-_gamepad_down_port = rtt.InputPort('bool')
-_gamepad_lb_port = rtt.InputPort('bool')
+gamepad_A_port = rtt.InputPort('bool')
+gamepad_B_port = rtt.InputPort('bool')
+gamepad_up_port = rtt.InputPort('bool')
+gamepad_down_port = rtt.InputPort('bool')
+gamepad_lb_port = rtt.InputPort('bool')
 
-tc:addPort(_emperor_fsm_event_port, 'emperor_fsm_event_port', 'Event port for driving the emperor FSM')
-tc:addPort(_emperor_send_event_port, 'emperor_send_event_port', 'Port to send events to the emperor FSM from the emperor')
-tc:addPort(_emperor_failure_event_port,'emperor_failure_event_port','Port to send indicate a failure in the emperor')
-tc:addPort(_emperor_current_state_port, 'emperor_current_state_port', 'current active state of the emperor FSM')
-tc:addPort(_gamepad_A_port, 'gamepad_A_port', 'A button of gamepad')
-tc:addPort(_gamepad_B_port, 'gamepad_B_port', 'B button of gamepad')
-tc:addPort(_gamepad_up_port, 'gamepad_up_port', 'Up button of gamepad')
-tc:addPort(_gamepad_down_port, 'gamepad_down_port', 'Down button of gamepad')
-tc:addPort(_gamepad_lb_port, 'gamepad_lb_port',  'LB button of gamepad')
+tc:addPort(emperor_fsm_event_port, 'emperor_fsm_event_port', 'Event port for driving the emperor FSM')
+tc:addPort(emperor_send_event_port, 'emperor_send_event_port', 'Port to send events to the emperor FSM from the emperor')
+tc:addPort(emperor_failure_event_port,'emperor_failure_event_port','Port to send indicate a failure in the emperor')
+tc:addPort(emperor_current_state_port, 'emperor_current_state_port', 'current active state of the emperor FSM')
+tc:addPort(gamepad_A_port, 'gamepad_A_port', 'A button of gamepad')
+tc:addPort(gamepad_B_port, 'gamepad_B_port', 'B button of gamepad')
+tc:addPort(gamepad_up_port, 'gamepad_up_port', 'Up button of gamepad')
+tc:addPort(gamepad_down_port, 'gamepad_down_port', 'Down button of gamepad')
+tc:addPort(gamepad_lb_port, 'gamepad_lb_port',  'LB button of gamepad')
+emperor_send_event_port:connect(emperor_fsm_event_port)
 
-_emperor_send_event_port:connect(_emperor_fsm_event_port)
+local fsm
 
 function configureHook()
    -- create local copies of the property values
@@ -72,8 +63,8 @@ function configureHook()
    end
 
   -- connect event ports to state machine
-   fsm.getevents = rfsm_rtt.gen_read_str_events(_emperor_fsm_event_port)
-   rfsm.post_step_hook_add(fsm, rfsm_rtt.gen_write_fqn(_emperor_current_state_port))
+   fsm.getevents = rfsm_rtt.gen_read_str_events(emperor_fsm_event_port)
+   rfsm.post_step_hook_add(fsm, rfsm_rtt.gen_write_fqn(emperor_current_state_port))
 
    if print_level >= 2 then
       -- enable state entry and exit dbg output
@@ -88,7 +79,7 @@ end
 
 function startHook()
    if not reporter:start() then
-      rtt.logl('Error', 'Could not start reporter component !')
+      rtt.logl('Error', 'Could not start reporter component!')
       return false
    end
    return true

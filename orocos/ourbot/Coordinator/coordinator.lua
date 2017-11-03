@@ -38,11 +38,6 @@ function configureHook()
   -- init global variables and functions
   init_globals()
 
-  -- obstacle_mode = _obstacle_mode:get()
-  -- if obstacle_mode then
-  --   communicator:joinGroup('obstacle')
-  -- end
-
   -- load state machine
   fsm = rfsm.init(rfsm.load('Coordinator/coordinator_fsm.lua'))
   if not fsm then
@@ -84,7 +79,7 @@ function updateHook()
   communicator_update()
   -- snapshot for reporter
   snapshot()
-  -- -- error check
+  -- error check
   if io_error() then
     rtt.logl('Error', 'RunTimeError in gamepad component!')
     rfsm.send_events(fsm, 'e_failed')

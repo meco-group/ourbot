@@ -248,7 +248,6 @@ return rfsm.state {
     entry = function(fsm)
       enable_manualcommand()
       zero_velocity()
-
     end,
 
     doo = function(fsm)

@@ -67,14 +67,14 @@ local initialize = function()
   tc:addPort(host_priority_port, 'host_priority_port', 'Am I claiming priority?')
   tc:addPort(peer_priority_port, 'peer_priority_port', 'Is my peer claiming priority?')
   tc:addPort(robot_markers_port, 'robot_markers_port', 'Markers of robot arm table')
-  if not communicator:addIncomingConnection('coordinator', 'robot_markers_port', 'markers_robot') then rfsm.send_events(fsm, 'e_failed') return end
-  if not communicator:addOutgoingConnection('coordinator', 'host_trajectory_port', 'trajectory_'..host, peer) then rfsm.send_events(fsm, 'e_failed') return end
-  if not communicator:addIncomingConnection('coordinator', 'peer_trajectory_port', 'trajectory_'..peer) then rfsm.send_events(fsm, 'e_failed') return end
-  if not communicator:addOutgoingConnection('coordinator', 'host_priority_port', 'priority_'..host, peer) then rfsm.send_events(fsm, 'e_failed') return end
-  if not communicator:addIncomingConnection('coordinator', 'peer_priority_port', 'priority_'..peer) then rfsm.send_events(fsm, 'e_failed') return end
-
+  if not communicator:addIncomingConnection('coordinator', 'robot_markers_port', 'markers_robot') then rfsm.send_events(fsm, 'e_failed') return false end
+  if not communicator:addOutgoingConnection('coordinator', 'host_trajectory_port', 'trajectory_'..host, peer) then rfsm.send_events(fsm, 'e_failed') return false end
+  if not communicator:addIncomingConnection('coordinator', 'peer_trajectory_port', 'trajectory_'..peer) then rfsm.send_events(fsm, 'e_failed') return false end
+  if not communicator:addOutgoingConnection('coordinator', 'host_priority_port', 'priority_'..host, peer) then rfsm.send_events(fsm, 'e_failed') return false end
+  if not communicator:addIncomingConnection('coordinator', 'peer_priority_port', 'priority_'..peer) then rfsm.send_events(fsm, 'e_failed') return false end
   -- join group
-  if not communicator:joinGroup(host .. '_flex') then rfsm.send_events(fsm, 'e_failed') return end
+  if not communicator:joinGroup(host .. '_flex') then rfsm.send_events(fsm, 'e_failed') return false end
+  return true
 end
 
 local release = function()
@@ -438,7 +438,9 @@ flex_fsm.init = rfsm.state{
       rfsm.send_events(fsm, 'e_failed')
       return
     end
-    initialize()
+    if not initialize() then
+      rfsm.send_events(fsm, 'e_failed')
+    end
     if not start_control_components() then
       rfsm.send_events(fsm, 'e_failed')
     end
