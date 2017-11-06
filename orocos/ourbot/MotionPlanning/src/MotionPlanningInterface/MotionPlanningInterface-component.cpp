@@ -155,7 +155,7 @@ void MotionPlanningInterface::updateHook() {
             _ref_velocity_trajectory_port[i].write(_ref_velocity_trajectory[i]);
         }
         // write motion time
-        // _motion_time_port.write(getMotionTime());
+        _motion_time_port.write(getMotionTime());
     } else {
         patchup();
     }

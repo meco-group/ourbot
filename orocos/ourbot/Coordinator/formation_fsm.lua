@@ -74,23 +74,6 @@ local initialize = function()
   return true
 end
 
--- local release = function()
---   local neighbors = motionplanning:getNeighbors()
---   for k=0, 1 do
---     if (n_robots == 2) then
---       communicator:removeConnection('motionplanning', 'x_var_port_' .. tostring(k), 'x_var_' .. host .. tostring(k))
---       communicator:removeConnection('motionplanning', 'zl_ij_var_port_' .. tostring(k), 'zl_var_' .. host .. tostring(k))
---       communicator:removeConnection('motionplanning', 'x_j_var_port_' .. tostring(k), 'x_var_' .. neighbors[k] .. tostring(k))
---       communicator:removeConnection('motionplanning', 'zl_ji_var_port_' .. tostring(k), 'zl_var_' .. neighbors[k] .. tostring(k))
---     else
---       communicator:removeConnection('motionplanning', 'x_var_port_' .. tostring(k), 'x_var_' .. host)
---       communicator:removeConnection('motionplanning', 'zl_ij_var_port_' .. tostring(k), 'zl_var_' .. host)
---       communicator:removeConnection('motionplanning', 'x_j_var_port_' .. tostring(k), 'x_var_' .. neighbors[k])
---       communicator:removeConnection('motionplanning', 'zl_ji_var_port_' .. tostring(k), 'zl_var_' .. neighbors[k])
---     end
---   end
--- end
-
 local load_obstacles_fun = function()
   reset_obstacles()
   -- self.add_static_obstacle()
@@ -117,26 +100,25 @@ mp_fsm.init = rfsm.state{
       return
     end
   end,
-
-  doo = function(fsm)
-  end,
 }
 
 mp_fsm.home = rfsm.state{
     doo = function(fsm)
-      while not estimator_valid() do
+      while true do
         if not control_hook(false) then
           rfsm.send_events(fsm, 'e_failed')
         end
+        if estimator_valid() then
+          home_pose = build_formation()
+          if not initialize() then
+            rfsm.send_events(fsm, 'e_failed')
+          end
+          mp_reset()
+          motionplanning:setTargetPose(home_pose)
+          rfsm.send_events(fsm, 'e_p2p')
+        end
         rfsm.yield(true)
       end
-      home_pose = build_formation()
-      -- if not initialize() then
-      --   rfsm.send_events(fsm, 'e_failed')
-      -- end
-      -- mp_reset()
-      -- motionplanning:setTargetPose(home_pose)
-      -- rfsm.send_events(fsm, 'e_p2p')
     end,
 }
 
