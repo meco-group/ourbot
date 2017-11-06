@@ -54,7 +54,7 @@ return rfsm.state {
   trajectoryfollowing = rfsm.load('Coordinator/trajectoryfollowing_fsm.lua'),
   motionplanning = rfsm.load('Coordinator/motionplanning_fsm.lua'),
   motionplanning_dynamic_obstacle = rfsm.load('Coordinator/motionplanning_dynamic_obstacle_fsm.lua'),
-  formation = rfsm.load('Coordinator/formation.lua'),
+  formation = rfsm.load('Coordinator/formation_fsm.lua'),
   flexonomy = rfsm.load('Coordinator/flexonomy_fsm.lua'),
 }
 

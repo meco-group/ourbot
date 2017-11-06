@@ -14,10 +14,6 @@ export void formation(){
   coordinator_send_event_port.write("e_formation")
 }
 
-export void formation(){
-  coordinator_send_event_port.write("e_formation")
-}
-
 export void flexonomy(){
   coordinator_send_event_port.write("e_flexonomy")
 }

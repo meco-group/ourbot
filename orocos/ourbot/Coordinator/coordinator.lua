@@ -20,10 +20,10 @@ tc:addProperty(rtt.Property('string','host', 'Name of host'))
 tc:addProperty(rtt.Property('array', 'ourbot_size'))
 
 -- create/connect ports
-local coordinator_fsm_event_port = rtt.InputPort('string')
-local coordinator_send_event_port = rtt.OutputPort('string')
-local coordinator_failure_event_port = rtt.OutputPort('string')
-local coordinator_current_state_port = rtt.OutputPort('string')
+coordinator_fsm_event_port = rtt.InputPort('string')
+coordinator_send_event_port = rtt.OutputPort('string')
+coordinator_failure_event_port = rtt.OutputPort('string')
+coordinator_current_state_port = rtt.OutputPort('string')
 
 tc:addEventPort(coordinator_fsm_event_port, 'coordinator_fsm_event_port', 'Event port for driving the coordinator FSM')
 tc:addPort(coordinator_send_event_port, 'coordinator_send_event_port', 'Port to send events to the coordinator FSM from the coordinator')

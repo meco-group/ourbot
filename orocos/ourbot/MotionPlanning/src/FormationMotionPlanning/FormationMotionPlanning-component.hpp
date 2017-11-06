@@ -81,8 +81,8 @@ class FormationMotionPlanning : public MotionPlanning {
 
     public:
         FormationMotionPlanning(std::string const& name);
-        void resetNeighbors();
-        void addNeighbor(const std::string& name, const std::vector<double>& pose);
+        void resetRobots();
+        void addRobot(const std::string& name, const std::vector<double>& pose);
         std::vector<std::string> getNeighbors();
         bool connectWithNeighbors();
         virtual void setTargetPose(const std::vector<double>& target_pose);
