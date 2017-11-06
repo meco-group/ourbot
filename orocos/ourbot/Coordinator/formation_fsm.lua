@@ -39,7 +39,6 @@ function build_formation()
                   pose[2] = -pose[2]
               end
               motionplanning:addRobot(peers[k], pose)
-              print(pose[0]..','..pose[1]..','..pose[2])
               communicator:removeMail()
               continue = false
               break

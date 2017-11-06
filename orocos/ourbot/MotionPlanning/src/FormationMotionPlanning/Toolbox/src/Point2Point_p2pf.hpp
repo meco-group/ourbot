@@ -70,7 +70,6 @@ typedef struct obstacle {
 class Point2Point{
     private:
         casadi::Function problem;
-        std::vector<double> spline_coeffs_vec;
         bool solve(double, std::vector<obstacle_t>&);
         bool _recover;
         void generateSubstituteFunctions();
@@ -78,6 +77,7 @@ class Point2Point{
 
     protected:
         Vehicle* vehicle;
+        std::vector<double> spline_coeffs_vec;
         double current_time=0.0;
         double current_time_prev=0.0;
         double horizon_time;

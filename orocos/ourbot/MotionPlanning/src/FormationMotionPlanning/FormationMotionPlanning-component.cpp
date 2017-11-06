@@ -1,4 +1,4 @@
-// #define DEBUG
+// #define FORMATIONDEBUG
 
 #include "FormationMotionPlanning-component.hpp"
 #include <rtt/Component.hpp>
@@ -152,6 +152,10 @@ bool FormationMotionPlanning::initialize() {
     emptyPorts();
     _problem->reset();
     _problem->resetTime();
+    _target_reached = false;
+    for (int k=0; k<2; k++) {
+        _target_reached_nghb[k] = false;
+    }
     return true;
 }
 
@@ -164,7 +168,6 @@ void FormationMotionPlanning::emptyPorts() {
 }
 
 double FormationMotionPlanning::encode(int index, bool valid) {
-    std::cout << "encode with index " << index << std::endl;
     code_t code;
     code.index = index;
     code.target_reached = _target_reached;
@@ -177,7 +180,6 @@ double FormationMotionPlanning::encode(int index, bool valid) {
 code_t FormationMotionPlanning::decode(double number) {
     code_t code;
     memcpy((char*)(&code), (char*)(&number), sizeof(code));
-    std::cout << "code with index " << code.index << std::endl;
     return code;
 }
 
@@ -206,14 +208,14 @@ bool FormationMotionPlanning::watchDog(bool initial, TimeService::ticks t0) {
 
 bool FormationMotionPlanning::admmIteration(bool initial) {
     ADMMProblem<p2pf::FormationPoint2Point>* problem = ((ADMMProblem<p2pf::FormationPoint2Point>*)_problem);
+    #ifdef FORMATIONDEBUG
     std::cout << "admm iteration " << problem->iteration() << std::endl;
-    #ifdef DEBUG
     _timestamp = TimeService::Instance()->getTicks();
     #endif
     // update1: determine x_var
     std::vector<double> rpc = {-_rel_pos_c[0], -_rel_pos_c[1]};
     bool check = problem->get()->update1(_est_pose, _target_pose, _ref_pose, _ref_velocity, _x_var, _z_ji_var, _l_ji_var, *(std::vector<p2pf::obstacle_t>*)&_obstacles, rpc, _predict_shift);
-    #ifdef DEBUG
+    #ifdef FORMATIONDEBUG
     Seconds time_elapsed = TimeService::Instance()->secondsSince(_timestamp);
     cout << "update1: " << time_elapsed << " s" << endl;
     _timestamp = TimeService::Instance()->getTicks();
@@ -228,7 +230,7 @@ bool FormationMotionPlanning::admmIteration(bool initial) {
     }
     // in the meantime, save trajectories
     save(_ref_pose, _ref_velocity);
-    #ifdef DEBUG
+    #ifdef FORMATIONDEBUG
     time_elapsed = TimeService::Instance()->secondsSince(_timestamp);
     cout << "saving+sending1: " << time_elapsed << " s" << endl;
     _timestamp = TimeService::Instance()->getTicks();
@@ -243,7 +245,7 @@ bool FormationMotionPlanning::admmIteration(bool initial) {
             }
         }
     }
-    #ifdef DEBUG
+    #ifdef FORMATIONDEBUG
     time_elapsed = TimeService::Instance()->secondsSince(_timestamp);
     cout << "waiting1: " << time_elapsed << " s" << endl;
     _timestamp = TimeService::Instance()->getTicks();
@@ -281,14 +283,14 @@ bool FormationMotionPlanning::admmIteration(bool initial) {
     if (!check) {
         return false;
     }
-    #ifdef DEBUG
+    #ifdef FORMATIONDEBUG
     time_elapsed = TimeService::Instance()->secondsSince(_timestamp);
     cout << "checking1: " << time_elapsed << " s" << endl;
     _timestamp = TimeService::Instance()->getTicks();
     #endif
     // update2: determine z_i_var, z_ij_var, l_i_var and l_ij_var
     problem->get()->update2(_x_j_var, _z_ij_var, _l_ij_var, _residuals);
-    #ifdef DEBUG
+    #ifdef FORMATIONDEBUG
     time_elapsed = TimeService::Instance()->secondsSince(_timestamp);
     cout << "update2: " << time_elapsed << " s" << endl;
     _timestamp = TimeService::Instance()->getTicks();
@@ -302,7 +304,7 @@ bool FormationMotionPlanning::admmIteration(bool initial) {
         _zl_ij_p_var[k][2*_n_shared] = encode(problem->iteration(), check);
         _zl_ij_var_port[k].write(_zl_ij_p_var[k]);
     }
-    #ifdef DEBUG
+    #ifdef FORMATIONDEBUG
     time_elapsed = TimeService::Instance()->secondsSince(_timestamp);
     cout << "extracting+sending2: " << time_elapsed << " s" << endl;
     _timestamp = TimeService::Instance()->getTicks();
@@ -317,7 +319,7 @@ bool FormationMotionPlanning::admmIteration(bool initial) {
             }
         }
     }
-    #ifdef DEBUG
+    #ifdef FORMATIONDEBUG
     time_elapsed = TimeService::Instance()->secondsSince(_timestamp);
     cout << "waiting2: " << time_elapsed << " s" << endl;
     _timestamp = TimeService::Instance()->getTicks();
@@ -329,7 +331,7 @@ bool FormationMotionPlanning::admmIteration(bool initial) {
             _l_ji_var[k][i] = _zl_ji_p_var[k][i+_n_shared];
         }
     }
-    #ifdef DEBUG
+    #ifdef FORMATIONDEBUG
     time_elapsed = TimeService::Instance()->secondsSince(_timestamp);
     cout << "checking2: " << time_elapsed << " s" << endl;
     #endif
@@ -342,7 +344,6 @@ bool FormationMotionPlanning::targetReached() {
         _target_reached = target_reached;
         return false;
     }
-    _target_reached = target_reached;
     for (int k=0; k<2; k++) {
         if (!(_target_reached && _target_reached_nghb[k])) {
             return false;

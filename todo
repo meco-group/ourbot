@@ -7,13 +7,6 @@ short-term
 - flexonomy
     - test with marcus
 
-- formation
-    - setTargetPose: est_pose_port ??
-        - fixed by calling control_hook ?
-    - getMotionTime
-        - fix in exported admm
-    - transition from home -> p2p ??
-
 short-mid-term
 --------------
 - eagle make/make install

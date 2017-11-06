@@ -196,7 +196,7 @@ end
 return rfsm.state {
   rfsm.trans{src = 'initial', tgt = 'init'},
   rfsm.trans{src = 'init', tgt = 'home', events = {'e_done'}},
-  -- rfsm.trans{src = 'home', tgt = 'idle', events = {'e_done', 'e_back'}},
+  rfsm.trans{src = 'home', tgt = 'idle', events = {'e_done', 'e_back'}},
   rfsm.trans{src = 'home', tgt = 'p2p0', events = {'e_p2p'}},
   rfsm.trans{src = 'idle', tgt = 'p2p0', events = {'e_p2p'}},
   rfsm.trans{src = 'p2p0', tgt = 'idle', events = {'e_idle', 'e_back'}},
