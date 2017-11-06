@@ -21,11 +21,20 @@ function build_formation()
         local msg = ret[0]
         local uuid = ret[1]
         if uuid == communicator:getPeerUUID(peers[k]) then
-          local a, b, c, d, e, f = string.match(msg, '(%d+).(%d+),(%d+).(%d+),(%d+).(%d+)')
+          local a, b, c, d, e, f = string.match(msg, '.-(%d+).(%d+),.-(%d+).(%d+),.-(%d+).(%d+)')
           if a ~= nil and b ~= nil and c ~= nil and d ~= nil and e ~= nil and f ~= nil then
-            pose[0] = a + 1000*b
-            pose[1] = c + 1000*d
-            pose[2] = e + 1000*f
+            pose[0] = a + 0.001*b
+            pose[1] = c + 0.001*d
+            pose[2] = e + 0.001*f
+            if string.match(msg, '%-.*,.*,.*') then
+                pose[0] = -pose[0]
+            end
+            if string.match(msg, '.*,%-.*,.*') then
+                pose[1] = -pose[1]
+            end
+            if string.match(msg, '.*,.*,%-.*') then
+                pose[2] = -pose[2]
+            end
             motionplanning:addNeighbor(peers[k], pose)
             communicator:removeMail()
             continue = false
