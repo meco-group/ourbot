@@ -28,7 +28,7 @@ current_dir = os.path.dirname(os.path.realpath(__file__))
 local_root = os.path.join(current_dir, 'orocos/ourbot')
 other_local_dirs = []
 
-addresses = col.OrderedDict([('kurt', '192.168.11.121'), ('krist', '192.168.11.122'), ('dave', '192.168.11.120')])
+addresses = col.OrderedDict([('kurt', '192.168.11.121'), ('krist', '192.168.11.120'), ('dave', '192.168.11.122')])
 ignore = []
 exclude = ['build', 'include', 'bin', 'lib', 'obj', '.tb_history']
 

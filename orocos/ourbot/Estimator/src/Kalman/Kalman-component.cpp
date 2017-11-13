@@ -48,7 +48,9 @@ bool Kalman::estimateHook(){
     _marker_time = _marker_data[6];
     if (_marker_time > _start_time){
       if (_enable_markers) {
-        _kf->observe_markers(_marker_time, _Mmeas, _Mref, _sigma_markers);
+        if (_marker_time > _start_time) {
+          _kf->observe_markers(_marker_time, _Mmeas, _Mref, _sigma_markers);
+        }
       }
     }
   }

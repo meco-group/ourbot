@@ -67,6 +67,7 @@ local initialize = function()
   tc:addPort(host_priority_port, 'host_priority_port', 'Am I claiming priority?')
   tc:addPort(peer_priority_port, 'peer_priority_port', 'Is my peer claiming priority?')
   tc:addPort(robot_markers_port, 'robot_markers_port', 'Markers of robot arm table')
+  motion_time_port:connect(motionplanning:getPort('motion_time_port'))
   if not communicator:addIncomingConnection('coordinator', 'robot_markers_port', 'markers_robot') then rfsm.send_events(fsm, 'e_failed') return false end
   if not communicator:addOutgoingConnection('coordinator', 'host_trajectory_port', 'trajectory_'..host, peer) then rfsm.send_events(fsm, 'e_failed') return false end
   if not communicator:addIncomingConnection('coordinator', 'peer_trajectory_port', 'trajectory_'..peer) then rfsm.send_events(fsm, 'e_failed') return false end
@@ -79,9 +80,9 @@ end
 
 local release = function()
   communicator:removeConnection('coordinator', 'robot_markers_port', 'markers_robot')
-  communicator:removeConnection('coordinator', 'host_trajectory_port', 'trajectory_'..host, peer)
+  communicator:removeConnection('coordinator', 'host_trajectory_port', 'trajectory_'..host)
   communicator:removeConnection('coordinator', 'peer_trajectory_port', 'trajectory_'..peer)
-  communicator:removeConnection('coordinator', 'host_priority_port', 'priority_'..host, peer)
+  communicator:removeConnection('coordinator', 'host_priority_port', 'priority_'..host)
   communicator:removeConnection('coordinator', 'peer_priority_port', 'priority_'..peer)
   motion_time_port:delete()
   host_trajectory_port:delete()
@@ -91,7 +92,11 @@ end
 
 function flex_update(fsm, control)
   -- send state to coordinator
-  send_state(status)
+  if control then
+    send_state('busy')
+  else
+    send_state('idle')
+  end
   -- send trajectory to neighbor
   communicate_trajectory(control)
   -- check if current task was canceled
@@ -105,9 +110,9 @@ function flex_update(fsm, control)
     if fs == 'NewData' then
       local eta = get_sec() + motion_time
       if math.abs(current_eta - eta) >= 1 then
-        current_eta = eta
-        send_task_status(current_task, 'ETA changed', current_eta)
+        send_task_status(current_task, 'ETA changed', eta)
       end
+      current_eta = eta
     end
   end
   -- check mail
@@ -203,6 +208,7 @@ function task_bid(task, peer)
   msg_tbl.header.type = 'bid'
   msg_tbl.header.timestamp = encode_time(get_sec())
   msg_tbl.payload = {task_uuid = task.task_uuid, task_position = {new_target[0], new_target[1], new_target[2]}, bid = total_time}
+  print('bid: ' .. tostring(total_time))
   write_mail(json.encode(msg_tbl), peer)
 end
 
@@ -346,7 +352,7 @@ end
 function get_target_pose(task)
   local pose = rtt.Variable('array')
   pose:resize(3)
-  if task.task_parameter_key == 'None' then
+  if task.task_parameter_key == 'null' then
     for k=0,2 do
       pose[k] = task.task_parameters[k+1]
     end
@@ -356,8 +362,8 @@ function get_target_pose(task)
     local rp = get_robot_pose()
     if key == 'robot' then
         local dx = -1.0
-        local dy = 0.0
-        local dt = math.pi
+        local dy = 0.
+        local dt = math.pi/2
 
         pose[0] = rp[0] + dx*math.cos(rp[2]) - dy*math.sin(rp[2])
         pose[1] = rp[1] + dx*math.sin(rp[2]) + dy*math.cos(rp[2])
@@ -400,7 +406,7 @@ end
 function motion_time_guess(start, target)
   local dist = math.sqrt(math.pow(target[0]-start[0], 2) + math.pow(target[1]-start[1], 2))
   local position_time = dist/(0.87*max_vel_position) -- 0.87 when 3th deg spline with 10 knot intervals
-  target_or = target[2] + math.floor(start[2]/(2*math.pi)*2*math.pi)
+  local target_or = target[2] + math.floor(start[2]/(2*math.pi))*2*math.pi
   if (target_or - start[2]) > math.pi then
     target_or = target_or - 2*math.pi
   end
@@ -408,7 +414,8 @@ function motion_time_guess(start, target)
     target_or = target_or + 2*math.pi
   end
   local orientation_time = math.abs(target_or-start[2])/max_vel_orientation
-  return math.max(position_time, orientation_time)
+  return position_time
+  -- return math.max(position_time, orientation_time)
 end
 
 function encode_time(time)

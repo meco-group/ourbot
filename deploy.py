@@ -26,7 +26,7 @@ current_dir = os.path.dirname(os.path.realpath(__file__))
 local_root = os.path.join(current_dir, 'orocos/emperor')
 
 hosts = ['dave', 'kurt', 'krist']
-addresses = col.OrderedDict([('kurt', '192.168.11.121'), ('krist', '192.168.11.122'), ('dave', '192.168.11.120')])
+addresses = col.OrderedDict([('kurt', '192.168.11.121'), ('krist', '192.168.11.120'), ('dave', '192.168.11.122')])
 
 
 def send_file(ftp, ssh, loc_file, rem_file):

@@ -138,9 +138,9 @@ function guard_time(start_time, prev_start_time, end_time)
   local duration = (end_time - prev_start_time) * 1000
   local jitter = (start_time - prev_start_time - period) * 1000
   -- print('duration: ' .. duration .. ' ms')
-  if duration > 1000*period then
-    rtt.logl('Warning','ControlLoop: Duration of calculation exceeded sample period!')
-  end
+  -- if duration > 1000*period then
+  --   rtt.logl('Warning','ControlLoop: Duration of calculation exceeded sample period!')
+  -- end
   -- if jitter > 100*period then
   --   rtt.logl('Info','ControlLoop: Jitter exceeded 10% of sample period')
   -- end
