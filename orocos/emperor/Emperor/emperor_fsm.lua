@@ -84,22 +84,12 @@ return rfsm.state {
   },
 
   state = rfsm.state{
-    entry = function(fsm)
-      if not communicator:addOutgoingConnection('hawkeye', 'obstacle_port', 'obstacles', 'ourbots') then
-        rfsm.send_events(fsm, 'e_failed')
-      end
-    end,
-
     doo = function(fsm)
       while(true) do
         velcmd_toggle()
         substate_toggle()
         rfsm.yield(true)
       end
-    end,
-
-    exit = function(fsm)
-      communicator:removeConnection('hawkeye', 'obstacle_port', 'obstacles')
     end,
   },
 

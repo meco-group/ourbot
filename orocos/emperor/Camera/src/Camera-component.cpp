@@ -38,7 +38,7 @@ bool Camera::configureHook(){
     _camera = eagle::getCamera(_eagle_config_path);
     _detector = new eagle::Detector(_eagle_config_path);
     _communicator = new eagle::Communicator(_node_name, _eagle_config_path);
-    _communicator->verbose(1);
+    _communicator->verbose(0);
     _communicator->start(100);
     _communicator->join(_communication_group);
     init_robots();
@@ -99,7 +99,7 @@ void Camera::updateHook(){
     }
     print(_verbose);
     // draw results
-    if (!_image_stream) {
+    if (_local_detecting || !_image_stream) {
         _image = draw();
     }
     cv::Point2f O = _projection->project_to_image(cv::Point3f(0, 0, 0));
@@ -208,6 +208,7 @@ bool Camera::shout_command(eagle::cmd_t cmd) {
 void Camera::receive_detected() {
     if (_communicator->receive()) {
         std::vector<std::map<std::string, eagle::marker_t>> marker_msgs(_robots.size());
+        std::map<std::string, std::vector<eagle::Obstacle*>> obstacle_msgs;
         // handle received messages
         while (_communicator->pop_message(_message)) {
             if (std::find(_eagles.begin(), _eagles.end(), _message.peer()) != _eagles.end()) {
@@ -229,7 +230,7 @@ void Camera::receive_detected() {
                         case eagle::OBSTACLE: {
                             eagle::obstacle_t obst;
                             _message.read(&obst);
-                            _obstacles.push_back(eagle::Obstacle::deserialize(obst));
+                            obstacle_msgs[_message.peer()].push_back(eagle::Obstacle::deserialize(obst));
                             break;
                         }
                         case eagle::IMAGE: {
@@ -253,8 +254,10 @@ void Camera::receive_detected() {
             }
         }
         // merge detected robot information
+        int n_msg;
         for (uint k=0; k<_robots.size(); k++) {
-            if (marker_msgs[k].size() > 0) {
+            n_msg = marker_msgs[k].size();
+            if (n_msg > 0) {
                 eagle::marker_t marker;
                 marker.id = marker_msgs[k].begin()->second.id;
                 marker.x = 0;
@@ -264,14 +267,23 @@ void Camera::receive_detected() {
                 marker.pitch = 0;
                 marker.yaw = 0;
                 for (std::map<std::string, eagle::marker_t>::iterator mrk=marker_msgs[k].begin(); mrk!=marker_msgs[k].end(); ++mrk) {
-                    marker.x += (1./marker_msgs[k].size())*mrk->second.x;
-                    marker.y += (1./marker_msgs[k].size())*mrk->second.y;
-                    marker.z += (1./marker_msgs[k].size())*mrk->second.z;
-                    marker.roll += (1./marker_msgs[k].size())*mrk->second.roll;
-                    marker.pitch += (1./marker_msgs[k].size())*mrk->second.pitch;
-                    marker.yaw += (1./marker_msgs[k].size())*mrk->second.yaw;
+                    marker.x += (1./n_msg)*mrk->second.x;
+                    marker.y += (1./n_msg)*mrk->second.y;
+                    marker.z += (1./n_msg)*mrk->second.z;
+                    marker.roll += (1./n_msg)*mrk->second.roll;
+                    marker.pitch += (1./n_msg)*mrk->second.pitch;
+                    marker.yaw += (1./n_msg)*mrk->second.yaw;
                 }
                 _robots[k]->update(marker);
+            }
+        }
+        // merge detected obstacle information and save it
+        for (std::map<std::string, std::vector<eagle::Obstacle*>>::iterator obs=obstacle_msgs.begin(); obs!=obstacle_msgs.end(); ++obs) {
+            if (obstacle_msgs.size() > 0) {
+                _obst_per_peer[obs->first] = obs->second;
+            }
+            for (uint k=0; k<_obst_per_peer[obs->first].size(); k++) {
+                _obstacles.push_back(_obst_per_peer[obs->first][k]);
             }
         }
     }
@@ -387,12 +399,10 @@ cv::Mat Camera::draw() {
     for (uint k=0; k<_obstacles.size(); k++) {
         _obstacles[k]->draw(img, *_projection);
     }
-    // // robots
+    // robots
     for (uint k=0; k<_robots.size(); k++) {
         if (_robots[k]->detected()) {
-            std::cout << "h1" << std::endl;
             _robots[k]->draw(img, *_projection);
-            std::cout << "h2" << std::endl;
             // estimated pose
             std::vector<double> pose(3);
             _robot_est_pose_port[k]->read(pose);
@@ -417,6 +427,14 @@ cv::Mat Camera::draw() {
                 }
             }
         }
+    }
+    // target
+    std::vector<double> target_pose;
+    _target_in_port.read(target_pose);
+    if (target_pose.size() == 2) {
+        cv::Point2f target = _projection->project_to_image(cv::Point3f(target_pose[0], target_pose[1], 0.));
+        cv::circle(img, target, 30, gray, 2);
+        cv::circle(img, target, 10, gray, -1.5);
     }
     return img;
 }

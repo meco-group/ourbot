@@ -9,12 +9,12 @@ tc = rtt.getTC()
 _print_level  = rtt.Property('int', 'print_level', 'Level of output printing')
 _velcmd_rate = rtt.Property('double', 'velcmd_rate', 'Frequency to update velocity commander')
 _emperor_rate = rtt.Property('double', 'emperor_rate', 'Frequency to update communicator')
-_hawkeye_rate = rtt.Property('double', 'hawkeye_rate', 'Frequency to update hawkeye')
+_camera_rate = rtt.Property('double', 'camera_rate', 'Frequency to update camera')
 
 tc:addProperty(_print_level)
 tc:addProperty(_velcmd_rate)
 tc:addProperty(_emperor_rate)
-tc:addProperty(_hawkeye_rate)
+tc:addProperty(_camera_rate)
 
 -- ports that drive/read the FSM
 _deployer_fsm_event_port = rtt.InputPort('string')
@@ -30,7 +30,7 @@ function configureHook()
    print_level = _print_level:get()
    velcmd_rate = _velcmd_rate:get()
    emperor_rate = _emperor_rate:get()
-   hawkeye_rate = _hawkeye_rate:get()
+   camera_rate = _camera_rate:get()
 
    -- create some variables referering to files
    emperor_file = 'Emperor/emperor.lua'

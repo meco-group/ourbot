@@ -52,6 +52,7 @@ class Camera : public RTT::TaskContext{
 
     std::vector<eagle::Robot*> _robots;
     std::vector<eagle::Obstacle*> _obstacles;
+    std::map<std::string, std::vector<eagle::Obstacle*>> _obst_per_peer;
     cv::VideoWriter _movie;
 
 

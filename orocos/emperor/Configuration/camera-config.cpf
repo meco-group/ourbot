@@ -4,12 +4,12 @@
 
     <simple name="local_detecting" type="boolean">
         <description>Are we detecting on this device?</description>
-        <value>0</value>
+        <value>1</value>
     </simple>
 
     <simple name="capture_bg_at_start" type="boolean">
         <description>Capture background at start</description>
-        <value>1</value>
+        <value>0</value>
     </simple>
 
     <simple name="node_name" type="string">
@@ -27,20 +27,10 @@
         <value>Configuration/eagle_config.xml</value>
     </simple>
 
-<!--     <struct name="image_size" type="ints">
-        <description>Image size [w x h] in pixels</description>
-        <simple name="width" type="long">
-            <value>5.42</value>
-        </simple>
-        <simple name="height" type="long">
-            <value>3.05</value>
-        </simple>
-    </struct> -->
-
     <struct name="image_size" type="array">
         <description>Image size [w x h] in m</description>
         <simple name="width" type="double">
-            <value>5.</value>
+            <value>5</value>
         </simple>
         <simple name="height" type="double">
             <value>3</value>
@@ -64,7 +54,7 @@
 
     <simple name="image_stream" type="boolean">
         <description>Setting up image stream with remote eagles?</description>
-        <value>0</value>
+        <value>1</value>
     </simple>
 
     <simple name="save_movie" type="boolean">
@@ -84,7 +74,7 @@
 
     <simple name="verbose" type="long">
         <description>Verbose flag</description>
-        <value>1</value>
+        <value>0</value>
     </simple>
 
     <struct name="robot_ids" type="ints">
