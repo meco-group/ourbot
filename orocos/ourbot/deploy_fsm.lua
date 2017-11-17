@@ -11,12 +11,13 @@ local components_to_load = {
   reference = 'Reference',
   reporter = 'OCL::NetcdfReporting',
   io = 'Container',
-  teensy = 'TeensyBridge'
+  teensy = 'TeensyBridge',
+  eaglebridge = 'EagleBridge'
 }
 
 -- containers to fill
 local containers_to_fill = {
-  io = {'teensy'}
+  io = {'teensy', 'eaglebridge'}
 }
 
 -- ports to report
@@ -28,7 +29,7 @@ local ports_to_report = {
 
 -- packages to import
 local packages_to_import = {'Communicator', 'Estimator', 'Controller',
-'Reference', 'MotionPlanning', 'Container','Serial'}
+'Reference', 'MotionPlanning', 'Container', 'Serial', 'EagleBridge'}
 
 
 -- configuration files to load
@@ -40,6 +41,7 @@ local component_config_files = {
   reference = 'Configuration/reference-config.cpf',
   reporter = 'Configuration/reporter-config.cpf',
   teensy = 'Configuration/teensy-config.cpf',
+  eaglebridge = 'Configuration/eaglebridge-config.cpf',
   lidar = 'Configuration/lidar-config.cpf',
   scanmatcher = 'Configuration/scanmatcher-config.cpf'
 }
@@ -183,8 +185,6 @@ return rfsm.state {
         -- coordinator
         if not addOutgoing('coordinator', 'coordinator_send_event_port', 'fsm_event', 'emperor') then rfsm.send_events(fsm, 'e_failed') return end
         if not addIncoming('coordinator', 'coordinator_fsm_event_port', 'fsm_event') then rfsm.send_events(fsm, 'e_failed') return end
-        -- estimator
-        if not addIncoming('estimator', 'markers_port', 'markers_'..host) then rfsm.send_events(fsm, 'e_failed') return end
         -- io
         if not addIncoming('io', 'cmd_velocity_port', 'cmd_velocity') then rfsm.send_events(fsm, 'e_failed') return end
         -- estimator
@@ -194,20 +194,6 @@ return rfsm.state {
         if not addOutgoing('reference', 'ref_position_trajectory_x_port', 'ref_x_'..host, 'emperor') then rfsm.send_events(fsm, 'e_failed') return end
         if not addOutgoing('reference', 'ref_position_trajectory_y_port', 'ref_y_'..host, 'emperor') then rfsm.send_events(fsm, 'e_failed') return end
         -- motion planning
-        -- if not obstacle_mode then
-        --   if not addIncoming('motionplanning', 'robobs_pose_port', 'robobs_pose') then rfsm.send_events(fsm, 'e_failed') return end
-        --   if not addIncoming('motionplanning', 'robobs_velocity_port', 'robobs_velocity') then rfsm.send_events(fsm, 'e_failed') return end
-        -- end
-        -- if not addIncoming('distrmotionplanning', 'obstacle_port', 'obstacles') then rfsm.send_events(fsm, 'e_failed') return end
-        -- if not addIncoming('distrmotionplanning', 'target_pose_port', 'target_pose') then rfsm.send_events(fsm, 'e_failed') return end
-        -- if not obstacle_mode then
-        --   if not addIncoming('distrmotionplanning', 'robobs_pose_port', 'robobs_pose') then rfsm.send_events(fsm, 'e_failed') return end
-        --   if not addIncoming('distrmotionplanning', 'robobs_velocity_port', 'robobs_velocity') then rfsm.send_events(fsm, 'e_failed') return end
-        -- end
-        -- if not addOutgoing('distrmotionplanning', 'negotiate_out_port', 'negotiate', 'ourbots') then rfsm.send_events(fsm, 'e_failed') return end
-        -- if not addBufferedIncoming('distrmotionplanning', 'negotiate_in_port', 'negotiate', 10) then rfsm.send_events(fsm, 'e_failed') return end
-        -- if not addIncoming('distrmotionplanning', 'negotiate_in_port', 'negotiate') then rfsm.send_events(fsm, 'e_failed') return end
-        -- end
         -- deployer
         if not addOutgoing('lua', 'deployer_failure_event_port', 'deployer_event', 'all') then rfsm.send_events(fsm,'e_failed') return end
         if not addIncoming('lua', 'deployer_fsm_event_port', 'deployer_event') then rfsm.send_events(fsm, 'e_failed') return end
