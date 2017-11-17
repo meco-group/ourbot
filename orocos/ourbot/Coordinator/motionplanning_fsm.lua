@@ -17,12 +17,17 @@ function set_motionplanner(mp, load_obstacles_fun)
   end
   mp_trigger_port = rtt.OutputPort('array')
   tc:addPort(mp_trigger_port, 'mp_trigger_port', 'Trigger for motion planning: is composed of current estimated pose and start index of internal reference input vector')
-  target_pose_port = rtt.InputPort('array')
-  tc:addPort(target_pose_port, 'target_pose_port', 'Target pose')
-  if not communicator:addIncomingConnection('coordinator', 'target_pose_port', 'target_pose') then
+  target_in_port = rtt.InputPort('array')
+  target_out_port = rtt.OutputPort('array')
+  tc:addPort(target_in_port, 'target_in_port', 'Target pose')
+  tc:addPort(target_out_port, 'target_out_port', 'Target pose')
+  if not communicator:addIncomingConnection('coordinator', 'target_in_port', 'target_out') then
     rfsm.send_events(fsm, 'e_failed')
   end
-  local fs, tgt = target_pose_port:read() -- flush port
+  if not communicator:addOutgoingConnection('coordinator', 'target_out_port', 'target_in', 'emperor') then
+    rfsm.send_events(fsm, 'e_failed')
+  end
+  local fs, tgt = target_in_port:read() -- flush port
   if not deployer:connectPorts('motionplanning', 'estimator') then
     return false
   end
@@ -256,11 +261,12 @@ return rfsm.state {
         if not control_hook(false) or motionplanning_error() then
           rfsm.send_events(fsm, 'e_failed')
         end
-        local fs, target_pose = target_pose_port:read()
+        local fs, target_pose = target_in_port:read()
         if fs == 'NewData' then
           mp_reset()
           motionplanning:setTargetPose(target_pose)
           rfsm.send_events(fsm, 'e_p2p')
+          target_out_port:write(target_pose) -- for drawing
         end
         rfsm.yield(true)
       end
