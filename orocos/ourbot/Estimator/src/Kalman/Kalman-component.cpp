@@ -26,8 +26,11 @@ bool Kalman::initialize() {
   return true;
 }
 
-unsigned long Kalman::timestamp() {
-  return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+double Kalman::timestamp() {
+  double s;
+  unsigned long ms = std::chrono::duration_cast< std::chrono::milliseconds >(std::chrono::system_clock::now().time_since_epoch()).count();
+  s = ms * double(std::chrono::milliseconds::period::num) / std::chrono::milliseconds::period::den;
+  return s;
 }
 
 bool Kalman::estimateHook(){
