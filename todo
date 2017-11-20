@@ -3,18 +3,33 @@ to do
 
 short-term
 ----------
+- calibrate see3cam
+- test emperor side
+    - fine calibration?
+- test ourbot size
 
+- if nothing received, last one plotted
+- target should be communicated to camera
+    - not correct -> solve in Visualizer
+- visualizer component in project eagle
 - flexonomy
-    - test with marcus
+    - test with marcus 2
 
 short-mid-term
 --------------
-- eagle make/make install
-- omg-tools pushen
 
 mid-term
 --------
 
+- omg-tools pushen
 - vel/acc parametric
-- eagle integration
 - wiki revision
+
+questions Maarten
+-----------------
+
+- remote configuration robots-to-detect
+- eagle transmitter is always shouting
+- com.available() nutteloos?
+- update rate eagle_transmitter
+- self adding to group
