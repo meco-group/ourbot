@@ -29,6 +29,7 @@ class EagleBridge : public RTT::TaskContext{
         void init_robot();
         void receive_detected();
         void print(int verbose);
+        void merge_obstacles(std::vector<eagle::Obstacle*>& obstacles);
         void sort_obstacles(std::vector<eagle::Obstacle*>& obstacles);
 
     public:

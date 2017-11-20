@@ -1,6 +1,7 @@
 #include "EagleBridge-component.hpp"
 #include <rtt/Component.hpp>
 #include <iostream>
+#include <chrono>
 
 EagleBridge::EagleBridge(std::string const& name) : TaskContext(name, PreOperational), _detected_pose(4) {
     // ports
@@ -132,7 +133,7 @@ void EagleBridge::receive_detected() {
                 _detected_pose[0] += (1./n_msg)*mrk->second.x;
                 _detected_pose[1] += (1./n_msg)*mrk->second.y;
                 _detected_pose[2] += (1./n_msg)*mrk->second.yaw;
-                _detected_pose[3] += (1./n_msg)*static_cast<double>(marker_times[mrk->first]);
+                _detected_pose[3] += (1./n_msg)*(marker_times[mrk->first]*double(std::chrono::milliseconds::period::num) / std::chrono::milliseconds::period::den);
             }
             _detected_pose_port.write(_detected_pose);
         }
@@ -149,6 +150,59 @@ void EagleBridge::receive_detected() {
         // sort obstacles
         sort_obstacles(_obstacles);
     }
+}
+
+void EagleBridge::merge_obstacles(std::vector<eagle::Obstacle*>& obstacles) {
+    std::vector<eagle::Obstacle*> similars;
+    std::vector<eagle::Obstacle*> new_obstacles;
+    for (uint i=0; i<obstacles.size(); i++) {
+        similars.clear();
+        similars.push_back(obstacles[i]);
+        for (uint j=i+1; j<obstacles.size(); j++) {
+            double dst = cv::norm(obstacles[i]->center() - obstacles[j]->center());
+            if (dst < 0.1) {
+                if (dynamic_cast<eagle::RectangleObstacle*>(obstacles[i]) != nullptr && dynamic_cast<eagle::RectangleObstacle*>(obstacles[j]) != nullptr) {
+                    eagle::RectangleObstacle* obst_i = dynamic_cast<eagle::RectangleObstacle*>(obstacles[i]);
+                    eagle::RectangleObstacle* obst_j = dynamic_cast<eagle::RectangleObstacle*>(obstacles[j]);
+                    // same size detected as width?
+                    if (fabs(obst_i->width() - obst_j->width())/fabs(obst_i->width()) < 0.01 && fabs(obst_i->height() - obst_j->height())/fabs(obst_i->height()) < 0.01) {
+                        similars.push_back(obstacles[j]);
+                    } else {
+                        similars.push_back(new eagle::RectangleObstacle(cv::RotatedRect(obst_j->center(), cv::Size(obst_j->height(), obst_j->width()), 90 - obst_j->angle()*180/M_PI ))); // no idea if this is correct.
+                    }
+                }
+                if (dynamic_cast<eagle::CircleObstacle*>(obstacles[i]) != nullptr && dynamic_cast<eagle::CircleObstacle*>(obstacles[j]) != nullptr) {
+                    similars.push_back(obstacles[j]);
+                }
+            }
+        }
+        int n_sim = similars.size();
+        if (n_sim > 1) {
+            if (dynamic_cast<eagle::RectangleObstacle*>(obstacles[i]) != nullptr) {
+                double x = 0, y = 0, w = 0, h = 0, t = 0;
+                for (uint k=0; k<similars.size(); k++) {
+                    x += (1/n_sim)*similars[k]->center().x;
+                    y += (1/n_sim)*similars[k]->center().y;
+                    w += (1/n_sim)*dynamic_cast<eagle::RectangleObstacle*>(similars[k])->width();
+                    h += (1/n_sim)*dynamic_cast<eagle::RectangleObstacle*>(similars[k])->height();
+                    t += (1/n_sim)*dynamic_cast<eagle::RectangleObstacle*>(similars[k])->angle();
+                }
+                new_obstacles.push_back(new eagle::RectangleObstacle(cv::RotatedRect(cv::Point2f(x, y), cv::Size(w, h), t*180/M_PI)));
+            }
+            if (dynamic_cast<eagle::CircleObstacle*>(obstacles[i]) != nullptr) {
+                double x = 0, y = 0, r = 0;
+                for (uint k=0; k<similars.size(); k++) {
+                    x += (1/n_sim)*similars[k]->center().x;
+                    y += (1/n_sim)*similars[k]->center().y;
+                    r += (1/n_sim)*dynamic_cast<eagle::CircleObstacle*>(similars[k])->radius();
+                }
+                new_obstacles.push_back(new eagle::CircleObstacle(cv::Point2f(x, y), r));
+            }
+        } else {
+            new_obstacles.push_back(obstacles[i]);
+        }
+    }
+    obstacles = new_obstacles;
 }
 
 void EagleBridge::print(int verbose) {
