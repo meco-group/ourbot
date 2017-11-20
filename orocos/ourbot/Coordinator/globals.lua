@@ -9,6 +9,7 @@ function init_globals()
   reference = tc:getPeer('reference')
   io = tc:getPeer('io')
   teensy = tc:getPeer('teensy')
+  eaglebridge = tc:getPeer('eaglebridge')
   communicator = tc:getPeer('communicator')
   reporter = tc:getPeer('reporter')
   -- operations
@@ -60,7 +61,7 @@ end
 function start_sensing_components()
   if not io:start() then
     rtt.logl('Error', 'Could not start io component!')
-    return false
+    -- return false
   end
   if not estimator:start() then
     rtt.logl('Error', 'Could not start estimator component!')

@@ -43,21 +43,30 @@ void EagleBridge::stopHook() {
     _communicator->stop();
 }
 
-std::vector<double> EagleBridge::getCircularObstacles() {
+std::vector<double> EagleBridge::getCircularObstacles(int n) {
     std::vector<double> ret(0);
+    int cnt = 0;
     for (uint k=0; k<_obstacles.size(); k++) {
+        if (cnt == n) {
+            break;
+        }
         if (dynamic_cast<eagle::CircleObstacle*>(_obstacles[k]) != nullptr) {
             ret.push_back(((eagle::CircleObstacle*)_obstacles[k])->center().x);
             ret.push_back(((eagle::CircleObstacle*)_obstacles[k])->center().y);
             ret.push_back(((eagle::CircleObstacle*)_obstacles[k])->radius());
+            cnt++;
         }
     }
     return ret;
 }
 
-std::vector<double> EagleBridge::getRectangularObstacles() {
+std::vector<double> EagleBridge::getRectangularObstacles(int n) {
     std::vector<double> ret(0);
+    int cnt = 0;
     for (uint k=0; k<_obstacles.size(); k++) {
+        if (cnt == n) {
+            break;
+        }
         if (dynamic_cast<eagle::RectangleObstacle*>(_obstacles[k]) != nullptr) {
             ret.push_back(((eagle::RectangleObstacle*)_obstacles[k])->center().x);
             ret.push_back(((eagle::RectangleObstacle*)_obstacles[k])->center().y);
@@ -65,6 +74,7 @@ std::vector<double> EagleBridge::getRectangularObstacles() {
             ret.push_back(((eagle::RectangleObstacle*)_obstacles[k])->width());
             ret.push_back(((eagle::RectangleObstacle*)_obstacles[k])->height());
         }
+        cnt++;
     }
     return ret;
 }
@@ -135,6 +145,8 @@ void EagleBridge::receive_detected() {
                 _obstacles.push_back(_obst_per_peer[obs->first][k]);
             }
         }
+        // sort obstacles
+        sort_obstacles(_obstacles);
     }
 }
 
@@ -147,6 +159,22 @@ void EagleBridge::print(int verbose) {
         for (uint k=0; k<_obstacles.size(); k++) {
             std::cout << "\t- " << _obstacles[k]->to_string() << std::endl;
         }
+    }
+}
+
+void EagleBridge::sort_obstacles(std::vector<eagle::Obstacle*>& obstacles) {
+    uint j;
+    eagle::Obstacle* obstacle;
+    // insertion sort
+    for (uint i=1; i<obstacles.size(); i++) {
+        j = i;
+        while (j > 0 && obstacles[j-1]->area() < obstacles[j]->area()) {
+            // swap obstacles
+            obstacle = obstacles[j];
+            obstacles[j] = obstacles[j-1];
+            obstacles[j-1] = obstacle;
+        }
+        j--;
     }
 }
 

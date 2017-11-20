@@ -75,7 +75,24 @@ end
 
 local load_obstacles_fun = function()
   reset_obstacles()
-  -- self.add_static_obstacle()
+  -- rectangular obstacles
+  local r_data = get_rectangular_obstacles(n_obstacles)
+  local n_rect = r_data.size/4
+  for k=0, n_rect-1 do
+    local pose = rtt.Variable('array')
+    pose:resize(3)
+    pose:fromtab{r_data[5*k], r_data[5*k+1], r_data[5*k+2]}
+    add_static_rect_obstacle(pose, r_data[5*k+3], r_data[5*k+4])
+  end
+  -- circular obstacles
+  local c_data = get_circular_obstacles(0)
+  local n_circ = c_data/3
+  for k=0, n_circ-1 do
+    local pos = rtt.Variable('array')
+    pos:resize(2)
+    pos:fromtab{c_data[3*k], c_data[3*k+1]}
+    add_static_circ_obstacle(pos, c_data[3*k+2])
+  end
 end
 
 local mp_fsm = rfsm.load('Coordinator/motionplanning_fsm.lua')

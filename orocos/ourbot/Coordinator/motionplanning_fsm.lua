@@ -1,4 +1,6 @@
 local load_new_trajectory = reference:getOperation('receiveTrajectory')
+local get_circular_obstacles = eaglebridge:getOperation('getCircularObstacles')
+local get_rectangular_obstacles = eaglebridge:getOperation('getRectangularObstacles')
 local mp_period = math.floor(control_rate/motionplanning_rate)
 local ref_cnt = 0
 local mp_failure_cnt = 0
@@ -59,6 +61,7 @@ function set_motionplanner(mp, load_obstacles_fun)
   add_dynamic_circ_obstacle = motionplanning:getOperation('addDynamicCircObstacle')
   add_peer_rect_obstacle = motionplanning:getOperation('addPeerRectObstacle')
   add_peer_circ_obstacle = motionplanning:getOperation('addPeerCircObstacle')
+  n_obstacles = motionplanning:getOperation('n_obstacles')
   mp_max_failures = motionplanning:getProperty('max_failures'):get()
   mp_max_recovers = motionplanning:getProperty('max_recovers'):get()
   mp_max_periods = motionplanning:getProperty('max_periods'):get()
@@ -84,7 +87,24 @@ end
 
 local load_obstacles_fun = function()
   reset_obstacles()
-  -- self.add_static_obstacle()
+  -- rectangular obstacles
+  local r_data = get_rectangular_obstacles(n_obstacles)
+  local n_rect = r_data.size/4
+  for k=0, n_rect-1 do
+    local pose = rtt.Variable('array')
+    pose:resize(3)
+    pose:fromtab{r_data[5*k], r_data[5*k+1], r_data[5*k+2]}
+    add_static_rect_obstacle(pose, r_data[5*k+3], r_data[5*k+4])
+  end
+  -- circular obstacles
+  local c_data = get_circular_obstacles(0)
+  local n_circ = c_data/3
+  for k=0, n_circ-1 do
+    local pos = rtt.Variable('array')
+    pos:resize(2)
+    pos:fromtab{c_data[3*k], c_data[3*k+1]}
+    add_static_circ_obstacle(pos, c_data[3*k+2])
+  end
 end
 
 function p2p0_init(fsm)
@@ -237,17 +257,17 @@ return rfsm.state {
 
   home = rfsm.state{
     -- wait until valid estimate
-    doo = function(fsm)
-      while true do
-        if not control_hook(false) then
-          rfsm.send_events(fsm, 'e_failed')
-        end
-        if estimator_valid() then
-          return
-        end
-        rfsm.yield(true)
-      end
-    end
+    -- doo = function(fsm)
+    --   while true do
+    --     if not control_hook(false) then
+    --       rfsm.send_events(fsm, 'e_failed')
+    --     end
+    --     if estimator_valid() then
+    --       return
+    --     end
+    --     rfsm.yield(true)
+    --   end
+    -- end
   },
 
   idle = rfsm.state{

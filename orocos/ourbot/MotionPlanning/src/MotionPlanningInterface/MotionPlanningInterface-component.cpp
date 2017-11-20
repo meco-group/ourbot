@@ -40,6 +40,7 @@ MotionPlanningInterface::MotionPlanningInterface(std::string const& name) : Task
     addOperation("ready", &MotionPlanningInterface::ready, this).doc("We reached the target, p2p task ready");
     addOperation("busy", &MotionPlanningInterface::busy, this).doc("Busy with computing a trajectory");
     addOperation("valid", &MotionPlanningInterface::valid, this).doc("Last computed trajectory is valid (i.e. not infeasible)");
+    addOperation("n_obstacles", &MotionPlanningInterface::n_obstacles, this).doc("Number of obstacles taken into account by motion planning");
     addOperation("resetObstacles", &MotionPlanningInterface::resetObstacles, this).doc("Reset obstacle list");
     addOperation("addStaticRectObstacle", &MotionPlanningInterface::addStaticRectObstacle, this).doc("Add static rectangular obstacle to obstacle list");
     addOperation("addStaticCircObstacle", &MotionPlanningInterface::addStaticCircObstacle, this).doc("Add static circular obstacle to obstacle list");
