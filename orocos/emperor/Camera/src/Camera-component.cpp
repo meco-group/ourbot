@@ -360,40 +360,22 @@ cv::Mat Camera::draw() {
     cv::arrowedLine(img, O, Ey, gray, 2); //Ey vector
     cv::putText(img, "x", _projection->project_to_image(cv::Point3f(1.1, 0, 0)), cv::FONT_HERSHEY_SIMPLEX, 1, gray, 2);
     cv::putText(img, "y", _projection->project_to_image(cv::Point3f(0, 1.1, 0)), cv::FONT_HERSHEY_SIMPLEX, 1, gray, 2);
-
-    cv::Point2f o1, o2;
-    o1 = _projection->project_to_image(cv::Point3f(0, 0, 0));
-    o2 = _projection->project_to_image(cv::Point3f(0, 0.1, 0));
-    cv::line(img, o1, o2, gray, 2);
-
-    o1 = _projection->project_to_image(cv::Point3f(1, 0, 0));
-    o2 = _projection->project_to_image(cv::Point3f(1, 0.1, 0));
-    cv::line(img, o1, o2, gray, 2);
-    o1 = _projection->project_to_image(cv::Point3f(2, 0, 0));
-    o2 = _projection->project_to_image(cv::Point3f(2, 0.1, 0));
-    cv::line(img, o1, o2, gray, 2);
-    o1 = _projection->project_to_image(cv::Point3f(-1, 0, 0));
-    o2 = _projection->project_to_image(cv::Point3f(-1, 0.1, 0));
-    cv::line(img, o1, o2, gray, 2);
-    o1 = _projection->project_to_image(cv::Point3f(-2, 0, 0));
-    o2 = _projection->project_to_image(cv::Point3f(-2, 0.1, 0));
-    cv::line(img, o1, o2, gray, 2);
-
-    o1 = _projection->project_to_image(cv::Point3f(0, 0, 0));
-    o2 = _projection->project_to_image(cv::Point3f(0.1, 0, 0));
-    cv::line(img, o1, o2, gray, 2);
-    o1 = _projection->project_to_image(cv::Point3f(0, 1, 0));
-    o2 = _projection->project_to_image(cv::Point3f(0.1, 1, 0));
-    cv::line(img, o1, o2, gray, 2);
-    o1 = _projection->project_to_image(cv::Point3f(0, 2, 0));
-    o2 = _projection->project_to_image(cv::Point3f(0.1, 2, 0));
-    cv::line(img, o1, o2, gray, 2);
-    o1 = _projection->project_to_image(cv::Point3f(0, -1, 0));
-    o2 = _projection->project_to_image(cv::Point3f(0.1, -1, 0));
-    cv::line(img, o1, o2, gray, 2);
-    o1 = _projection->project_to_image(cv::Point3f(0, -2, 0));
-    o2 = _projection->project_to_image(cv::Point3f(0.1, -2, 0));
-    cv::line(img, o1, o2, gray, 2);
+    // grid
+    cv::Point2f o1;
+    for (int k=0; k<5; k++) {
+        o1 = _projection->project_to_image(cv::Point3f(k, 0, 0));
+        cv::line(img, cv::Point2f(o1.x, 0), cv::Point2f(o1.x, img.size().height), gray, 1);
+        if (k != 0) {
+            o1 = _projection->project_to_image(cv::Point3f(-k, 0, 0));
+            cv::line(img, cv::Point2f(o1.x, 0), cv::Point2f(o1.x, img.size().height), gray, 1);
+        }
+        o1 = _projection->project_to_image(cv::Point3f(0, k, 0));
+        cv::line(img, cv::Point2f(0, o1.y), cv::Point2f(img.size().width, o1.y), gray, 1);
+        if (k != 0) {
+            o1 = _projection->project_to_image(cv::Point3f(0, -k, 0));
+            cv::line(img, cv::Point2f(0, o1.y), cv::Point2f(img.size().width, o1.y), gray, 1);
+        }
+    }
 
     // obstacles
     for (uint k=0; k<_obstacles.size(); k++) {
