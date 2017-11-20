@@ -7,7 +7,11 @@ short-term
 + test emperor side
     + fine calibration?
 - test ourbot side
-    - conversion from unsigned long time to double
+    - conversion from unsigned long time to double (to test)
+    - test obstacles
+- test with 1 remote eagle
+- test with 2 remote eagles
+    - test merge_obstacles
 
 - if nothing received, last one plotted
 - target should be communicated to camera
