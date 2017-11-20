@@ -1,38 +1,35 @@
 <?xml version="1.0"?>
 <opencv_storage>
     <camera>
-        <index>0</index>
-        <type>LATCAM</type>
+        <index>1</index>
+        <type>SEE3CAM</type>
         <resolution>
             <width>640</width>
-            <height>480</height>
+            <height>360</height>
         </resolution>
         <camera_matrix type_id="opencv-matrix">
             <rows>3</rows>
             <cols>3</cols>
             <dt>d</dt>
-            <data>414.664073 0.000000 327.848765 0.000000 414.664073 242.006555 0.000000 0.000000 1.000000 </data>
-            <!-- <data>470.22180331 0.000000 319.75 0.000000 470.22180331 179.75 0.000000 0.000000 1.000000 </data> -->
+            <data>374.436819 0.000000 311.227597 0.000000 374.436819 179.095061 0.000000 0.000000 1.000000 </data>
         </camera_matrix>
         <distortion_vector type_id="opencv-matrix">
             <rows>5</rows>
             <cols>1</cols>
             <dt>d</dt>
-            <data>-0.224108 0.068924 -0.001305 -0.000329 -0.012663 </data>
-            <!-- <data>-0.466087 0.069038 0 0 0.0723158</data> -->
+            <data>-0.366278 0.154797 0.001915 0.000318 -0.010904 </data>
         </distortion_vector>
         <ground_plane type_id="opencv-matrix">
             <rows>1</rows>
             <cols>4</cols>
             <dt>d</dt>
-            <data>0.000000 0.000000 1.000000 -2.456176 </data>
+            <data>0.000000 0.000000 1.000000 0.000000 </data>
         </ground_plane>
         <external_transformation type_id="opencv-matrix">
             <rows>4</rows>
             <cols>4</cols>
             <dt>d</dt>
-            <!-- <data>0.999985 -0.000000 -0.005510 0.016809 -0.000045 -0.999967 -0.008144 0.024845 -0.005509 0.008144 -0.999952 3.050711 0.000000 0.000000 0.000000 1.000000</data> -->
-            <data>1.000000 0.000000 0.000000 0.000000 0.000000 -1.000000 0.000000 -0.000000 0.000000 -0.000000 -1.000000 3.05 0.000000 0.000000 0.000000 1.000000 </data>
+            <data>0.999950 0.000000 -0.010028 0.031426 0.000056 -0.999984 0.005630 -0.017644 -0.010028 -0.005631 -0.999934 3.133537 0.000000 0.000000 0.000000 1.000000 </data>
         </external_transformation>
     </camera>
     <communicator>
