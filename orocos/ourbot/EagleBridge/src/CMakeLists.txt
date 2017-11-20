@@ -11,6 +11,7 @@
 # and installs in the directory lib/orocos/EagleBridge/
 #
 orocos_component(EagleBridge EagleBridge-component.hpp EagleBridge-component.cpp) # ...you may add multiple source files
+target_link_libraries(EagleBridge ${eagle_LIBRARIES}) # Link libraries to Orocos component here
 #
 # You may add multiple orocos_component statements.
 

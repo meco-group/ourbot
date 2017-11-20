@@ -1,4 +1,6 @@
 local load_new_trajectory = reference:getOperation('receiveTrajectory')
+local get_circular_obstacles = eaglebridge:getOperation('getCircularObstacles')
+local get_rectangular_obstacles = eaglebridge:getOperation('getRectangularObstacles')
 local mp_period = math.floor(control_rate/motionplanning_rate)
 local ref_cnt = 0
 local mp_failure_cnt = 0
@@ -17,12 +19,17 @@ function set_motionplanner(mp, load_obstacles_fun)
   end
   mp_trigger_port = rtt.OutputPort('array')
   tc:addPort(mp_trigger_port, 'mp_trigger_port', 'Trigger for motion planning: is composed of current estimated pose and start index of internal reference input vector')
-  target_pose_port = rtt.InputPort('array')
-  tc:addPort(target_pose_port, 'target_pose_port', 'Target pose')
-  if not communicator:addIncomingConnection('coordinator', 'target_pose_port', 'target_pose') then
+  target_in_port = rtt.InputPort('array')
+  target_out_port = rtt.OutputPort('array')
+  tc:addPort(target_in_port, 'target_in_port', 'Target pose')
+  tc:addPort(target_out_port, 'target_out_port', 'Target pose')
+  if not communicator:addIncomingConnection('coordinator', 'target_in_port', 'target_out') then
     rfsm.send_events(fsm, 'e_failed')
   end
-  local fs, tgt = target_pose_port:read() -- flush port
+  if not communicator:addOutgoingConnection('coordinator', 'target_out_port', 'target_in', 'emperor') then
+    rfsm.send_events(fsm, 'e_failed')
+  end
+  local fs, tgt = target_in_port:read() -- flush port
   if not deployer:connectPorts('motionplanning', 'estimator') then
     return false
   end
@@ -54,6 +61,7 @@ function set_motionplanner(mp, load_obstacles_fun)
   add_dynamic_circ_obstacle = motionplanning:getOperation('addDynamicCircObstacle')
   add_peer_rect_obstacle = motionplanning:getOperation('addPeerRectObstacle')
   add_peer_circ_obstacle = motionplanning:getOperation('addPeerCircObstacle')
+  n_obstacles = motionplanning:getOperation('n_obstacles')
   mp_max_failures = motionplanning:getProperty('max_failures'):get()
   mp_max_recovers = motionplanning:getProperty('max_recovers'):get()
   mp_max_periods = motionplanning:getProperty('max_periods'):get()
@@ -79,7 +87,24 @@ end
 
 local load_obstacles_fun = function()
   reset_obstacles()
-  -- self.add_static_obstacle()
+  -- rectangular obstacles
+  local r_data = get_rectangular_obstacles(n_obstacles)
+  local n_rect = r_data.size/4
+  for k=0, n_rect-1 do
+    local pose = rtt.Variable('array')
+    pose:resize(3)
+    pose:fromtab{r_data[5*k], r_data[5*k+1], r_data[5*k+2]}
+    add_static_rect_obstacle(pose, r_data[5*k+3], r_data[5*k+4])
+  end
+  -- circular obstacles
+  local c_data = get_circular_obstacles(0)
+  local n_circ = c_data/3
+  for k=0, n_circ-1 do
+    local pos = rtt.Variable('array')
+    pos:resize(2)
+    pos:fromtab{c_data[3*k], c_data[3*k+1]}
+    add_static_circ_obstacle(pos, c_data[3*k+2])
+  end
 end
 
 function p2p0_init(fsm)
@@ -232,17 +257,17 @@ return rfsm.state {
 
   home = rfsm.state{
     -- wait until valid estimate
-    doo = function(fsm)
-      while true do
-        if not control_hook(false) then
-          rfsm.send_events(fsm, 'e_failed')
-        end
-        if estimator_valid() then
-          return
-        end
-        rfsm.yield(true)
-      end
-    end
+    -- doo = function(fsm)
+    --   while true do
+    --     if not control_hook(false) then
+    --       rfsm.send_events(fsm, 'e_failed')
+    --     end
+    --     if estimator_valid() then
+    --       return
+    --     end
+    --     rfsm.yield(true)
+    --   end
+    -- end
   },
 
   idle = rfsm.state{
@@ -256,11 +281,12 @@ return rfsm.state {
         if not control_hook(false) or motionplanning_error() then
           rfsm.send_events(fsm, 'e_failed')
         end
-        local fs, target_pose = target_pose_port:read()
+        local fs, target_pose = target_in_port:read()
         if fs == 'NewData' then
           mp_reset()
           motionplanning:setTargetPose(target_pose)
           rfsm.send_events(fsm, 'e_p2p')
+          target_out_port:write(target_pose) -- for drawing
         end
         rfsm.yield(true)
       end

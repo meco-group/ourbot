@@ -13,8 +13,8 @@
     <description>Frequency to update communicator</description>
     <value>100.</value>
   </simple>
-  <simple name="hawkeye_rate" type="double">
-    <description>Frequency to update hawkeye</description>
+  <simple name="camera_rate" type="double">
+    <description>Frequency to update camera</description>
     <value>10</value>
   </simple>
   <simple name="reporting_rate" type="double">

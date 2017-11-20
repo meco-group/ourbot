@@ -7,7 +7,7 @@ local components_to_load = {
   emperor = 'OCL::LuaTLSFComponent',
   gamepad = 'GamePad',
   communicator = 'Communicator',
-  hawkeye = 'HawkEye',
+  camera = 'Camera',
   reporter = 'OCL::NetcdfReporting'
 }
 
@@ -17,14 +17,14 @@ local ports_to_report = {
 }
 
 -- packages to import
-local packages_to_import = {'Serial', 'HawkEye', 'Communicator'}
+local packages_to_import = {'Serial', 'Camera', 'Communicator'}
 
 -- configuration files to load
 local system_config_file = 'Configuration/system-config.cpf'
 local component_config_files = {
   communicator = '../ourbot/Configuration/communicator-config.cpf',
   reporter = 'Configuration/reporter-config.cpf',
-  hawkeye = 'Configuration/hawkeye-config.cpf',
+  camera = 'Configuration/camera-config.cpf',
   gamepad = 'Configuration/gamepad-config.cpf'
 }
 
@@ -136,21 +136,18 @@ return rfsm.state {
         if not addIncoming('emperor', 'emperor_fsm_event_port', 'fsm_event') then rfsm.send_events(fsm,'e_failed') return end
         -- gamepad
         if not addOutgoing('gamepad', 'cmd_velocity_port', 'cmd_velocity', 'ourbots') then rfsm.send_events(fsm,'e_failed') return end
-        -- hawkeye
-        if not addOutgoing('hawkeye', 'target_pose_port', 'target_pose', 'ourbots') then rfsm.send_events(fsm, 'e_failed') return end
-        if not addOutgoing('hawkeye', 'robot9_pose_port', 'markers_kurt', 'kurt') then rfsm.send_events(fsm, 'e_failed') return end
-        if not addOutgoing('hawkeye', 'robot0_pose_port', 'markers_dave', 'dave') then rfsm.send_events(fsm, 'e_failed') return end
-        if not addOutgoing('hawkeye', 'robot1_pose_port', 'markers_krist', 'krist') then rfsm.send_events(fsm, 'e_failed') return end
-        if not addOutgoing('hawkeye', 'robot2_pose_port', 'markers_robot', 'ourbots') then rfsm.send_events(fsm, 'e_failed') return end
-        if not addIncoming('hawkeye', 'robot9_est_pose_port', 'est_pose_kurt') then rfsm.send_events(fsm,'e_failed') return end
-        if not addIncoming('hawkeye', 'robot0_est_pose_port', 'est_pose_dave') then rfsm.send_events(fsm,'e_failed') return end
-        if not addIncoming('hawkeye', 'robot1_est_pose_port', 'est_pose_krist') then rfsm.send_events(fsm,'e_failed') return end
-        if not addIncoming('hawkeye', 'robot9_ref_x_port', 'ref_x_kurt') then rfsm.send_events(fsm,'e_failed') return end
-        if not addIncoming('hawkeye', 'robot0_ref_x_port', 'ref_x_dave') then rfsm.send_events(fsm,'e_failed') return end
-        if not addIncoming('hawkeye', 'robot1_ref_x_port', 'ref_x_krist') then rfsm.send_events(fsm,'e_failed') return end
-        if not addIncoming('hawkeye', 'robot9_ref_y_port', 'ref_y_kurt') then rfsm.send_events(fsm,'e_failed') return end
-        if not addIncoming('hawkeye', 'robot0_ref_y_port', 'ref_y_dave') then rfsm.send_events(fsm,'e_failed') return end
-        if not addIncoming('hawkeye', 'robot1_ref_y_port', 'ref_y_krist') then rfsm.send_events(fsm,'e_failed') return end
+        -- camera
+        if not addOutgoing('camera', 'target_out_port', 'target_out', 'ourbots') then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('camera', 'target_in_port', 'target_in') then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('camera', 'robot0_est_pose_port', 'est_pose_dave') then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('camera', 'robot1_est_pose_port', 'est_pose_krist') then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('camera', 'robot2_est_pose_port', 'est_pose_kurt') then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('camera', 'robot0_ref_x_port', 'ref_x_dave') then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('camera', 'robot1_ref_x_port', 'ref_x_krist') then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('camera', 'robot2_ref_x_port', 'ref_x_kurt') then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('camera', 'robot0_ref_y_port', 'ref_y_dave') then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('camera', 'robot1_ref_y_port', 'ref_y_krist') then rfsm.send_events(fsm,'e_failed') return end
+        if not addIncoming('camera', 'robot2_ref_y_port', 'ref_y_kurt') then rfsm.send_events(fsm,'e_failed') return end
         -- deployer
         if not addOutgoing('lua', 'deployer_failure_event_port', 'deployer_event', 'ourbots') then rfsm.send_events(fsm,'e_failed') return end
         if not addIncoming('lua', 'deployer_fsm_event_port', 'deployer_event') then rfsm.send_events(fsm, 'e_failed') return end
@@ -161,7 +158,7 @@ return rfsm.state {
       entry = function(fsm)
         dp:setActivity('emperor', 1./emperor_rate, 0, rtt.globals.ORO_SCHED_OTHER)
         dp:setActivity('gamepad', 1./velcmd_rate, 0, rtt.globals.ORO_SCHED_OTHER)
-        dp:setActivity('hawkeye', 1./hawkeye_rate, 0, rtt.globals.ORO_SCHED_OTHER)
+        dp:setActivity('camera', 1./camera_rate, 0, rtt.globals.ORO_SCHED_OTHER)
         dp:setActivity('reporter', 0, 0, rtt.globals.ORO_SCHED_OTHER)
         dp:setMasterSlaveActivity('emperor', 'communicator')
           --add here extra activities
@@ -195,11 +192,11 @@ return rfsm.state {
         -- load the local application script
         components.emperor:loadService("scripting")
         if not components.emperor:provides("scripting"):loadPrograms(app_file) then rfsm.send_events(fsm,'e_failed') return end
-        -- start the emperor, gamepad and hawkeye
+        -- start the emperor, gamepad and camera
         if not components.emperor:start() then rfsm.send_events(fsm,'e_failed') return end
         if not components.communicator:start() then rfsm.send_events(fsm, 'e_failed') return end
         components.gamepad:start() -- no failure when not connected
-        if not components.hawkeye:start() then rfsm.send_events(fsm, 'e_failed') return end
+        if not components.camera:start() then rfsm.send_events(fsm, 'e_failed') return end
       end,
     },
   },

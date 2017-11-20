@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "cpf.dtd">
+<properties>
+
+    <simple name="local_detecting" type="boolean">
+        <description>Are we detecting on this device?</description>
+        <value>1</value>
+    </simple>
+
+    <simple name="capture_bg_at_start" type="boolean">
+        <description>Capture background at start</description>
+        <value>1</value>
+    </simple>
+
+    <simple name="node_name" type="string">
+        <description>Name of zyre node for Camera component</description>
+        <value>camera_node</value>
+    </simple>
+
+    <simple name="communication_group" type="string">
+        <description>Zyre group to communicate eagle messages</description>
+        <value>EAGLE</value>
+    </simple>
+
+    <simple name="eagle_config_path" type="string">
+        <description>Path to configure project eagle components</description>
+        <value>Configuration/eagle_config.xml</value>
+    </simple>
+
+    <struct name="image_size" type="array">
+        <description>Image size [w x h] in m</description>
+        <simple name="width" type="double">
+            <value>10</value>
+        </simple>
+        <simple name="height" type="double">
+            <value>6</value>
+        </simple>
+    </struct>
+
+    <struct name="frame_position" type="array">
+        <description>Position of frame in displayed image in m</description>
+        <simple name="x" type="double">
+            <value>5</value>
+        </simple>
+        <simple name="y" type="double">
+            <value>3</value>
+        </simple>
+    </struct>
+
+    <simple name="pixels_per_meter" type="long">
+        <description>Number of pixels displayed in a meter</description>
+        <value>118</value>
+    </simple>
+
+    <simple name="image_stream" type="boolean">
+        <description>Setting up image stream with remote eagles?</description>
+        <value>1</value>
+    </simple>
+
+    <simple name="save_movie" type="boolean">
+        <description>Save movie?</description>
+        <value>0</value>
+    </simple>
+
+    <struct name="eagles" type="strings">
+        <description>Name of eagle nodes to listen to</description>
+        <simple name="eagle0" type="string">
+            <value>eagle0</value>
+        </simple>
+        <simple name="eagle1" type="string">
+            <value>eagle1</value>
+        </simple>
+    </struct>
+
+    <simple name="verbose" type="long">
+        <description>Verbose flag</description>
+        <value>0</value>
+    </simple>
+
+    <struct name="robot_ids" type="ints">
+        <description>Id's of robots to detect</description>
+        <simple name="dave" type="long">
+            <value>0</value>
+        </simple>
+        <simple name="krist" type="long">
+            <value>1</value>
+        </simple>
+        <simple name="kurt" type="long">
+            <value>9</value>
+        </simple>
+    </struct>
+
+    <struct name="robot_sizes" type="array">
+        <description>Sizes of robots to detect</description>
+        <simple name="dave_width" type="double">
+            <value>0.55</value>
+        </simple>
+        <simple name="dave_height" type="double">
+            <value>0.4</value>
+        </simple>
+        <simple name="krist_width" type="double">
+            <value>0.55</value>
+        </simple>
+        <simple name="krist_height" type="double">
+            <value>0.4</value>
+        </simple>
+        <simple name="kurt_width" type="double">
+            <value>0.55</value>
+        </simple>
+        <simple name="kurt_height" type="double">
+            <value>0.4</value>
+        </simple>
+    </struct>
+
+    <struct name="robot_colors" type="ints">
+        <description>Color of robots to detect</description>
+        <simple name="dave_blue" type="long">
+            <value>138</value>
+        </simple>
+        <simple name="dave_green" type="long">
+            <value>110</value>
+        </simple>
+        <simple name="dave_red" type="long">
+            <value>17</value>
+        </simple>
+        <simple name="krist_blue" type="long">
+            <value>17</value>
+        </simple>
+        <simple name="krist_green" type="long">
+            <value>31</value>
+        </simple>
+        <simple name="krist_red" type="long">
+            <value>138</value>
+        </simple>
+        <simple name="kurt_blue" type="long">
+            <value>19</value>
+        </simple>
+        <simple name="kurt_green" type="long">
+            <value>138</value>
+        </simple>
+        <simple name="kurt_red" type="long">
+            <value>17</value>
+        </simple>
+    </struct>
+
+</properties>

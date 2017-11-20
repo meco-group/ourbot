@@ -11,6 +11,7 @@
 # and installs in the directory lib/orocos/Camera/
 #
 orocos_component(Camera Camera-component.hpp Camera-component.cpp) # ...you may add multiple source files
+target_link_libraries(Camera ${eagle_LIBRARIES}) # Link libraries to Orocos component here
 #
 # You may add multiple orocos_component statements.
 

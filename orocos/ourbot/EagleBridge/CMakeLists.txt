@@ -20,6 +20,10 @@ endif()
 # documentation.
 include( ${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake )
 
+# Load Project Eagle
+find_package(eagle REQUIRED)
+include_directories( ${eagle_INCLUDE_DIRS} )
+
 # Rest of the configuration is in src/
 add_subdirectory( src )
 #

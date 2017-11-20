@@ -44,12 +44,12 @@ function configureHook()
    -- variables to use in updateHook
    communicator = tc:getPeer('communicator')
    gamepad = tc:getPeer('gamepad')
-   hawkeye = tc:getPeer('hawkeye')
+   camera = tc:getPeer('camera')
    reporter = tc:getPeer('reporter')
    communicator_update = communicator:getOperation('update')
    communicator_error = communicator:getOperation('inRunTimeError')
    gamepad_error = gamepad:getOperation('inRunTimeError')
-   hawkeye_error = hawkeye:getOperation('inRunTimeError')
+   camera_error = camera:getOperation('inRunTimeError')
 
    reporter_snapshot = reporter:getOperation('snapshot')
    period = tc:getPeriod()
@@ -96,8 +96,8 @@ function updateHook()
       rfsm.send_events(fsm, 'e_failed')
       return
    end
-   if hawkeye_error() then
-      rtt.logl('Error', 'RunTimeError in hawkeye component!')
+   if camera_error() then
+      rtt.logl('Error', 'RunTimeError in camera component!')
       rfsm.send_events(fsm, 'e_failed')
       return
    end
@@ -117,7 +117,7 @@ end
 
 function stopHook()
    gamepad:stop()
-   hawkeye:stop()
+   camera:stop()
    communicator:stop()
    reporter:stop()
 end

@@ -8,12 +8,11 @@ using namespace RTT;
 
 class Kalman : public EstimatorInterface {
   private:
-    InputPort <std::vector<double> >  _markers_port;
+    InputPort <std::vector<double> >  _detected_pose_port;
 
     std::vector<double> _psd_state;
     std::vector<double> _sigma_odo;
     double _sigma_markers;
-    std::vector<double> _marker_loc;
     bool _enable_odo;
     bool _enable_markers;
     double _max_cov_det;
@@ -33,7 +32,7 @@ class Kalman : public EstimatorInterface {
     std::vector<double> _cal_velocity;
     std::vector<double> _est_pose;
     std::vector<double> _est_velocity;
-    std::vector<double> _marker_data;
+    std::vector<double> _detected_pose;
 
     double captureTime();
 

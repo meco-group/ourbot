@@ -1,0 +1,14 @@
+require("print")
+import("rtt_ros")
+ros.import("Camera")
+
+loadComponent("cam", "Camera")
+
+loadService("cam", "marshalling")
+cam.marshalling.loadProperties("Configuration/camera-config.cpf")
+//cam.marshalling.loadProperties("Configuration/system-config.cpf")
+
+cam.setPeriod(0.1)
+
+cam.configure()
+cam.start()

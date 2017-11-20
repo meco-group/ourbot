@@ -477,8 +477,10 @@ flex_fsm.idle = rfsm.state{
       local task = next_task()
       if task ~= nil then
         mp_reset()
-        motionplanning:setTargetPose(get_target_pose(task))
+        local target_pose = get_target_pose(task)
+        motionplanning:setTargetPose(target_pose)
         rfsm.send_events(fsm, 'e_p2p')
+        target_out_port:write(target_pose)
       end
       rfsm.yield(true)
     end
