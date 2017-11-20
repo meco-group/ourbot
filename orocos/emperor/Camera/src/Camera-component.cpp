@@ -82,6 +82,7 @@ void Camera::updateHook(){
             error();
         }
         _capture_time = eagle::timestamp();
+        std::cout << _capture_time << std::endl;
         // detect robots & obstacles
         _detector->search(_image, _robots, _obstacles);
         // transmit results
@@ -327,9 +328,7 @@ void Camera::transmit_detected() {
         data[i++] = (const void*)(&obstacles[k]);
     }
     // send everything
-    if (sizes.size() > 0) {
-        _communicator->shout(data, sizes, _communication_group);
-    }
+    _communicator->shout(data, sizes, _communication_group);
 }
 
 void Camera::print(int verbose) {

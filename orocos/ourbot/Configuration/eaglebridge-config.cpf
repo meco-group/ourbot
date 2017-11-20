@@ -9,6 +9,9 @@
 
     <struct name="eagles" type="strings">
         <description>Name of eagle nodes to listen to</description>
+        <simple name="camera_node" type="string">
+            <value>camera_node</value>
+        </simple>
         <simple name="eagle0" type="string">
             <value>eagle0</value>
         </simple>

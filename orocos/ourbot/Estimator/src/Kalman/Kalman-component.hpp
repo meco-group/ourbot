@@ -25,16 +25,16 @@ class Kalman : public EstimatorInterface {
     M<3, 2> _Mref;
     M<3, 2> _Mmeas;
 
-    double _time;
-    double _start_time;
-    double _marker_time;
+    unsigned long _time;
+    unsigned long _start_time;
+    unsigned long _marker_time;
 
     std::vector<double> _cal_velocity;
     std::vector<double> _est_pose;
     std::vector<double> _est_velocity;
     std::vector<double> _detected_pose;
 
-    double captureTime();
+    unsigned long timestamp();
 
   public:
     Kalman(std::string const& name);

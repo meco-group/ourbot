@@ -72,6 +72,6 @@
             <top_marker>0.1</top_marker>
             <triangle_ratio>0.1</triangle_ratio>
         </thresholds>
-        <background_path>/home/ruben/Documents/Work/Repositories/ProjectEagle/eagle/config/background.png</background_path>
+        <background_path>background.png</background_path>
     </detector>
 </opencv_storage>

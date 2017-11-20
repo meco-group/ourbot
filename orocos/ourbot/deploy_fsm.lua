@@ -95,6 +95,7 @@ return rfsm.state {
         end
         -- go through the table of components and load them
         for name, type in pairs(components_to_load) do
+          print(name)
           if not dp:loadComponent(name, type) then rfsm.send_events(fsm,'e_failed') return end
           components[name] = dp:getPeer(name)
         end

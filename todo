@@ -4,14 +4,16 @@ to do
 short-term
 ----------
 - calibrate see3cam
-- test emperor side
-    - fine calibration?
-- test ourbot size
++ test emperor side
+    + fine calibration?
+- test ourbot side
+    - conversion from unsigned long time to double
 
 - if nothing received, last one plotted
 - target should be communicated to camera
     - not correct -> solve in Visualizer
 - visualizer component in project eagle
+- position of robot should be given
 - flexonomy
     - test with marcus 2
 

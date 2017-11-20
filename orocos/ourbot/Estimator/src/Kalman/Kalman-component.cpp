@@ -20,22 +20,18 @@ _sigma_odo(3), _cal_velocity(3), _est_pose(3), _est_velocity(3), _detected_pose(
 
 bool Kalman::initialize() {
   _kf = new OdometryFilter<3>(_psd_state[0], _psd_state[1], _psd_state[2]);
-  _start_time = captureTime();
+  _start_time = timestamp();
   _kf->unknown(_start_time);
-  _Mref << 0, 1, 0, -1, 1, 0;
+  _Mref << 0.0, 1.0, 0.0, -1.0, 1.0, 0.0;
   return true;
 }
 
-double Kalman::captureTime(){
-  uint32_t ms;
-  double s;
-  ms = std::chrono::duration_cast< std::chrono::milliseconds >(std::chrono::system_clock::now().time_since_epoch()).count();
-  s = ms * double(std::chrono::milliseconds::period::num) / std::chrono::milliseconds::period::den;
-  return s;
+unsigned long Kalman::timestamp() {
+  return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
 bool Kalman::estimateHook(){
-  _time = captureTime();
+  _time = timestamp();
   // odometry velocity
   if (_enable_odo){
     _cal_velocity = getCalVelocity();
@@ -51,6 +47,7 @@ bool Kalman::estimateHook(){
     double m2_y = _detected_pose[1] + sin(_detected_pose[2]);
     _Mmeas << m0_x, m0_y, m1_x, m1_y, m2_x, m2_y;
     _marker_time = _detected_pose[3];
+    std::cout << _marker_time << " vs " << _time << std::endl;
     if (_marker_time > _start_time){
       if (_enable_markers) {
         if (_marker_time > _start_time) {

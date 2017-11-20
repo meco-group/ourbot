@@ -9,7 +9,7 @@
 
     <simple name="capture_bg_at_start" type="boolean">
         <description>Capture background at start</description>
-        <value>1</value>
+        <value>0</value>
     </simple>
 
     <simple name="node_name" type="string">
@@ -30,20 +30,20 @@
     <struct name="image_size" type="array">
         <description>Image size [w x h] in m</description>
         <simple name="width" type="double">
-            <value>10</value>
+            <value>5</value>
         </simple>
         <simple name="height" type="double">
-            <value>6</value>
+            <value>3</value>
         </simple>
     </struct>
 
     <struct name="frame_position" type="array">
         <description>Position of frame in displayed image in m</description>
         <simple name="x" type="double">
-            <value>5</value>
+            <value>2.5</value>
         </simple>
         <simple name="y" type="double">
-            <value>3</value>
+            <value>1.5</value>
         </simple>
     </struct>
 

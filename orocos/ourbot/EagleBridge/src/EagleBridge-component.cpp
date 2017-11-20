@@ -2,7 +2,7 @@
 #include <rtt/Component.hpp>
 #include <iostream>
 
-EagleBridge::EagleBridge(std::string const& name) : TaskContext(name), _detected_pose(4) {
+EagleBridge::EagleBridge(std::string const& name) : TaskContext(name, PreOperational), _detected_pose(4) {
     // ports
     ports()->addPort("detected_pose_port", _detected_pose_port).doc("Detected pose with timestamp");
     // properties
@@ -14,7 +14,6 @@ EagleBridge::EagleBridge(std::string const& name) : TaskContext(name), _detected
     // operations
     addOperation("getCircularObstacles", &EagleBridge::getCircularObstacles, this);
     addOperation("getRectangularObstacles", &EagleBridge::getRectangularObstacles, this);
-
 }
 
 bool EagleBridge::configureHook() {
@@ -22,16 +21,16 @@ bool EagleBridge::configureHook() {
     _detected_pose_port.setDataSample(_detected_pose);
     std::string node_name = "eagle_bridge_";
     node_name.append(_host);
-    _communicator = new eagle::Communicator(node_name);
+    _communicator = new eagle::Communicator(node_name, "wlan0", 5670);
     _communicator->verbose(0);
-    _communicator->start(100);
+    _communicator->start(0);
     _communicator->join(_communication_group);
     init_robot();
     return true;
 }
 
 bool EagleBridge::startHook() {
-  return true;
+    return true;
 }
 
 void EagleBridge::updateHook() {
@@ -127,18 +126,20 @@ void EagleBridge::receive_detected() {
         }
         // merge detected robot information and send it
         int n_msg = marker_msgs.size();
+        std::fill(_detected_pose.begin(), _detected_pose.end(), 0);
         if (n_msg > 0) {
             for (std::map<std::string, eagle::marker_t>::iterator mrk=marker_msgs.begin(); mrk!=marker_msgs.end(); ++mrk) {
                 _detected_pose[0] += (1./n_msg)*mrk->second.x;
                 _detected_pose[1] += (1./n_msg)*mrk->second.y;
                 _detected_pose[2] += (1./n_msg)*mrk->second.yaw;
-                _detected_pose[3] += (1./n_msg)*marker_times[mrk->first];
+                _detected_pose[3] += (1./n_msg)*static_cast<double>(marker_times[mrk->first]);
             }
             _detected_pose_port.write(_detected_pose);
         }
         // merge detected obstacle information and save it
+        _obstacles.clear();
         for (std::map<std::string, std::vector<eagle::Obstacle*>>::iterator obs=obstacle_msgs.begin(); obs!=obstacle_msgs.end(); ++obs) {
-            if (obstacle_msgs.size() > 0) {
+            if (obs->second.size() > 0) {
                 _obst_per_peer[obs->first] = obs->second;
             }
             for (uint k=0; k<_obst_per_peer[obs->first].size(); k++) {
