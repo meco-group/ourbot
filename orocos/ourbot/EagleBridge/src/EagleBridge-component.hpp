@@ -3,6 +3,7 @@
 
 #include <rtt/RTT.hpp>
 #include <eagle.h>
+#include <vector>
 
 using namespace RTT;
 
@@ -29,6 +30,7 @@ class EagleBridge : public RTT::TaskContext{
         std::vector<eagle::Obstacle*> _obstacles;
         std::vector<unsigned long> _robot_timestamps;
         std::vector<unsigned long> _obstacle_timestamps;
+        unsigned long _prev_timestamp;
 
         void init_robots();
         void receive_detected();

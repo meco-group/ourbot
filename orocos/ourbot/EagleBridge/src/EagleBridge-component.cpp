@@ -110,9 +110,6 @@ void EagleBridge::init_robots() {
 
 void EagleBridge::receive_detected() {
     if (_communicator->receive()) {
-        std::map<std::string, eagle::marker_t> marker_msgs;
-        std::map<std::string, unsigned long> marker_times;
-        std::map<std::string, std::vector<eagle::Obstacle*> > obstacle_msgs;
         // handle received messages
         while (_communicator->pop_message(_message)) {
             if (std::find(_eagles.begin(), _eagles.end(), _message.peer()) != _eagles.end()) {
@@ -161,7 +158,7 @@ void EagleBridge::receive_detected() {
         _collector->robots(_robots, _robot_timestamps);
         _collector->obstacles(_obstacles, _obstacle_timestamps);
         for (uint k=0; k<_robots.size(); k++) {
-            if (_robots[k]->id() == _id) {
+            if (_robots[k]->id() == _id && _robots[k]->detected()) {
                 cv::Point3f t = _robots[k]->translation();
                 cv::Point3f r = _robots[k]->rotation();
                 _detected_pose[0] = t.x;

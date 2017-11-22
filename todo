@@ -15,6 +15,8 @@ short-term
     - eagle shout communicate even if nothing was detected
 - test with 2 remote eagles
     - test merge_obstacles
+- 2 robots close to each other not detected well
+- only put on port when new marker/diff time
 
 - if nothing received, last one plotted
 - target should be communicated to camera
