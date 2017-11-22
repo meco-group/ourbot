@@ -50,6 +50,7 @@ bool Camera::configureHook(){
         cv::Mat distortion_vector = (cv::Mat_<double>(5, 1) << 0, 0, 0, 0, 0);
         cv::Mat T = (cv::Mat_<double>(4, 4) << 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 1., 0, 0, 0, 1);
         _projection = new eagle::Projection(camera_matrix, distortion_vector, _image, T);
+        _collector = new eagle::Collector();
     }
     _displayed_image = cv::Mat(cv::Size2f(_image_size[0]*_pixels_per_meter, _image_size[1]*_pixels_per_meter), CV_8UC3);
     return true;
@@ -208,30 +209,37 @@ bool Camera::shout_command(eagle::cmd_t cmd) {
 
 void Camera::receive_detected() {
     if (_communicator->receive()) {
-        std::vector<std::map<std::string, eagle::marker_t>> marker_msgs(_robots.size());
-        std::map<std::string, std::vector<eagle::Obstacle*>> obstacle_msgs;
         // handle received messages
         while (_communicator->pop_message(_message)) {
             if (std::find(_eagles.begin(), _eagles.end(), _message.peer()) != _eagles.end()) {
+                std::vector<eagle::marker_t> robot_msgs;
+                std::vector<unsigned long> robot_msg_times;
+                std::vector<eagle::obstacle_t> obstacle_msgs;
+                std::vector<unsigned long> obstacle_msg_times;
+                bool detect_msg = false;
+                if (_message.empty()) {
+                    // nothing detected
+                    detect_msg = true;
+                }
                 while (_message.available()) {
                     // read header
                     eagle::header_t header;
                     _message.read(&header);
                     switch (header.id) {
                         case eagle::MARKER: {
+                            detect_msg = true;
                             eagle::marker_t marker;
                             _message.read(&marker);
-                            for (uint k=0; k<_robots.size(); k++) {
-                                if (marker.id == _robots[k]->id()) {
-                                    marker_msgs[k][_message.peer()] = marker;
-                                }
-                            }
+                            robot_msgs.push_back(marker);
+                            robot_msg_times.push_back(header.time);
                             break;
                         }
                         case eagle::OBSTACLE: {
+                            detect_msg = true;
                             eagle::obstacle_t obst;
                             _message.read(&obst);
-                            obstacle_msgs[_message.peer()].push_back(eagle::Obstacle::deserialize(obst));
+                            obstacle_msgs.push_back(obst);
+                            obstacle_msg_times.push_back(header.time);
                             break;
                         }
                         case eagle::IMAGE: {
@@ -252,41 +260,14 @@ void Camera::receive_detected() {
                         }
                     }
                 }
-            }
-        }
-        // merge detected robot information
-        int n_msg;
-        for (uint k=0; k<_robots.size(); k++) {
-            n_msg = marker_msgs[k].size();
-            if (n_msg > 0) {
-                eagle::marker_t marker;
-                marker.id = marker_msgs[k].begin()->second.id;
-                marker.x = 0;
-                marker.y = 0;
-                marker.z = 0;
-                marker.roll = 0;
-                marker.pitch = 0;
-                marker.yaw = 0;
-                for (std::map<std::string, eagle::marker_t>::iterator mrk=marker_msgs[k].begin(); mrk!=marker_msgs[k].end(); ++mrk) {
-                    marker.x += (1./n_msg)*mrk->second.x;
-                    marker.y += (1./n_msg)*mrk->second.y;
-                    marker.z += (1./n_msg)*mrk->second.z;
-                    marker.roll += (1./n_msg)*mrk->second.roll;
-                    marker.pitch += (1./n_msg)*mrk->second.pitch;
-                    marker.yaw += (1./n_msg)*mrk->second.yaw;
+                if (detect_msg) {
+                    _collector->add(_message.peer(), robot_msgs, robot_msg_times);
+                    _collector->add(_message.peer(), obstacle_msgs, obstacle_msg_times);
                 }
-                _robots[k]->update(marker);
             }
         }
-        // merge detected obstacle information and save it
-        for (std::map<std::string, std::vector<eagle::Obstacle*>>::iterator obs=obstacle_msgs.begin(); obs!=obstacle_msgs.end(); ++obs) {
-            if (obstacle_msgs.size() > 0) {
-                _obst_per_peer[obs->first] = obs->second;
-            }
-            for (uint k=0; k<_obst_per_peer[obs->first].size(); k++) {
-                _obstacles.push_back(_obst_per_peer[obs->first][k]);
-            }
-        }
+        _collector->robots(_robots, _robot_timestamps);
+        _collector->obstacles(_obstacles, _obstacle_timestamps);
     }
 }
 

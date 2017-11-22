@@ -8,8 +8,11 @@ short-term
     + fine calibration?
 - test ourbot side
     - conversion from unsigned long time to double (to test)
+    - test nothing detected
     - test obstacles
+    - test flexonomy
 - test with 1 remote eagle
+    - eagle shout communicate even if nothing was detected
 - test with 2 remote eagles
     - test merge_obstacles
 

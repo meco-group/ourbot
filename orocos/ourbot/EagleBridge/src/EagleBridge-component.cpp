@@ -12,6 +12,7 @@ EagleBridge::EagleBridge(std::string const& name) : TaskContext(name, PreOperati
     addProperty("eagles", _eagles).doc("Name of eagle nodes to listen to");
     addProperty("verbose", _verbose).doc("Verbose flag");
     addProperty("robot_ids", _robot_ids).doc("Id's of robots to detect");
+    addProperty("robot_sizes", _robot_sizes).doc("Sizes of robots to detect");
     // operations
     addOperation("getCircularObstacles", &EagleBridge::getCircularObstacles, this);
     addOperation("getRectangularObstacles", &EagleBridge::getRectangularObstacles, this);
@@ -22,11 +23,12 @@ bool EagleBridge::configureHook() {
     _detected_pose_port.setDataSample(_detected_pose);
     std::string node_name = "eagle_bridge_";
     node_name.append(_host);
+    _collector = new eagle::Collector();
     _communicator = new eagle::Communicator(node_name, "wlan0", 5670);
     _communicator->verbose(0);
     _communicator->start(0);
     _communicator->join(_communication_group);
-    init_robot();
+    init_robots();
     return true;
 }
 
@@ -79,7 +81,24 @@ std::vector<double> EagleBridge::getRectangularObstacles(int n) {
     return ret;
 }
 
-void EagleBridge::init_robot() {
+std::vector<double> EagleBridge::getRobotPose(int id) {
+    std::vector<double> pose(0);
+    for (uint k=0; k<_robots.size(); k++) {
+        if (_robots[k]->id() == id) {
+            pose.push_back(_robots[k]->translation().x);
+            pose.push_back(_robots[k]->translation().y);
+            pose.push_back(_robots[k]->rotation().z);
+        }
+    }
+    return pose;
+}
+
+
+void EagleBridge::init_robots() {
+    _robots.resize(_robot_ids.size());
+    for (uint k=0; k<_robots.size(); k++) {
+        _robots[k] = new eagle::Robot(_robot_ids[k], _robot_sizes[2*k], _robot_sizes[2*k+1]);
+    }
     std::vector<std::string> hosts = {"dave", "krist", "kurt"};
     for (uint k=0; k<hosts.size(); k++) {
         if (_host == hosts[k]) {
@@ -97,24 +116,34 @@ void EagleBridge::receive_detected() {
         // handle received messages
         while (_communicator->pop_message(_message)) {
             if (std::find(_eagles.begin(), _eagles.end(), _message.peer()) != _eagles.end()) {
+                std::vector<eagle::marker_t> robot_msgs;
+                std::vector<unsigned long> robot_msg_times;
+                std::vector<eagle::obstacle_t> obstacle_msgs;
+                std::vector<unsigned long> obstacle_msg_times;
+                bool detect_msg = false;
+                if (_message.empty()) {
+                    // nothing detected
+                    detect_msg = true;
+                }
                 while (_message.available()) {
                     // read header
                     eagle::header_t header;
                     _message.read(&header);
                     switch (header.id) {
                         case eagle::MARKER: {
+                            detect_msg = true;
                             eagle::marker_t marker;
                             _message.read(&marker);
-                            if (marker.id == _id) {
-                                marker_msgs[_message.peer()] = marker;
-                                marker_times[_message.peer()] = header.time;
-                            }
+                            robot_msgs.push_back(marker);
+                            robot_msg_times.push_back(header.time);
                             break;
                         }
                         case eagle::OBSTACLE: {
+                            detect_msg = true;
                             eagle::obstacle_t obst;
                             _message.read(&obst);
-                            obstacle_msgs[_message.peer()].push_back(eagle::Obstacle::deserialize(obst));
+                            obstacle_msgs.push_back(obst);
+                            obstacle_msg_times.push_back(header.time);
                             break;
                         }
                         default: {
@@ -123,28 +152,23 @@ void EagleBridge::receive_detected() {
                         }
                     }
                 }
+                if (detect_msg) {
+                    _collector->add(_message.peer(), robot_msgs, robot_msg_times);
+                    _collector->add(_message.peer(), obstacle_msgs, obstacle_msg_times);
+                }
             }
         }
-        // merge detected robot information and send it
-        int n_msg = marker_msgs.size();
-        std::fill(_detected_pose.begin(), _detected_pose.end(), 0);
-        if (n_msg > 0) {
-            for (std::map<std::string, eagle::marker_t>::iterator mrk=marker_msgs.begin(); mrk!=marker_msgs.end(); ++mrk) {
-                _detected_pose[0] += (1./n_msg)*mrk->second.x;
-                _detected_pose[1] += (1./n_msg)*mrk->second.y;
-                _detected_pose[2] += (1./n_msg)*mrk->second.yaw;
-                _detected_pose[3] += (1./n_msg)*(marker_times[mrk->first]*double(std::chrono::milliseconds::period::num) / std::chrono::milliseconds::period::den);
-            }
-            _detected_pose_port.write(_detected_pose);
-        }
-        // merge detected obstacle information and save it
-        _obstacles.clear();
-        for (std::map<std::string, std::vector<eagle::Obstacle*>>::iterator obs=obstacle_msgs.begin(); obs!=obstacle_msgs.end(); ++obs) {
-            if (obs->second.size() > 0) {
-                _obst_per_peer[obs->first] = obs->second;
-            }
-            for (uint k=0; k<_obst_per_peer[obs->first].size(); k++) {
-                _obstacles.push_back(_obst_per_peer[obs->first][k]);
+        _collector->robots(_robots, _robot_timestamps);
+        _collector->obstacles(_obstacles, _obstacle_timestamps);
+        for (uint k=0; k<_robots.size(); k++) {
+            if (_robots[k]->id() == _id) {
+                cv::Point3f t = _robots[k]->translation();
+                cv::Point3f r = _robots[k]->rotation();
+                _detected_pose[0] = t.x;
+                _detected_pose[1] = t.y;
+                _detected_pose[2] = r.z;
+                _detected_pose[3] = _robot_timestamps[k]*double(std::chrono::milliseconds::period::num) / std::chrono::milliseconds::period::den;
+                _detected_pose_port.write(_detected_pose);
             }
         }
         // sort obstacles

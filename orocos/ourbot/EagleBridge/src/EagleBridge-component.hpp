@@ -18,15 +18,19 @@ class EagleBridge : public RTT::TaskContext{
         std::vector<std::string> _eagles;
         int _verbose;
         std::vector<int> _robot_ids;
+        std::vector<double> _robot_sizes;
 
         unsigned int _id;
         std::vector<double> _detected_pose;
+        eagle::Collector* _collector;
         eagle::Communicator* _communicator;
         eagle::Message _message;
+        std::vector<eagle::Robot*> _robots;
         std::vector<eagle::Obstacle*> _obstacles;
-        std::map<std::string, std::vector<eagle::Obstacle*>> _obst_per_peer;
+        std::vector<unsigned long> _robot_timestamps;
+        std::vector<unsigned long> _obstacle_timestamps;
 
-        void init_robot();
+        void init_robots();
         void receive_detected();
         void print(int verbose);
         void merge_obstacles(std::vector<eagle::Obstacle*>& obstacles);
@@ -41,5 +45,6 @@ class EagleBridge : public RTT::TaskContext{
 
         std::vector<double> getCircularObstacles(int n);
         std::vector<double> getRectangularObstacles(int n);
+        std::vector<double> getRobotPose(int id);
 };
 #endif

@@ -7,9 +7,14 @@
         <value>1</value>
     </simple>
 
+    <simple name="image_stream" type="boolean">
+        <description>Setting up image stream with remote eagles?</description>
+        <value>0</value>
+    </simple>
+
     <simple name="capture_bg_at_start" type="boolean">
         <description>Capture background at start</description>
-        <value>0</value>
+        <value>1</value>
     </simple>
 
     <simple name="node_name" type="string">
@@ -50,11 +55,6 @@
     <simple name="pixels_per_meter" type="long">
         <description>Number of pixels displayed in a meter</description>
         <value>118</value>
-    </simple>
-
-    <simple name="image_stream" type="boolean">
-        <description>Setting up image stream with remote eagles?</description>
-        <value>1</value>
     </simple>
 
     <simple name="save_movie" type="boolean">

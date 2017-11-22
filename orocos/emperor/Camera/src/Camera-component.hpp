@@ -44,6 +44,7 @@ class Camera : public RTT::TaskContext{
     eagle::Camera* _camera;
     eagle::Detector* _detector;
     eagle::Projection* _projection;
+    eagle::Collector* _collector;
     eagle::Communicator* _communicator;
     eagle::Message _message;
     cv::Mat _image;
@@ -52,7 +53,8 @@ class Camera : public RTT::TaskContext{
 
     std::vector<eagle::Robot*> _robots;
     std::vector<eagle::Obstacle*> _obstacles;
-    std::map<std::string, std::vector<eagle::Obstacle*>> _obst_per_peer;
+    std::vector<unsigned long> _robot_timestamps;
+    std::vector<unsigned long> _obstacle_timestamps;
     cv::VideoWriter _movie;
 
 
