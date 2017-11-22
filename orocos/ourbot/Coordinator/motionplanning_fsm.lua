@@ -1,6 +1,4 @@
 local load_new_trajectory = reference:getOperation('receiveTrajectory')
-local get_circular_obstacles = eaglebridge:getOperation('getCircularObstacles')
-local get_rectangular_obstacles = eaglebridge:getOperation('getRectangularObstacles')
 local mp_period = math.floor(control_rate/motionplanning_rate)
 local ref_cnt = 0
 local mp_failure_cnt = 0

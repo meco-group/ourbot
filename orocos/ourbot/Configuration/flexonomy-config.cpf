@@ -32,6 +32,16 @@
     </simple>
   </struct>
 
+  <struct name="robot_table_marker_pos" type="array">
+    <description>Position of marker wrt table center</description>
+    <simple name="dx" type="double">
+      <value>0.4705</value>
+    </simple>
+    <simple name="dy" type="double">
+      <value>0.4175</value>
+    </simple>
+  </struct>
+
   <simple name="no_robot_cnt_max" type="long">
     <description>Maximum iterations to decide that robot arm is not visible</description>
     <value>15</value>

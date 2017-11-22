@@ -7,18 +7,16 @@ short-term
 + test emperor side
     + fine calibration?
 - test ourbot side
-    - conversion from unsigned long time to double (to test)
-    - test nothing detected
+    - problem with marker injection in Kalman
     - test obstacles
     - test flexonomy
+        - remeasure distance from markers to table center
 - test with 1 remote eagle
-    - eagle shout communicate even if nothing was detected
 - test with 2 remote eagles
-    - test merge_obstacles
+    - test merging
 - 2 robots close to each other not detected well
-- only put on port when new marker/diff time
+~ only put on port when new marker/diff time (to verify)
 
-- if nothing received, last one plotted
 - target should be communicated to camera
     - not correct -> solve in Visualizer
 - visualizer component in project eagle

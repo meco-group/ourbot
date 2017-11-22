@@ -8,6 +8,7 @@ local time_tbl = {}
 local current_task_canceled = false
 local priority = false
 local state = 'busy'
+local ts_prev = 0
 
 local peer_uuid = communicator:getOperation('getPeerUUID')
 local write_mail = communicator:getOperation('writeMail')
@@ -31,6 +32,7 @@ local initialize = function()
   tc:addProperty(rtt.Property('double', 'statemsg_rate', 'Rate to send state messages'))
   tc:addProperty(rtt.Property('double', 'nghbcom_rate', 'Rate to communicate trajectories to neighbor'))
   tc:addProperty(rtt.Property('array', 'robot_table_size', 'Length and width of robot arm table'))
+  tc::addProperty(rtt.Property('array', 'robot_table_marker_pos', 'Position of marker wrt table center'))
   tc:addProperty(rtt.Property('int', 'no_robot_cnt_max', 'Maximum iterations to decide that robot arm is not visible'))
   -- read properties
   if not tc:provides('marshalling'):updateProperties('Configuration/flexonomy-config.cpf') then
@@ -41,6 +43,7 @@ local initialize = function()
   statemsg_rate = tc:getProperty('statemsg_rate'):get()
   nghbcom_rate = tc:getProperty('nghbcom_rate'):get()
   robot_table_size = tc:getProperty('robot_table_size'):get()
+  robot_table_marker_pos = tc:getProperty('robot_table_marker_pos'):get()
   no_robot_cnt_max = tc:getProperty('no_robot_cnt_max'):get()
   local ourbot_size = tc:getProperty('ourbot_size')
   ourbot_radius = 1.1*math.sqrt(math.pow(0.5*ourbot_size[0]+0.13, 2) + math.pow(0.5*ourbot_size[1], 2))
@@ -60,15 +63,12 @@ local initialize = function()
   peer_trajectory_port = rtt.InputPort('array')
   host_priority_port = rtt.OutputPort('bool')
   peer_priority_port = rtt.InputPort('bool')
-  robot_markers_port = rtt.InputPort('array')
   tc:addPort(motion_time_port, 'motion_time_port', 'Motion time of computed motion trajectory')
   tc:addPort(host_trajectory_port, 'host_trajectory_port', 'Port to send trajectory of host')
   tc:addPort(peer_trajectory_port, 'peer_trajectory_port', 'Port to receive trajectory of peer')
   tc:addPort(host_priority_port, 'host_priority_port', 'Am I claiming priority?')
   tc:addPort(peer_priority_port, 'peer_priority_port', 'Is my peer claiming priority?')
-  tc:addPort(robot_markers_port, 'robot_markers_port', 'Markers of robot arm table')
   motion_time_port:connect(motionplanning:getPort('motion_time_port'))
-  if not communicator:addIncomingConnection('coordinator', 'robot_markers_port', 'markers_robot') then rfsm.send_events(fsm, 'e_failed') return false end
   if not communicator:addOutgoingConnection('coordinator', 'host_trajectory_port', 'trajectory_'..host, peer) then rfsm.send_events(fsm, 'e_failed') return false end
   if not communicator:addIncomingConnection('coordinator', 'peer_trajectory_port', 'trajectory_'..peer) then rfsm.send_events(fsm, 'e_failed') return false end
   if not communicator:addOutgoingConnection('coordinator', 'host_priority_port', 'priority_'..host, peer) then rfsm.send_events(fsm, 'e_failed') return false end
@@ -79,7 +79,6 @@ local initialize = function()
 end
 
 local release = function()
-  communicator:removeConnection('coordinator', 'robot_markers_port', 'markers_robot')
   communicator:removeConnection('coordinator', 'host_trajectory_port', 'trajectory_'..host)
   communicator:removeConnection('coordinator', 'peer_trajectory_port', 'trajectory_'..peer)
   communicator:removeConnection('coordinator', 'host_priority_port', 'priority_'..host)
@@ -87,7 +86,6 @@ local release = function()
   motion_time_port:delete()
   host_trajectory_port:delete()
   peer_priority_port:delete()
-  robot_markers_port:delete()
 end
 
 function flex_update(fsm, control)
@@ -122,7 +120,7 @@ end
 local load_obstacles_fun = function ()
   reset_obstacles()
   -- add robot table
-  local robot_pose = get_robot_pose()
+  local robot_pose = get_table_pose()
   add_static_rect_obstacle(robot_pose, robot_table_size)
   -- print('robot pose: (' ..robot_pose[0]..','..robot_pose[1]..','..robot_pose[2]..')')
   -- add peer
@@ -310,7 +308,7 @@ function communicate_trajectory(control)
       if priority then -- send trajectory
         coeffs = get_coeffs()
       else -- send robot position (i.e. send nothing)
-        local robot_pose = get_robot_pose()
+        local robot_pose = get_table_pose()
         for k=0, n_coeffs-1 do
           coeffs[k] = robot_pose[0]
           coeffs[k+n_coeffs] = robot_pose[1]
@@ -359,7 +357,7 @@ function get_target_pose(task)
     return pose
   else
     local key = task.task_parameter_key
-    local rp = get_robot_pose()
+    local rp = get_table_pose()
     if key == 'robot' then
         local dx = -1.0
         local dy = 0.
@@ -375,12 +373,11 @@ function get_target_pose(task)
   return nil
 end
 
-function get_robot_pose()
-  local robot_pose = rtt.Variable('array')
-  robot_pose:resize(3)
-  local fs, robot_markers = robot_markers_port:read()
+function get_table_pose()
+  local robot_pose = get_robot_pose(2)
+  local ts = get_robot_timestamp(2)
   -- robot table still visible?
-  if fs ~= 'NewData' then
+  if ts == ts_prev or ts < 0 then
     no_robot_cnt = no_robot_cnt + 1
     if (no_robot_cnt >= no_robot_cnt_max) then
       no_robot_cnt = no_robot_cnt_max
@@ -391,12 +388,12 @@ function get_robot_pose()
   else
     no_robot_cnt = 0
   end
-  -- comput robot table pose
-  local x = (robot_markers[0] + robot_markers[2] + robot_markers[4])/3.
-  local y = (robot_markers[1] + robot_markers[3] + robot_markers[5])/3.
-  local theta = math.atan2((robot_markers[3] - robot_markers[1]), (robot_markers[2] - robot_markers[0])) - 0.5*math.pi;
-  local dx = 0.4705;
-  local dy = 0.4175;
+  -- compute robot table pose
+  local x = robot_pose[0]
+  local y = robot_pose[1]
+  local theta = robot_pose[2]
+  local dx = -robot_table_marker_pos[0]
+  local dy = -robot_table_marker_pos[1]
   x = x + dx*math.cos(theta) - dy*math.sin(theta)
   y = y + dx*math.sin(theta) + dy*math.cos(theta)
   robot_pose:fromtab{x, y, theta}
