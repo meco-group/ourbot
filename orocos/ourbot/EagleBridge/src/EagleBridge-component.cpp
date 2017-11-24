@@ -124,9 +124,9 @@ void EagleBridge::receive_detected() {
         while (_communicator->pop_message(_message)) {
             if (std::find(_eagles.begin(), _eagles.end(), _message.peer()) != _eagles.end()) {
                 std::vector<eagle::marker_t> robot_msgs;
-                std::vector<unsigned long> robot_msg_times;
+                std::vector<uint32_t> robot_msg_times;
                 std::vector<eagle::obstacle_t> obstacle_msgs;
-                std::vector<unsigned long> obstacle_msg_times;
+                std::vector<uint32_t> obstacle_msg_times;
                 bool detect_msg = false;
                 if (_message.empty()) {
                     // nothing detected

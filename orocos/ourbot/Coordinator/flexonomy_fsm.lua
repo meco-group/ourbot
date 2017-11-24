@@ -32,7 +32,7 @@ local initialize = function()
   tc:addProperty(rtt.Property('double', 'statemsg_rate', 'Rate to send state messages'))
   tc:addProperty(rtt.Property('double', 'nghbcom_rate', 'Rate to communicate trajectories to neighbor'))
   tc:addProperty(rtt.Property('array', 'robot_table_size', 'Length and width of robot arm table'))
-  tc::addProperty(rtt.Property('array', 'robot_table_marker_pos', 'Position of marker wrt table center'))
+  tc:addProperty(rtt.Property('array', 'robot_table_marker_pos', 'Position of marker wrt table center'))
   tc:addProperty(rtt.Property('int', 'no_robot_cnt_max', 'Maximum iterations to decide that robot arm is not visible'))
   -- read properties
   if not tc:provides('marshalling'):updateProperties('Configuration/flexonomy-config.cpf') then

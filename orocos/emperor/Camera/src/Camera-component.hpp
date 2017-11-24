@@ -49,12 +49,12 @@ class Camera : public RTT::TaskContext{
     eagle::Message _message;
     cv::Mat _image;
     cv::Mat _displayed_image;
-    unsigned long _capture_time;
+    uint32_t _capture_time;
 
     std::vector<eagle::Robot*> _robots;
     std::vector<eagle::Obstacle*> _obstacles;
-    std::vector<unsigned long> _robot_timestamps;
-    std::vector<unsigned long> _obstacle_timestamps;
+    std::vector<uint32_t> _robot_timestamps;
+    std::vector<uint32_t> _obstacle_timestamps;
     cv::VideoWriter _movie;
 
 

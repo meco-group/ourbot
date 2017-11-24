@@ -6,16 +6,18 @@ short-term
 - calibrate see3cam
 + test emperor side
     + fine calibration?
+- problem with kurt
+    - reinstall project eagle
 - test ourbot side
-    - problem with marker injection in Kalman
-    - test obstacles
+    + problem with marker injection in Kalman
+    + test obstacles
     - test flexonomy
         - remeasure distance from markers to table center
 - test with 1 remote eagle
 - test with 2 remote eagles
     - test merging
 - 2 robots close to each other not detected well
-~ only put on port when new marker/diff time (to verify)
++ only put on port when new marker/diff time (to verify)
 
 - target should be communicated to camera
     - not correct -> solve in Visualizer

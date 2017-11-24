@@ -4,6 +4,7 @@
 #include <rtt/RTT.hpp>
 #include <eagle.h>
 #include <vector>
+#include <stdint.h>
 
 using namespace RTT;
 
@@ -28,8 +29,8 @@ class EagleBridge : public RTT::TaskContext{
         eagle::Message _message;
         std::vector<eagle::Robot*> _robots;
         std::vector<eagle::Obstacle*> _obstacles;
-        std::vector<unsigned long> _robot_timestamps;
-        std::vector<unsigned long> _obstacle_timestamps;
+        std::vector<uint32_t> _robot_timestamps;
+        std::vector<uint32_t> _obstacle_timestamps;
         uint32_t _prev_timestamp;
 
         void init_robots();

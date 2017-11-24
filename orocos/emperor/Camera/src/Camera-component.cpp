@@ -83,7 +83,6 @@ void Camera::updateHook(){
             error();
         }
         _capture_time = eagle::timestamp();
-        std::cout << _capture_time << std::endl;
         // detect robots & obstacles
         _detector->search(_image, _robots, _obstacles);
         // transmit results
@@ -213,9 +212,9 @@ void Camera::receive_detected() {
         while (_communicator->pop_message(_message)) {
             if (std::find(_eagles.begin(), _eagles.end(), _message.peer()) != _eagles.end()) {
                 std::vector<eagle::marker_t> robot_msgs;
-                std::vector<unsigned long> robot_msg_times;
+                std::vector<uint32_t> robot_msg_times;
                 std::vector<eagle::obstacle_t> obstacle_msgs;
-                std::vector<unsigned long> obstacle_msg_times;
+                std::vector<uint32_t> obstacle_msg_times;
                 bool detect_msg = false;
                 if (_message.empty()) {
                     // nothing detected
@@ -368,8 +367,8 @@ cv::Mat Camera::draw() {
             // estimated pose
             std::vector<double> pose(3);
             _robot_est_pose_port[k]->read(pose);
-            cv::Point2f center = _projection->project_to_image(cv::Point3f(pose[0], pose[1], 0));
-            cv::Point2f heading = _projection->project_to_image(cv::Point3f(pose[0]+0.1*cos(pose[2]), pose[1]+0.1*sin(pose[2]), 0));
+            cv::Point2f center = _projection->project_to_image(cv::Point3f(pose[0], pose[1], 0.07));
+            cv::Point2f heading = _projection->project_to_image(cv::Point3f(pose[0]+0.1*cos(pose[2]), pose[1]+0.1*sin(pose[2]), 0.07));
             cv::circle(img, center, 5, _robots[k]->color(), -2);
             cv::line(img, center, heading, _robots[k]->color(), 2);
             // reference trajectory
@@ -380,7 +379,7 @@ cv::Mat Camera::draw() {
             std::vector<cv::Point2f> points;
             for (uint i=0; i<ref_x.size(); i++) {
                 if (ref_x[i] != 0 && ref_y[i] != 0) {
-                    points.push_back(_projection->project_to_image(cv::Point3f(ref_x[i], ref_y[i], 0)));
+                    points.push_back(_projection->project_to_image(cv::Point3f(ref_x[i], ref_y[i], 0.07)));
                 }
             }
             if (points.size() > 0) {

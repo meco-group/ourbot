@@ -50,7 +50,6 @@ bool Kalman::estimateHook(){
     double m2_y = _detected_pose[1] + sin(_detected_pose[2]);
     _Mmeas << m0_x, m0_y, m1_x, m1_y, m2_x, m2_y;
     _marker_time = _detected_pose[3];
-    std::cout << _marker_time << " vs " << _time << std::endl;
     if (_marker_time > _start_time){
       if (_enable_markers) {
         if (_marker_time > _start_time) {
