@@ -18,13 +18,9 @@ function set_motionplanner(mp, load_obstacles_fun)
   mp_trigger_port = rtt.OutputPort('array')
   tc:addPort(mp_trigger_port, 'mp_trigger_port', 'Trigger for motion planning: is composed of current estimated pose and start index of internal reference input vector')
   target_in_port = rtt.InputPort('array')
-  target_out_port = rtt.OutputPort('array')
+  print('h3')
   tc:addPort(target_in_port, 'target_in_port', 'Target pose')
-  tc:addPort(target_out_port, 'target_out_port', 'Target pose')
   if not communicator:addIncomingConnection('coordinator', 'target_in_port', 'target_out') then
-    rfsm.send_events(fsm, 'e_failed')
-  end
-  if not communicator:addOutgoingConnection('coordinator', 'target_out_port', 'target_in', 'emperor') then
     rfsm.send_events(fsm, 'e_failed')
   end
   local fs, tgt = target_in_port:read() -- flush port
@@ -45,6 +41,7 @@ function set_motionplanner(mp, load_obstacles_fun)
   end
   deployer:setActivity('motionplanning', 0, 0, rtt.globals.ORO_SCHED_OTHER)
 
+  if not communicator:addOutgoingConnection('motionplanning', 'target_pose_port', 'target_in', 'emperor') then rfsm.send_events(fsm, 'e_failed') return end
   motionplanning_error = motionplanning:getOperation('inRunTimeError')
   mp_reset = motionplanning:getOperation('reset')
   mp_busy = motionplanning:getOperation('busy')
@@ -287,7 +284,6 @@ return rfsm.state {
           mp_reset()
           motionplanning:setTargetPose(target_pose)
           rfsm.send_events(fsm, 'e_p2p')
-          target_out_port:write(target_pose) -- for drawing
         end
         rfsm.yield(true)
       end

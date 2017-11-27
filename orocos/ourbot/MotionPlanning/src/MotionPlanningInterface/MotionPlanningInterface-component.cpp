@@ -10,6 +10,7 @@ MotionPlanningInterface::MotionPlanningInterface(std::string const& name) : Task
 
     ports()->addPort("est_pose_port", _est_pose_port).doc("Estimated pose wrt to initial frame");
     ports()->addEventPort("mp_trigger_port", _mp_trigger_port).doc("Trigger for motion planning: is composed of current estimated pose and start index of internal reference input vector");
+    ports()->addPort("target_pose_port", _target_pose_port).doc("Target pose received (for plotting)");
 
     ports()->addPort("ref_pose_trajectory_x_port", _ref_pose_trajectory_port[0]).doc("x reference trajectory");
     ports()->addPort("ref_pose_trajectory_y_port", _ref_pose_trajectory_port[1]).doc("y reference trajectory");
@@ -63,6 +64,7 @@ void MotionPlanningInterface::setTargetPose(const std::vector<double>& target_po
         _target_pose[2] += 2*M_PI;
     }
     std::cout << "target set: (" << _target_pose[0] << "," << _target_pose[1] << "," << _target_pose[2] << ")" << std::endl;
+    _target_pose_port.write(_target_pose);
     _target_set = true;
     _ready = false;
 }
@@ -139,6 +141,7 @@ void MotionPlanningInterface::updateHook() {
         _ready = true;
         _valid = true;
         _busy = false;
+        _target_pose_port.write(std::vector<double>({-1}));
         DEBUG_PRINT("stopped mp update");
         return;
     }

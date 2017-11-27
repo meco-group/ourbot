@@ -23,6 +23,11 @@ EagleBridge::EagleBridge(std::string const& name) : TaskContext(name, PreOperati
 bool EagleBridge::configureHook() {
     // show example data sample to ports to make data flow real-time
     _detected_pose_port.setDataSample(_detected_pose);
+    init_robots();
+    return true;
+}
+
+bool EagleBridge::startHook() {
     std::string node_name = "eagle_bridge_";
     node_name.append(_host);
     _collector = new eagle::Collector();
@@ -30,11 +35,6 @@ bool EagleBridge::configureHook() {
     _communicator->verbose(0);
     _communicator->start(0);
     _communicator->join(_communication_group);
-    init_robots();
-    return true;
-}
-
-bool EagleBridge::startHook() {
     return true;
 }
 
@@ -95,7 +95,7 @@ std::vector<double> EagleBridge::getRobotPose(int id) {
     return pose;
 }
 
-int EagleBridge::getRobotTimestamp(int id) {
+uint32_t EagleBridge::getRobotTimestamp(int id) {
     for (uint k=0; k<_robots.size(); k++) {
         if (_robots[k]->id() == id) {
             return _robot_timestamps[k];

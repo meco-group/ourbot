@@ -95,7 +95,6 @@ return rfsm.state {
         end
         -- go through the table of components and load them
         for name, type in pairs(components_to_load) do
-          print(name)
           if not dp:loadComponent(name, type) then rfsm.send_events(fsm,'e_failed') return end
           components[name] = dp:getPeer(name)
         end
@@ -194,7 +193,6 @@ return rfsm.state {
         -- reference
         if not addOutgoing('reference', 'ref_position_trajectory_x_port', 'ref_x_'..host, 'emperor') then rfsm.send_events(fsm, 'e_failed') return end
         if not addOutgoing('reference', 'ref_position_trajectory_y_port', 'ref_y_'..host, 'emperor') then rfsm.send_events(fsm, 'e_failed') return end
-        -- motion planning
         -- deployer
         if not addOutgoing('lua', 'deployer_failure_event_port', 'deployer_event', 'all') then rfsm.send_events(fsm,'e_failed') return end
         if not addIncoming('lua', 'deployer_fsm_event_port', 'deployer_event') then rfsm.send_events(fsm, 'e_failed') return end

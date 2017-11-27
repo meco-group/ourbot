@@ -7,8 +7,8 @@ GROUP = 'ourbots'
 
 node = pyre.Pyre('SH1')
 node.set_interface('wlan0')
-# node.set_port('5670')
-node.set_port('5671')
+node.set_port('5670')
+# node.set_port('5671')
 node.start()
 # node.set_verbose()
 node.join(GROUP)

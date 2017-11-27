@@ -4,33 +4,27 @@ to do
 to do this weak
 -----------
 
-- recover kurt
-- add flexonomy table and test
-- eagle on laptop
-- eagle0 check detection/deploy script
-- eagle0 with ourbot
++ recover kurt
++ add flexonomy table and test
++ eagle on laptop
++ eagle0 check detection/deploy script
++ eagle0 with ourbot
++ eagle0 with ourbots
+
 - eagle0 & eagle1 with ourbot
 - eagle0 & eagle1 with ourbots
 
++ flikkeren robot in Camera
+- Camera frame verplaatsen
+- eventueel robot een positie geven
+- deploy flexonomy
 
 short-term
 ----------
-- calibrate see3cam
-+ test emperor side
-    + fine calibration?
-- problem with kurt
-    - reinstall project eagle
-- test ourbot side
-    + problem with marker injection in Kalman
-    + test obstacles
-    - test flexonomy
-        - remeasure distance from markers to table center
-- test with 1 remote eagle
+- test flexonomy
+    - remeasure distance from markers to table center
 - test with 2 remote eagles
     - test merging
-+ 2 robots close to each other not detected well
-    + only 1x pattern search is the problem
-+ only put on port when new marker/diff time (to verify)
 
 - visualizer component in project eagle
 - flexonomy

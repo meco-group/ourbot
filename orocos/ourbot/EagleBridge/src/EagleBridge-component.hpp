@@ -48,6 +48,6 @@ class EagleBridge : public RTT::TaskContext{
         std::vector<double> getCircularObstacles(int n);
         std::vector<double> getRectangularObstacles(int n);
         std::vector<double> getRobotPose(int id);
-        int getRobotTimestamp(int id);
+        uint32_t getRobotTimestamp(int id);
 };
 #endif

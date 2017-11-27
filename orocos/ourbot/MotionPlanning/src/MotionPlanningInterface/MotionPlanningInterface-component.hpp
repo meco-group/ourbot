@@ -30,7 +30,7 @@ typedef struct obstacle {
 class MotionPlanningInterface : public RTT::TaskContext {
 
     private:
-        InputPort<std::vector<double> > _target_pose_port;
+        OutputPort<std::vector<double> > _target_pose_port;
         InputPort<std::vector<double> > _mp_trigger_port;
 
         OutputPort<std::vector<double> > _ref_pose_trajectory_port[3];

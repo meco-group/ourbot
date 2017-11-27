@@ -83,9 +83,6 @@ local release = function()
   communicator:removeConnection('coordinator', 'peer_trajectory_port', 'trajectory_'..peer)
   communicator:removeConnection('coordinator', 'host_priority_port', 'priority_'..host)
   communicator:removeConnection('coordinator', 'peer_priority_port', 'priority_'..peer)
-  motion_time_port:delete()
-  host_trajectory_port:delete()
-  peer_priority_port:delete()
 end
 
 function flex_update(fsm, control)
@@ -392,8 +389,8 @@ function get_table_pose()
   local x = robot_pose[0]
   local y = robot_pose[1]
   local theta = robot_pose[2]
-  local dx = -robot_table_marker_pos[0]
-  local dy = -robot_table_marker_pos[1]
+  local dx = robot_table_marker_pos[0]
+  local dy = robot_table_marker_pos[1]
   x = x + dx*math.cos(theta) - dy*math.sin(theta)
   y = y + dx*math.sin(theta) + dy*math.cos(theta)
   robot_pose:fromtab{x, y, theta}
@@ -477,7 +474,6 @@ flex_fsm.idle = rfsm.state{
         local target_pose = get_target_pose(task)
         motionplanning:setTargetPose(target_pose)
         rfsm.send_events(fsm, 'e_p2p')
-        target_out_port:write(target_pose)
       end
       rfsm.yield(true)
     end

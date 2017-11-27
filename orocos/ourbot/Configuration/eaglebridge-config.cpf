@@ -36,6 +36,9 @@
         <simple name="kurt" type="long">
             <value>9</value>
         </simple>
+        <simple name="table" type="long">
+            <value>2</value>
+        </simple>
     </struct>
 
     <struct name="robot_sizes" type="array">
@@ -56,6 +59,12 @@
             <value>0.55</value>
         </simple>
         <simple name="kurt_height" type="double">
+            <value>0.4</value>
+        </simple>
+        <simple name="table_width" type="double">
+            <value>0.55</value>
+        </simple>
+        <simple name="table_height" type="double">
             <value>0.4</value>
         </simple>
     </struct>
