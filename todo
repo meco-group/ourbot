@@ -1,6 +1,18 @@
 to do
 -----
 
+to do this weak
+-----------
+
+- recover kurt
+- add flexonomy table and test
+- eagle on laptop
+- eagle0 check detection/deploy script
+- eagle0 with ourbot
+- eagle0 & eagle1 with ourbot
+- eagle0 & eagle1 with ourbots
+
+
 short-term
 ----------
 - calibrate see3cam
@@ -16,13 +28,11 @@ short-term
 - test with 1 remote eagle
 - test with 2 remote eagles
     - test merging
-- 2 robots close to each other not detected well
++ 2 robots close to each other not detected well
+    + only 1x pattern search is the problem
 + only put on port when new marker/diff time (to verify)
 
-- target should be communicated to camera
-    - not correct -> solve in Visualizer
 - visualizer component in project eagle
-- position of robot should be given
 - flexonomy
     - test with marcus 2
 
