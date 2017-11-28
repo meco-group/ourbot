@@ -12,7 +12,6 @@ EagleBridge::EagleBridge(std::string const& name) : TaskContext(name, PreOperati
     addProperty("eagles", _eagles).doc("Name of eagle nodes to listen to");
     addProperty("verbose", _verbose).doc("Verbose flag");
     addProperty("robot_ids", _robot_ids).doc("Id's of robots to detect");
-    addProperty("robot_sizes", _robot_sizes).doc("Sizes of robots to detect");
     // operations
     addOperation("getCircularObstacles", &EagleBridge::getCircularObstacles, this);
     addOperation("getRectangularObstacles", &EagleBridge::getRectangularObstacles, this);
@@ -107,7 +106,7 @@ uint32_t EagleBridge::getRobotTimestamp(int id) {
 void EagleBridge::init_robots() {
     _robots.resize(_robot_ids.size());
     for (uint k=0; k<_robots.size(); k++) {
-        _robots[k] = new eagle::Robot(_robot_ids[k], _robot_sizes[2*k], _robot_sizes[2*k+1]);
+        _robots[k] = new eagle::Robot(_robot_ids[k], 0, 0, cv::Point3f(0,0,0), cv::Point3f(0,0,0));
     }
     std::vector<std::string> hosts = {"dave", "krist", "kurt"};
     for (uint k=0; k<hosts.size(); k++) {
@@ -165,8 +164,7 @@ void EagleBridge::receive_detected() {
                 }
             }
         }
-        _collector->robots(_robots, _robot_timestamps);
-        _collector->obstacles(_obstacles, _obstacle_timestamps);
+        _collector->get(_robots, _obstacles, _robot_timestamps, _obstacle_timestamps);
         for (uint k=0; k<_robots.size(); k++) {
             if (_robots[k]->id() == _id && _robots[k]->detected() && _robot_timestamps[k] != _prev_timestamp) {
                 _prev_timestamp = _robot_timestamps[k];

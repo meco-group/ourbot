@@ -3,15 +3,13 @@ to do
 
 to do this week
 ---------------
-
-+ Camera frame verplaatsen
-+ deploy flexonomy
-+ eventueel robot een positie geven
 - eagle0 & eagle1 with ourbot
 - eagle0 & eagle1 with ourbots
 
-- stereocalibrate eagle0 & eagle1
-- overlap robot/obstacle
+~ stereocalibrate eagle0 & eagle1
+    - uploaden en testen
+~ overlap robot/obstacle
+    - to test
 - flexonomy multiple tables
 - test movie making eagle's
 

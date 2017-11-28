@@ -20,7 +20,6 @@ class EagleBridge : public RTT::TaskContext{
         std::vector<std::string> _eagles;
         int _verbose;
         std::vector<int> _robot_ids;
-        std::vector<double> _robot_sizes;
 
         unsigned int _id;
         std::vector<double> _detected_pose;

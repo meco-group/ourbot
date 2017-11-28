@@ -258,8 +258,7 @@ void Camera::receive_detected() {
                 }
             }
         }
-        _collector->robots(_robots, _robot_timestamps);
-        _collector->obstacles(_obstacles, _obstacle_timestamps);
+        _collector->get(_robots, _obstacles, _robot_timestamps, _obstacle_timestamps);
     }
 }
 
