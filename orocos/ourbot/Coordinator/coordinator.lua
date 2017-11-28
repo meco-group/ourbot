@@ -10,7 +10,7 @@ local fsm
 local fqn_out, events_in
 
 -- create properties
-tc:addProperty(rtt.Property('int', 'print_level','Level of output printing'))
+tc:addProperty(rtt.Property('int', 'print_level', 'Level of output printing'))
 tc:addProperty(rtt.Property('double', 'control_rate', 'Frequency to update controller'))
 tc:addProperty(rtt.Property('double', 'motionplanning_rate', 'Frequency to update motion planning'))
 tc:addProperty(rtt.Property('double', 'reporting_rate', 'Frequency to take snapshots for the reporter'))
@@ -18,6 +18,7 @@ tc:addProperty(rtt.Property('double', 'garbagecollect_rate', 'Frequency to colle
 tc:addProperty(rtt.Property('bool', 'obstacle_mode','Robot is acting as a moving obstacle'))
 tc:addProperty(rtt.Property('string','host', 'Name of host'))
 tc:addProperty(rtt.Property('array', 'ourbot_size'))
+tc:addProperty(rtt.Property('bool', 'flexonomy', 'Switch immediately to flexonomy state'))
 
 -- create/connect ports
 coordinator_fsm_event_port = rtt.InputPort('string')

@@ -53,6 +53,11 @@
     <value>0.05</value>
   </simple>
 
+  <simple name="flexonomy" type="boolen">
+    <description>Switch immediately to flexonomy state</description>
+    <value>0</value>
+  </simple>
+
   <simple name="accelero_mounting_distance" type="double">
     <description>Distance between the accelerometer and the center of the robot</description>
     <value>0.10738</value>
@@ -61,19 +66,5 @@
     <description>Length of lidar data</description>
     <value>400</value>
   </simple>
-
-  <simple name="index" type="long">
-    <description>Index of agent</description>
-    <value>0</value>
-  </simple>
-  <struct name="neighbors" type="strings">
-    <description>Ip numbers of neighbouring agents</description>
-    <simple name="neighbor0" type="string">
-      <value>192.168.11.120</value>
-    </simple>
-    <simple name="neighbor1" type="string">
-      <value>192.168.11.120</value>
-    </simple>
-  </struct>
 
 </properties>

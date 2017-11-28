@@ -45,7 +45,9 @@ return rfsm.state {
         if not control_hook(false) then
           rfsm.send_events(fsm, 'e_failed')
         end
-        -- rfsm.send_events(fsm, 'e_flexonomy')
+        if flexonomy then
+          rfsm.send_events(fsm, 'e_flexonomy')
+        end
         rfsm.yield(true)
       end
     end,

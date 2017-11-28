@@ -1,23 +1,21 @@
 to do
 -----
 
-to do this weak
------------
+to do this week
+---------------
 
-+ recover kurt
-+ add flexonomy table and test
-+ eagle on laptop
-+ eagle0 check detection/deploy script
-+ eagle0 with ourbot
-+ eagle0 with ourbots
-
+~ Camera frame verplaatsen
+    - to check
+~ deploy flexonomy
+    - to check
+~ eventueel robot een positie geven
+    - to check
+    - rotation?
 - eagle0 & eagle1 with ourbot
 - eagle0 & eagle1 with ourbots
 
-+ flikkeren robot in Camera
-- Camera frame verplaatsen
-- eventueel robot een positie geven
-- deploy flexonomy
+- calibrate eagle0 with wide lens
+- flexonomy multiple tables
 
 short-term
 ----------
@@ -39,12 +37,3 @@ mid-term
 - omg-tools pushen
 - vel/acc parametric
 - wiki revision
-
-questions Maarten
------------------
-
-- remote configuration robots-to-detect
-- eagle transmitter is always shouting
-- com.available() nutteloos?
-- update rate eagle_transmitter
-- self adding to group
