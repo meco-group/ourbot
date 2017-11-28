@@ -37,8 +37,10 @@ class Camera : public RTT::TaskContext{
     bool _save_movie;
     std::vector<std::string> _eagles;
     int _verbose;
+    int _draw;
     std::vector<int> _robot_ids;
     std::vector<double> _robot_sizes;
+    std::vector<double> _robot_marker_translation;
     std::vector<int> _robot_colors;
 
     eagle::Camera* _camera;

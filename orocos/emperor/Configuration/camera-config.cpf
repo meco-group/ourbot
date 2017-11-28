@@ -35,7 +35,7 @@
     <struct name="image_size" type="array">
         <description>Image size [w x h] in m</description>
         <simple name="width" type="double">
-            <value>5</value>
+            <value>6</value>
         </simple>
         <simple name="height" type="double">
             <value>4</value>
@@ -45,10 +45,10 @@
     <struct name="frame_position" type="array">
         <description>Position of frame in displayed image in m</description>
         <simple name="x" type="double">
-            <value>2.5</value>
+            <value>3</value>
         </simple>
         <simple name="y" type="double">
-            <value>2.</value>
+            <value>2</value>
         </simple>
     </struct>
 
@@ -59,7 +59,7 @@
 
     <simple name="save_movie" type="boolean">
         <description>Save movie?</description>
-        <value>0</value>
+        <value>1</value>
     </simple>
 
     <struct name="eagles" type="strings">
@@ -75,6 +75,11 @@
     <simple name="verbose" type="long">
         <description>Verbose flag</description>
         <value>0</value>
+    </simple>
+
+    <simple name="draw" type="long">
+        <description>Amount of drawing</description>
+        <value>4</value>
     </simple>
 
     <struct name="robot_ids" type="ints">
@@ -118,6 +123,34 @@
         </simple>
         <simple name="table_height" type="double">
             <value>0.4</value>
+        </simple>
+    </struct>
+
+    <struct name="robot_marker_translation" type="array">
+        <description>Translation of marker wrt to robot frame</description>
+        <simple name="dave_dx" type="double">
+            <value>0</value>
+        </simple>
+        <simple name="dave_dy" type="double">
+            <value>0</value>
+        </simple>
+        <simple name="krist_dx" type="double">
+            <value>0</value>
+        </simple>
+        <simple name="krist_dy" type="double">
+            <value>0</value>
+        </simple>
+        <simple name="kurt_dx" type="double">
+            <value>0</value>
+        </simple>
+        <simple name="kurt_dy" type="double">
+            <value>0</value>
+        </simple>
+        <simple name="table_dx" type="double">
+            <value>0</value>
+        </simple>
+        <simple name="table_dy" type="double">
+            <value>0</value>
         </simple>
     </struct>
 

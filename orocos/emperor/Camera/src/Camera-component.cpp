@@ -26,8 +26,10 @@ Camera::Camera(std::string const& name) : TaskContext(name){
     addProperty("save_movie", _save_movie).doc("Save movie?");
     addProperty("eagles", _eagles).doc("Name of eagle nodes to listen to");
     addProperty("verbose", _verbose).doc("Verbose flag");
+    addProperty("draw", _draw).doc("Amount of drawing");
     addProperty("robot_ids", _robot_ids).doc("Id's of robots to detect");
     addProperty("robot_sizes", _robot_sizes).doc("Sizes of robots to detect");
+    addProperty("robot_marker_translation", _robot_marker_translation).doc("Translation of marker wrt to robot frame");
     addProperty("robot_colors", _robot_colors).doc("Colors of robots to detect");
     // operations
     addOperation("capture_background", &Camera::capture_background, this);
@@ -46,27 +48,28 @@ bool Camera::configureHook(){
         _projection = _detector->projection();
     } else {
         _image = cv::Mat(cv::Size2f(_image_size[0]*_pixels_per_meter, _image_size[1]*_pixels_per_meter), CV_8UC3);
-        cv::Mat camera_matrix = (cv::Mat_<double>(3, 3) << _pixels_per_meter, 0, 0.5*_image_size[0]*_pixels_per_meter, 0, _pixels_per_meter, 0.5*_image_size[1]*_pixels_per_meter, 0, 0, 1);
+        cv::Mat camera_matrix = (cv::Mat_<double>(3, 3) << _pixels_per_meter, 0, _frame_position[0]*_pixels_per_meter, 0, _pixels_per_meter, _frame_position[1]*_pixels_per_meter, 0, 0, 1);
         cv::Mat distortion_vector = (cv::Mat_<double>(5, 1) << 0, 0, 0, 0, 0);
         cv::Mat T = (cv::Mat_<double>(4, 4) << 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 1., 0, 0, 0, 1);
         _projection = new eagle::Projection(camera_matrix, distortion_vector, _image, T);
         _collector = new eagle::Collector();
     }
-    _displayed_image = cv::Mat(cv::Size2f(_image_size[0]*_pixels_per_meter, _image_size[1]*_pixels_per_meter), CV_8UC3);
     return true;
 }
 
 bool Camera::startHook(){
     if (_local_detecting) {
         _camera->start();
+        _camera->read(_image);
     } else {
         stream(_image_stream);
+        _image = cv::Mat(cv::Size2f(_image_size[0]*_pixels_per_meter, _image_size[1]*_pixels_per_meter), CV_8UC3);
     }
     if (!load_background()) {
         return false;
     }
     if (_save_movie){
-        _movie.open("movie.avi", CV_FOURCC('M','J','P','G'), 1./getPeriod(), _displayed_image.size(), true);
+        _movie.open("movie.avi", CV_FOURCC('M','J','P','G'), 1./getPeriod(), _image.size(), true);
     }
     cvStartWindowThread();
     cv::namedWindow("Image", 1);
@@ -75,7 +78,6 @@ bool Camera::startHook(){
 }
 
 void Camera::updateHook(){
-    _image.setTo(cv::Scalar(0, 0, 0));
     if (_local_detecting) {
         // read new camera image
         if (!_camera->read(_image)) {
@@ -99,16 +101,10 @@ void Camera::updateHook(){
     if (_local_detecting || !_image_stream) {
         _image = draw();
     }
-    cv::Point2f O = _projection->project_to_image(cv::Point3f(0, 0, 0));
-    cv::Point2f roi_or = cv::Point2f(_frame_position[0]*_pixels_per_meter - O.x, _frame_position[1]*_pixels_per_meter - O.y);
-    cv::Rect roi(roi_or, _image.size());
-    roi = roi & cv::Rect(cv::Point(0, 0), _displayed_image.size());
-    cv::Point2f roi_or_img = cv::Point2f( (roi_or.x<0) ? -roi_or.x : 0, (roi_or.y<0) ? -roi_or.y : 0);
-    _image(cv::Rect(roi_or_img, roi.size())).copyTo(_displayed_image(roi));
-    cv::imshow("Image", _displayed_image);
+    cv::imshow("Image", _image);
     cv::waitKey(25);
     if (_save_movie) {
-        _movie.write(_displayed_image);
+        _movie.write(_image);
     }
 }
 
@@ -133,7 +129,6 @@ bool Camera::load_background() {
 
 bool Camera::capture_background() {
     if (_local_detecting) {
-        std::cout << "capturing background ... ";
         for (int i=0; i<10; i++) {
             if (!_camera->read(_image)) {
                 log(Error) << "Could not read camera!" << endlog();
@@ -171,7 +166,8 @@ void Camera::init_robots() {
     _robot_ref_y_port.resize(_robot_ids.size());
     for (uint k=0; k<_robots.size(); k++) {
         cv::Scalar color(_robot_colors[3*k], _robot_colors[3*k+1], _robot_colors[3*k+2]);
-        _robots[k] = new eagle::Robot(_robot_ids[k], _robot_sizes[2*k], _robot_sizes[2*k+1], color);
+        _robots[k] = new eagle::Robot(_robot_ids[k], _robot_sizes[2*k], _robot_sizes[2*k+1],
+            cv::Point3f(_robot_marker_translation[2*k], _robot_marker_translation[2*k+1], 0), color);
         // create ports
         _robot_est_pose_port[k] = new InputPort<std::vector<double> >();
         ports()->addPort("robot" + std::to_string(k) + "_est_pose_port", *_robot_est_pose_port[k]).doc("Estimated pose of robot " + std::to_string(k));
@@ -326,73 +322,82 @@ cv::Mat Camera::draw() {
     cv::Mat img;
     _projection->remap(_image, img);
     double robot_height = 0.07;
-    // coordinate system
     cv::Scalar gray(77, 76, 75);
-    cv::Point2f O = _projection->project_to_image(cv::Point3f(0, 0, 0));
-    cv::Point2f Ex = _projection->project_to_image(cv::Point3f(1, 0, 0));
-    cv::Point2f Ey = _projection->project_to_image(cv::Point3f(0, 1, 0));
-    cv::circle(img, O, 5, gray, -2);
-    cv::arrowedLine(img, O, Ex, gray, 2); //Ex vector
-    cv::arrowedLine(img, O, Ey, gray, 2); //Ey vector
-    cv::putText(img, "x", _projection->project_to_image(cv::Point3f(1.1, 0, 0)), cv::FONT_HERSHEY_SIMPLEX, 1, gray, 2);
-    cv::putText(img, "y", _projection->project_to_image(cv::Point3f(0, 1.1, 0)), cv::FONT_HERSHEY_SIMPLEX, 1, gray, 2);
-    // grid
-    cv::Point2f o1;
-    for (int k=0; k<5; k++) {
-        o1 = _projection->project_to_image(cv::Point3f(k, 0, 0));
-        cv::line(img, cv::Point2f(o1.x, 0), cv::Point2f(o1.x, img.size().height), gray, 1);
-        if (k != 0) {
-            o1 = _projection->project_to_image(cv::Point3f(-k, 0, 0));
+    if (_draw >= 2) {
+        // coordinate system
+        cv::Point2f O = _projection->project_to_image(cv::Point3f(0, 0, 0));
+        cv::Point2f Ex = _projection->project_to_image(cv::Point3f(1, 0, 0));
+        cv::Point2f Ey = _projection->project_to_image(cv::Point3f(0, 1, 0));
+        cv::circle(img, O, 5, gray, -2);
+        cv::arrowedLine(img, O, Ex, gray, 2); //Ex vector
+        cv::arrowedLine(img, O, Ey, gray, 2); //Ey vector
+        cv::putText(img, "x", _projection->project_to_image(cv::Point3f(1.1, 0, 0)), cv::FONT_HERSHEY_SIMPLEX, 1, gray, 2);
+        cv::putText(img, "y", _projection->project_to_image(cv::Point3f(0, 1.1, 0)), cv::FONT_HERSHEY_SIMPLEX, 1, gray, 2);
+    }
+    if (_draw >= 3) {
+        // grid
+        cv::Point2f o1;
+        for (int k=0; k<5; k++) {
+            o1 = _projection->project_to_image(cv::Point3f(k, 0, 0));
             cv::line(img, cv::Point2f(o1.x, 0), cv::Point2f(o1.x, img.size().height), gray, 1);
-        }
-        o1 = _projection->project_to_image(cv::Point3f(0, k, 0));
-        cv::line(img, cv::Point2f(0, o1.y), cv::Point2f(img.size().width, o1.y), gray, 1);
-        if (k != 0) {
-            o1 = _projection->project_to_image(cv::Point3f(0, -k, 0));
+            if (k != 0) {
+                o1 = _projection->project_to_image(cv::Point3f(-k, 0, 0));
+                cv::line(img, cv::Point2f(o1.x, 0), cv::Point2f(o1.x, img.size().height), gray, 1);
+            }
+            o1 = _projection->project_to_image(cv::Point3f(0, k, 0));
             cv::line(img, cv::Point2f(0, o1.y), cv::Point2f(img.size().width, o1.y), gray, 1);
-        }
-    }
-
-    // obstacles
-    for (uint k=0; k<_obstacles.size(); k++) {
-        _obstacles[k]->draw(img, *_projection);
-    }
-    // robots
-    for (uint k=0; k<_robots.size(); k++) {
-        if (_robots[k]->detected()) {
-            _robots[k]->draw(img, *_projection);
-            // estimated pose
-            std::vector<double> pose(3);
-            _robot_est_pose_port[k]->read(pose);
-            cv::Point2f center = _projection->project_to_image(cv::Point3f(pose[0], pose[1], robot_height));
-            cv::Point2f heading = _projection->project_to_image(cv::Point3f(pose[0]+0.1*cos(pose[2]), pose[1]+0.1*sin(pose[2]), robot_height));
-            cv::circle(img, center, 5, _robots[k]->color(), -2);
-            cv::line(img, center, heading, _robots[k]->color(), 2);
-            // reference trajectory
-            std::vector<double> ref_x, ref_y;
-            cv::Scalar color_w = mix_with_white(_robots[k]->color(), 50);
-            _robot_ref_x_port[k]->read(ref_x);
-            _robot_ref_y_port[k]->read(ref_y);
-            std::vector<cv::Point2f> points;
-            for (uint i=0; i<ref_x.size(); i++) {
-                if (ref_x[i] != 0 && ref_y[i] != 0) {
-                    points.push_back(_projection->project_to_image(cv::Point3f(ref_x[i], ref_y[i], robot_height)));
-                }
-            }
-            if (points.size() > 0) {
-                for (uint i=0; i<points.size()-1; i++) {
-                    cv::line(img, points[i], points[i+1], color_w, 2);
-                }
+            if (k != 0) {
+                o1 = _projection->project_to_image(cv::Point3f(0, -k, 0));
+                cv::line(img, cv::Point2f(0, o1.y), cv::Point2f(img.size().width, o1.y), gray, 1);
             }
         }
     }
-    // target
-    std::vector<double> target_pose;
-    _target_in_port.read(target_pose);
-    if (target_pose.size() >= 2) {
-        cv::Point2f target = _projection->project_to_image(cv::Point3f(target_pose[0], target_pose[1], robot_height));
-        cv::circle(img, target, 30, gray, 2);
-        cv::circle(img, target, 10, gray, -1.5);
+    if (_draw >= 4) {
+        // obstacles
+        for (uint k=0; k<_obstacles.size(); k++) {
+            _obstacles[k]->draw(img, *_projection);
+        }
+    }
+    if (_draw >= 1) {
+        // robots
+        for (uint k=0; k<_robots.size(); k++) {
+            if (_robots[k]->detected()) {
+                _robots[k]->draw(img, *_projection);
+                // estimated pose
+                std::vector<double> pose({-100, -100, -100});
+                _robot_est_pose_port[k]->read(pose);
+                cv::Point2f center = _projection->project_to_image(cv::Point3f(pose[0], pose[1], robot_height));
+                cv::Point2f heading = _projection->project_to_image(cv::Point3f(pose[0]+0.1*cos(pose[2]), pose[1]+0.1*sin(pose[2]), robot_height));
+                cv::circle(img, center, 5, _robots[k]->color(), -2);
+                cv::line(img, center, heading, _robots[k]->color(), 2);
+                // reference trajectory
+                std::vector<double> ref_x, ref_y;
+                cv::Scalar color_w = mix_with_white(_robots[k]->color(), 50);
+                _robot_ref_x_port[k]->read(ref_x);
+                _robot_ref_y_port[k]->read(ref_y);
+                std::vector<cv::Point2f> points;
+                for (uint i=0; i<ref_x.size(); i++) {
+                    if (ref_x[i] != 0 && ref_y[i] != 0) {
+                        points.push_back(_projection->project_to_image(cv::Point3f(ref_x[i], ref_y[i], robot_height)));
+                    }
+                }
+                if (points.size() > 0) {
+                    for (uint i=0; i<points.size()-1; i++) {
+                        cv::line(img, points[i], points[i+1], color_w, 2);
+                    }
+                }
+            }
+        }
+    }
+    if (_draw >= 1) {
+        // target
+        std::vector<double> target_pose;
+        _target_in_port.read(target_pose);
+        if (target_pose.size() >= 2) {
+            cv::Point2f target = _projection->project_to_image(cv::Point3f(target_pose[0], target_pose[1], robot_height));
+            cv::circle(img, target, 30, gray, 2);
+            cv::circle(img, target, 10, gray, -1.5);
+        }
     }
     return img;
 }
