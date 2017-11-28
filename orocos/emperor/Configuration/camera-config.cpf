@@ -119,10 +119,10 @@
             <value>0.4</value>
         </simple>
         <simple name="table_width" type="double">
-            <value>0.55</value>
+            <value>1.1</value>
         </simple>
         <simple name="table_height" type="double">
-            <value>0.4</value>
+            <value>1.2</value>
         </simple>
     </struct>
 
@@ -147,10 +147,10 @@
             <value>0</value>
         </simple>
         <simple name="table_dx" type="double">
-            <value>0</value>
+            <value>-0.4705</value>
         </simple>
         <simple name="table_dy" type="double">
-            <value>0</value>
+            <value>-0.4175</value>
         </simple>
     </struct>
 
@@ -183,17 +183,14 @@
         <simple name="kurt_red" type="long">
             <value>17</value>
         </simple>
-        <simple name="krist_red" type="long">
-            <value>138</value>
-        </simple>
         <simple name="table_blue" type="long">
-            <value>0</value>
+            <value>64</value>
         </simple>
         <simple name="table_green" type="long">
-            <value>255</value>
+            <value>64</value>
         </simple>
         <simple name="table_red" type="long">
-            <value>0</value>
+            <value>169</value>
         </simple>
     </struct>
 

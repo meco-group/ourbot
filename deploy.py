@@ -17,7 +17,6 @@ import errno
 import sys
 import math
 import socket
-import pyre
 
 # parameters
 user = os.getenv('USER')
@@ -33,6 +32,7 @@ addresses = col.OrderedDict([('kurt', '192.168.11.121'),
                              ('dave', '192.168.11.122'),
                              ('eagle0', '192.168.11.139'),
                              ('eagle1', '192.168.11.123')])
+
 
 def send_file(ftp, ssh, loc_file, rem_file):
     directory = os.path.dirname(rem_file)
@@ -79,10 +79,10 @@ def modify_robot_config(robot, flexonomy=False):
     tree = et.parse(local_files[-1])
     root = tree.getroot()
     for elem in root.findall('simple'):
-        if elem.attrib['name'] == 'robot':
+        if elem.attrib['name'] == 'host':
             elem.find('value').text = robot
         if elem.attrib['name'] == 'flexonomy':
-            elem.find('value').text = 1 if flexonomy else 0
+            elem.find('value').text = '1' if flexonomy else '0'
     file = open(local_files[-1]+'_', 'w')
     file.write('<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE properties SYSTEM "cpf.dtd">\n')
     tree.write(file)
@@ -92,7 +92,7 @@ def modify_robot_config(robot, flexonomy=False):
 
 def write_settings(flexonomy):
     ssh = paramiko.SSHClient()
-    ssh.set_missing_robot_key_policy(paramiko.AutoAddPolicy())
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     robots_tmp = robots[:]
     for robot in robots_tmp:
         # send all deploy scripts and configuration files
@@ -125,18 +125,28 @@ def write_settings(flexonomy):
 
 def deploy(robots, eagles=None, flexonomy=False):
     write_settings(flexonomy)
-    if len(robots) == 0:
-        return
+    # if len(robots) == 0:
+    #     return
     command = ['gnome-terminal']
     if eagles is not None:
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        for eagle in eagles:
+            try:
+                ssh.connect(addresses[eagle], username='odroid', password='odroid', timeout=0.5)
+            except socket.error:
+                print 'Could not connect to %s' % eagle
+                eagles.remove(eagle)
+                continue
         for eagle in eagles:
             address = addresses[eagle]
-            command.extend(['--tabl', '-e', '''
+            command.extend(['--tab', '-e', '''
                 bash -c '
                 sshpass -p %s ssh %s@%s "
-                killall -9 eagle_transmitter
+                killall -9 EagleTransmitter
+                cd /home/odroid/ProjectEagle/eagle/build
                 echo I am %s
-                eagle_transmitter %s
+                ./bin/EagleTransmitter %s
                 "'
                 ''' % ('odroid', 'odroid', address, eagle, eagle)])
     for robot in robots:

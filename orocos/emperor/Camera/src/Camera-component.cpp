@@ -184,12 +184,13 @@ bool Camera::stream(bool enable) {
             std::cout << "Sending image_stream_on command not succesful." << std::endl;
             return false;
         }
-    } else {
-        if (!shout_command(eagle::IMAGE_STREAM_OFF)) {
-            std::cout << "Sending image_stream_off command not succesful." << std::endl;
-            return false;
-        }
     }
+    // } else {
+    //     if (!shout_command(eagle::IMAGE_STREAM_OFF)) {
+    //         std::cout << "Sending image_stream_off command not succesful." << std::endl;
+    //         return false;
+    //     }
+    // }
     return true;
 }
 

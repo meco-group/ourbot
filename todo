@@ -4,18 +4,16 @@ to do
 to do this week
 ---------------
 
-~ Camera frame verplaatsen
-    - to check
-~ deploy flexonomy
-    - to check
-~ eventueel robot een positie geven
-    - to check
-    - rotation?
++ Camera frame verplaatsen
++ deploy flexonomy
++ eventueel robot een positie geven
 - eagle0 & eagle1 with ourbot
 - eagle0 & eagle1 with ourbots
 
-- calibrate eagle0 with wide lens
+- stereocalibrate eagle0 & eagle1
+- overlap robot/obstacle
 - flexonomy multiple tables
+- test movie making eagle's
 
 short-term
 ----------

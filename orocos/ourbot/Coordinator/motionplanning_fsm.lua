@@ -18,7 +18,6 @@ function set_motionplanner(mp, load_obstacles_fun)
   mp_trigger_port = rtt.OutputPort('array')
   tc:addPort(mp_trigger_port, 'mp_trigger_port', 'Trigger for motion planning: is composed of current estimated pose and start index of internal reference input vector')
   target_in_port = rtt.InputPort('array')
-  print('h3')
   tc:addPort(target_in_port, 'target_in_port', 'Target pose')
   if not communicator:addIncomingConnection('coordinator', 'target_in_port', 'target_out') then
     rfsm.send_events(fsm, 'e_failed')
