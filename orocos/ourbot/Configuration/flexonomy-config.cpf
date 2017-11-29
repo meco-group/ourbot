@@ -48,22 +48,6 @@
     </simple>
   </struct>
 
-  <struct name="robot_table_marker_translation" type="array">
-      <description>Translation of marker wrt to robot frame</description>
-      <simple name="table0_dx" type="double">
-          <value>-0.4705</value>
-      </simple>
-      <simple name="table0_dy" type="double">
-          <value>-0.4175</value>
-      </simple>
-      <simple name="table1_dx" type="double">
-          <value>-0.4705</value>
-      </simple>
-      <simple name="table1_dy" type="double">
-          <value>-0.4175</value>
-      </simple>
-  </struct>
-
   <simple name="no_robot_cnt_max" type="long">
     <description>Maximum iterations to decide that robot arm is not visible</description>
     <value>15</value>

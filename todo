@@ -6,28 +6,18 @@ to do this week
 - eagle0 & eagle1 with ourbot
 - eagle0 & eagle1 with ourbots
 
-~ stereocalibrate eagle0 & eagle1
-    - uploaden en testen
-~ overlap robot/obstacle
-    - to test
-~ flexonomy multiple tables
-    - to test
+- measure marker position wrt table frame
+- measure table length/width
+    - adapt flexonomy-config.cpf
+    - adapt camera-config.cpf
+    - adapt eagle_transmister.cpp
+- build on kurt
+- build eagles
+- capture background
+
+
 ~ test movie making eagle's
     - to test
-
-short-term
-----------
-- test flexonomy
-    - remeasure distance from markers to table center
-- test with 2 remote eagles
-    - test merging
-
-- visualizer component in project eagle
-- flexonomy
-    - test with marcus 2
-
-short-mid-term
---------------
 
 mid-term
 --------

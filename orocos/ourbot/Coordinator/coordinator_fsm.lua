@@ -45,7 +45,7 @@ return rfsm.state {
         if not control_hook(false) then
           rfsm.send_events(fsm, 'e_failed')
         end
-        if tc:getProperty('flexonomy'):get() then
+        if true or tc:getProperty('flexonomy'):get() then
           rfsm.send_events(fsm, 'e_flexonomy')
         end
         rfsm.yield(true)
@@ -57,7 +57,8 @@ return rfsm.state {
   motionplanning = rfsm.load('Coordinator/motionplanning_fsm.lua'),
   motionplanning_dynamic_obstacle = rfsm.load('Coordinator/motionplanning_dynamic_obstacle_fsm.lua'),
   formation = rfsm.load('Coordinator/formation_fsm.lua'),
-  flexonomy = rfsm.load('Coordinator/flexonomy_fsm.lua'),
+  -- flexonomy = rfsm.load('Coordinator/flexonomy_fsm.lua'),
+  flexonomy = rfsm.load('Coordinator/flexonomy_fsm_mult_tables.lua'),
 }
 
 

@@ -27,6 +27,7 @@ orocos/setup.zsh
 *.rosinstall.bak
 *_
 *.avi
+*.png
 orocos/ourbot/Estimator/src/Kalman/const_*
 timer.cpp
 time

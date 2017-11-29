@@ -30,11 +30,10 @@ local robot_tables = {}
 local init_robot_tables = function()
   local robot_table_ids = tc:getProperty('robot_table_ids'):get()
   local robot_table_sizes = tc:getProperty('robot_table_sizes'):get()
-  local robot_table_marker_translation = tc:getProperty('robot_table_marker_translation'):get()
   n_tables = math.min(n_obstacles()-1, robot_table_ids.size)
   for k=0, n_tables-1 do
     robot_tables[k] = {id = robot_table_ids[k], length = robot_table_sizes[2*k], width = robot_table_sizes[2*k+1],
-                 dx = robot_table_marker_translation[2*k], dy = robot_table_marker_translation[2*k+1], no_robot_cnt = no_robot_cnt_max}
+                       no_robot_cnt = no_robot_cnt_max}
   end
   print('Added ' .. n_tables .. ' robot table(s).')
 end
@@ -47,7 +46,6 @@ local initialize = function()
   tc:addProperty(rtt.Property('double', 'nghbcom_rate', 'Rate to communicate trajectories to neighbor'))
   tc:addProperty(rtt.Property('ints', 'robot_table_ids', 'Ids of robot tables to detect'))
   tc:addProperty(rtt.Property('array', 'robot_table_sizes', 'Length and width of robot arm tables'))
-  tc:addProperty(rtt.Property('array', 'robot_table_marker_translation', 'Translation of marker wrt to robot frame'))
   tc:addProperty(rtt.Property('int', 'no_robot_cnt_max', 'Maximum iterations to decide that robot arm is not visible'))
   -- read properties
   if not tc:provides('marshalling'):updateProperties('Configuration/flexonomy-config_mult_tables.cpf') then
@@ -413,19 +411,6 @@ function get_table_pose(nr)
   else
     robot_tables[nr].no_robot_cnt = 0
   end
-  -- compute robot table pose
-  -- local x = robot_pose[0]
-  -- local y = robot_pose[1]
-  -- local theta = robot_pose[2]
-  -- local dx = -robot_tables[nr].dx
-  -- local dy = -robot_tables[nr].dy
-  -- x = x + dx*math.cos(theta) - dy*math.sin(theta)
-  -- y = y + dx*math.sin(theta) + dy*math.cos(theta)
-
-
-
-  -- robot_pose:fromtab{x, y, theta}
-  print('pose table ' .. robot_tables[nr].id .. ': (' .. robot_pose[0] .. ',' .. robot_pose[1] .. ',' .. robot_pose[2] .. ')' )
   return robot_pose
 end
 
