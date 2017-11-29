@@ -36,8 +36,6 @@ Camera::Camera(std::string const& name) : TaskContext(name){
 }
 
 bool Camera::configureHook(){
-
-    _camera = eagle::getCamera(_eagle_config_path);
     _detector = new eagle::Detector(_eagle_config_path);
     _communicator = new eagle::Communicator(_node_name, _eagle_config_path);
     _communicator->verbose(0);
@@ -53,12 +51,14 @@ bool Camera::configureHook(){
         cv::Mat T = (cv::Mat_<double>(4, 4) << 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 1., 0, 0, 0, 1);
         _projection = new eagle::Projection(camera_matrix, distortion_vector, _image, T);
         _collector = new eagle::Collector();
+        _collector->verbose(0);
     }
     return true;
 }
 
 bool Camera::startHook(){
     if (_local_detecting) {
+        _camera = eagle::getCamera(_eagle_config_path);
         _camera->start();
         _camera->read(_image);
     } else {
@@ -112,9 +112,9 @@ void Camera::cleanupHook() {
     cvDestroyAllWindows();
     _camera->stop();
     _communicator->stop();
-    if (_save_movie) {
-        _movie.release();
-    }
+    // if (_save_movie) {
+    //     _movie.release();
+    // }
 }
 
 bool Camera::load_background() {

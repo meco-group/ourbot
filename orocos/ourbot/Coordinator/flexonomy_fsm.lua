@@ -24,6 +24,20 @@ local msg_tbl = {
   },
   payload = {}
 }
+local n_tables = 0
+local robot_tables = {}
+
+local init_robot_tables = function()
+  local robot_table_ids = tc:getProperty('robot_table_ids'):get()
+  local robot_table_sizes = tc:getProperty('robot_table_sizes'):get()
+  local robot_table_marker_translation = tc:getProperty('robot_table_marker_translation'):get()
+  n_tables = math.min(n_obstacles()-1, robot_table_ids.size)
+  for k=0, n_tables-1 do
+    robot_tables[k] = {id = robot_table_ids[k], length = robot_table_sizes[2*k], width = robot_table_sizes[2*k+1],
+                 dx = robot_table_marker_translation[2*k], dy = robot_table_marker_translation[2*k+1], no_robot_cnt = no_robot_cnt_max}
+  end
+  print('Added ' .. n_tables .. ' robot table(s).')
+end
 
 local initialize = function()
   -- create properties
@@ -31,25 +45,23 @@ local initialize = function()
   tc:addProperty(rtt.Property('string', 'header_version', 'Version of communication header'))
   tc:addProperty(rtt.Property('double', 'statemsg_rate', 'Rate to send state messages'))
   tc:addProperty(rtt.Property('double', 'nghbcom_rate', 'Rate to communicate trajectories to neighbor'))
-  tc:addProperty(rtt.Property('array', 'robot_table_size', 'Length and width of robot arm table'))
-  tc:addProperty(rtt.Property('array', 'robot_table_marker_pos', 'Position of marker wrt table center'))
+  tc:addProperty(rtt.Property('ints', 'robot_table_ids', 'Ids of robot tables to detect'))
+  tc:addProperty(rtt.Property('array', 'robot_table_sizes', 'Length and width of robot arm tables'))
+  tc:addProperty(rtt.Property('array', 'robot_table_marker_translation', 'Translation of marker wrt to robot frame'))
   tc:addProperty(rtt.Property('int', 'no_robot_cnt_max', 'Maximum iterations to decide that robot arm is not visible'))
   -- read properties
-  if not tc:provides('marshalling'):updateProperties('Configuration/flexonomy-config.cpf') then
+  if not tc:provides('marshalling'):updateProperties('Configuration/flexonomy-config_mult_tables.cpf') then
     return false
   end
   coordinator_name = tc:getProperty('coordinator_name'):get()
   header_version = tc:getProperty('header_version'):get()
   statemsg_rate = tc:getProperty('statemsg_rate'):get()
   nghbcom_rate = tc:getProperty('nghbcom_rate'):get()
-  robot_table_size = tc:getProperty('robot_table_size'):get()
-  robot_table_marker_pos = tc:getProperty('robot_table_marker_pos'):get()
   no_robot_cnt_max = tc:getProperty('no_robot_cnt_max'):get()
   local ourbot_size = tc:getProperty('ourbot_size')
   ourbot_radius = 1.1*math.sqrt(math.pow(0.5*ourbot_size[0]+0.13, 2) + math.pow(0.5*ourbot_size[1], 2))
   statemsg_cnt = 1./(statemsg_rate*period)
   nghbcom_cnt = 1./(nghbcom_rate*period)
-  no_robot_cnt = no_robot_cnt_max
   max_vel_position = motionplanning:getProperty('max_vel_position'):get()
   max_vel_orientation = motionplanning:getProperty('max_vel_orientation'):get()
   if host == 'kurt' then
@@ -75,6 +87,8 @@ local initialize = function()
   if not communicator:addIncomingConnection('coordinator', 'peer_priority_port', 'priority_'..peer) then rfsm.send_events(fsm, 'e_failed') return false end
   -- join group
   if not communicator:joinGroup(host .. '_flex') then rfsm.send_events(fsm, 'e_failed') return false end
+  -- init robot tables
+  init_robot_tables()
   return true
 end
 
@@ -116,10 +130,15 @@ end
 
 local load_obstacles_fun = function ()
   reset_obstacles()
-  -- add robot table
-  local robot_pose = get_table_pose()
-  add_static_rect_obstacle(robot_pose, robot_table_size)
+  -- add robot tables
+  for k=0, n_tables - 1 do
+    local robot_pose = get_table_pose(k)
+    local robot_table_size = rtt.Variable('array')
+    robot_table_size:resize(2)
+    robot_table_size:fromtab{robot_tables[k].length, robot_tables[k].width}
+    add_static_rect_obstacle(robot_pose, robot_table_size)
   -- print('robot pose: (' ..robot_pose[0]..','..robot_pose[1]..','..robot_pose[2]..')')
+  end
   -- add peer
   local fs, peer_coeffs = peer_trajectory_port:read()
   local n_coeffs = get_basis_length()
@@ -127,6 +146,7 @@ local load_obstacles_fun = function ()
   coeffs:resize(2*n_coeffs)
   if fs ~= 'NewData' then
     print('No trajectory received from peer, using robot arm position!')
+    local robot_pose = get_table_pose(0)
     for k=0, n_coeffs-1 do
       coeffs[k] = robot_pose[0]
       coeffs[k+n_coeffs] = robot_pose[1]
@@ -305,8 +325,8 @@ function communicate_trajectory(control)
       if priority then -- send trajectory
         coeffs = get_coeffs()
       else -- send robot position (i.e. send nothing)
-        local robot_pose = get_table_pose()
         for k=0, n_coeffs-1 do
+        local robot_pose = get_table_pose(0)
           coeffs[k] = robot_pose[0]
           coeffs[k+n_coeffs] = robot_pose[1]
         end
@@ -354,46 +374,58 @@ function get_target_pose(task)
     return pose
   else
     local key = task.task_parameter_key
-    local rp = get_table_pose()
-    if key == 'robot' then
-        local dx = -1.0
-        local dy = 0.
-        local dt = math.pi/2
-
-        pose[0] = rp[0] + dx*math.cos(rp[2]) - dy*math.sin(rp[2])
-        pose[1] = rp[1] + dx*math.sin(rp[2]) + dy*math.cos(rp[2])
-        pose[2] = rp[2] + dt
-        return pose
+    if key == 'robot0' then
+      local rp = get_table_pose(0)
+      local dx = -1.0
+      local dy = 0.
+      local dt = math.pi/2
+      pose[0] = rp[0] + dx*math.cos(rp[2]) - dy*math.sin(rp[2])
+      pose[1] = rp[1] + dx*math.sin(rp[2]) + dy*math.cos(rp[2])
+      pose[2] = rp[2] + dt
+      return pose
+    elseif key == 'robot1' then
+      local rp = get_table_pose(1)
+      local dx = -1.0
+      local dy = 0.
+      local dt = math.pi/2
+      pose[0] = rp[0] + dx*math.cos(rp[2]) - dy*math.sin(rp[2])
+      pose[1] = rp[1] + dx*math.sin(rp[2]) + dy*math.cos(rp[2])
+      pose[2] = rp[2] + dt
+      return pose
     end
   end
   rtt.logl('Warning', 'Target not recognized!')
   return nil
 end
 
-function get_table_pose()
-  local robot_pose = get_robot_pose(2)
-  local ts = get_robot_timestamp(2)
+function get_table_pose(nr)
+  local robot_pose = get_robot_pose(robot_tables[nr].id)
+  local ts = get_robot_timestamp(robot_tables[nr].id)
   -- robot table still visible?
   if ts == ts_prev or ts < 0 then
-    no_robot_cnt = no_robot_cnt + 1
-    if (no_robot_cnt >= no_robot_cnt_max) then
-      no_robot_cnt = no_robot_cnt_max
+    robot_tables[nr].no_robot_cnt = robot_tables[nr].no_robot_cnt + 1
+    if (robot_tables[nr].no_robot_cnt >= no_robot_cnt_max) then
+      robot_tables[nr].no_robot_cnt = no_robot_cnt_max
       rtt.logl('Warning', 'Robot table not detected! Putting it far away!')
       robot_pose:fromtab{-100, -100, 0}
       return robot_pose
     end
   else
-    no_robot_cnt = 0
+    robot_tables[nr].no_robot_cnt = 0
   end
   -- compute robot table pose
-  local x = robot_pose[0]
-  local y = robot_pose[1]
-  local theta = robot_pose[2]
-  local dx = robot_table_marker_pos[0]
-  local dy = robot_table_marker_pos[1]
-  x = x + dx*math.cos(theta) - dy*math.sin(theta)
-  y = y + dx*math.sin(theta) + dy*math.cos(theta)
-  robot_pose:fromtab{x, y, theta}
+  -- local x = robot_pose[0]
+  -- local y = robot_pose[1]
+  -- local theta = robot_pose[2]
+  -- local dx = -robot_tables[nr].dx
+  -- local dy = -robot_tables[nr].dy
+  -- x = x + dx*math.cos(theta) - dy*math.sin(theta)
+  -- y = y + dx*math.sin(theta) + dy*math.cos(theta)
+
+
+
+  -- robot_pose:fromtab{x, y, theta}
+  print('pose table ' .. robot_tables[nr].id .. ': (' .. robot_pose[0] .. ',' .. robot_pose[1] .. ',' .. robot_pose[2] .. ')' )
   return robot_pose
 end
 

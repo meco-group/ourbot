@@ -36,8 +36,11 @@
         <simple name="kurt" type="long">
             <value>9</value>
         </simple>
-        <simple name="table" type="long">
+        <simple name="table0" type="long">
             <value>2</value>
+        </simple>
+        <simple name="table0" type="long">
+            <value>8</value>
         </simple>
     </struct>
 

@@ -1,6 +1,7 @@
 #include "Kalman-component.hpp"
 #include <rtt/Component.hpp>
 #include <iostream>
+#include <stdio.h>
 #include <iomanip>
 #include <chrono>
 
@@ -19,7 +20,7 @@ _sigma_odo(3), _cal_velocity(3), _est_pose(3), _est_velocity(3), _detected_pose(
 }
 
 bool Kalman::initialize() {
-  _kf = new OdometryFilter<3>(_psd_state[0], _psd_state[1], _psd_state[2]);
+  _kf = new OdometryFilter<3>(_psd_state[0], _psd_state[1], _psd_state[2], 300);
   _start_time = timestamp();
   _kf->unknown(_start_time);
   _Mref << 0.0, 1.0, 0.0, -1.0, 1.0, 0.0;
@@ -28,7 +29,7 @@ bool Kalman::initialize() {
 
 double Kalman::timestamp() {
   double s;
-  unsigned long ms = std::chrono::duration_cast< std::chrono::milliseconds >(std::chrono::system_clock::now().time_since_epoch()).count();
+  uint32_t ms = std::chrono::duration_cast< std::chrono::milliseconds >(std::chrono::system_clock::now().time_since_epoch()).count();
   s = ms * double(std::chrono::milliseconds::period::num) / std::chrono::milliseconds::period::den;
   return s;
 }
@@ -53,6 +54,7 @@ bool Kalman::estimateHook(){
     if (_marker_time > _start_time){
       if (_enable_markers) {
         if (_marker_time > _start_time) {
+          // printf("%.3f vs %.3f vs %.3f\n", _marker_time, _time, _start_time);
           _kf->observe_markers(_marker_time, _Mmeas, _Mref, _sigma_markers);
         }
       }

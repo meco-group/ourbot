@@ -98,7 +98,7 @@ while(kp != 'q'):
         msg['payload'] = col.OrderedDict()
         msg['payload']['task_uuid'] = current_task_id
         msg['payload']['task_type'] = 'move_to'
-        msg['payload']['task_parameter_key'] = 'robot'
+        msg['payload']['task_parameter_key'] = 'robot0'
         msg['payload']['task_parameters'] = 'None'
         node.shout(host2+'_flex', json.dumps(msg))
         print 'sent execute msg task Robot to ' + host2
@@ -107,8 +107,8 @@ while(kp != 'q'):
         msg['payload'] = col.OrderedDict()
         msg['payload']['task_uuid'] = current_task_id
         msg['payload']['task_type'] = 'move_to'
-        msg['payload']['task_parameter_key'] = 'None'
-        msg['payload']['task_parameters'] = zone_B
+        msg['payload']['task_parameter_key'] = 'robot1'
+        msg['payload']['task_parameters'] = 'None'
         node.shout(host2+'_flex', json.dumps(msg))
         print 'sent execute msg task B to ' + host2
     elif (ord(kp) == 56): # keypress 8

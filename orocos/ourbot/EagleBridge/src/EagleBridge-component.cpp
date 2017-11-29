@@ -30,6 +30,7 @@ bool EagleBridge::startHook() {
     std::string node_name = "eagle_bridge_";
     node_name.append(_host);
     _collector = new eagle::Collector();
+    _collector->verbose(0);
     _communicator = new eagle::Communicator(node_name, "wlan0", 5670);
     _communicator->verbose(0);
     _communicator->start(0);
