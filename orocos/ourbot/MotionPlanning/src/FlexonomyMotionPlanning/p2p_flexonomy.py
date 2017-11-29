@@ -28,6 +28,7 @@ height = 2.59
 environment = Environment(room={'shape': Rectangle(width, height), 'position': [0.5*width, 0.5*height]})
 robot_arm = Rectangle(width=2., height=2.)
 environment.add_obstacle(Obstacle({'position': [width, height]}, shape=robot_arm))
+environment.add_obstacle(Obstacle({'position': [width, height]}, shape=robot_arm))
 neighbor = Obstacle({'position': C}, shape=Circle(0.34))
 neighbor.set_options({'spline_traj': True})
 neighbor.set_options({'spline_params': spline_params})

@@ -112,6 +112,9 @@ void Camera::cleanupHook() {
     cvDestroyAllWindows();
     _camera->stop();
     _communicator->stop();
+    if (_save_movie) {
+        _movie.release();
+    }
 }
 
 bool Camera::load_background() {
