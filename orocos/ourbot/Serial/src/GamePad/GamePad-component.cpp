@@ -32,7 +32,7 @@ _enable_velcmd(true), _filter_state(3, 0.0), _filter_bandwidth(2)
   addOperation("disableVelocityCmd", &GamePad::disableVelocityCmd, this).doc("Disable writing of cmd_velocity_port");
   addProperty("max_velocity", _max_velocity);
   addProperty("max_omega", _max_omega);
-  addProperty("velcmd_sample_rate", _velcmd_sample_rate).doc("Frequency to update velocity commander");
+  addProperty("velcmd_rate", _velcmd_rate).doc("Frequency to update velocity commander");
   addProperty("filter_bandwidth", _filter_bandwidth).doc("Bandwidth of low pass filter (Hz)");
   addProperty("enable_LPF", _enable_LPF).doc("Enable low pass filter");
 
@@ -74,8 +74,7 @@ _enable_velcmd(true), _filter_state(3, 0.0), _filter_bandwidth(2)
 
 }
 
-bool GamePad::configureHook()
-{
+bool GamePad::configureHook() {
   // Show example data sample to ports to make data flow real-time
   std::vector<double> example(2, 0.0);
   _gamepad_laxis_port.setDataSample(example);
@@ -90,15 +89,13 @@ bool GamePad::configureHook()
 #endif //GAMEPAD_TESTFLAG
 }
 
-bool GamePad::startHook()
-{
+bool GamePad::startHook() {
   setReadWriteOptions(O_RDONLY);
   disableUnknownStuff();
   return USBInterface::startHook();
 }
 
-void GamePad::updateHook()
-{
+void GamePad::updateHook() {
   uint8_t buffer[10*sizeof(_event)];
   unsigned int k = 0;
   int numbytes = readBytes(buffer,10*sizeof(_event));
@@ -124,94 +121,92 @@ void GamePad::updateHook()
 void GamePad::writePorts()
 {
   // buttons
-  if (_gamepad_A != _gamepad_A_prev){
+  if (_gamepad_A != _gamepad_A_prev) {
     _gamepad_A_port.write(_gamepad_A);
     _gamepad_A_prev = _gamepad_A;
   }
-  if (_gamepad_B != _gamepad_B_prev){
+  if (_gamepad_B != _gamepad_B_prev) {
     _gamepad_B_port.write(_gamepad_B);
     _gamepad_B_prev = _gamepad_B;
   }
-  if (_gamepad_X != _gamepad_X_prev){
+  if (_gamepad_X != _gamepad_X_prev) {
     _gamepad_X_port.write(_gamepad_X);
     _gamepad_X_prev = _gamepad_X;
   }
-  if (_gamepad_Y != _gamepad_Y_prev){
+  if (_gamepad_Y != _gamepad_Y_prev) {
     _gamepad_Y_port.write(_gamepad_Y);
     _gamepad_Y_prev = _gamepad_Y;
   }
-  if (_gamepad_lb != _gamepad_lb_prev){
+  if (_gamepad_lb != _gamepad_lb_prev) {
     _gamepad_lb_port.write(_gamepad_lb);
     _gamepad_lb_prev = _gamepad_lb;
   }
-  if (_gamepad_rb != _gamepad_rb_prev){
+  if (_gamepad_rb != _gamepad_rb_prev) {
     _gamepad_rb_port.write(_gamepad_rb);
     _gamepad_rb_prev = _gamepad_rb;
   }
-  if (_gamepad_back != _gamepad_back_prev){
+  if (_gamepad_back != _gamepad_back_prev) {
     _gamepad_back_port.write(_gamepad_back);
     _gamepad_back_prev = _gamepad_back;
   }
-  if (_gamepad_start != _gamepad_start_prev){
+  if (_gamepad_start != _gamepad_start_prev) {
     _gamepad_start_port.write(_gamepad_start);
     _gamepad_start_prev = _gamepad_start;
   }
-  if (_gamepad_logitech != _gamepad_logitech_prev){
+  if (_gamepad_logitech != _gamepad_logitech_prev) {
     _gamepad_logitech_port.write(_gamepad_logitech);
     _gamepad_logitech_prev = _gamepad_logitech;
   }
-  if (_gamepad_laxisbutton != _gamepad_laxisbutton_prev){
+  if (_gamepad_laxisbutton != _gamepad_laxisbutton_prev) {
     _gamepad_laxisbutton_port.write(_gamepad_laxisbutton);
     _gamepad_laxisbutton_prev = _gamepad_laxisbutton;
   }
-  if (_gamepad_raxisbutton != _gamepad_raxisbutton_prev){
+  if (_gamepad_raxisbutton != _gamepad_raxisbutton_prev) {
     _gamepad_raxisbutton_port.write(_gamepad_raxisbutton);
     _gamepad_raxisbutton_prev = _gamepad_raxisbutton;
   }
   // axes
-  if (_gamepad_laxis != _gamepad_laxis_prev){
+  if (_gamepad_laxis != _gamepad_laxis_prev) {
     _gamepad_laxis_port.write(_gamepad_laxis);
     _gamepad_laxis_prev = _gamepad_laxis;
   }
-  if (_gamepad_raxis != _gamepad_raxis_prev){
+  if (_gamepad_raxis != _gamepad_raxis_prev) {
     _gamepad_raxis_port.write(_gamepad_raxis);
     _gamepad_raxis_prev = _gamepad_raxis;
   }
-  if (_gamepad_lt != _gamepad_lt_prev){
+  if (_gamepad_lt != _gamepad_lt_prev) {
     _gamepad_lt_port.write(_gamepad_lt);
     _gamepad_lt_prev = _gamepad_lt;
   }
-  if (_gamepad_rt != _gamepad_rt_prev){
+  if (_gamepad_rt != _gamepad_rt_prev) {
     _gamepad_rt_port.write(_gamepad_rt);
     _gamepad_rt_prev = _gamepad_rt;
   }
-  if (_gamepad_left != _gamepad_left_prev){
+  if (_gamepad_left != _gamepad_left_prev) {
     _gamepad_left_port.write(_gamepad_left);
     _gamepad_left_prev = _gamepad_left;
   }
-  if (_gamepad_right != _gamepad_right_prev){
+  if (_gamepad_right != _gamepad_right_prev) {
     _gamepad_right_port.write(_gamepad_right);
     _gamepad_right_prev = _gamepad_right;
   }
-  if (_gamepad_up != _gamepad_up_prev){
+  if (_gamepad_up != _gamepad_up_prev) {
     _gamepad_up_port.write(_gamepad_up);
     _gamepad_up_prev = _gamepad_up;
   }
-  if (_gamepad_down != _gamepad_down_prev){
+  if (_gamepad_down != _gamepad_down_prev) {
     _gamepad_down_port.write(_gamepad_down);
     _gamepad_down_prev = _gamepad_down;
   }
   // velocity command
-  if (_enable_velcmd and (_cmd_velocity != _cmd_velocity_prev)){
+  if (_enable_velcmd and (_cmd_velocity != _cmd_velocity_prev)) {
     _cmd_velocity_port.write(_cmd_velocity);
     _cmd_velocity_prev = _cmd_velocity;
   }
 }
 
-void GamePad::decodeButtons()
-{
-  switch(_event.number)
-  {
+void GamePad::decodeButtons() {
+  switch(_event.number) {
     case BUTTON_A:
       _gamepad_A = _event.value;
       break;
@@ -248,10 +243,8 @@ void GamePad::decodeButtons()
   }
 }
 
-void GamePad::decodeAxes()
-{
-  switch(_event.number)
-  {
+void GamePad::decodeAxes() {
+  switch(_event.number) {
     case AXIS_LEFTX:
       _gamepad_laxis[0] = transformData(_event.value);
       break;
@@ -281,17 +274,15 @@ void GamePad::decodeAxes()
   }
 }
 
-double GamePad::transformData(int value)
-{
+double GamePad::transformData(int value) {
   return ((double)value)/MAXVALUE;
 }
 
-void GamePad::stopHook()
-{
+void GamePad::stopHook() {
   USBInterface::stopHook();
 }
 
-void GamePad::VelocityCommand(){
+void GamePad::VelocityCommand() {
   std::vector<double> sample(2);
   _cmd_velocity[0] = -treshold(_gamepad_raxis[1])*_max_velocity;
   if (_gamepad_rb == true)
@@ -308,7 +299,7 @@ void GamePad::VelocityCommand(){
   }
 }
 
-double GamePad::treshold(double data){
+double GamePad::treshold(double data) {
   double data_tf;
   if (data > 0.05){
     data_tf = (100./95.)*(data-0.05);
@@ -323,27 +314,27 @@ double GamePad::treshold(double data){
 }
 
 std::vector<double> GamePad::lowPassFilter(std::vector<double> input) {
-  double alpha = (_filter_bandwidth*2*M_PI)/(_velcmd_sample_rate);
+  double alpha = (_filter_bandwidth*2*M_PI)/(_velcmd_rate);
   _filter_state[0] = (1.-alpha)*_filter_state[0] + alpha*input[0];
   _filter_state[1] = (1.-alpha)*_filter_state[1] + alpha*input[1];
   _filter_state[2] = (1.-alpha)*_filter_state[2] + alpha*input[2];
-  for (int k=0; k<3; k++){
+  for (int k=0; k<3; k++) {
     _filter_state[k] = (_filter_state[k] < 0.05 && _filter_state[k] > -0.05) ? 0.:_filter_state[k];
   }
   return _filter_state;
 }
 
-void GamePad::setVelocity(double vx, double vy, double w){
+void GamePad::setVelocity(double vx, double vy, double w) {
   _cmd_velocity[0] = vx;
   _cmd_velocity[1] = vy;
   _cmd_velocity[2] = w;
 }
 
-void GamePad::enableVelocityCmd(){
+void GamePad::enableVelocityCmd() {
   _enable_velcmd = true;
 }
 
-void GamePad::disableVelocityCmd(){
+void GamePad::disableVelocityCmd() {
   _enable_velcmd = false;
 }
 ORO_LIST_COMPONENT_TYPE(GamePad)

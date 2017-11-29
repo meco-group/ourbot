@@ -7,13 +7,11 @@
   </simple>
   <simple name="max_velocity" type="double">
     <description>Maximum allowed translational command velocity</description>
-    <value>0.8</value>
-    <!-- <value>0.3</value> -->
+    <value>0.5</value>
   </simple>
   <simple name="max_omega" type="double">
     <description>Maximum allowed rotational command velocity</description>
-    <value>2.</value>
-    <!-- <value>0.5</value> -->
+    <value>1.</value>
   </simple>
   <simple name="filter_bandwidth" type="double">
     <description>Bandwidth of low pass filter (Hz)</description>

@@ -17,14 +17,14 @@
 // License along with this program; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#ifndef VEHICLE
-#define VEHICLE
+#ifndef VEHICLE_P2P
+#define VEHICLE_P2P
 
 #include <math.h>
 #include <vector>
 #include <map>
 
-namespace omg{
+namespace p2p{
 
 class Vehicle{
     private:

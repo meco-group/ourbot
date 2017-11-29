@@ -1,96 +1,126 @@
-require "rttlib"
-require "rfsm"
-require "rfsm_rtt"
-require "rfsmpp"
+require 'rttlib'
+require 'rfsm'
+require 'rfsm_rtt'
+require 'rfsmpp'
+
+require './Coordinator/globals'
 
 local tc = rtt.getTC();
 local fsm
 local fqn_out, events_in
-local start_time
 
 -- create properties
-_print_level            = rtt.Property("int","print_level","Level of output printing")
-_reporter_sample_rate   = rtt.Property("double","reporter_sample_rate", "Frequency to take snapshots for the reporter")
-_obstacle_mode          = rtt.Property("bool","obstacle_mode","Robot is acting as a moving obstacle")
+tc:addProperty(rtt.Property('int', 'print_level', 'Level of output printing'))
+tc:addProperty(rtt.Property('double', 'control_rate', 'Frequency to update controller'))
+tc:addProperty(rtt.Property('double', 'motionplanning_rate', 'Frequency to update motion planning'))
+tc:addProperty(rtt.Property('double', 'reporting_rate', 'Frequency to take snapshots for the reporter'))
+tc:addProperty(rtt.Property('double', 'garbagecollect_rate', 'Frequency to collect garbage'))
+tc:addProperty(rtt.Property('bool', 'obstacle_mode','Robot is acting as a moving obstacle'))
+tc:addProperty(rtt.Property('string','host', 'Name of host'))
+tc:addProperty(rtt.Property('array', 'ourbot_size'))
+tc:addProperty(rtt.Property('bool', 'flexonomy', 'Switch immediately to flexonomy state'))
 
-tc:addProperty(_print_level)
-tc:addProperty(_reporter_sample_rate)
-tc:addProperty(_obstacle_mode)
+-- create/connect ports
+coordinator_fsm_event_port = rtt.InputPort('string')
+coordinator_send_event_port = rtt.OutputPort('string')
+coordinator_failure_event_port = rtt.OutputPort('string')
+coordinator_current_state_port = rtt.OutputPort('string')
 
--- ports that drive/read the FSM
-_coordinator_fsm_event_port      = rtt.InputPort("string")
-_coordinator_send_event_port     = rtt.OutputPort("string")
-_coordinator_failure_event_port  = rtt.OutputPort("string")
-_coordinator_current_state_port  = rtt.OutputPort("string")
+tc:addEventPort(coordinator_fsm_event_port, 'coordinator_fsm_event_port', 'Event port for driving the coordinator FSM')
+tc:addPort(coordinator_send_event_port, 'coordinator_send_event_port', 'Port to send events to the coordinator FSM from the coordinator')
+tc:addPort(coordinator_failure_event_port, 'coordinator_failure_event_port','Port to send indicate a failure in the coordinator')
+tc:addPort(coordinator_current_state_port, 'coordinator_current_state_port', 'current active state of the coordinator FSM')
+tc:addPort(rtt.InputPort('array'), 'est_pose_port', 'Estimated pose wrt to initial frame')
+coordinator_send_event_port:connect(coordinator_fsm_event_port)
 
-tc:addEventPort(_coordinator_fsm_event_port, "coordinator_fsm_event_port", "Event port for driving the coordinator FSM")
-tc:addPort(_coordinator_send_event_port, "coordinator_send_event_port", "Port to send events to the coordinator FSM from the coordinator")
-tc:addPort(_coordinator_failure_event_port,"coordinator_failure_event_port","Port to send indicate a failure in the coordinator")
-tc:addPort(_coordinator_current_state_port, "coordinator_current_state_port", "current active state of the coordinator FSM")
-
-_coordinator_send_event_port:connect(_coordinator_fsm_event_port)
+local fsm
 
 function configureHook()
-   -- create local copies of the property values
-   print_level = _print_level:get()
-   reporter_sample_rate = _reporter_sample_rate:get()
-   obstacle_mode = _obstacle_mode:get()
+  -- init global variables and functions
+  init_globals()
 
-   -- variables to use in updateHook
-   communicator = tc:getPeer('communicator')
-   communicatorUpdate = communicator:getOperation("update")
-   communicatorInRunTimeError = communicator:getOperation("inRunTimeError")
+  -- load state machine
+  fsm = rfsm.init(rfsm.load('Coordinator/coordinator_fsm.lua'))
+  if not fsm then
+    rtt.logl('Error','Could not initialize coordinator state machine')
+    return false
+  end
 
-   if obstacle_mode then
-      communicator:joinGroup('obstacle')
-   end
+  -- connect event ports to state machine
+  fsm.getevents = rfsm_rtt.gen_read_str_events(coordinator_fsm_event_port)
+  rfsm.post_step_hook_add(fsm, rfsm_rtt.gen_write_fqn(coordinator_current_state_port))
 
-   -- load state machine
-   fsm = rfsm.init(rfsm.load("Coordinator/coordinator_fsm.lua"))
-   if not fsm then
-      rtt.logl("Error","Could not initialize coordinator state machine")
-      return false
-   end
+  if tc:getProperty('print_level'):get() >= 2 then
+    -- enable state entry and exit dbg output
+    fsm.dbg=rfsmpp.gen_dbgcolor('Coordinator FSM', { STATE_ENTER=true, STATE_EXIT=true}, false)
+    -- redirect FSM output to rtt log
+    fsm.info=function(...) rtt.logl('Info', table.concat({...}, ' ')) end
+    fsm.warn=function(...) rtt.logl('Warning', table.concat({...}, ' ')) end
+    fsm.err=function(...) rtt.logl('Error', table.concat({...}, ' ')) end
+  end
+  return true
+end
 
-   -- connect event ports to state machine
-   fsm.getevents = rfsm_rtt.gen_read_str_events(_coordinator_fsm_event_port)
-   rfsm.post_step_hook_add(fsm, rfsm_rtt.gen_write_fqn(_coordinator_current_state_port))
-
-   if print_level >= 2 then
-      -- enable state entry and exit dbg output
-      fsm.dbg=rfsmpp.gen_dbgcolor('Coordinator FSM', { STATE_ENTER=true, STATE_EXIT=true}, false)
-      -- redirect FSM output to rtt log
-      fsm.info=function(...) rtt.logl('Info', table.concat({...}, ' ')) end
-      fsm.warn=function(...) rtt.logl('Warning', table.concat({...}, ' ')) end
-      fsm.err=function(...) rtt.logl('Error', table.concat({...}, ' ')) end
-   end
-
-   -- create ports with timing info
-   _controlloop_duration = rtt.OutputPort("double")
-   _controlloop_jitter   = rtt.OutputPort("double")
-   tc:addPort(_controlloop_duration,"controlloop_duration","Duration of executing the control loop")
-   tc:addPort(_controlloop_jitter,"controlloop_jitter","Jitter of the control loop")
-   return true
+function startHook()
+  if not start_sensing_components() then
+    return false
+  end
+  start_time = get_sec()
+  prev_start_time = start_time
+  end_time = start_time
+  return true
 end
 
 function updateHook()
-   -- update communication
-   communicatorUpdate()
-   if communicatorInRunTimeError() then
-      rtt.logl("Error","RunTimeError in communicator")
-      rfsm.send_events(fsm,'e_failed')
-      return
-   end
+  prev_start_time = start_time
+  start_time = get_sec()
+  -- manual garbage collection is necessary for omitting mem leaks!!
+  garbage_collect()
+  -- update communication
+  communicator_update()
+  -- snapshot for reporter
+  snapshot()
+  -- error check
+  if io_error() then
+    rtt.logl('Error', 'RunTimeError in gamepad component!')
+    rfsm.send_events(fsm, 'e_failed')
+    return
+  end
+  if estimator_error() then
+    rtt.logl('Error', 'RunTimeError in hawkeye component!')
+    rfsm.send_events(fsm, 'e_failed')
+    return
+  end
+  if reference_error() then
+    rtt.logl('Error', 'RunTimeError in emperor component!')
+    rfsm.send_events(fsm, 'e_failed')
+    return
+  end
+  if controller_error() then
+    rtt.logl('Error', 'RunTimeError in emperor component!')
+    rfsm.send_events(fsm, 'e_failed')
+    return
+  end
+  if communicator_error() then
+    rtt.logl('Error','RunTimeError in communicator component!')
+    rfsm.send_events(fsm, 'e_failed')
+    return
+  end
+  if tc:inRunTimeError() then
+    rtt.logl('Error', 'RunTimeError in coordinator component!')
+    return false
+  end
+  -- run state machine
+  rfsm.run(fsm)
+  -- guard time
+  guard_time(start_time, prev_start_time, end_time)
+  end_time = get_sec()
+end
 
-   rfsm.run(fsm)
+function stopHook()
+  stop_sensing_components()
 end
 
 function cleanupHook()
    rttlib.tc_cleanup()
-end
-
---Local function to get the current time in seconds
-function get_sec()
-   local sec, nsec = rtt.getTime()
-   return sec + nsec*1e-9
 end

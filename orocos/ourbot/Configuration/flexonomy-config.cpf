@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "cpf.dtd">
+<properties>
+
+  <simple name="coordinator_name" type="string">
+    <description>Name of coordinating node</description>
+    <value>SH1</value>
+  </simple>
+
+  <simple name="header_version" type="string">
+    <description>Version of communication header</description>
+    <value>1.0.0</value>
+  </simple>
+
+  <simple name="statemsg_rate" type="double">
+    <description>Rate to send state messages</description>
+    <value>0.5</value>
+  </simple>
+
+  <simple name="nghbcom_rate" type="double">
+    <description>Rate to communicate trajectories to neighbor</description>
+    <value>4</value>
+  </simple>
+
+  <struct name="robot_table_ids" type="ints">
+    <description>Id's of robot tables to detect</description>
+    <simple name="table0" type="long">
+        <value>2</value>
+    </simple>
+    <simple name="table1" type="long">
+        <value>8</value>
+    </simple>
+  </struct>
+
+  <struct name="robot_table_sizes" type="array">
+    <description>Length and width of robot arm tables</description>
+    <simple name="table0_length" type="double">
+      <value>1.1</value>
+    </simple>
+    <simple name="table0_width" type="double">
+      <value>1.2</value>
+    </simple>
+    <simple name="table1_length" type="double">
+      <value>1.1</value>
+    </simple>
+    <simple name="table1_width" type="double">
+      <value>1.2</value>
+    </simple>
+  </struct>
+
+  <simple name="no_robot_cnt_max" type="long">
+    <description>Maximum iterations to decide that robot arm is not visible</description>
+    <value>15</value>
+  </simple>
+
+</properties>
+

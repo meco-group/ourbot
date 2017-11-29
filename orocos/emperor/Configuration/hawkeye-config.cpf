@@ -1,69 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE properties SYSTEM "cpf.dtd">
 <properties>
-    <struct name="robot_sizes" type="array">
-        <description>Width and height of outer rectangle of each robot [w_r1, h_r1, w_r2, ...] (m)</description>
-        <simple name="width_robot0" type="double">
-            <value>0.4</value>
-        </simple>
-        <simple name="height_robot0" type="double">
-            <value>0.55</value>
-        </simple>
-    </struct>
 
-     <struct name="robot_colors" type="ints">
-        <description>RGB colors of each robot [r_r1, g_r1, b_r1, r_r2, ...]</description>
-        <simple name="red_robot0" type="long">
-            <value>17</value>
-        </simple>
-        <simple name="green_robot0" type="long">
-            <value>110</value>
-        </simple>
-        <simple name="blue_robot0" type="long">
-            <value>138</value>
-        </simple>
-<!--         <simple name="red_robot1" type="long">
-            <value>138</value>
-        </simple>
-        <simple name="green_robot1" type="long">
-            <value>31</value>
-        </simple>
-        <simple name="blue_robot1" type="long">
-            <value>17</value>
-        </simple>
-        <simple name="red_robot2" type="long">
-            <value>17</value>
-        </simple>
-        <simple name="green_robot2" type="long">
-            <value>138</value>
-        </simple>
-        <simple name="blue_robot2" type="long">
-            <value>19</value>
-        </simple> -->
-    </struct>
-
-    <!-- laser cut markers -->
-    <struct name="marker_locations" type="array">
-        <description>Locations of markers in robot frame [x1_r1, y1_r1, x2_r1, y2_r1, x3_r1, y3_r1, x1_r2, ...] (m)</description>
-        <simple name="x1_robot1" type="double">
-            <value>-0.0145</value>
-        </simple>
-        <simple name="y1_robot1" type="double">
-            <value>-0.082</value>
-        </simple>
-        <simple name="x2_robot1" type="double">
-            <value>-0.0145</value>
-        </simple>
-        <simple name="y2_robot1" type="double">
-            <value>0.082</value>
-        </simple>
-        <simple name="x3_robot1" type="double">
-            <value>0.0855</value>
-        </simple>
-        <simple name="y3_robot1" type="double">
-            <value>0.0</value>
-        </simple>
-    </struct>
+    <simple name="draw_amount" type="long">
+        <description>Amount of drawing on captured image</description>
+        <value>4</value>
+    </simple>
 
     <simple name="video_port_name" type="string">
         <description>Path to video driver</description>
@@ -110,6 +52,11 @@
           <value>0.072315805984965828</value>
         </simple>
     </struct>
+
+    <simple name="detect_obstacles" type="boolean">
+        <description>Enable obstacle detection</description>
+        <value>0</value>
+    </simple>
 
     <simple name="max_detectable_obstacles" type="long">
         <description>Maximum number of detectable obstacles</description>
@@ -206,4 +153,134 @@
         <description>Ratio for frame cropping</description>
         <value>0.85</value>
     </simple>
+
+    <simple name="z_position_cam" type="double">
+        <description>Distance camera is placed above ground</description>
+        <value>3.1</value>
+    </simple>
+
+    <struct name="z_position_robot" type="array">
+        <description>Distance robot is placed above ground</description>
+        <value>3.1</value>
+        <simple name="z_position_robot0" type="double">
+            <value>0</value>
+        </simple>
+        <simple name="z_position_robot1" type="double">
+            <value>0</value>
+        </simple>
+        <simple name="z_position_robot2" type="double">
+            <value>0.</value>
+        </simple>
+    </struct>
+
+    <struct name="robot_sizes" type="array">
+        <description>Width and height of outer rectangle of each robot [w_r0, h_r0, w_r1, h_r1, ...] (m)</description>
+        <simple name="width_robot0" type="double">
+            <value>0.4</value>
+        </simple>
+        <simple name="height_robot0" type="double">
+            <value>0.55</value>
+        </simple>
+        <simple name="width_robot1" type="double">
+            <value>0.4</value>
+        </simple>
+        <simple name="height_robot1" type="double">
+            <value>0.55</value>
+        </simple>
+        <simple name="width_robot2" type="double">
+            <value>1.2</value>
+        </simple>
+        <simple name="height_robot2" type="double">
+            <value>1.2</value>
+        </simple>
+    </struct>
+
+     <struct name="robot_colors" type="ints">
+        <description>RGB colors of each robot [r_r1, g_r1, b_r1, r_r2, ...]</description>
+        <simple name="red_robot0" type="long">
+            <value>17</value>
+        </simple>
+        <simple name="green_robot0" type="long">
+            <value>110</value>
+        </simple>
+        <simple name="blue_robot0" type="long">
+            <value>138</value>
+        </simple>
+        <simple name="red_robot1" type="long">
+            <value>138</value>
+        </simple>
+        <simple name="green_robot1" type="long">
+            <value>31</value>
+        </simple>
+        <simple name="blue_robot1" type="long">
+            <value>17</value>
+        </simple>
+        <simple name="red_robot2" type="long">
+            <value>17</value>
+        </simple>
+        <simple name="green_robot2" type="long">
+            <value>138</value>
+        </simple>
+        <simple name="blue_robot2" type="long">
+            <value>19</value>
+        </simple>
+    </struct>
+
+    <struct name="marker_locations" type="array">
+        <description>Locations of markers in robot frame [x1_r0, y1_r0, x2_r0, y2_r0, x3_r0, y3_r0, x1_r1, ...] (m)</description>
+        <simple name="x1_robot0" type="double">
+            <value>-0.0145</value>
+        </simple>
+        <simple name="y1_robot0" type="double">
+            <value>-0.082</value>
+        </simple>
+        <simple name="x2_robot0" type="double">
+            <value>-0.0145</value>
+        </simple>
+        <simple name="y2_robot0" type="double">
+            <value>0.082</value>
+        </simple>
+        <simple name="x3_robot0" type="double">
+            <value>0.0855</value>
+        </simple>
+        <simple name="y3_robot0" type="double">
+            <value>0.0</value>
+        </simple>
+        <simple name="x1_robot1" type="double">
+            <value>-0.0145</value>
+        </simple>
+        <simple name="y1_robot1" type="double">
+            <value>-0.082</value>
+        </simple>
+        <simple name="x2_robot1" type="double">
+            <value>-0.0145</value>
+        </simple>
+        <simple name="y2_robot1" type="double">
+            <value>0.082</value>
+        </simple>
+        <simple name="x3_robot1" type="double">
+            <value>0.0855</value>
+        </simple>
+        <simple name="y3_robot1" type="double">
+            <value>0.0</value>
+        </simple>
+        <simple name="x1_robot2" type="double">
+            <value>-0.5055</value>
+        </simple>
+        <simple name="y1_robot2" type="double">
+            <value>-0.502</value>
+        </simple>
+        <simple name="x2_robot2" type="double">
+            <value>-0.5055</value>
+        </simple>
+        <simple name="y2_robot2" type="double">
+            <value>-0.333</value>
+        </simple>
+        <simple name="x3_robot2" type="double">
+            <value>-0.4005</value>
+        </simple>
+        <simple name="y3_robot2" type="double">
+            <value>-0.4175</value>
+        </simple>
+    </struct>
 </properties>

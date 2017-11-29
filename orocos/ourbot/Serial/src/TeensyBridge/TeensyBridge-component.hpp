@@ -38,8 +38,7 @@ class TeensyBridge : public USBInterface
 		void writeRawDataToPorts();
 
 		// KINEMATIC HANDLERS
-		double _platform_length;
-		double _platform_width;
+		std::vector<double> _ourbot_size;
 		double _wheel_radius;
 		uint32_t _encoder_ticks_per_revolution;
 		double _current_sensor_gain;
@@ -55,6 +54,7 @@ class TeensyBridge : public USBInterface
 
 		std::vector<double> _velocity_pid_soft;
 		std::vector<double> _velocity_pid_strong;
+		std::vector<double> _max_velocity;
 
 		RTT::InputPort<std::vector<double> >  _cmd_velocity_port;
 		RTT::OutputPort<std::vector<double> > _cmd_velocity_passthrough_port;
@@ -74,6 +74,7 @@ class TeensyBridge : public USBInterface
 
 		void recalculatePose();
 		void recalculateVelocity();
+		double saturate(double v, double max);
 
 		// IMU HANDLERS
 		IMU* _imus[2]; //array of imus

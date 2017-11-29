@@ -7,11 +7,11 @@
 typedef std::vector<RTT::TaskContext*> Components;
 typedef std::vector<RTT::base::PortInterface*> Ports;
 
-class Container : public RTT::TaskContext{
-	private:
-		Components _components;
+class Container : public RTT::TaskContext {
+private:
+    Components _components;
 
-  public:
+public:
     Container(std::string const& name);
     bool configureHook();
     bool startHook();

@@ -2,51 +2,57 @@
 <!DOCTYPE properties SYSTEM "cpf.dtd">
 <properties>
 
-<simple name="init_iter" type="long">
-  <description>Number of initial ADMM iterations</description>
+<simple name="max_failures" type="long">
+  <description>Maximum number of consecutive infeasible motionplanning updates</description>
+  <value>1</value>
+</simple>
+
+<simple name="max_recovers" type="long">
+  <description>Maximum number of consecutive motionplanning recoveries</description>
   <value>5</value>
 </simple>
-<simple name="rho" type="double">
-  <description>Penalty factor for ADMM</description>
-  <value>0.2</value>
+
+<simple name="max_periods" type="long">
+  <description>Maximum number of periods the motionplanning can take to compute</description>
+  <value>5</value>
 </simple>
+
 <simple name="ideal_prediction" type="boolean">
   <description>Use prediction based on computed trajectories and not on state estimation</description>
   <value>0</value>
 </simple>
-<simple name="maximum_failures" type="long">
-  <description>Maximum allowed consecutive failures</description>
-  <value>5</value>
-</simple>
-<simple name="target_detection" type="boolean">
-  <description>Target reached detection?</description>
-  <value>1</value>
-</simple>
 
-<struct name="configuration_x" type="array">
-  <description>x coordinates relative to fleet center</description>
-  <simple name="Element0" type="double">
-    <value>-0.2</value>
-  </simple>
-  <simple name="Element1" type="double">
-    <value>-0.2</value>
-  </simple>
-  <simple name="Element2" type="double">
-    <value>0.35</value>
-  </simple>
-</struct>
-
-<struct name="configuration_y" type="array">
-  <description>y coordinates relative to fleet center</description>
-  <simple name="Element0" type="double">
-    <value>-0.2</value>
-  </simple>
-  <simple name="Element1" type="double">
-    <value>0.2</value>
-  </simple>
-  <simple name="Element2" type="double">
-    <value>0.0</value>
-  </simple>
-</struct>
+<simple name="max_vel_position" type="double">
+ <description>Maximum position velocity [m/s]</description>
+   <value>0.5</value>
+</simple>
+<simple name="max_acc_position" type="double">
+ <description>Maximum position acceleration [m/s^2]</description>
+   <value>1.</value>
+</simple>
+<simple name="max_vel_orientation" type="double">
+ <description>Maximum orientation velocity [rad/s]</description>
+   <value>0.5</value>
+</simple>
+<simple name="max_acc_orientation" type="double">
+ <description>Maximum orientation acceleration [rad/s^2]</description>
+   <value>1.</value>
+</simple>
+<simple name="target_dist_tol" type="double">
+  <description>Tolerance for target position detection</description>
+  <value>0.01</value>
+</simple>
+<simple name="angle_dist_tol" type="double">
+  <description>Tolerance for target orientation detection</description>
+  <value>0.02</value>
+</simple>
+<simple name="input_norm_tol" type="double">
+  <description>Tolerance for target input detection</description>
+  <value>0.01</value>
+</simple>
+<simple name="orientation_th" type="double">
+  <description>Threshold for orientation setpoint</description>
+  <value>0.01</value>
+</simple>
 
 </properties>

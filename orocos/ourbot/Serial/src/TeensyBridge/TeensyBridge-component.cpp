@@ -6,20 +6,20 @@
 #define MAVLINK_MSG_OVERHEAD			8
 
 TeensyBridge::TeensyBridge(std::string const& name) :
-	USBInterface(name), _platform_length(0.3), _platform_width(0.265), _wheel_radius(0.05), _encoder_ticks_per_revolution(35840),
+	USBInterface(name), _ourbot_size(2), _wheel_radius(0.05), _encoder_ticks_per_revolution(35840),
 	_current_sensor_gain(1.0), _current_sensor_offset(0.0),
 	_kinematic_conversion_position(0.0), _kinematic_conversion_orientation(0.0), _kinematic_conversion_wheel(0.0), _pose(3,0.0), _velocity(3,0.0),
 	_control_mode(TEENSYBRIDGE_CONTROL_MODE_SIMPLE), _velocity_pid_soft(3, 0.0), _velocity_pid_strong(3, 0.0),
 	_imus{new IMU(std::string("left_imu")), new IMU(std::string("right_imu"))}
 {
 	// SETUP KINEMATICS
-	this->addProperty("platform_length",_platform_length).doc("Property containing the platform length in [m].");
-	this->addProperty("platform_width",_platform_width).doc("Property containing the platform width in [m].");
+	this->addProperty("ourbot_size", _ourbot_size).doc("Length and width of ourbot [m x m]");
 	this->addProperty("wheel_radius",_wheel_radius).doc("Property containing the wheel radius in [m].");
 	this->addProperty("encoder_ticks_per_revolution",_encoder_ticks_per_revolution).doc("Property containing the encoder ticks per revolution in [-].");
 	this->addProperty("current_sensor_gain",_current_sensor_gain).doc("Gain of current sensor to get proper scaling");
 	this->addProperty("velocity_pid_soft", _velocity_pid_soft).doc("PID parameters for soft velocity control (gamepad).");
 	this->addProperty("velocity_pid_strong", _velocity_pid_strong).doc("PID parameters for strong velocity control (smooth trajectories).");
+	this->addProperty("max_velocity", _max_velocity).doc("Max velocity setpoint");
 
 	this->ports()->addPort( "cmd_velocity_port", _cmd_velocity_port ).doc("Input port for low level velocity controller. Vector contains [vx,vy,w]");
 	this->ports()->addPort( "cmd_velocity_passthrough_port", _cmd_velocity_passthrough_port ).doc("Passthrough for cmd velocity port.");
@@ -195,7 +195,7 @@ bool TeensyBridge::configureHook()
 
 	//calculate kinematic conversion
   	_kinematic_conversion_position = _wheel_radius*M_PI/_encoder_ticks_per_revolution; //2*R*pi/enc_res
-	_kinematic_conversion_orientation = _wheel_radius*M_PI/_encoder_ticks_per_revolution/(_platform_length/2.0 + _platform_width/2.0);
+	_kinematic_conversion_orientation = _wheel_radius*M_PI/_encoder_ticks_per_revolution/(_ourbot_size[0]/2.0 + _ourbot_size[1]/2.0);
 	_kinematic_conversion_wheel = _encoder_ticks_per_revolution/(2.0*M_PI*_wheel_radius);
 
 	//setup imus
@@ -247,7 +247,6 @@ void TeensyBridge::updateHook()
 	// Possible return values are: NoData, OldData and NewData.
 	if(_cmd_velocity_port.read(cmd_velocity) == RTT::NewData){
 		setVelocity(cmd_velocity[0], cmd_velocity[1], cmd_velocity[2]);
-		_cmd_velocity_passthrough_port.write(cmd_velocity);
 	}
 }
 
@@ -325,15 +324,34 @@ void TeensyBridge::setMotorVoltage(double voltage, int ID)
 	setMotorReference(voltage_setpoint, ID, 1);
 }
 
+double TeensyBridge::saturate(double v, double max) {
+	if (v > max) {
+		RTT::log(RTT::Warning) << "Saturating velocity " << v << RTT::endlog();
+		return max;
+	}
+	if (v < -max) {
+		RTT::log(RTT::Warning) << "Saturating velocity " << v << RTT::endlog();
+		return -max;
+	}
+	return v;
+}
+
 void TeensyBridge::setVelocity(double vx, double vy, double w)
 {
 	if(_control_mode == TEENSYBRIDGE_CONTROL_MODE_SIMPLE){
+		vx = saturate(vx, _max_velocity[0]);
+		vy = saturate(vy, _max_velocity[1]);
+		w = saturate(w, _max_velocity[2]);
+
+		std::vector<double> vel({vx, vy, w});
+		_cmd_velocity_passthrough_port.write(vel);
+
 		mavlink_motor_command_t motor_command;
 		mavlink_message_t msg;
 		uint8_t buffer[MAVLINK_MSG_ID_MOTOR_COMMAND_LEN+MAVLINK_MSG_OVERHEAD];
 		uint8_t numbytes = 0;
 
-		w = (_platform_length + _platform_width)*w/2.0;
+		w = (_ourbot_size[0] + _ourbot_size[1])*w/2.0;
 
 		// UPDATE 14/07/2015: To have the same reference frame as the youbot, the y-axis has been changed
 		motor_command.command_left_front = (vx - vy - w)*_kinematic_conversion_wheel;

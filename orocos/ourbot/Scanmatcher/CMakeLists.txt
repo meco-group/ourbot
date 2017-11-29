@@ -30,7 +30,6 @@ IF(${CSM_FOUND})
 ELSE(${CSM_FOUND})
         MESSAGE(FATAL_ERROR "CSM not found. Check that the environment variable PKG_CONFIG_PATH includes the path containing the file 'csm.pc'.")
 ENDIF(${CSM_FOUND})
-
 # Defines the orocos_* cmake macros. See that file for additional
 # documentation.
 include( ${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake )

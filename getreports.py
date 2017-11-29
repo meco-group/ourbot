@@ -25,9 +25,9 @@ import optparse, os, paramiko
 from netCDF4 import Dataset
 import matplotlib
 import matplotlib.pyplot as plt
-matplotlib.use('TKAgg')
 import socket
 import collections as col
+matplotlib.use('TKAgg')
 
 # parameters
 user = os.getenv('USER') # default: user with same name as on emperor
@@ -37,7 +37,7 @@ current_dir = os.path.dirname(os.path.realpath(__file__))
 local_root = os.path.join(current_dir, 'orocos/emperor')
 
 hosts = ['kurt', 'krist', 'dave']
-addresses = col.OrderedDict([('kurt', '192.168.11.121'), ('krist', '192.168.11.122'), ('dave', '192.168.11.120')])
+addresses = col.OrderedDict([('kurt', '192.168.11.121'), ('krist', '192.168.11.120'), ('dave', '192.168.11.122')])
 show_plots = True
 
 

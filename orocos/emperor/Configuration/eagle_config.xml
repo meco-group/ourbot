@@ -1,0 +1,77 @@
+<?xml version="1.0"?>
+<opencv_storage>
+    <camera>
+        <index>1</index>
+        <type>SEE3CAM</type>
+        <resolution>
+            <width>640</width>
+            <height>360</height>
+        </resolution>
+        <camera_matrix type_id="opencv-matrix">
+            <rows>3</rows>
+            <cols>3</cols>
+            <dt>d</dt>
+            <data>374.436819 0.000000 311.227597 0.000000 374.436819 179.095061 0.000000 0.000000 1.000000 </data>
+        </camera_matrix>
+        <distortion_vector type_id="opencv-matrix">
+            <rows>5</rows>
+            <cols>1</cols>
+            <dt>d</dt>
+            <data>-0.366278 0.154797 0.001915 0.000318 -0.010904 </data>
+        </distortion_vector>
+        <ground_plane type_id="opencv-matrix">
+            <rows>1</rows>
+            <cols>4</cols>
+            <dt>d</dt>
+            <data>0.000000 0.000000 1.000000 0.000000 </data>
+        </ground_plane>
+        <external_transformation type_id="opencv-matrix">
+            <rows>4</rows>
+            <cols>4</cols>
+            <dt>d</dt>
+            <data>0.999950 0.000000 -0.010028 0.031426 0.000056 -0.999984 0.005630 -0.017644 -0.010028 -0.005631 -0.999934 3.133537 0.000000 0.000000 0.000000 1.000000 </data>
+        </external_transformation>
+    </camera>
+    <communicator>
+        <interface>wlan0</interface>
+        <group>EAGLE</group>
+        <zyre_port>5670</zyre_port>
+        <zyre_wait_time>100</zyre_wait_time>
+    </communicator>
+    <calibrator>
+        <pattern>CHESSBOARD</pattern>
+        <board_width>6</board_width>
+        <board_height>7</board_height>
+        <square_size>0.108</square_size>
+        <calib_fix_aspect_ratio>1</calib_fix_aspect_ratio>
+        <integrated>1</integrated>
+        <calibrated>1</calibrated>
+    </calibrator>
+    <detector>
+        <blob>
+            <minThreshold>10</minThreshold>
+            <maxThreshold>200</maxThreshold>
+            <filterByArea>1</filterByArea>
+            <minArea>80</minArea>
+            <filterByCircularity>1</filterByCircularity>
+            <minCircularity>0.85</minCircularity>
+        </blob>
+        <min_robot_area>0.06</min_robot_area>
+        <min_obstacle_area>0.02</min_obstacle_area>
+        <markers>
+            <triangle_ratio>0.625</triangle_ratio>
+            <qr_posx>0</qr_posx>
+            <qr_posy>0</qr_posy>
+            <qr_sizex>0.8</qr_sizex>
+            <qr_sizey>0.8</qr_sizey>
+            <qr_nbitx>2</qr_nbitx>
+            <qr_nbity>2</qr_nbity>
+        </markers>
+        <thresholds>
+            <bg_subtraction>24</bg_subtraction>
+            <top_marker>0.1</top_marker>
+            <triangle_ratio>0.1</triangle_ratio>
+        </thresholds>
+        <background_path>background.png</background_path>
+    </detector>
+</opencv_storage>

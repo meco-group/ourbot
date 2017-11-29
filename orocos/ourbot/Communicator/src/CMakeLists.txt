@@ -10,7 +10,7 @@
 # Creates a component library libCommunicator-<target>.so
 # and installs in the directory lib/orocos/Communicator/
 #
-orocos_component(Communicator Communicator-component.hpp Communicator-component.cpp Connection.hpp) # ...you may add multiple source files
+orocos_component(Communicator Communicator-component.hpp Communicator-component.cpp Connection.hpp Mailbox.hpp) # ...you may add multiple source files
 
 target_link_libraries(Communicator ${ZMQ_LIBRARIES} ${CZMQ_LIBRARIES} ${ZYRE_LIBRARIES}) # Link libraries to Orocos component here
 
@@ -22,7 +22,7 @@ target_link_libraries(Communicator ${ZMQ_LIBRARIES} ${CZMQ_LIBRARIES} ${ZYRE_LIB
 #
 # Installs in the include/orocos/Communicator/ directory
 #
-orocos_install_headers(Communicator-component.hpp Connection.hpp) # ...you may add multiple header files
+orocos_install_headers(Communicator-component.hpp Connection.hpp Mailbox.hpp) # ...you may add multiple header files
 #
 # You may add multiple orocos_install_headers statements.
 

@@ -19,7 +19,7 @@ endif()
 # Defines the orocos_* cmake macros. See that file for additional
 # documentation.
 include( ${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake )
-
+add_definitions(-std=c++11)
 # Rest of the configuration is in src/
 add_subdirectory( src )
 #

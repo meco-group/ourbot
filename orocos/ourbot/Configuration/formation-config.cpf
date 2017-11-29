@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "cpf.dtd">
+<properties>
+
+<struct name="configuration" type="array">
+  <description>Pose relative to the fleet center</description>
+  <simple name="x0" type="double">
+    <value>-0.2</value>
+  </simple>
+  <simple name="y0" type="double">
+    <value>-0.2</value>
+  </simple>
+  <simple name="t0" type="double">
+    <value>0.0</value>
+  </simple>
+  <simple name="x1" type="double">
+    <value>-0.2</value>
+  </simple>
+  <simple name="y1" type="double">
+    <value>0.2</value>
+  </simple>
+  <simple name="t1" type="double">
+    <value>0.0</value>
+  </simple>
+  <simple name="x2" type="double">
+    <value>0.35</value>
+  </simple>
+  <simple name="y2" type="double">
+    <value>0.0</value>
+  </simple>
+  <simple name="t2" type="double">
+    <value>0.0</value>
+  </simple>
+</struct>
+
+<simple name="init_admm_iter" type="long">
+  <description>Number of initial ADMM iterations</description>
+  <value>5</value>
+</simple>
+
+<simple name="rho" type="double">
+  <description>Penalty factor for ADMM</description>
+  <value>0.2</value>
+</simple>
+
+
+</properties>

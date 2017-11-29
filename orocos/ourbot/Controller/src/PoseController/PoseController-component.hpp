@@ -3,14 +3,15 @@
 
 #include "../ControllerInterface/ControllerInterface-component.hpp"
 
-class PoseController : public ControllerInterface{
+class PoseController : public ControllerInterface {
+
   private:
+    double _control_rate;
     bool _enable_fb;
     bool _enable_ff;
     bool _correct_orientation;
     std::vector<double> _kp;
     std::vector<double> _ki;
-    double _Ts;
 
     std::vector<double> _cmd_vel;
     std::vector<double> _cmd_vel_prev;
@@ -26,8 +27,9 @@ class PoseController : public ControllerInterface{
 
   public:
     PoseController(std::string const& name);
-    bool controlUpdate();
+    bool controlHook();
     bool initialize();
+
 };
 
 #endif

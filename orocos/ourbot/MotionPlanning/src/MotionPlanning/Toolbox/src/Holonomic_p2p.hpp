@@ -17,16 +17,16 @@
 // License along with this program; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#ifndef HOLONOMIC
-#define HOLONOMIC
+#ifndef HOLONOMIC_P2P
+#define HOLONOMIC_P2P
 
 #include "Vehicle_p2p.hpp"
 
-namespace omg{
+namespace p2p{
 
 class Holonomic: public Vehicle{
     private:
-        std::vector<double> positionT;
+        std::vector<double> poseT;
 
     public:
         Holonomic();

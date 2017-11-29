@@ -1,40 +1,31 @@
-export void VelocityControl(){
-  emperor_send_event_port.write("e_velocitycmd")
+export void next(){
+  emperor_send_event_port.write("e_next")
 }
 
-export void MotionPlanning(){
-  emperor_send_event_port.write("e_motionplanning")
+export void back(){
+  emperor_send_event_port.write("e_back")
 }
 
-export void TrajectoryFollowing(){
+export string get_state(){
+  return emperor_current_state_port.last()
+}
+
+export void trajectoryfollowing(){
   emperor_send_event_port.write("e_trajectoryfollowing")
 }
 
-
-export void Idle(){
-  emperor_send_event_port.write("e_idle")
+export void motionplanning(){
+  emperor_send_event_port.write("e_motionplanning")
 }
 
-export void Reset(){
-  emperor_send_event_port.write("e_reset")
+export void motionplanning_dynamic_obstacle(){
+  emperor_send_event_port.write("e_motionplanning_dynamic_obstacle")
 }
 
-export void Run(){
-  emperor_send_event_port.write("e_run")
+export void formation(){
+  emperor_send_event_port.write("e_formation")
 }
 
-export void Restart(){
-  emperor_send_event_port.write("e_restart")
-}
-
-export void Break(){
-  emperor_send_event_port.write("e_stop")
-}
-
-export void Init(){
-  emperor_send_event_port.write("e_init")
-}
-
-export string getState(){
-  return emperor_current_state_port.last()
+export void flexonomy(){
+  emperor_send_event_port.write("e_flexonomy")
 }

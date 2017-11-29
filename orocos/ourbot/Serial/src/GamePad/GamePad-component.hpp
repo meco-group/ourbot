@@ -100,7 +100,7 @@ class GamePad : public USBInterface
     double _filter_bandwidth;
     double _max_velocity;
     double _max_omega;
-    double _velcmd_sample_rate;
+    double _velcmd_rate;
     bool _enable_LPF;
     void VelocityCommand();
     std::vector<double> lowPassFilter(std::vector<double>);

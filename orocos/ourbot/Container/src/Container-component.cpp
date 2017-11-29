@@ -13,19 +13,19 @@
 																									(*task)->func(); \
 																								}
 
-Container::Container(std::string const& name) : TaskContext(name,PreOperational){
+Container::Container(std::string const& name) : TaskContext(name, PreOperational) {
 	addOperation("addComponent", &Container::addComponent, this).doc("Adds a component to the component container and takes care of its configure, start, stop cleanup and update. All its ports become available under the same name.");
 }
 
-bool Container::configureHook(){
+bool Container::configureHook() {
 	COMPONENTS_FUNCTION_ITERATOR_BOOL(configure)
 }
 
-bool Container::startHook(){
+bool Container::startHook() {
 	COMPONENTS_FUNCTION_ITERATOR_BOOL(start)
 }
 
-void Container::updateHook(){
+void Container::updateHook() {
 	COMPONENTS_FUNCTION_ITERATOR_VOID(update)
 }
 
@@ -48,16 +48,16 @@ bool Container::addComponent( const std::string& component, const std::string& c
 	bool compStopped = comp->getTaskState() == RTT::base::TaskCore::PreOperational;
 	bool thisStopped = getTaskState() == RTT::base::TaskCore::PreOperational;
 
-	if(compStopped && thisStopped){
+	if (compStopped && thisStopped) {
 		// It is possible to add the task to the container
 		_components.push_back(comp);
 
 		Ports ports = comp->ports()->getPorts();
 		for (Ports::iterator port = ports.begin(); port != ports.end() ; ++port) {
 			std::string port_name = (*port)->getName();
-			if(getPort(port_name) == NULL){
+			if (getPort(port_name) == NULL) {
 				//Port not yet in use: we can add it to the container components ports
-				addPort(component_name+port_name, (**port));
+				addPort(component_name + port_name, (**port));
 			} else {
 				RTT::log(RTT::Warning) << "Could not add port " + port_name + " because it is already in use." << RTT::endlog();
 			}

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "cpf.dtd">
+<properties>
+
+    <simple name="communication_group" type="string">
+        <description>Zyre group to communicate eagle messages</description>
+        <value>EAGLE</value>
+    </simple>
+
+    <struct name="eagles" type="strings">
+        <description>Name of eagle nodes to listen to</description>
+        <simple name="camera_node" type="string">
+            <value>camera_node</value>
+        </simple>
+        <simple name="eagle0" type="string">
+            <value>eagle0</value>
+        </simple>
+        <simple name="eagle1" type="string">
+            <value>eagle1</value>
+        </simple>
+    </struct>
+
+    <simple name="verbose" type="long">
+        <description>Verbose flag</description>
+        <value>0</value>
+    </simple>
+
+    <struct name="robot_ids" type="ints">
+        <description>Id's of robots to detect</description>
+        <simple name="dave" type="long">
+            <value>0</value>
+        </simple>
+        <simple name="krist" type="long">
+            <value>1</value>
+        </simple>
+        <simple name="kurt" type="long">
+            <value>9</value>
+        </simple>
+        <simple name="table0" type="long">
+            <value>2</value>
+        </simple>
+        <simple name="table0" type="long">
+            <value>8</value>
+        </simple>
+    </struct>
+
+</properties>

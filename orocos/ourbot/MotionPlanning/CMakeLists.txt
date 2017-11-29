@@ -21,13 +21,15 @@ link_directories($ENV{CASADI_LIB})
 include_directories($ENV{CASADI_INC})
 include_directories($ENV{ROS_WORKSPACE}/ourbot/MotionPlanning/src/MotionPlanning/Toolbox/src/)
 link_directories($ENV{ROS_WORKSPACE}/ourbot/MotionPlanning/src/MotionPlanning/Toolbox/bin/)
-include_directories($ENV{ROS_WORKSPACE}/ourbot/MotionPlanning/src/DistributedMotionPlanning/Toolbox/src/)
-link_directories($ENV{ROS_WORKSPACE}/ourbot/MotionPlanning/src/DistributedMotionPlanning/Toolbox/bin/)
+include_directories($ENV{ROS_WORKSPACE}/ourbot/MotionPlanning/src/FormationMotionPlanning/Toolbox/src/)
+link_directories($ENV{ROS_WORKSPACE}/ourbot/MotionPlanning/src/FormationMotionPlanning/Toolbox/bin/)
+include_directories($ENV{ROS_WORKSPACE}/ourbot/MotionPlanning/src/FlexonomyMotionPlanning/Toolbox/src/)
+link_directories($ENV{ROS_WORKSPACE}/ourbot/MotionPlanning/src/FlexonomyMotionPlanning/Toolbox/bin/)
+include_directories($ENV{ROS_WORKSPACE}/ourbot/MotionPlanning/src/MotionPlanningDynamicObstacle/Toolbox/src/)
+link_directories($ENV{ROS_WORKSPACE}/ourbot/MotionPlanning/src/MotionPlanningDynamicObstacle/Toolbox/bin/)
 
 add_definitions(-std=c++11)
 # nothing should be changed in the Makefile!
-
-
 # Defines the orocos_* cmake macros. See that file for additional
 # documentation.
 include( ${OROCOS-RTT_USE_FILE_PATH}/UseOROCOS-RTT.cmake )

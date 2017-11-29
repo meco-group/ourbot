@@ -1,3 +1,5 @@
+/orocos/hawkeye/HawkEye/calibration/CMakeFiles/camera_calibration.dir/camera_calibration.cpp.o
+/orocos/emperor/HawkEye/calibration/CMakeFiles/camera_calibration.dir/camera_calibration.cpp.o
 info/*
 identify_velcontrol/*
 .test/
@@ -10,7 +12,6 @@ orocos/emperor/HawkEye/images/*
 orocos/ourbot/MotionPlanning/src/*/Toolbox/bin
 orocos/ourbot/MotionPlanning/src/*/Toolbox/obj
 orocos/ourbot/MotionPlanning/src/*/Toolbox/test
-todo
 *.nc
 *.log
 *.ior
@@ -26,5 +27,7 @@ orocos/setup.zsh
 *.rosinstall.bak
 *_
 *.avi
+*.png
 orocos/ourbot/Estimator/src/Kalman/const_*
-
+timer.cpp
+time

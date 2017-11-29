@@ -10,6 +10,19 @@
     <value>/dev/ttyACM0</value>
   </simple>
 
+  <struct name="max_velocity" type="array">
+    <description>Max velocity setpoint</description>
+    <simple name="vx" type="double">
+      <value>0.8</value>
+    </simple>
+    <simple name="vy" type="double">
+      <value>0.8</value>
+    </simple>
+    <simple name="w" type="double">
+      <value>1.2</value>
+    </simple>
+  </struct>
+
   <struct name="velocity_pid_soft" type="array">
     <description>PID parameters for soft velocity control (gamepad)</description>
     <simple name="P" type="double">
@@ -26,15 +39,12 @@
   <struct name="velocity_pid_strong" type="array">
     <description>PID parameters for strong velocity control (smooth trajectories)</description>
     <simple name="P" type="double">
-      <!-- <value>5.</value> -->
       <value>1.</value>
     </simple>
     <simple name="I" type="double">
-      <!-- <value>15.</value> -->
       <value>1.5</value>
     </simple>
     <simple name="D" type="double">
-      <!-- <value>0.015</value> -->
       <value>0.00</value>
     </simple>
   </struct>

@@ -19,17 +19,19 @@ import math
 import socket
 
 # parameters
-user = os.getenv('USER') # default: user with same name as on emperor
+user = os.getenv('USER')
 password = user
 remote_root = os.path.join('/home/' + user, 'orocos/ourbot/')
 current_dir = os.path.dirname(os.path.realpath(__file__))
 local_root = os.path.join(current_dir, 'orocos/emperor')
 
-hosts = ['kurt', 'krist', 'dave']
-# obstacle = 'dave'
-obstacle = None
-
-addresses = col.OrderedDict([('kurt', '192.168.11.121'), ('krist', '192.168.11.122'), ('dave', '192.168.11.120')])
+robots = ['dave', 'kurt', 'krist']
+eagles = ['eagle0', 'eagle1']
+addresses = col.OrderedDict([('kurt', '192.168.11.121'),
+                             ('krist', '192.168.11.120'),
+                             ('dave', '192.168.11.122'),
+                             ('eagle0', '192.168.11.139'),
+                             ('eagle1', '192.168.11.123')])
 
 
 def send_file(ftp, ssh, loc_file, rem_file):
@@ -67,7 +69,7 @@ def send_files(ftp, ssh, loc_files, rem_files, fancy_print=False):
         print ''
 
 
-def modify_host_config(host):
+def modify_robot_config(robot, flexonomy=False):
     local_files, remote_files = [], []
     # modify system-config
     local_files.append(os.path.join(
@@ -78,10 +80,9 @@ def modify_host_config(host):
     root = tree.getroot()
     for elem in root.findall('simple'):
         if elem.attrib['name'] == 'host':
-            elem.find('value').text = host
-        if host == obstacle:
-            if elem.attrib['name'] == 'obstacle_mode':
-                elem.find('value').text = str(1)
+            elem.find('value').text = robot
+        if elem.attrib['name'] == 'flexonomy':
+            elem.find('value').text = '1' if flexonomy else '0'
     file = open(local_files[-1]+'_', 'w')
     file.write('<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE properties SYSTEM "cpf.dtd">\n')
     tree.write(file)
@@ -89,11 +90,11 @@ def modify_host_config(host):
     return [lf+'_' for lf in local_files], remote_files
 
 
-def write_settings():
+def write_settings(flexonomy):
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    hosts_tmp = hosts[:]
-    for host in hosts_tmp:
+    robots_tmp = robots[:]
+    for robot in robots_tmp:
         # send all deploy scripts and configuration files
         local_files, remote_files = [], []
         files = ['deploy.lua', 'deploy_fsm.lua']
@@ -102,14 +103,14 @@ def write_settings():
         for file in files:
             local_files.append(os.path.join(current_dir+'/orocos/ourbot', file))
             remote_files.append(os.path.join(remote_root, file))
-        # modify host's config files
-        local_files_mod, remote_files_mod = modify_host_config(host)
+        # modify robot's config files
+        local_files_mod, remote_files_mod = modify_robot_config(robot, flexonomy)
         # open ssh connection
         try:
-            ssh.connect(addresses[host], username=user, password=password, timeout=0.5)
+            ssh.connect(addresses[robot], username=user, password=password, timeout=0.5)
         except socket.error:
-            print 'Could not connect to %s' % host
-            hosts.remove(host)
+            print 'Could not connect to %s' % robot
+            robots.remove(robot)
             continue
         ftp = ssh.open_sftp()
         # send files
@@ -122,13 +123,34 @@ def write_settings():
         ssh.close()
 
 
-def deploy(hosts):
-    write_settings()
-    if len(hosts) == 0:
-        return
+def deploy(robots, eagles=None, flexonomy=False):
+    write_settings(flexonomy)
+    # if len(robots) == 0:
+    #     return
     command = ['gnome-terminal']
-    for host in hosts:
-        address = addresses[host]
+    if eagles is not None:
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        for eagle in eagles:
+            try:
+                ssh.connect(addresses[eagle], username='odroid', password='odroid', timeout=0.5)
+            except socket.error:
+                print 'Could not connect to %s' % eagle
+                eagles.remove(eagle)
+                continue
+        for eagle in eagles:
+            address = addresses[eagle]
+            command.extend(['--tab', '-e', '''
+                bash -c '
+                sshpass -p %s ssh %s@%s "
+                killall -9 EagleTransmitter
+                cd /home/odroid/ProjectEagle/eagle/build
+                echo I am %s
+                ./bin/EagleTransmitter %s
+                "'
+                ''' % ('odroid', 'odroid', address, eagle, eagle)])
+    for robot in robots:
+        address = addresses[robot]
         command.extend(['--tab', '-e', '''
             bash -c '
             sshpass -p %s ssh %s@%s "
@@ -139,7 +161,7 @@ def deploy(hosts):
             echo I am %s
             deployer-gnulinux -s run.ops
             "'
-            ''' % (password, user, address, user, remote_root, host)
+            ''' % (password, user, address, user, remote_root, robot)
         ])
     command.extend(['--tab', '-e', '''
         bash -c '
@@ -156,4 +178,14 @@ def deploy(hosts):
 if __name__ == "__main__":
     usage = ("Usage: %prog [options]")
     op = optparse.OptionParser(usage=usage)
-    deploy(hosts)
+    op.add_option("-e", "--eagles", action="store_true",
+                  dest="deploy_eagles", default=False,
+                  help="deploy eagles")
+    op.add_option("-f", "--flexonomy", action="store_true",
+                  dest="flexonomy", default=False,
+                  help="switch immediately to flexonomy state")
+    options, args = op.parse_args()
+    if options.deploy_eagles:
+        deploy(robots, eagles, options.flexonomy)
+    else:
+        deploy(robots, [], options.flexonomy)
