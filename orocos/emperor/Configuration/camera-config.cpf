@@ -122,7 +122,7 @@
             <value>0.4</value>
         </simple>
         <simple name="table0_width" type="double">
-            <value>1.1</value>
+            <value>0.8</value>
         </simple>
         <simple name="table0_height" type="double">
             <value>1.2</value>
@@ -131,7 +131,7 @@
             <value>1.1</value>
         </simple>
         <simple name="table1_height" type="double">
-            <value>1.2</value>
+            <value>1.8</value>
         </simple>
     </struct>
 
@@ -156,16 +156,16 @@
             <value>0</value>
         </simple>
         <simple name="table0_dx" type="double">
-            <value>-0.4705</value>
+            <value>-0.52</value>
         </simple>
         <simple name="table0_dy" type="double">
-            <value>-0.4175</value>
+            <value>-0.405</value>
         </simple>
         <simple name="table1_dx" type="double">
-            <value>-0.4705</value>
+            <value>-0.5</value>
         </simple>
         <simple name="table1_dy" type="double">
-            <value>-0.4175</value>
+            <value>-0.7</value>
         </simple>
     </struct>
 

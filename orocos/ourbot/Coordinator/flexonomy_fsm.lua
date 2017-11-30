@@ -1,8 +1,8 @@
 local json = require "cjson"
 
 -- local variables
-local current_task = nil
 local current_eta = nil
+local current_task = nil
 local task_queue = {}
 local time_tbl = {}
 local current_task_canceled = false
@@ -48,7 +48,7 @@ local initialize = function()
   tc:addProperty(rtt.Property('array', 'robot_table_sizes', 'Length and width of robot arm tables'))
   tc:addProperty(rtt.Property('int', 'no_robot_cnt_max', 'Maximum iterations to decide that robot arm is not visible'))
   -- read properties
-  if not tc:provides('marshalling'):updateProperties('Configuration/flexonomy-config_mult_tables.cpf') then
+  if not tc:provides('marshalling'):updateProperties('Configuration/flexonomy-config.cpf') then
     return false
   end
   coordinator_name = tc:getProperty('coordinator_name'):get()
@@ -57,7 +57,7 @@ local initialize = function()
   nghbcom_rate = tc:getProperty('nghbcom_rate'):get()
   no_robot_cnt_max = tc:getProperty('no_robot_cnt_max'):get()
   local ourbot_size = tc:getProperty('ourbot_size')
-  ourbot_radius = 1.1*math.sqrt(math.pow(0.5*ourbot_size[0]+0.13, 2) + math.pow(0.5*ourbot_size[1], 2))
+  ourbot_radius = 1.2*math.sqrt(math.pow(0.5*ourbot_size[0]+0.13, 2) + math.pow(0.5*ourbot_size[1], 2))
   statemsg_cnt = 1./(statemsg_rate*period)
   nghbcom_cnt = 1./(nghbcom_rate*period)
   max_vel_position = motionplanning:getProperty('max_vel_position'):get()
@@ -67,6 +67,7 @@ local initialize = function()
   else
     peer = 'kurt'
   end
+
   -- add ports
   motion_time_port = rtt.InputPort('double')
   host_trajectory_port = rtt.OutputPort('array')
@@ -199,11 +200,12 @@ function task_bid(task, peer)
   -- compute bid based on eta
   local total_time = 0
   for k, time in pairs(time_tbl) do
-      if k == 1 and current_task ~= nil then
+      if k == 1 and current_task ~= nil and current_eta ~= nil then
           total_time = total_time + current_eta - get_sec()  -- use latest motion time guess of current task
       else
           total_time = total_time + time
       end
+      total_time = total_time + 5.0 -- estimated wait time between tasks
   end
   local nt = table.getn(task_queue)
   local _, pose = est_pose_port:read()
@@ -261,8 +263,8 @@ end
 function remove_task(task)
   print('removing task ' .. task.task_uuid)
   if current_task ~= nil and task.task_uuid == current_task.task_uuid then
-    current_task = nil
     current_eta = nil
+    current_task = nil
   end
   for k, task in pairs(task_queue) do
     if task.task_uuid == task.task_uuid then
@@ -374,7 +376,7 @@ function get_target_pose(task)
     local key = task.task_parameter_key
     if key == 'robot0' then
       local rp = get_table_pose(0)
-      local dx = -1.0
+      local dx = -0.85
       local dy = 0.
       local dt = math.pi/2
       pose[0] = rp[0] + dx*math.cos(rp[2]) - dy*math.sin(rp[2])
@@ -385,7 +387,7 @@ function get_target_pose(task)
       local rp = get_table_pose(1)
       local dx = -1.0
       local dy = 0.
-      local dt = math.pi/2
+      local dt = -math.pi/2
       pose[0] = rp[0] + dx*math.cos(rp[2]) - dy*math.sin(rp[2])
       pose[1] = rp[1] + dx*math.sin(rp[2]) + dy*math.cos(rp[2])
       pose[2] = rp[2] + dt

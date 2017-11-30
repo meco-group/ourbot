@@ -35,7 +35,7 @@
   <struct name="robot_table_sizes" type="array">
     <description>Length and width of robot arm tables</description>
     <simple name="table0_length" type="double">
-      <value>1.1</value>
+      <value>0.8</value>
     </simple>
     <simple name="table0_width" type="double">
       <value>1.2</value>
@@ -44,7 +44,7 @@
       <value>1.1</value>
     </simple>
     <simple name="table1_width" type="double">
-      <value>1.2</value>
+      <value>1.8</value>
     </simple>
   </struct>
 
