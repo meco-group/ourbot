@@ -12,7 +12,7 @@ options = {'safety_distance': 0.05, 'room_constraints': False}
 N = 3
 rect = Rectangle(0.55, 0.4)
 rect.radius = 0.02
-vehicles = [Holonomic(shapes=rect, options=options, bounds={'vmin': -0.3, 'vmax': 0.3, 'amin': -0.3, 'amax': 0.3}) for _ in range(N)]
+vehicles = [Holonomic(shapes=rect, options=options, bounds={'vmin': -0.5, 'vmax': 0.5, 'amin': -0.3, 'amax': 0.3}) for _ in range(N)]
 fleet = Fleet(vehicles)
 configuration = np.array([[-0.2, -0.2], [-0.2, 0.2], [0.4, 0]])
 init_positions = [0.8, 0.8] + configuration
@@ -28,7 +28,7 @@ height = 2.59
 environment = Environment(room={'shape': Rectangle(width, height), 'position': [0.5*width, 0.5*height]})
 rectangle = Rectangle(width=0.3, height=0.8)
 
-# environment.add_obstacle(Obstacle({'position': [0.5*width, 0.5*height]}, shape=rectangle))
+environment.add_obstacle(Obstacle({'position': [0.5*width, 0.5*height]}, shape=rectangle))
 # environment.add_obstacle(Obstacle({'position': [2.5, 2]}, shape=rectangle))
 
 # create a point-to-point problem

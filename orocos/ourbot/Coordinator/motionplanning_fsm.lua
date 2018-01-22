@@ -254,17 +254,17 @@ return rfsm.state {
 
   home = rfsm.state{
     -- wait until valid estimate
-    -- doo = function(fsm)
-    --   while true do
-    --     if not control_hook(false) then
-    --       rfsm.send_events(fsm, 'e_failed')
-    --     end
-    --     if estimator_valid() then
-    --       return
-    --     end
-    --     rfsm.yield(true)
-    --   end
-    -- end
+    doo = function(fsm)
+      while true do
+        if not control_hook(false) then
+          rfsm.send_events(fsm, 'e_failed')
+        end
+        if estimator_valid() then
+          return
+        end
+        rfsm.yield(true)
+      end
+    end
   },
 
   idle = rfsm.state{

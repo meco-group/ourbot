@@ -367,12 +367,12 @@ cv::Mat Camera::draw() {
             if (_robots[k]->detected()) {
                 _robots[k]->draw(img, *_projection);
                 // estimated pose
-                // std::vector<double> pose({-100, -100, -100});
-                // _robot_est_pose_port[k]->read(pose);
-                // cv::Point2f center = _projection->project_to_image(cv::Point3f(pose[0], pose[1], robot_height));
-                // cv::Point2f heading = _projection->project_to_image(cv::Point3f(pose[0]+0.1*cos(pose[2]), pose[1]+0.1*sin(pose[2]), robot_height));
-                // cv::circle(img, center, 5, _robots[k]->color(), -2);
-                // cv::line(img, center, heading, _robots[k]->color(), 2);
+                std::vector<double> pose({-100, -100, -100});
+                _robot_est_pose_port[k]->read(pose);
+                cv::Point2f center = _projection->project_to_image(cv::Point3f(pose[0], pose[1], robot_height));
+                cv::Point2f heading = _projection->project_to_image(cv::Point3f(pose[0]+0.1*cos(pose[2]), pose[1]+0.1*sin(pose[2]), robot_height));
+                cv::circle(img, center, 5, _robots[k]->color(), -2);
+                cv::line(img, center, heading, _robots[k]->color(), 2);
                 // reference trajectory
                 std::vector<double> ref_x, ref_y;
                 cv::Scalar color_w = mix_with_white(_robots[k]->color(), 50);
@@ -392,16 +392,16 @@ cv::Mat Camera::draw() {
             }
         }
     }
-    // if (_draw >= 1) {
-        // target
-        // std::vector<double> target_pose;
-        // _target_in_port.read(target_pose);
-        // if (target_pose.size() >= 2) {
-        //     cv::Point2f target = _projection->project_to_image(cv::Point3f(target_pose[0], target_pose[1], robot_height));
-        //     cv::circle(img, target, 30, gray, 2);
-        //     cv::circle(img, target, 10, gray, -1.5);
-        // }
-    // }
+    if (_draw >= 1) {
+        target
+        std::vector<double> target_pose;
+        _target_in_port.read(target_pose);
+        if (target_pose.size() >= 2) {
+            cv::Point2f target = _projection->project_to_image(cv::Point3f(target_pose[0], target_pose[1], robot_height));
+            cv::circle(img, target, 30, gray, 2);
+            cv::circle(img, target, 10, gray, -1.5);
+        }
+    }
     return img;
 }
 
