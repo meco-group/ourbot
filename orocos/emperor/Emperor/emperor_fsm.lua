@@ -13,6 +13,7 @@ function state_toggle()
   local fs_up, data_up = gamepad_up_port:read()
   local fs_down, data_down = gamepad_down_port:read()
   local fs_A, data_A = gamepad_A_port:read()
+  local fs_B, data_B = gamepad_B_port:read()
   if ((fs_up == 'NewData') and data_up) then
     state_index = (state_index)%table.getn(states)+1
     print('selected state: ' .. states[state_index])
@@ -25,6 +26,8 @@ function state_toggle()
     print('entering state ' .. states[state_index])
     emperor_send_event_port:write('e_'..states[state_index])
     return true
+  elseif ((fs_B == 'NewData') and data_B) then
+    emperor_send_event_port:write('e_back')
   end
   return false
 end

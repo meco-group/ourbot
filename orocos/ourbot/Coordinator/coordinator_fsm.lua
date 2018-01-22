@@ -45,7 +45,7 @@ return rfsm.state {
         if not control_hook(false) then
           rfsm.send_events(fsm, 'e_failed')
         end
-        if true or tc:getProperty('flexonomy'):get() then
+        if tc:getProperty('flexonomy'):get() then
           rfsm.send_events(fsm, 'e_flexonomy')
         end
         rfsm.yield(true)

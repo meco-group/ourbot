@@ -218,8 +218,9 @@ end
 return rfsm.state {
   rfsm.trans{src = 'initial', tgt = 'init'},
   rfsm.trans{src = 'init', tgt = 'home', events = {'e_done'}},
-  rfsm.trans{src = 'home', tgt = 'idle', events = {'e_done', 'e_back'}},
+  rfsm.trans{src = 'home', tgt = 'idle', events = {'e_done'}},
   rfsm.trans{src = 'home', tgt = 'p2p0', events = {'e_p2p'}},
+  rfsm.trans{src = 'home', tgt = 'stop', events = {'e_stop'}},
   rfsm.trans{src = 'idle', tgt = 'p2p0', events = {'e_p2p'}},
   rfsm.trans{src = 'p2p0', tgt = 'idle', events = {'e_idle', 'e_back'}},
   rfsm.trans{src = 'p2p0', tgt = 'p2p', events = {'e_p2p'}},
@@ -255,11 +256,18 @@ return rfsm.state {
   home = rfsm.state{
     -- wait until valid estimate
     doo = function(fsm)
+      est_cnt = 0
       while true do
         if not control_hook(false) then
           rfsm.send_events(fsm, 'e_failed')
         end
-        if estimator_valid() then
+        if not estimator_valid() then
+          est_cnt = est_cnt + 1
+          if est_cnt >= 10 then
+            print('No valid estimate, leaving state!')
+            rfsm.send_events(fsm, 'e_stop')
+          end
+        else
           return
         end
         rfsm.yield(true)

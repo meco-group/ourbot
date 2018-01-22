@@ -28,7 +28,7 @@ local component_config_files = {
   gamepad = 'Configuration/gamepad-config.cpf'
 }
 
-local components      = {}
+local components = {}
 local dp = rtt.getTC():getPeer('Deployer')
 
 return rfsm.state {

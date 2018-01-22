@@ -79,7 +79,7 @@
 
     <simple name="draw" type="long">
         <description>Amount of drawing</description>
-        <value>3</value>
+        <value>4</value>
     </simple>
 
     <struct name="robot_ids" type="ints">
