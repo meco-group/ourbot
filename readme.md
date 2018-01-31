@@ -7,8 +7,8 @@ More information on the setup is found on our [ourbot wiki](https://github.com/m
 <table style="border: none; border-collapse: collapse;" border="0" cellspacing="0" cellpadding="0" width="100%" align="center">
 <tr>
 <td align="center" valign="center" style="background-color:rgba(0, 0, 0, 0);">
-<a href="https://www.youtube.com/watch?v=XeQFI1EhGPU">
-<img src="https://img.youtube.com/vi/XeQFI1EhGPU/0.jpg" alt="Online motion planning"/>
+<a href="https://www.youtube.com/watch?v=txkjt0O4mwU">
+<img src="https://img.youtube.com/vi/txkjt0O4mwU/0.jpg" alt="Online motion planning"/>
 </a>
 </td>
 <td align="center" valign="center" style="background-color:rgba(0, 0, 0, 0);">
